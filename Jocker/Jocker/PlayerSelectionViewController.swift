@@ -87,29 +87,29 @@ class PlayerSelectionViewController: UIViewController {
         fourPlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
         startButton.addTarget(self, action: #selector(startGameTapped), for: .touchUpInside)
         
-        // Настраиваем constraints
+        // Настраиваем constraints - кнопки расположены горизонтально
         NSLayoutConstraint.activate([
             // Title Label
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 50),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
             
-            // 3 Players Button
-            threePlayersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            threePlayersButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -60),
-            threePlayersButton.widthAnchor.constraint(equalToConstant: 300),
-            threePlayersButton.heightAnchor.constraint(equalToConstant: 80),
-            
-            // 4 Players Button
-            fourPlayersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            fourPlayersButton.topAnchor.constraint(equalTo: threePlayersButton.bottomAnchor, constant: 30),
-            fourPlayersButton.widthAnchor.constraint(equalToConstant: 300),
+            // 4 Players Button - слева
+            fourPlayersButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
+            fourPlayersButton.trailingAnchor.constraint(equalTo: view.centerXAnchor, constant: -10),
+            fourPlayersButton.widthAnchor.constraint(equalToConstant: 200),
             fourPlayersButton.heightAnchor.constraint(equalToConstant: 80),
+            
+            // 3 Players Button - справа
+            threePlayersButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
+            threePlayersButton.leadingAnchor.constraint(equalTo: view.centerXAnchor, constant: 10),
+            threePlayersButton.widthAnchor.constraint(equalToConstant: 200),
+            threePlayersButton.heightAnchor.constraint(equalToConstant: 80),
             
             // Start Button
             startButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -60),
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
             startButton.widthAnchor.constraint(equalToConstant: 350),
             startButton.heightAnchor.constraint(equalToConstant: 70)
         ])
