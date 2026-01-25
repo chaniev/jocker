@@ -14,6 +14,8 @@ class GameScene: SKScene {
     private var pokerTable: SKShapeNode?
     private var tableInner: SKShapeNode?
     private var players: [PlayerNode] = []
+    private var dealButton: SKShapeNode?
+    private var dealButtonLabel: SKLabelNode?
     
     // Размеры стола (для расчёта позиций игроков)
     private var tableWidth: CGFloat = 0
@@ -28,6 +30,9 @@ class GameScene: SKScene {
         
         // Размещаем игроков вокруг стола
         setupPlayers()
+        
+        // Создаём кнопку "Раздать карты"
+        setupDealButton()
     }
     
     private func setupPokerTable() {
@@ -104,6 +109,13 @@ class GameScene: SKScene {
         // Обработка касаний для будущей игровой логики
         for touch in touches {
             let location = touch.location(in: self)
+            
+            // Проверяем, нажата ли кнопка "Раздать карты"
+            if let button = dealButton, button.contains(location) {
+                handleDealButtonTap()
+                return
+            }
+            
             print("Touch at: \(location)")
         }
     }
@@ -155,6 +167,91 @@ class GameScene: SKScene {
             
             players.append(playerNode)
             self.addChild(playerNode)
+        }
+    }
+    
+    // MARK: - Кнопка "Раздать карты"
+    
+    private func setupDealButton() {
+        // Размеры кнопки (увеличены в 2 раза)
+        let buttonWidth: CGFloat = 360
+        let buttonHeight: CGFloat = 100
+        let cornerRadius: CGFloat = 24
+        
+        // Позиция: левый край кнопки на расстоянии 50 от края экрана, поднята выше
+        let buttonX: CGFloat = 50 + buttonWidth / 2  // сдвиг вправо еще на 25
+        let buttonY: CGFloat = buttonHeight / 2 + 50   // поднята еще на 25
+        
+        // Создаём прямоугольник с закруглёнными углами для кнопки
+        let buttonRect = CGRect(
+            x: -buttonWidth / 2,
+            y: -buttonHeight / 2,
+            width: buttonWidth,
+            height: buttonHeight
+        )
+        let button = SKShapeNode(rect: buttonRect, cornerRadius: cornerRadius)
+        button.position = CGPoint(x: buttonX, y: buttonY)
+        
+        // Стильный красный цвет для кнопки (как фишки в покере)
+        button.fillColor = SKColor(red: 0.85, green: 0.2, blue: 0.2, alpha: 1.0)
+        button.strokeColor = SKColor(red: 0.65, green: 0.1, blue: 0.1, alpha: 1.0)
+        button.lineWidth = 3
+        button.zPosition = 100
+        
+        // Добавляем эффект градиента с помощью дополнительного слоя
+        let highlightRect = CGRect(
+            x: -buttonWidth / 2,
+            y: 0,
+            width: buttonWidth,
+            height: buttonHeight / 2
+        )
+        let highlight = SKShapeNode(rect: highlightRect, cornerRadius: cornerRadius)
+        highlight.fillColor = SKColor(white: 1.0, alpha: 0.15)
+        highlight.strokeColor = .clear
+        highlight.zPosition = 1
+        button.addChild(highlight)
+        
+        self.dealButton = button
+        self.addChild(button)
+        
+        // Создаём текст на кнопке
+        let label = SKLabelNode(fontNamed: "Helvetica-Bold")
+        label.text = "Раздать карты"
+        label.fontSize = 40
+        label.fontColor = .white
+        label.verticalAlignmentMode = .center
+        label.horizontalAlignmentMode = .center
+        label.position = CGPoint(x: 0, y: 0)
+        label.zPosition = 2
+        
+        // Добавляем тень для текста
+        let shadow = SKLabelNode(fontNamed: "Helvetica-Bold")
+        shadow.text = "Раздать карты"
+        shadow.fontSize = 40
+        shadow.fontColor = SKColor(white: 0.0, alpha: 0.5)
+        shadow.verticalAlignmentMode = .center
+        shadow.horizontalAlignmentMode = .center
+        shadow.position = CGPoint(x: 2, y: -2)
+        shadow.zPosition = 1
+        button.addChild(shadow)
+        
+        button.addChild(label)
+        self.dealButtonLabel = label
+    }
+    
+    private func handleDealButtonTap() {
+        // Анимация нажатия кнопки
+        guard let button = dealButton else { return }
+        
+        // Эффект нажатия
+        let scaleDown = SKAction.scale(to: 0.95, duration: 0.1)
+        let scaleUp = SKAction.scale(to: 1.0, duration: 0.1)
+        let pulse = SKAction.sequence([scaleDown, scaleUp])
+        
+        button.run(pulse) {
+            // Здесь будет логика раздачи карт
+            print("Раздача карт...")
+            // TODO: Добавить логику раздачи карт игрокам
         }
     }
 }
