@@ -17,6 +17,15 @@ class PlayerNode: SKNode {
     private var nameLabel: SKLabelNode!
     private var backgroundCircle: SKShapeNode!
     
+    // Карты игрока
+    var hand: CardHandNode!
+    private var trickCountLabel: SKLabelNode!
+    private var bidLabel: SKLabelNode!
+    
+    // Ставка и взятки
+    private(set) var bid: Int = 0
+    private(set) var tricksTaken: Int = 0
+    
     init(playerNumber: Int, avatar: String, position: CGPoint, angle: CGFloat, totalPlayers: Int) {
         self.playerNumber = playerNumber
         self.avatar = avatar
@@ -28,6 +37,7 @@ class PlayerNode: SKNode {
         self.zPosition = 10
         
         setupVisuals(angle: angle)
+        setupCardHand(angle: angle)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -98,5 +108,140 @@ class PlayerNode: SKNode {
         shadow.position = CGPoint(x: 2, y: -2)
         shadow.zPosition = -1
         addChild(shadow)
+        
+        // Счётчик взяток
+        trickCountLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        trickCountLabel.fontSize = 24
+        trickCountLabel.fontColor = .white
+        trickCountLabel.horizontalAlignmentMode = .center
+        trickCountLabel.verticalAlignmentMode = .center
+        trickCountLabel.position = CGPoint(x: 0, y: -150)
+        trickCountLabel.zPosition = 3
+        trickCountLabel.text = "0/0"
+        addChild(trickCountLabel)
+        
+        // Индикатор ставки
+        bidLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        bidLabel.fontSize = 20
+        bidLabel.fontColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        bidLabel.horizontalAlignmentMode = .center
+        bidLabel.verticalAlignmentMode = .center
+        bidLabel.position = CGPoint(x: 0, y: -120)
+        bidLabel.zPosition = 3
+        bidLabel.text = ""
+        bidLabel.isHidden = true
+        addChild(bidLabel)
+    }
+    
+    private func setupCardHand(angle: CGFloat) {
+        hand = CardHandNode()
+        
+        // Специальная обработка для Игрока 1 (внизу экрана)
+        if playerNumber == 1 {
+            // Карты располагаются горизонтально над игроком
+            hand.handPosition = CGPoint(x: 0, y: 200)  // Подняли выше
+            hand.arcAngle = 0.4
+            hand.cardSpacing = 168  // Уменьшено на 20% (было 210)
+            hand.isVertical = false  // Горизонтальное расположение
+        } else if playerNumber == 3 && totalPlayers == 4 {
+            // Для Игрока 3 (сверху) - карты под ним, на том же расстоянии что и у Игрока 1
+            hand.handPosition = CGPoint(x: 0, y: -200)  // Под игроком (отрицательное значение)
+            hand.arcAngle = 0.4
+            hand.cardSpacing = 168  // Уменьшено на 20% (было 210)
+            hand.isVertical = false  // Горизонтальное расположение
+        } else {
+            // Позиция руки относительно игрока для остальных игроков
+            let handDistance: CGFloat = 150
+            let handX = handDistance * cos(angle)
+            let handY = handDistance * sin(angle)
+            
+            hand.handPosition = CGPoint(x: handX, y: handY)
+            hand.arcAngle = 0.4
+            hand.cardSpacing = 168  // Уменьшено на 20% (было 210)
+            
+            // Определяем, должна ли рука быть вертикальной
+            let normalizedAngle = angle.truncatingRemainder(dividingBy: 2 * .pi)
+            hand.isVertical = (normalizedAngle >= .pi/4 && normalizedAngle < 3 * .pi/4) ||
+                              (normalizedAngle >= -3 * .pi/4 && normalizedAngle < -.pi/4)
+        }
+        
+        addChild(hand)
+    }
+    
+    // MARK: - Public Methods
+    
+    /// Установить ставку игрока
+    func setBid(_ bid: Int, animated: Bool = true) {
+        self.bid = bid
+        updateBidDisplay(animated: animated)
+    }
+    
+    /// Увеличить счётчик взяток
+    func incrementTricks() {
+        tricksTaken += 1
+        updateTrickDisplay()
+    }
+    
+    /// Сбросить счётчики для новой раздачи
+    func resetForNewRound() {
+        bid = 0
+        tricksTaken = 0
+        updateBidDisplay(animated: false)
+        updateTrickDisplay()
+    }
+    
+    /// Обновить отображение ставки
+    private func updateBidDisplay(animated: Bool) {
+        bidLabel.text = "Ставка: \(bid)"
+        bidLabel.isHidden = false
+        
+        if animated {
+            bidLabel.alpha = 0
+            bidLabel.setScale(0.5)
+            
+            let fadeIn = SKAction.fadeIn(withDuration: 0.3)
+            let scale = SKAction.scale(to: 1.0, duration: 0.3)
+            bidLabel.run(SKAction.group([fadeIn, scale]))
+        }
+    }
+    
+    /// Обновить отображение взяток
+    private func updateTrickDisplay() {
+        trickCountLabel.text = "\(tricksTaken)/\(bid)"
+        
+        // Изменить цвет в зависимости от выполнения ставки
+        if tricksTaken > bid {
+            trickCountLabel.fontColor = SKColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 1.0)  // Оранжевый
+        } else if tricksTaken == bid {
+            trickCountLabel.fontColor = SKColor(red: 0.2, green: 0.8, blue: 0.2, alpha: 1.0)  // Зелёный
+        } else {
+            trickCountLabel.fontColor = .white
+        }
+        
+        // Анимация изменения
+        let scale = SKAction.sequence([
+            SKAction.scale(to: 1.3, duration: 0.1),
+            SKAction.scale(to: 1.0, duration: 0.1)
+        ])
+        trickCountLabel.run(scale)
+    }
+    
+    /// Подсветить игрока (когда его ход)
+    func highlight(_ enabled: Bool) {
+        if enabled {
+            backgroundCircle.strokeColor = SKColor(red: 0.2, green: 0.8, blue: 0.2, alpha: 1.0)
+            backgroundCircle.lineWidth = 5
+            
+            let pulse = SKAction.sequence([
+                SKAction.scale(to: 1.1, duration: 0.5),
+                SKAction.scale(to: 1.0, duration: 0.5)
+            ])
+            backgroundCircle.run(SKAction.repeatForever(pulse), withKey: "highlight")
+        } else {
+            backgroundCircle.removeAction(forKey: "highlight")
+            backgroundCircle.strokeColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+            backgroundCircle.lineWidth = 3
+            backgroundCircle.setScale(1.0)
+        }
     }
 }

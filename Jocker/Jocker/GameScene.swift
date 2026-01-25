@@ -21,6 +21,12 @@ class GameScene: SKScene {
     private var tableWidth: CGFloat = 0
     private var tableHeight: CGFloat = 0
     
+    // Игровые компоненты
+    private var deck: Deck!
+    private var trickNode: TrickNode!
+    private var trumpIndicator: TrumpIndicator!
+    private var currentTrump: Suit?
+    
     override func didMove(to view: SKView) {
         // Устанавливаем фон сцены - темно-синий
         self.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
@@ -33,6 +39,9 @@ class GameScene: SKScene {
         
         // Создаём кнопку "Раздать карты"
         setupDealButton()
+        
+        // Инициализируем игровые компоненты
+        setupGameComponents()
     }
     
     private func setupPokerTable() {
@@ -248,10 +257,91 @@ class GameScene: SKScene {
         let scaleUp = SKAction.scale(to: 1.0, duration: 0.1)
         let pulse = SKAction.sequence([scaleDown, scaleUp])
         
-        button.run(pulse) {
-            // Здесь будет логика раздачи карт
-            print("Раздача карт...")
-            // TODO: Добавить логику раздачи карт игрокам
+        button.run(pulse) { [weak self] in
+            self?.dealCards()
+        }
+    }
+    
+    // MARK: - Игровые компоненты
+    
+    private func setupGameComponents() {
+        // Колода
+        deck = Deck()
+        
+        // Узел для текущей взятки
+        trickNode = TrickNode()
+        trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        trickNode.zPosition = 50
+        addChild(trickNode)
+        
+        // Индикатор козыря
+        trumpIndicator = TrumpIndicator()
+        trumpIndicator.position = CGPoint(x: self.size.width - 90, y: self.size.height / 2)
+        trumpIndicator.zPosition = 100
+        addChild(trumpIndicator)
+    }
+    
+    private func dealCards() {
+        print("Раздача карт...")
+        
+        // Сбрасываем колоду и перемешиваем
+        deck.reset()
+        deck.shuffle()
+        
+        // Очищаем руки игроков
+        for player in players {
+            player.hand.removeAllCards(animated: true)
+            player.resetForNewRound()
+        }
+        
+        // Очищаем взятку
+        trickNode.clearTrick(toPosition: CGPoint(x: self.size.width / 2, y: self.size.height / 2), animated: false)
+        
+        // Раздаём по 3 карты каждому игроку (для примера)
+        let cardsPerPlayer = 3
+        let dealResult = deck.dealCards(playerCount: playerCount, cardsPerPlayer: cardsPerPlayer)
+        
+        // Раздаём карты игрокам с анимацией
+        for (index, player) in players.enumerated() {
+            let cards = dealResult.hands[index]
+            
+            // Задержка для последовательной раздачи
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.3) {
+                player.hand.addCards(cards, animated: true)
+                
+                // Сортируем карты через 1 секунду после раздачи
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    player.hand.sortCardsStandard(animated: true)
+                }
+            }
+        }
+        
+        // Показываем козырь
+        if let trumpCard = dealResult.trump {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 0.5) { [weak self] in
+                self?.trumpIndicator.setTrumpCard(trumpCard, animated: true)
+                
+                // Устанавливаем козырь (если это не джокер)
+                if !trumpCard.isJoker, let suit = trumpCard.suit {
+                    self?.currentTrump = suit
+                } else {
+                    self?.currentTrump = nil
+                }
+            }
+        }
+        
+        // Демонстрация: устанавливаем ставки для игроков
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 2.0) { [weak self] in
+            guard let self = self else { return }
+            for (index, player) in self.players.enumerated() {
+                let bid = (index % cardsPerPlayer) + 1  // Случайные ставки для демонстрации
+                player.setBid(bid, animated: true)
+            }
+        }
+        
+        // Демонстрация: выделяем первого игрока
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 3.0) { [weak self] in
+            self?.players.first?.highlight(true)
         }
     }
 }

@@ -20,6 +20,14 @@
 		7E4AC96C2F268D860037CA75 /* JockerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */; };
 		7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */; };
 		7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97B2F268F000037CA75 /* PlayerNode.swift */; };
+		7E4AC97C2F269A000037CA75 /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97D2F269A000037CA75 /* Card.swift */; };
+		7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97F2F269A100037CA75 /* Deck.swift */; };
+		7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9812F269A200037CA75 /* CardNode.swift */; };
+		7E4AC9822F269A300037CA75 /* CardHandNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9832F269A300037CA75 /* CardHandNode.swift */; };
+		7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */; };
+		7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9872F269A500037CA75 /* TrickNode.swift */; };
+		7E4AC9882F269A600037CA75 /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9892F269A600037CA75 /* GameState.swift */; };
+		7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +64,14 @@
 		7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewController.swift; sourceTree = "<group>"; };
 		7E4AC97B2F268F000037CA75 /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
+		7E4AC97D2F269A000037CA75 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
+		7E4AC97F2F269A100037CA75 /* Deck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deck.swift; sourceTree = "<group>"; };
+		7E4AC9812F269A200037CA75 /* CardNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardNode.swift; sourceTree = "<group>"; };
+		7E4AC9832F269A300037CA75 /* CardHandNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHandNode.swift; sourceTree = "<group>"; };
+		7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpIndicator.swift; sourceTree = "<group>"; };
+		7E4AC9872F269A500037CA75 /* TrickNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickNode.swift; sourceTree = "<group>"; };
+		7E4AC9892F269A600037CA75 /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
+		7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDemoScene.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,9 +126,17 @@
 				7E4AC9472F268D820037CA75 /* GameScene.sks */,
 				7E4AC9492F268D820037CA75 /* Actions.sks */,
 				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
+				7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */,
 				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
 				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
 				7E4AC97B2F268F000037CA75 /* PlayerNode.swift */,
+				7E4AC97D2F269A000037CA75 /* Card.swift */,
+				7E4AC97F2F269A100037CA75 /* Deck.swift */,
+				7E4AC9812F269A200037CA75 /* CardNode.swift */,
+				7E4AC9832F269A300037CA75 /* CardHandNode.swift */,
+				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
+				7E4AC9872F269A500037CA75 /* TrickNode.swift */,
+				7E4AC9892F269A600037CA75 /* GameState.swift */,
 				7E4AC94F2F268D820037CA75 /* Main.storyboard */,
 				7E4AC9522F268D850037CA75 /* Assets.xcassets */,
 				7E4AC9542F268D850037CA75 /* LaunchScreen.storyboard */,
@@ -274,6 +298,14 @@
 				7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
 				7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */,
 				7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
+				7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
+				7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
+				7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */,
+				7E4AC9822F269A300037CA75 /* CardHandNode.swift in Sources */,
+				7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */,
+				7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */,
+				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
+				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
