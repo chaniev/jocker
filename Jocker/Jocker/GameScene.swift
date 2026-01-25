@@ -325,7 +325,9 @@ class GameScene: SKScene {
         
         // Индикатор козыря
         trumpIndicator = TrumpIndicator()
-        trumpIndicator.position = CGPoint(x: self.size.width - 90, y: self.size.height / 2)
+        // Позиционируем в правом нижнем углу с отступом, чтобы карта полностью помещалась
+        // Высота индикатора ~180, ширина ~140, добавляем небольшой отступ от краев
+        trumpIndicator.position = CGPoint(x: self.size.width - 90, y: 120)
         trumpIndicator.zPosition = 100
         addChild(trumpIndicator)
     }
@@ -370,8 +372,9 @@ class GameScene: SKScene {
             }
         }
         
-        // Показываем козырь
+        // Показываем козырь (если есть)
         if let trumpCard = dealResult.trump {
+            // Есть козырная карта
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 0.5) { [weak self] in
                 self?.trumpIndicator.setTrumpCard(trumpCard, animated: true)
                 
@@ -381,6 +384,12 @@ class GameScene: SKScene {
                 } else {
                     self?.currentTrump = nil
                 }
+            }
+        } else {
+            // Нет козырной карты (все карты розданы)
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 0.5) { [weak self] in
+                self?.trumpIndicator.setTrumpCard(nil, animated: true)
+                self?.currentTrump = nil
             }
         }
         

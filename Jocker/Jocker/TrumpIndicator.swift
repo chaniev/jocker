@@ -73,7 +73,7 @@ class TrumpIndicator: SKNode {
         
         guard let card = card else {
             // Нет козыря
-            labelNode?.text = "Без козыря"
+            labelNode?.text = "Козырь выбирает игрок"
             return
         }
         
@@ -96,12 +96,8 @@ class TrumpIndicator: SKNode {
         
         self.cardNode = newCardNode
         
-        // Обновляем текст
-        if card.isJoker {
-            labelNode?.text = "Без козыря"
-        } else {
-            labelNode?.text = "Козырь"
-        }
+        // Обновляем текст - всегда "Козырь" когда есть карта (включая джокера)
+        labelNode?.text = "Козырь"
     }
     
     /// Скрыть индикатор

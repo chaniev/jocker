@@ -112,8 +112,16 @@ class Deck {
             }
         }
         
-        // Верхняя карта становится козырем
-        let trumpCard = peekTopCard()
+        // Верхняя карта становится козырем только если остались карты в колоде
+        // Если все карты розданы, козыря нет
+        let trumpCard: Card?
+        if cards.isEmpty {
+            // Все карты розданы - козыря нет
+            trumpCard = nil
+        } else {
+            // Остались карты - верхняя карта становится козырем
+            trumpCard = peekTopCard()
+        }
         
         return (hands, trumpCard)
     }
