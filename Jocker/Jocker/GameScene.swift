@@ -13,6 +13,11 @@ class GameScene: SKScene {
     var playerCount: Int = 4
     private var pokerTable: SKShapeNode?
     private var tableInner: SKShapeNode?
+    private var players: [PlayerNode] = []
+    
+    // Размеры стола (для расчёта позиций игроков)
+    private var tableWidth: CGFloat = 0
+    private var tableHeight: CGFloat = 0
     
     override func didMove(to view: SKView) {
         // Устанавливаем фон сцены - темно-синий
@@ -21,14 +26,14 @@ class GameScene: SKScene {
         // Создаём овальный зелёный стол
         setupPokerTable()
         
-        // Отображаем количество игроков (для проверки)
-        showPlayerCount()
+        // Размещаем игроков вокруг стола
+        setupPlayers()
     }
     
     private func setupPokerTable() {
-        // Размеры овального стола для горизонтальной ориентации
-        let tableWidth = self.size.width * 0.75
-        let tableHeight = self.size.height * 0.85
+        // Размеры овального стола для горизонтальной ориентации (уменьшены для размещения имён)
+        tableWidth = self.size.width * 0.70
+        tableHeight = self.size.height * 0.70
         let outerTableSize = CGSize(width: tableWidth, height: tableHeight)
         let innerTableSize = CGSize(width: tableWidth * 0.92, height: tableHeight * 0.92)
         
@@ -116,5 +121,40 @@ class GameScene: SKScene {
         label.position = CGPoint(x: self.size.width / 2, y: self.size.height - 50)
         label.zPosition = 100
         self.addChild(label)
+    }
+    
+    // MARK: - Настройка игроков
+    
+    private func setupPlayers() {
+        let center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        
+        // Радиусы овала для позиционирования игроков (снаружи стола)
+        let radiusX = tableWidth / 2 + 80
+        let radiusY = tableHeight / 2 + 80
+        
+        // Аватары для игроков (эмодзи людей)
+        let avatars = ["👨‍💼", "👩‍💼", "🧔", "👨‍🦰", "👩‍🦱"]
+        
+        for i in 0..<playerCount {
+            // Расчёт угла для равномерного распределения
+            // Начинаем с нижней части стола и идём по часовой стрелке
+            let angle = -CGFloat(i) * (2.0 * .pi / CGFloat(playerCount)) - (.pi / 2)
+            
+            // Вычисляем позицию на овале
+            let x = center.x + radiusX * cos(angle)
+            let y = center.y + radiusY * sin(angle)
+            
+            // Создаём игрока
+            let playerNode = PlayerNode(
+                playerNumber: i + 1,
+                avatar: avatars[i % avatars.count],
+                position: CGPoint(x: x, y: y),
+                angle: angle,
+                totalPlayers: playerCount
+            )
+            
+            players.append(playerNode)
+            self.addChild(playerNode)
+        }
     }
 }
