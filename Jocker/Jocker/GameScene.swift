@@ -17,6 +17,9 @@ class GameScene: SKScene {
     private var dealButton: SKShapeNode?
     private var dealButtonLabel: SKLabelNode?
     
+    // UI элементы для отображения состояния игры
+    private var gameInfoLabel: SKLabelNode?
+    
     // Размеры стола (для расчёта позиций игроков)
     private var tableWidth: CGFloat = 0
     private var tableHeight: CGFloat = 0
@@ -26,6 +29,7 @@ class GameScene: SKScene {
     private var trickNode: TrickNode!
     private var trumpIndicator: TrumpIndicator!
     private var currentTrump: Suit?
+    private var gameState: GameState!
     
     override func didMove(to view: SKView) {
         // Устанавливаем фон сцены - темно-синий
@@ -39,6 +43,9 @@ class GameScene: SKScene {
         
         // Создаём кнопку "Раздать карты"
         setupDealButton()
+        
+        // Создаём индикатор состояния игры
+        setupGameInfoLabel()
         
         // Инициализируем игровые компоненты
         setupGameComponents()
@@ -181,6 +188,44 @@ class GameScene: SKScene {
     
     // MARK: - Кнопка "Раздать карты"
     
+    private func setupGameInfoLabel() {
+        // Создаём лейбл для отображения информации об игре
+        let infoLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        infoLabel.text = "Ожидание раздачи"
+        infoLabel.fontSize = 24
+        infoLabel.fontColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        infoLabel.horizontalAlignmentMode = .center
+        infoLabel.verticalAlignmentMode = .center
+        infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - 50)
+        infoLabel.zPosition = 100
+        
+        self.gameInfoLabel = infoLabel
+        self.addChild(infoLabel)
+    }
+    
+    private func updateGameInfoLabel() {
+        guard let label = gameInfoLabel else { return }
+        
+        let blockName: String
+        switch gameState.currentBlock {
+        case .first:
+            blockName = "Блок 1 (1-8 карт)"
+        case .second:
+            blockName = "Блок 2 (9 карт)"
+        case .third:
+            blockName = "Блок 3 (8-1 карт)"
+        case .fourth:
+            blockName = "Блок 4 (9 карт)"
+        }
+        
+        let roundInfo = "Раунд \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)"
+        let cardsInfo = "Карт: \(gameState.currentCardsPerPlayer)"
+        
+        label.text = "\(blockName) | \(roundInfo) | \(cardsInfo)"
+    }
+    
+    // MARK: - Кнопка "Раздать карты"
+    
     private func setupDealButton() {
         // Размеры кнопки (увеличены в 2 раза)
         let buttonWidth: CGFloat = 360
@@ -268,6 +313,10 @@ class GameScene: SKScene {
         // Колода
         deck = Deck()
         
+        // Игровое состояние
+        gameState = GameState(playerCount: playerCount)
+        gameState.startGame()
+        
         // Узел для текущей взятки
         trickNode = TrickNode()
         trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
@@ -283,6 +332,11 @@ class GameScene: SKScene {
     
     private func dealCards() {
         print("Раздача карт...")
+        print("Блок: \(gameState.currentBlock.rawValue), Раунд: \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)")
+        print("Карт на игрока: \(gameState.currentCardsPerPlayer)")
+        
+        // Обновляем информацию об игре
+        updateGameInfoLabel()
         
         // Сбрасываем колоду и перемешиваем
         deck.reset()
@@ -297,8 +351,8 @@ class GameScene: SKScene {
         // Очищаем взятку
         trickNode.clearTrick(toPosition: CGPoint(x: self.size.width / 2, y: self.size.height / 2), animated: false)
         
-        // Раздаём по 3 карты каждому игроку (для примера)
-        let cardsPerPlayer = 3
+        // Получаем количество карт из состояния игры
+        let cardsPerPlayer = gameState.currentCardsPerPlayer
         let dealResult = deck.dealCards(playerCount: playerCount, cardsPerPlayer: cardsPerPlayer)
         
         // Раздаём карты игрокам с анимацией
@@ -334,7 +388,7 @@ class GameScene: SKScene {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 2.0) { [weak self] in
             guard let self = self else { return }
             for (index, player) in self.players.enumerated() {
-                let bid = (index % cardsPerPlayer) + 1  // Случайные ставки для демонстрации
+                let bid = (index % max(1, cardsPerPlayer)) + 1  // Случайные ставки для демонстрации
                 player.setBid(bid, animated: true)
             }
         }
@@ -343,5 +397,25 @@ class GameScene: SKScene {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 3.0) { [weak self] in
             self?.players.first?.highlight(true)
         }
+        
+        // Подготавливаем следующий раунд для следующей раздачи
+        // Проверяем, не закончились ли раунды в текущем блоке
+        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
+            print("Блок \(gameState.currentBlock.rawValue) завершен!")
+            
+            // Переходим к следующему блоку
+            let currentBlockNumber = gameState.currentBlock.rawValue
+            if currentBlockNumber < 4 {
+                // Вызываем метод перехода к следующему блоку
+                // Это будет сделано в startNewRound, но мы должны сбросить currentRoundInBlock
+                print("Переход к блоку \(currentBlockNumber + 1)")
+            } else {
+                print("Игра завершена!")
+                return
+            }
+        }
+        
+        // Переходим к следующему раунду
+        gameState.startNewRound()
     }
 }

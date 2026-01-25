@@ -132,12 +132,18 @@ class GameState {
     /// Рассчитать количество раундов в текущем блоке
     private func calculateRoundsInBlock() {
         switch currentBlock {
-        case .first, .third:
-            // 36/N - 1 раздач
-            totalRoundsInBlock = (36 / playerCount) - 1
-        case .second, .fourth:
-            // N раздач (по количеству игроков)
-            totalRoundsInBlock = playerCount
+        case .first:
+            // Блок 1: 8 раздач (1, 2, 3, 4, 5, 6, 7, 8 карт)
+            totalRoundsInBlock = (36 / playerCount) - 1  // 8 для 4 игроков
+        case .second:
+            // Блок 2: 4 раздачи по 9 карт
+            totalRoundsInBlock = playerCount  // 4 для 4 игроков
+        case .third:
+            // Блок 3: 8 раздач (8, 7, 6, 5, 4, 3, 2, 1 карта)
+            totalRoundsInBlock = (36 / playerCount) - 1  // 8 для 4 игроков
+        case .fourth:
+            // Блок 4: 4 раздачи по 9 карт
+            totalRoundsInBlock = playerCount  // 4 для 4 игроков
         }
     }
     
@@ -146,6 +152,15 @@ class GameState {
         // Сброс данных игроков
         for player in players {
             player.resetForNewRound()
+        }
+        
+        // Увеличиваем счетчик раундов
+        currentRoundInBlock += 1
+        
+        // Проверяем, закончился ли текущий блок
+        if currentRoundInBlock >= totalRoundsInBlock {
+            // Переходим к следующему блоку
+            moveToNextBlock()
         }
         
         // Обновляем дилера (следующий по кругу)
@@ -157,26 +172,31 @@ class GameState {
         // Обновляем количество карт в зависимости от блока
         updateCardsPerPlayer()
         
-        currentRoundInBlock += 1
         phase = .bidding
     }
     
     /// Обновить количество карт на игрока
+    /// 
+    /// Для 4 игроков последовательность раздач:
+    /// Блок 1 (8 раздач): 1, 2, 3, 4, 5, 6, 7, 8 карт
+    /// Блок 2 (4 раздачи): 9, 9, 9, 9 карт
+    /// Блок 3 (8 раздач): 8, 7, 6, 5, 4, 3, 2, 1 карта
+    /// Блок 4 (4 раздачи): 9, 9, 9, 9 карт
     private func updateCardsPerPlayer() {
         switch currentBlock {
         case .first:
-            // Возрастающее: 1, 2, 3, ...
+            // Возрастающее: 1, 2, 3, ..., 8
             currentCardsPerPlayer = currentRoundInBlock + 1
         case .second:
-            // Фиксированное: равно количеству игроков
-            currentCardsPerPlayer = playerCount
+            // Фиксированное: 9 карт для всех раздач
+            currentCardsPerPlayer = 9
         case .third:
-            // Убывающее: начинаем с максимума
-            let maxCards = (36 / playerCount) - 1
-            currentCardsPerPlayer = maxCards - currentRoundInBlock + 1
+            // Убывающее: 8, 7, 6, 5, 4, 3, 2, 1
+            let maxCards = (36 / playerCount) - 1  // 8 для 4 игроков
+            currentCardsPerPlayer = maxCards - currentRoundInBlock
         case .fourth:
-            // Фиксированное: равно количеству игроков
-            currentCardsPerPlayer = playerCount
+            // Фиксированное: 9 карт для всех раздач
+            currentCardsPerPlayer = 9
         }
     }
     
