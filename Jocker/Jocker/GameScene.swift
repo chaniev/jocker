@@ -10,6 +10,7 @@ import GameplayKit
 
 class GameScene: SKScene {
     
+    var playerCount: Int = 4
     private var pokerTable: SKShapeNode?
     private var tableInner: SKShapeNode?
     
@@ -19,6 +20,9 @@ class GameScene: SKScene {
         
         // Создаём овальный зелёный стол
         setupPokerTable()
+        
+        // Отображаем количество игроков (для проверки)
+        showPlayerCount()
     }
     
     private func setupPokerTable() {
@@ -101,5 +105,16 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
+    }
+    
+    private func showPlayerCount() {
+        // Добавляем текст с количеством игроков для проверки
+        let label = SKLabelNode(fontNamed: "Helvetica-Bold")
+        label.text = "Игроков: \(playerCount)"
+        label.fontSize = 24
+        label.fontColor = .white
+        label.position = CGPoint(x: self.size.width / 2, y: self.size.height - 50)
+        label.zPosition = 100
+        self.addChild(label)
     }
 }

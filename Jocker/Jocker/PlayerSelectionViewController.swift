@@ -1,0 +1,177 @@
+//
+//  PlayerSelectionViewController.swift
+//  Jocker
+//
+//  Created by Чаниев Мурад on 25.01.2026.
+//
+
+import UIKit
+
+class PlayerSelectionViewController: UIViewController {
+    
+    private var selectedPlayerCount: Int = 4
+    
+    // UI элементы
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Выберите количество игроков"
+        label.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        label.textColor = .white
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let threePlayersButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("3 игрока", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 28, weight: .semibold)
+        button.backgroundColor = UIColor(red: 0.13, green: 0.55, blue: 0.13, alpha: 1.0)
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 15
+        button.layer.borderWidth = 3
+        button.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0).cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tag = 3
+        return button
+    }()
+    
+    private let fourPlayersButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("4 игрока", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 28, weight: .semibold)
+        button.backgroundColor = UIColor(red: 0.13, green: 0.55, blue: 0.13, alpha: 0.7)
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 15
+        button.layer.borderWidth = 2
+        button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.tag = 4
+        return button
+    }()
+    
+    private let startButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Начать игру", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        button.backgroundColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 15
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowOffset = CGSize(width: 0, height: 4)
+        button.layer.shadowRadius = 8
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // Устанавливаем фон как у игрового стола
+        view.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
+        
+        setupUI()
+        updateButtonStates()
+    }
+    
+    private func setupUI() {
+        // Добавляем элементы на view
+        view.addSubview(titleLabel)
+        view.addSubview(threePlayersButton)
+        view.addSubview(fourPlayersButton)
+        view.addSubview(startButton)
+        
+        // Добавляем действия на кнопки
+        threePlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
+        fourPlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
+        startButton.addTarget(self, action: #selector(startGameTapped), for: .touchUpInside)
+        
+        // Настраиваем constraints
+        NSLayoutConstraint.activate([
+            // Title Label
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            
+            // 3 Players Button
+            threePlayersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            threePlayersButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -60),
+            threePlayersButton.widthAnchor.constraint(equalToConstant: 300),
+            threePlayersButton.heightAnchor.constraint(equalToConstant: 80),
+            
+            // 4 Players Button
+            fourPlayersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            fourPlayersButton.topAnchor.constraint(equalTo: threePlayersButton.bottomAnchor, constant: 30),
+            fourPlayersButton.widthAnchor.constraint(equalToConstant: 300),
+            fourPlayersButton.heightAnchor.constraint(equalToConstant: 80),
+            
+            // Start Button
+            startButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -60),
+            startButton.widthAnchor.constraint(equalToConstant: 350),
+            startButton.heightAnchor.constraint(equalToConstant: 70)
+        ])
+    }
+    
+    @objc private func playerCountButtonTapped(_ sender: UIButton) {
+        selectedPlayerCount = sender.tag
+        updateButtonStates()
+        
+        // Добавляем анимацию нажатия
+        UIView.animate(withDuration: 0.1, animations: {
+            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                sender.transform = .identity
+            }
+        }
+    }
+    
+    private func updateButtonStates() {
+        // Обновляем внешний вид кнопок в зависимости от выбора
+        let buttons = [threePlayersButton, fourPlayersButton]
+        
+        for button in buttons {
+            if button.tag == selectedPlayerCount {
+                button.backgroundColor = UIColor(red: 0.13, green: 0.55, blue: 0.13, alpha: 1.0)
+                button.layer.borderWidth = 3
+                button.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0).cgColor
+                button.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+            } else {
+                button.backgroundColor = UIColor(red: 0.13, green: 0.55, blue: 0.13, alpha: 0.7)
+                button.layer.borderWidth = 2
+                button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
+                button.transform = .identity
+            }
+        }
+    }
+    
+    @objc private func startGameTapped() {
+        // Анимация нажатия
+        UIView.animate(withDuration: 0.1, animations: {
+            self.startButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }) { _ in
+            UIView.animate(withDuration: 0.1) {
+                self.startButton.transform = .identity
+            }
+        }
+        
+        // Переход к игровому экрану
+        let gameVC = GameViewController()
+        gameVC.playerCount = selectedPlayerCount
+        gameVC.modalPresentationStyle = .fullScreen
+        gameVC.modalTransitionStyle = .crossDissolve
+        
+        present(gameVC, animated: true, completion: nil)
+    }
+    
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
+    }
+    
+    override var prefersStatusBarHidden: Bool {
+        return true
+    }
+}

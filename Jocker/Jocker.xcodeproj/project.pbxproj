@@ -18,6 +18,7 @@
 		7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC95F2F268D860037CA75 /* JockerTests.swift */; };
 		7E4AC96A2F268D860037CA75 /* JockerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9692F268D860037CA75 /* JockerUITests.swift */; };
 		7E4AC96C2F268D860037CA75 /* JockerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */; };
+		7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 		7E4AC9652F268D860037CA75 /* JockerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JockerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E4AC9692F268D860037CA75 /* JockerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITests.swift; sourceTree = "<group>"; };
 		7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +109,7 @@
 				7E4AC9492F268D820037CA75 /* Actions.sks */,
 				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
 				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
+				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
 				7E4AC94F2F268D820037CA75 /* Main.storyboard */,
 				7E4AC9522F268D850037CA75 /* Assets.xcassets */,
 				7E4AC9542F268D850037CA75 /* LaunchScreen.storyboard */,
@@ -266,6 +269,7 @@
 			files = (
 				7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
 				7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
+				7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
