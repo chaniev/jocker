@@ -136,6 +136,9 @@ class PlayerNode: SKNode {
     private func setupCardHand(angle: CGFloat) {
         hand = CardHandNode()
         
+        // Только игрок 1 видит свои карты лицом, остальные показываются рубашкой
+        hand.isFaceUp = (playerNumber == 1)
+        
         // Специальная обработка для Игрока 1 (внизу экрана)
         if playerNumber == 1 {
             // Карты располагаются горизонтально над игроком
