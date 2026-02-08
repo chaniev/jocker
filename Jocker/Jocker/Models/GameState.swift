@@ -7,81 +7,6 @@
 
 import Foundation
 
-/// Состояние игры
-enum GamePhase {
-    case notStarted      // Игра не начата
-    case bidding         // Фаза ставок
-    case playing         // Фаза игры (разыгрывание карт)
-    case roundEnd        // Конец раунда
-    case gameEnd         // Конец игры
-}
-
-/// Блок игры (всего 4 блока)
-enum GameBlock: Int {
-    case first = 1       // 1-й блок: возрастающее количество карт
-    case second = 2      // 2-й блок: фиксированное количество карт (равное числу игроков)
-    case third = 3       // 3-й блок: убывающее количество карт
-    case fourth = 4      // 4-й блок: фиксированное количество карт (равное числу игроков)
-}
-
-/// Информация об игроке
-class PlayerInfo {
-    let playerNumber: Int
-    var name: String
-    var score: Int = 0
-    var currentBid: Int = 0
-    var tricksTaken: Int = 0
-    
-    init(playerNumber: Int, name: String) {
-        self.playerNumber = playerNumber
-        self.name = name
-    }
-    
-    /// Рассчитать очки за раунд
-    func calculateRoundScore(cardsInRound: Int) -> Int {
-        let bid = currentBid
-        let taken = tricksTaken
-        
-        // Игрок взял столько, сколько объявил
-        if taken == bid {
-            // Взял все карты (объявил максимум)
-            if bid == cardsInRound {
-                return bid * 100
-            }
-            // Обычное выполнение ставки
-            return bid * 50 + 50
-        }
-        
-        // Игрок взял больше
-        if taken > bid {
-            return taken * 10
-        }
-        
-        // Игрок взял меньше
-        let deficit = bid - taken
-        
-        // Объявил все карты, но не взял ни одной
-        if bid == cardsInRound && taken == 0 {
-            return -bid * 100
-        }
-        
-        // Не добрал до ставки
-        return -deficit * 50 - 50
-    }
-    
-    /// Добавить очки за раунд
-    func addRoundScore(cardsInRound: Int) {
-        let roundScore = calculateRoundScore(cardsInRound: cardsInRound)
-        score += roundScore
-    }
-    
-    /// Сброс для нового раунда
-    func resetForNewRound() {
-        currentBid = 0
-        tricksTaken = 0
-    }
-}
-
 /// Менеджер состояния игры
 class GameState {
     
@@ -259,9 +184,15 @@ class GameState {
     func completeRound() {
         guard phase == .playing else { return }
         
-        // Подсчитываем очки
+        // Подсчитываем очки через единый ScoreCalculator
         for player in players {
-            player.addRoundScore(cardsInRound: currentCardsPerPlayer)
+            let roundScore = ScoreCalculator.calculateRoundScore(
+                cardsInRound: currentCardsPerPlayer,
+                bid: player.currentBid,
+                tricksTaken: player.tricksTaken,
+                isBlind: false
+            )
+            player.score += roundScore
         }
         
         phase = .roundEnd

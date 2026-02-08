@@ -8,7 +8,9 @@
 import Foundation
 
 /// Калькулятор очков — чистые статические функции для расчёта очков
-class ScoreCalculator {
+///
+/// Используется как namespace (caseless enum) — экземпляры не создаются
+enum ScoreCalculator {
     
     // MARK: - Расчёт очков за раунд
     

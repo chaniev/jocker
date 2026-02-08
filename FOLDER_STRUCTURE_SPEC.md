@@ -17,15 +17,19 @@ Jocker/Jocker/
 │   └── Nodes/
 │       ├── CardNode.swift
 │       ├── CardHandNode.swift
+│       ├── GameButton.swift
 │       ├── PlayerNode.swift
 │       ├── TrickNode.swift
 │       └── TrumpIndicator.swift
 ├── Models/
+│   ├── BlockResult.swift
 │   ├── Card.swift
 │   ├── Deck.swift
+│   ├── GameBlock.swift
+│   ├── GamePhase.swift
 │   ├── GameState.swift
-│   ├── RoundResult.swift
-│   └── BlockResult.swift
+│   ├── PlayerInfo.swift
+│   └── RoundResult.swift
 ├── Scoring/
 │   ├── ScoreCalculator.swift
 │   └── ScoreManager.swift
@@ -51,14 +55,18 @@ GameScene.swift -> Game/Scenes/GameScene.swift
 CardDemoScene.swift -> Game/Scenes/CardDemoScene.swift
 CardNode.swift -> Game/Nodes/CardNode.swift
 CardHandNode.swift -> Game/Nodes/CardHandNode.swift
+GameButton.swift -> Game/Nodes/GameButton.swift
 PlayerNode.swift -> Game/Nodes/PlayerNode.swift
 TrickNode.swift -> Game/Nodes/TrickNode.swift
 TrumpIndicator.swift -> Game/Nodes/TrumpIndicator.swift
+BlockResult.swift -> Models/BlockResult.swift
 Card.swift -> Models/Card.swift
 Deck.swift -> Models/Deck.swift
+GameBlock.swift -> Models/GameBlock.swift
+GamePhase.swift -> Models/GamePhase.swift
 GameState.swift -> Models/GameState.swift
+PlayerInfo.swift -> Models/PlayerInfo.swift
 RoundResult.swift -> Models/RoundResult.swift
-BlockResult.swift -> Models/BlockResult.swift
 ScoreCalculator.swift -> Scoring/ScoreCalculator.swift
 ScoreManager.swift -> Scoring/ScoreManager.swift
 GameViewController.swift -> ViewControllers/GameViewController.swift
