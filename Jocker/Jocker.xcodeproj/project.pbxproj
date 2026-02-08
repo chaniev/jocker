@@ -56,8 +56,8 @@
 /* Begin PBXFileReference section */
 		7E4AC9422F268D810037CA75 /* Jocker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Jocker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E4AC9452F268D810037CA75 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		7E4AC9472F268D820037CA75 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
-		7E4AC9492F268D820037CA75 /* Actions.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Actions.sks; sourceTree = "<group>"; };
+		7E4AC9472F268D820037CA75 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Resources/GameScene.sks; sourceTree = "<group>"; };
+		7E4AC9492F268D820037CA75 /* Actions.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Resources/Actions.sks; sourceTree = "<group>"; };
 		7E4AC94B2F268D820037CA75 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
 		7E4AC94D2F268D820037CA75 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		7E4AC9502F268D820037CA75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -139,13 +139,21 @@
 				AA1000032F2800020037CA75 /* Game */,
 				AA1000062F2800020037CA75 /* Scoring */,
 				AA1000072F2800020037CA75 /* ViewControllers */,
-				7E4AC9472F268D820037CA75 /* GameScene.sks */,
-				7E4AC9492F268D820037CA75 /* Actions.sks */,
+				AA1000082F2800030037CA75 /* Resources */,
 				7E4AC94F2F268D820037CA75 /* Main.storyboard */,
 				7E4AC9522F268D850037CA75 /* Assets.xcassets */,
 				7E4AC9542F268D850037CA75 /* LaunchScreen.storyboard */,
 			);
 			path = Jocker;
+			sourceTree = "<group>";
+		};
+		AA1000082F2800030037CA75 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC9492F268D820037CA75 /* Actions.sks */,
+				7E4AC9472F268D820037CA75 /* GameScene.sks */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		AA1000012F2800020037CA75 /* App */ = {

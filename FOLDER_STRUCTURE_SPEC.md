@@ -32,8 +32,9 @@ Jocker/Jocker/
 ├── ViewControllers/
 │   ├── GameViewController.swift
 │   └── PlayerSelectionViewController.swift
-├── Actions.sks
-├── GameScene.sks
+├── Resources/
+│   ├── Actions.sks
+│   └── GameScene.sks
 ├── Assets.xcassets/
 └── Base.lproj/
 ```
@@ -58,11 +59,13 @@ ScoreCalculator.swift -> Scoring/ScoreCalculator.swift
 ScoreManager.swift -> Scoring/ScoreManager.swift
 GameViewController.swift -> ViewControllers/GameViewController.swift
 PlayerSelectionViewController.swift -> ViewControllers/PlayerSelectionViewController.swift
+Actions.sks -> Resources/Actions.sks
+GameScene.sks -> Resources/GameScene.sks
 ```
 
 ## Xcode Project Updates
 
-- Added groups: App, Models, Game/Scenes, Game/Nodes, Scoring, ViewControllers.
+- Added groups: App, Models, Game/Scenes, Game/Nodes, Scoring, ViewControllers, Resources.
 - File references updated by group placement (relative paths).
 
 ## Unit Tests
@@ -72,7 +75,7 @@ PlayerSelectionViewController.swift -> ViewControllers/PlayerSelectionViewContro
 
 ## Notes
 
-- `Actions.sks` and `GameScene.sks` remain at `Jocker/Jocker/` (resource files).
+- `Actions.sks` and `GameScene.sks` are stored under `Jocker/Jocker/Resources`.
 - Assets and storyboards remain under `Assets.xcassets` and `Base.lproj`.
 
 ## Future Conventions
