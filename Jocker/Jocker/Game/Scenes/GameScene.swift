@@ -11,6 +11,7 @@ import GameplayKit
 class GameScene: SKScene {
     
     var playerCount: Int = 4
+    var onScoreButtonTapped: (() -> Void)?
     private var pokerTable: SKShapeNode?
     private var tableInner: SKShapeNode?
     private var players: [PlayerNode] = []
@@ -386,8 +387,8 @@ class GameScene: SKScene {
         let scaleUp = SKAction.scale(to: 1.0, duration: 0.1)
         let pulse = SKAction.sequence([scaleDown, scaleUp])
         
-        button.run(pulse) {
-            print("Открыть окно очков")
+        button.run(pulse) { [weak self] in
+            self?.onScoreButtonTapped?()
         }
     }
     

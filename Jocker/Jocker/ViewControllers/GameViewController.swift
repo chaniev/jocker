@@ -12,6 +12,7 @@ import GameplayKit
 class GameViewController: UIViewController {
     
     var playerCount: Int = 4
+    private var gameScene: GameScene?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,9 +31,20 @@ class GameViewController: UIViewController {
         let scene = GameScene(size: CGSize(width: 2556, height: 1179))
         scene.scaleMode = .aspectFill
         scene.playerCount = playerCount
+        scene.onScoreButtonTapped = { [weak self] in
+            self?.presentScoreTable()
+        }
+        self.gameScene = scene
         
         // Показываем сцену
         skView.presentScene(scene)
+    }
+
+    private func presentScoreTable() {
+        let scoreVC = ScoreTableViewController(playerCount: playerCount)
+        scoreVC.modalPresentationStyle = .fullScreen
+        scoreVC.modalTransitionStyle = .crossDissolve
+        present(scoreVC, animated: true, completion: nil)
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
