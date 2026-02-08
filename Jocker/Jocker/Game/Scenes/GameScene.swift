@@ -33,6 +33,8 @@ class GameScene: SKScene {
     private var trumpIndicator: TrumpIndicator!
     private var currentTrump: Suit?
     private var gameState: GameState!
+    private(set) var scoreManager: ScoreManager?
+    private var hasDealtAtLeastOnce = false
     
     override func didMove(to view: SKView) {
         // Устанавливаем фон сцены - темно-синий
@@ -141,6 +143,11 @@ class GameScene: SKScene {
             // Проверяем, нажата ли кнопка "Раздать карты"
             if let button = dealButton, button.contains(location) {
                 handleDealButtonTap()
+                return
+            }
+            
+            if let playerIndex = playerIndex(at: location) {
+                registerTrickWin(for: playerIndex)
                 return
             }
             
@@ -402,6 +409,9 @@ class GameScene: SKScene {
         gameState = GameState(playerCount: playerCount)
         gameState.startGame()
         
+        // Менеджер очков
+        scoreManager = ScoreManager(gameState: gameState)
+        
         // Узел для текущей взятки
         trickNode = TrickNode()
         trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
@@ -418,6 +428,7 @@ class GameScene: SKScene {
     }
     
     private func dealCards() {
+        recordCurrentRoundIfNeeded()
         print("Раздача карт...")
         print("Блок: \(gameState.currentBlock.rawValue), Раунд: \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)")
         print("Карт на игрока: \(gameState.currentCardsPerPlayer)")
@@ -484,6 +495,7 @@ class GameScene: SKScene {
             for (index, player) in self.players.enumerated() {
                 let bid = (index % max(1, cardsPerPlayer)) + 1  // Случайные ставки для демонстрации
                 player.setBid(bid, animated: true)
+                self.gameState.players[index].currentBid = bid
             }
         }
         
@@ -511,6 +523,69 @@ class GameScene: SKScene {
         
         // Переходим к следующему раунду
         gameState.startNewRound()
+        hasDealtAtLeastOnce = true
+    }
+    
+    private func recordCurrentRoundIfNeeded() {
+        guard hasDealtAtLeastOnce, let scoreManager = scoreManager else { return }
+        guard recordedRoundsInCurrentBlock() < gameState.currentRoundInBlock else { return }
+        
+        let cardsInRound = gameState.currentCardsPerPlayer
+        var results: [RoundResult] = []
+        results.reserveCapacity(playerCount)
+        
+        for playerIndex in 0..<playerCount {
+            let player = gameState.players[playerIndex]
+            let result = RoundResult(
+                cardsInRound: cardsInRound,
+                bid: player.currentBid,
+                tricksTaken: player.tricksTaken,
+                isBlind: false
+            )
+            results.append(result)
+        }
+        
+        scoreManager.recordRoundResults(results)
+        
+        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
+            _ = scoreManager.finalizeBlock(blockNumber: gameState.currentBlock.rawValue)
+        }
+    }
+    
+    private func registerTrickWin(for playerIndex: Int) {
+        guard playerIndex >= 0, playerIndex < playerCount else { return }
+        gameState.completeTrick(winner: playerIndex)
+        players[playerIndex].incrementTricks()
+        completeRoundIfNeeded()
+    }
+    
+    private func completeRoundIfNeeded() {
+        let totalTricks = gameState.players.reduce(0) { $0 + $1.tricksTaken }
+        guard totalTricks >= gameState.currentCardsPerPlayer else { return }
+        
+        gameState.completeRound()
+        recordCurrentRoundIfNeeded()
+    }
+    
+    private func playerIndex(at point: CGPoint) -> Int? {
+        let nodesAtPoint = nodes(at: point)
+        for node in nodesAtPoint {
+            if let playerNode = node as? PlayerNode {
+                return playerNode.playerNumber - 1
+            }
+            if let playerNode = node.parent as? PlayerNode {
+                return playerNode.playerNumber - 1
+            }
+            if let playerNode = node.parent?.parent as? PlayerNode {
+                return playerNode.playerNumber - 1
+            }
+        }
+        return nil
+    }
+    
+    private func recordedRoundsInCurrentBlock() -> Int {
+        guard let scoreManager = scoreManager else { return 0 }
+        return scoreManager.currentBlockRoundResults.map { $0.count }.min() ?? 0
     }
 }
 

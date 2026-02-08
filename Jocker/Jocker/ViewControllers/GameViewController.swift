@@ -41,7 +41,8 @@ class GameViewController: UIViewController {
     }
 
     private func presentScoreTable() {
-        let scoreVC = ScoreTableViewController(playerCount: playerCount)
+        guard let scoreManager = gameScene?.scoreManager else { return }
+        let scoreVC = ScoreTableViewController(scoreManager: scoreManager)
         scoreVC.modalPresentationStyle = .fullScreen
         scoreVC.modalTransitionStyle = .crossDissolve
         present(scoreVC, animated: true, completion: nil)

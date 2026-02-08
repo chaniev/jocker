@@ -18,10 +18,18 @@ final class ScoreTableView: UIView {
     private struct Layout {
         let rows: [RowKind]
         let blockEndRowIndices: [Int]
+        let rowMappings: [RowMapping]
+    }
+    
+    private struct RowMapping {
+        let kind: RowKind
+        let blockIndex: Int
+        let roundIndex: Int?
     }
     
     private let playerCount: Int
     private let layout: Layout
+    private var scoreManager: ScoreManager?
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -33,6 +41,10 @@ final class ScoreTableView: UIView {
     private var pointsColumnWidth: CGFloat = 64
     private let headerHeight: CGFloat = 28
     private let rowHeight: CGFloat = 24
+    
+    private var cardsLabels: [UILabel] = []
+    private var tricksLabels: [[UILabel]] = []
+    private var pointsLabels: [[UILabel]] = []
     
     init(playerCount: Int) {
         self.playerCount = playerCount
@@ -52,6 +64,12 @@ final class ScoreTableView: UIView {
         layoutScrollView()
         rebuildLabels()
         updateGridLayers()
+        applyScoreDataIfNeeded()
+    }
+    
+    func update(with scoreManager: ScoreManager) {
+        self.scoreManager = scoreManager
+        applyScoreDataIfNeeded()
     }
     
     private func setupView() {
@@ -103,6 +121,10 @@ final class ScoreTableView: UIView {
         let cellFont = UIFont.systemFont(ofSize: 12, weight: .regular)
         let summaryFont = UIFont.systemFont(ofSize: 12, weight: .bold)
         
+        cardsLabels = []
+        tricksLabels = Array(repeating: [], count: layout.rows.count)
+        pointsLabels = Array(repeating: [], count: layout.rows.count)
+        
         for playerIndex in 0..<playerCount {
             let headerLabel = UILabel()
             headerLabel.text = "Игрок \(playerIndex + 1)"
@@ -133,6 +155,7 @@ final class ScoreTableView: UIView {
                 cardsLabel.text = ""
             }
             contentView.addSubview(cardsLabel)
+            cardsLabels.append(cardsLabel)
             
             for playerIndex in 0..<playerCount {
                 let baseX = leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth)
@@ -144,6 +167,7 @@ final class ScoreTableView: UIView {
                 tricksLabel.frame = CGRect(x: baseX, y: rowY, width: trickColumnWidth, height: rowHeight)
                 tricksLabel.text = ""
                 contentView.addSubview(tricksLabel)
+                tricksLabels[rowIndex].append(tricksLabel)
                 
                 let pointsLabel = UILabel()
                 pointsLabel.font = isSummary ? summaryFont : cellFont
@@ -157,8 +181,150 @@ final class ScoreTableView: UIView {
                 )
                 pointsLabel.text = ""
                 contentView.addSubview(pointsLabel)
+                pointsLabels[rowIndex].append(pointsLabel)
             }
         }
+    }
+    
+    private func applyScoreDataIfNeeded() {
+        guard let scoreManager = scoreManager else { return }
+        
+        let completedBlocks = scoreManager.completedBlocks
+        let currentBlockResults = scoreManager.currentBlockRoundResults
+        let currentBlockScores = scoreManager.currentBlockBaseScores
+        
+        for (rowIndex, mapping) in layout.rowMappings.enumerated() {
+            switch mapping.kind {
+            case .deal:
+                applyDealRow(
+                    rowIndex: rowIndex,
+                    blockIndex: mapping.blockIndex,
+                    roundIndex: mapping.roundIndex ?? 0,
+                    completedBlocks: completedBlocks,
+                    currentBlockResults: currentBlockResults
+                )
+            case .subtotal:
+                applySubtotalRow(
+                    rowIndex: rowIndex,
+                    blockIndex: mapping.blockIndex,
+                    completedBlocks: completedBlocks,
+                    currentBlockScores: currentBlockScores
+                )
+            case .cumulative:
+                applyCumulativeRow(
+                    rowIndex: rowIndex,
+                    blockIndex: mapping.blockIndex,
+                    completedBlocks: completedBlocks,
+                    currentBlockScores: currentBlockScores
+                )
+            }
+        }
+    }
+    
+    private func applyDealRow(
+        rowIndex: Int,
+        blockIndex: Int,
+        roundIndex: Int,
+        completedBlocks: [BlockResult],
+        currentBlockResults: [[RoundResult]]
+    ) {
+        let results: [[RoundResult]]?
+        
+        if blockIndex < completedBlocks.count {
+            results = completedBlocks[blockIndex].roundResults
+        } else if blockIndex == completedBlocks.count {
+            results = currentBlockResults
+        } else {
+            results = nil
+        }
+        
+        for playerIndex in 0..<playerCount {
+            let tricksLabel = tricksLabels[rowIndex][playerIndex]
+            let pointsLabel = pointsLabels[rowIndex][playerIndex]
+            
+            guard
+                let results = results,
+                playerIndex < results.count,
+                roundIndex < results[playerIndex].count
+            else {
+                tricksLabel.text = ""
+                pointsLabel.text = ""
+                continue
+            }
+            
+            let roundResult = results[playerIndex][roundIndex]
+            tricksLabel.text = "\(roundResult.tricksTaken)"
+            pointsLabel.text = "\(roundResult.score)"
+        }
+    }
+    
+    private func applySubtotalRow(
+        rowIndex: Int,
+        blockIndex: Int,
+        completedBlocks: [BlockResult],
+        currentBlockScores: [Int]
+    ) {
+        let scores: [Int]?
+        
+        if blockIndex < completedBlocks.count {
+            scores = completedBlocks[blockIndex].finalScores
+        } else if blockIndex == completedBlocks.count {
+            scores = currentBlockScores
+        } else {
+            scores = nil
+        }
+        
+        for playerIndex in 0..<playerCount {
+            tricksLabels[rowIndex][playerIndex].text = ""
+            pointsLabels[rowIndex][playerIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
+        }
+    }
+    
+    private func applyCumulativeRow(
+        rowIndex: Int,
+        blockIndex: Int,
+        completedBlocks: [BlockResult],
+        currentBlockScores: [Int]
+    ) {
+        let scores: [Int]?
+        
+        if blockIndex < completedBlocks.count {
+            scores = cumulativeScores(through: blockIndex, completedBlocks: completedBlocks)
+        } else if blockIndex == completedBlocks.count {
+            scores = cumulativeScoresIncludingCurrent(completedBlocks: completedBlocks, currentBlockScores: currentBlockScores)
+        } else {
+            scores = nil
+        }
+        
+        for playerIndex in 0..<playerCount {
+            tricksLabels[rowIndex][playerIndex].text = ""
+            pointsLabels[rowIndex][playerIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
+        }
+    }
+    
+    private func cumulativeScores(through blockIndex: Int, completedBlocks: [BlockResult]) -> [Int] {
+        var scores = Array(repeating: 0, count: playerCount)
+        guard !completedBlocks.isEmpty else { return scores }
+        
+        for index in 0...min(blockIndex, completedBlocks.count - 1) {
+            let block = completedBlocks[index]
+            for playerIndex in 0..<playerCount {
+                scores[playerIndex] += block.finalScores[playerIndex]
+            }
+        }
+        
+        return scores
+    }
+    
+    private func cumulativeScoresIncludingCurrent(
+        completedBlocks: [BlockResult],
+        currentBlockScores: [Int]
+    ) -> [Int] {
+        var scores = cumulativeScores(through: completedBlocks.count - 1, completedBlocks: completedBlocks)
+        for playerIndex in 0..<playerCount {
+            scores[playerIndex] += currentBlockScores[playerIndex]
+        }
+        return scores
     }
     
     private func updateGridLayers() {
@@ -255,20 +421,29 @@ final class ScoreTableView: UIView {
         
         var rows: [RowKind] = []
         var blockEndRowIndices: [Int] = []
+        var rowMappings: [RowMapping] = []
         
         for blockIndex in 0..<blockDeals.count {
+            var roundIndex = 0
             for cards in blockDeals[blockIndex] {
-                rows.append(.deal(cards: cards))
+                let rowKind = RowKind.deal(cards: cards)
+                rows.append(rowKind)
+                rowMappings.append(RowMapping(kind: rowKind, blockIndex: blockIndex, roundIndex: roundIndex))
+                roundIndex += 1
             }
             
-            rows.append(.subtotal)
+            let subtotalKind = RowKind.subtotal
+            rows.append(subtotalKind)
+            rowMappings.append(RowMapping(kind: subtotalKind, blockIndex: blockIndex, roundIndex: nil))
             if blockIndex >= 1 {
-                rows.append(.cumulative)
+                let cumulativeKind = RowKind.cumulative
+                rows.append(cumulativeKind)
+                rowMappings.append(RowMapping(kind: cumulativeKind, blockIndex: blockIndex, roundIndex: nil))
             }
             
             blockEndRowIndices.append(rows.count - 1)
         }
         
-        return Layout(rows: rows, blockEndRowIndices: blockEndRowIndices)
+        return Layout(rows: rows, blockEndRowIndices: blockEndRowIndices, rowMappings: rowMappings)
     }
 }

@@ -10,9 +10,11 @@ import UIKit
 final class ScoreTableViewController: UIViewController, UIGestureRecognizerDelegate {
     
     private let tableView: ScoreTableView
+    private let scoreManager: ScoreManager
     
-    init(playerCount: Int) {
-        self.tableView = ScoreTableView(playerCount: playerCount)
+    init(scoreManager: ScoreManager) {
+        self.scoreManager = scoreManager
+        self.tableView = ScoreTableView(playerCount: scoreManager.playerCount)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -26,6 +28,12 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         view.backgroundColor = .white
         setupTableView()
         setupSwipeToDismiss()
+        tableView.update(with: scoreManager)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.update(with: scoreManager)
     }
     
     private func setupTableView() {
