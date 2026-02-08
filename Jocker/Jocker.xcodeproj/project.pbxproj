@@ -28,6 +28,12 @@
 		7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9872F269A500037CA75 /* TrickNode.swift */; };
 		7E4AC9882F269A600037CA75 /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9892F269A600037CA75 /* GameState.swift */; };
 		7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */; };
+		AA0000022F2800010037CA75 /* RoundResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000012F2800010037CA75 /* RoundResult.swift */; };
+		AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000032F2800010037CA75 /* ScoreCalculator.swift */; };
+		AA0000062F2800010037CA75 /* BlockResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000052F2800010037CA75 /* BlockResult.swift */; };
+		AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000072F2800010037CA75 /* ScoreManager.swift */; };
+		AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */; };
+		AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +78,12 @@
 		7E4AC9872F269A500037CA75 /* TrickNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickNode.swift; sourceTree = "<group>"; };
 		7E4AC9892F269A600037CA75 /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
 		7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDemoScene.swift; sourceTree = "<group>"; };
+		AA0000012F2800010037CA75 /* RoundResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundResult.swift; sourceTree = "<group>"; };
+		AA0000032F2800010037CA75 /* ScoreCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculator.swift; sourceTree = "<group>"; };
+		AA0000052F2800010037CA75 /* BlockResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockResult.swift; sourceTree = "<group>"; };
+		AA0000072F2800010037CA75 /* ScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManager.swift; sourceTree = "<group>"; };
+		AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculatorTests.swift; sourceTree = "<group>"; };
+		AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManagerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +149,10 @@
 				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
 				7E4AC9872F269A500037CA75 /* TrickNode.swift */,
 				7E4AC9892F269A600037CA75 /* GameState.swift */,
+				AA0000012F2800010037CA75 /* RoundResult.swift */,
+				AA0000032F2800010037CA75 /* ScoreCalculator.swift */,
+				AA0000052F2800010037CA75 /* BlockResult.swift */,
+				AA0000072F2800010037CA75 /* ScoreManager.swift */,
 				7E4AC94F2F268D820037CA75 /* Main.storyboard */,
 				7E4AC9522F268D850037CA75 /* Assets.xcassets */,
 				7E4AC9542F268D850037CA75 /* LaunchScreen.storyboard */,
@@ -148,6 +164,8 @@
 			isa = PBXGroup;
 			children = (
 				7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
+				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
+				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
 			);
 			path = JockerTests;
 			sourceTree = "<group>";
@@ -307,6 +325,10 @@
 				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
 				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
+				AA0000022F2800010037CA75 /* RoundResult.swift in Sources */,
+				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
+				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,
+				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,6 +337,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
+				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,
+				AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
