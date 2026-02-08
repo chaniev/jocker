@@ -16,10 +16,11 @@ class CardHandNode: SKNode {
     private(set) var cardNodes: [CardNode] = []
     
     var handPosition: CGPoint = .zero
-    var cardSpacing: CGFloat = 60  // Расстояние между картами
-    var arcAngle: CGFloat = 0.3    // Угол дуги для раскладки карт (в радианах)
-    var isVertical: Bool = false   // Вертикальное или горизонтальное расположение
-    var isFaceUp: Bool = true      // Показывать ли карты лицом
+    var cardSpacing: CGFloat = 60       // Расстояние между картами (центрами)
+    var cardOverlapRatio: CGFloat = 0.3  // Коэффициент перекрывания карт (0.0 = нет, 1.0 = полное)
+    var arcAngle: CGFloat = 0.3         // Угол дуги для раскладки карт (в радианах)
+    var isVertical: Bool = false        // Вертикальное или горизонтальное расположение
+    var isFaceUp: Bool = true           // Показывать ли карты лицом
     
     // Callback при выборе карты
     var onCardSelected: ((Card, CardNode) -> Void)?
@@ -114,7 +115,7 @@ class CardHandNode: SKNode {
         cardNodes.removeAll()
     }
     
-    /// Расположить карты в руке
+    /// Расположить карты в руке (стиль покерного стола с перекрыванием)
     func arrangeCards(animated: Bool = true) {
         let count = cardNodes.count
         guard count > 0 else { return }
@@ -127,32 +128,52 @@ class CardHandNode: SKNode {
             let rotate = SKAction.rotate(toAngle: 0, duration: duration)
             cardNodes[0].run(SKAction.group([move, rotate]))
         } else {
-            // Несколько карт - веерная раскладка
+            // Несколько карт - веерная раскладка с перекрыванием (как в покере)
             let totalWidth = CGFloat(count - 1) * cardSpacing
             let startX = handPosition.x - totalWidth / 2
             
+            // Радиус дуги для создания веерного эффекта
+            let arcRadius: CGFloat = 400.0  // Больший радиус = более плоская дуга
+            
             for (index, cardNode) in cardNodes.enumerated() {
-                let progress = CGFloat(index) / CGFloat(count - 1)
+                let progress = count > 1 ? CGFloat(index) / CGFloat(count - 1) : 0.5
+                
+                // Угол поворота карты для веерного эффекта
                 let angle = (progress - 0.5) * arcAngle
                 
                 let x: CGFloat
                 let y: CGFloat
                 
                 if isVertical {
-                    x = handPosition.x
+                    // Вертикальное расположение (для боковых игроков)
+                    // Небольшое смещение по X для веерного эффекта
+                    let horizontalOffset = sin(angle) * 15
+                    x = handPosition.x + horizontalOffset
                     y = startX + CGFloat(index) * cardSpacing
                 } else {
+                    // Горизонтальное расположение (для игроков сверху/снизу)
                     x = startX + CGFloat(index) * cardSpacing
-                    // Создаём небольшую дугу
-                    let arcHeight: CGFloat = 20
-                    y = handPosition.y - abs(progress - 0.5) * 2 * arcHeight
+                    
+                    // Создаём дугу с помощью окружности (более реалистичный веер)
+                    // Чем дальше от центра, тем ниже карта
+                    let distanceFromCenter = abs(progress - 0.5) * 2.0  // 0.0 в центре, 1.0 по краям
+                    let arcHeight = (1.0 - distanceFromCenter * distanceFromCenter) * arcRadius
+                    let yOffset = arcRadius - arcHeight
+                    
+                    y = handPosition.y - yOffset * 0.12  // Коэффициент для настройки высоты дуги
                 }
                 
                 let position = CGPoint(x: x, y: y)
                 let move = SKAction.move(to: position, duration: duration)
                 let rotate = SKAction.rotate(toAngle: angle, duration: duration)
                 
-                cardNode.zPosition = CGFloat(index)
+                // Z-позиция: карты в центре должны быть выше
+                // Это создаёт эффект "вложенности" как в покере
+                let centerDistance = abs(Float(index) - Float(count - 1) / 2.0)
+                let maxDistance = Float(count - 1) / 2.0
+                let zPosition = CGFloat(100 - Int(centerDistance / maxDistance * 50))
+                cardNode.zPosition = zPosition
+                
                 cardNode.run(SKAction.group([move, rotate]))
             }
         }

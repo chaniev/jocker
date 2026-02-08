@@ -141,16 +141,18 @@ class PlayerNode: SKNode {
         
         // Специальная обработка для Игрока 1 (внизу экрана)
         if playerNumber == 1 {
-            // Карты располагаются горизонтально над игроком
+            // Карты располагаются горизонтально над игроком (как в покере)
             hand.handPosition = CGPoint(x: 0, y: 200)  // Подняли выше
-            hand.arcAngle = 0.4
-            hand.cardSpacing = 168  // Уменьшено на 20% (было 210)
+            hand.arcAngle = 0.25  // Уменьшенный угол для более плоского веера
+            hand.cardSpacing = 35   // Сильно уменьшено для перекрывания как в покере
+            hand.cardOverlapRatio = 0.35  // Карты перекрываются на 65%
             hand.isVertical = false  // Горизонтальное расположение
         } else if playerNumber == 3 && totalPlayers == 4 {
             // Для Игрока 3 (сверху) - карты под ним, на том же расстоянии что и у Игрока 1
             hand.handPosition = CGPoint(x: 0, y: -200)  // Под игроком (отрицательное значение)
-            hand.arcAngle = 0.4
-            hand.cardSpacing = 168  // Уменьшено на 20% (было 210)
+            hand.arcAngle = 0.25  // Уменьшенный угол для более плоского веера
+            hand.cardSpacing = 35   // Сильно уменьшено для перекрывания как в покере
+            hand.cardOverlapRatio = 0.35  // Карты перекрываются на 65%
             hand.isVertical = false  // Горизонтальное расположение
         } else {
             // Позиция руки относительно игрока для остальных игроков
@@ -159,8 +161,9 @@ class PlayerNode: SKNode {
             let handY = handDistance * sin(angle)
             
             hand.handPosition = CGPoint(x: handX, y: handY)
-            hand.arcAngle = 0.4
-            hand.cardSpacing = 168  // Уменьшено на 20% (было 210)
+            hand.arcAngle = 0.25  // Уменьшенный угол для более плоского веера
+            hand.cardSpacing = 35   // Сильно уменьшено для перекрывания как в покере
+            hand.cardOverlapRatio = 0.35  // Карты перекрываются на 65%
             
             // Определяем, должна ли рука быть вертикальной
             let normalizedAngle = angle.truncatingRemainder(dividingBy: 2 * .pi)
