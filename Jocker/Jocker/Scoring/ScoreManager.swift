@@ -18,8 +18,17 @@ class ScoreManager {
     
     // MARK: - Properties
     
+    /// Провайдер количества игроков (например, из GameState или другого источника)
+    private let playerCountProvider: () -> Int
+    
+    /// Текущее количество игроков (кэш)
+    private var storedPlayerCount: Int
+    
     /// Количество игроков
-    let playerCount: Int
+    var playerCount: Int {
+        syncPlayerCountIfNeeded()
+        return storedPlayerCount
+    }
     
     /// Результаты раундов в текущем блоке: [playerIndex][roundIndex]
     private(set) var currentBlockRoundResults: [[RoundResult]]
@@ -30,9 +39,24 @@ class ScoreManager {
     // MARK: - Initialization
     
     init(playerCount: Int) {
-        self.playerCount = playerCount
-        self.currentBlockRoundResults = Array(repeating: [], count: playerCount)
+        self.playerCountProvider = { playerCount }
+        self.storedPlayerCount = max(1, playerCount)
+        self.currentBlockRoundResults = Array(repeating: [], count: storedPlayerCount)
         self.completedBlocks = []
+    }
+    
+    /// Инициализация с динамическим источником количества игроков
+    init(playerCountProvider: @escaping () -> Int) {
+        self.playerCountProvider = playerCountProvider
+        let initialCount = max(1, playerCountProvider())
+        self.storedPlayerCount = initialCount
+        self.currentBlockRoundResults = Array(repeating: [], count: initialCount)
+        self.completedBlocks = []
+    }
+    
+    /// Инициализация из состояния игры (актуализирует число игроков при запуске)
+    convenience init(gameState: GameState) {
+        self.init(playerCountProvider: { gameState.playerCount })
     }
     
     // MARK: - Запись результатов раунда
@@ -317,6 +341,15 @@ class ScoreManager {
     /// Сбросить данные текущего блока
     private func resetCurrentBlock() {
         currentBlockRoundResults = Array(repeating: [], count: playerCount)
+    }
+    
+    /// Обновить количество игроков, если источник изменился
+    private func syncPlayerCountIfNeeded() {
+        let updatedCount = playerCountProvider()
+        guard updatedCount > 0, updatedCount != storedPlayerCount else { return }
+        storedPlayerCount = updatedCount
+        currentBlockRoundResults = Array(repeating: [], count: updatedCount)
+        completedBlocks = []
     }
 }
 

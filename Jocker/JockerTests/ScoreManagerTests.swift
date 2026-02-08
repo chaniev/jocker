@@ -25,7 +25,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Запись результатов раунда
     
     func testRecordRoundResult_singlePlayer() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         let result = matchedResult(bid: 2, cardsInRound: 5)
         
         manager.recordRoundResult(playerIndex: 0, result: result)
@@ -35,7 +35,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testRecordRoundResults_allPlayers() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         let results = [
             matchedResult(bid: 1, cardsInRound: 3),
             matchedResult(bid: 0, cardsInRound: 3),
@@ -51,7 +51,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testRecordRoundResults_wrongCount_ignored() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         let results = [
             matchedResult(bid: 1, cardsInRound: 3),
             matchedResult(bid: 0, cardsInRound: 3)
@@ -68,7 +68,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Базовые очки текущего блока
     
     func testCurrentBlockBaseScores() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Раунд 1 (C=1)
         manager.recordRoundResults([
@@ -86,7 +86,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testCurrentBlockBaseScores_multipleRounds() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Раунд 1 (C=1)
         manager.recordRoundResults([
@@ -114,7 +114,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Завершение блока без премий
     
     func testFinalizeBlock_noPremium() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // 3 раунда, у игрока 2 — не совпала ставка во 2-м раунде
         manager.recordRoundResults([
@@ -154,7 +154,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Завершение блока с премией
     
     func testFinalizeBlock_onePremium() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Игрок 0 совпадает во всех раундах → получает премию
         // Раунд 1 (C=1)
@@ -207,7 +207,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Премия: пропуск соседа с премией
     
     func testFinalizeBlock_premiumSkipsNeighborWithPremium() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Игроки 0 и 3 получают премию
         // Игрок 0: справа — игрок 3 (у него тоже премия) → штраф с игрока 2
@@ -268,7 +268,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Общие очки за несколько блоков
     
     func testTotalScores_multipleBlocks() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Блок 1: простой, без премий
         manager.recordRoundResults([
@@ -318,7 +318,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Общие очки с текущим незавершённым блоком
     
     func testTotalScoresIncludingCurrentBlock() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Завершаем блок 1
         manager.recordRoundResults([
@@ -356,7 +356,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Победитель
     
     func testGetWinnerIndex() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         manager.recordRoundResults([
             matchedResult(bid: 1, cardsInRound: 1),        // 100
@@ -385,7 +385,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Таблица очков
     
     func testGetScoreboard() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         manager.recordRoundResults([
             mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),   // P0: -100
@@ -412,7 +412,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Сброс
     
     func testReset() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         manager.recordRoundResults([
             matchedResult(bid: 1, cardsInRound: 1),
@@ -442,7 +442,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Слепая ставка в блоке
     
     func testBlindBidInBlock() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Раунд 1: игрок 0 ставит в тёмную
         manager.recordRoundResults([
@@ -474,7 +474,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Три игрока
     
     func testThreePlayers_rightNeighbor() {
-        let manager = ScoreManager(playerCount: 3)
+        let manager = ScoreManager(playerCountProvider: { 3 })
         
         // Игрок 0 получает премию
         // Справа от 0 → игрок 2 (0-1+3)%3 = 2
@@ -515,7 +515,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Краевые случаи
     
     func testFinalizeBlock_emptyBlock() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         let result = manager.finalizeBlock()
         
         XCTAssertEqual(result.baseScores, [0, 0, 0, 0])
@@ -524,7 +524,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testFinalizeBlock_singleRound() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // 1 раунд — нет «предпоследнего», бонус = 0
         manager.recordRoundResults([
@@ -549,7 +549,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Нулевая премия
     
     func testZeroPremium_block1_eligible() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Игрок 1 заказывает 0 и берёт 0 во всех раундах
         // Раунд 1 (C=1)
@@ -589,7 +589,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testZeroPremium_block2_notEligible() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Тот же сценарий, но блок 2 — нулевая премия не применяется
         manager.recordRoundResults([
@@ -613,7 +613,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testZeroPremium_block3_eligible() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // P2 заказывает 0 и берёт 0 во всех раундах блока 3
         manager.recordRoundResults([
@@ -646,7 +646,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testZeroPremium_block4_notEligible() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         manager.recordRoundResults([
             matchedResult(bid: 1, cardsInRound: 1),
@@ -669,7 +669,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testZeroPremium_playerTookTricks_notEligible() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // P1 заказывает 0, но в одном раунде берёт взятку
         manager.recordRoundResults([
@@ -693,7 +693,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testZeroPremium_exclusiveWithRegularPremium() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // P3 заказывает 0 и берёт 0 во всех раундах → нулевая премия
         // P0 все ставки совпали → обычная премия
@@ -756,7 +756,7 @@ final class ScoreManagerTests: XCTestCase {
     }
     
     func testZeroPremium_noBlockNumber_notApplied() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         manager.recordRoundResults([
             matchedResult(bid: 0, cardsInRound: 1),
@@ -781,7 +781,7 @@ final class ScoreManagerTests: XCTestCase {
     // MARK: - Интеграционный тест: полный блок 4 игрока
     
     func testIntegration_fullBlock_4players() {
-        let manager = ScoreManager(playerCount: 4)
+        let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Симулируем блок из 4 раундов
         // Раунд 1 (C=1): P0=100, P1=50, P2=50, P3=-100
