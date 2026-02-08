@@ -1,0 +1,6 @@
+---
+description: расположение файлов и классов
+alwaysApply: true
+---
+
+- When creating a new class, enum, or interface, create a new file with a name that matches the name of the class, enum, or interface
