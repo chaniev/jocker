@@ -31,15 +31,19 @@ Jocker/Jocker/
 │   └── ScoreManager.swift
 ├── ViewControllers/
 │   ├── GameViewController.swift
-│   └── PlayerSelectionViewController.swift
+│   ├── PlayerSelectionViewController.swift
+│   ├── ScoreTableView.swift
+│   └── ScoreTableViewController.swift
 ├── Resources/
 │   ├── Actions.sks
 │   └── GameScene.sks
 ├── Assets.xcassets/
 └── Base.lproj/
+    ├── LaunchScreen.storyboard
+    └── Main.storyboard
 ```
 
-## File Moves (old -> new)
+## Canonical File Paths
 
 ```
 AppDelegate.swift -> App/AppDelegate.swift
@@ -59,6 +63,8 @@ ScoreCalculator.swift -> Scoring/ScoreCalculator.swift
 ScoreManager.swift -> Scoring/ScoreManager.swift
 GameViewController.swift -> ViewControllers/GameViewController.swift
 PlayerSelectionViewController.swift -> ViewControllers/PlayerSelectionViewController.swift
+ScoreTableView.swift -> ViewControllers/ScoreTableView.swift
+ScoreTableViewController.swift -> ViewControllers/ScoreTableViewController.swift
 Actions.sks -> Resources/Actions.sks
 GameScene.sks -> Resources/GameScene.sks
 ```
@@ -70,8 +76,13 @@ GameScene.sks -> Resources/GameScene.sks
 
 ## Unit Tests
 
-- No test file moves were performed.
-- `JockerTests` and `JockerUITests` stay in place and remain referenced in the project.
+- `JockerTests` contains:
+  - `JockerTests.swift`
+  - `ScoreCalculatorTests.swift`
+  - `ScoreManagerTests.swift`
+- `JockerUITests` contains:
+  - `JockerUITests.swift`
+  - `JockerUITestsLaunchTests.swift`
 
 ## Notes
 
@@ -80,6 +91,7 @@ GameScene.sks -> Resources/GameScene.sks
 
 ## Future Conventions
 
+- One type per file: when creating a new class/enum/interface, create a new file with the same name.
 - New domain models go in `Models/`.
 - New SpriteKit scenes go in `Game/Scenes/`.
 - New SpriteKit nodes go in `Game/Nodes/`.
