@@ -319,3 +319,4 @@ class ScoreManager {
         currentBlockRoundResults = Array(repeating: [], count: playerCount)
     }
 }
+

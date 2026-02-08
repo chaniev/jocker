@@ -134,30 +134,86 @@
 		7E4AC9442F268D810037CA75 /* Jocker */ = {
 			isa = PBXGroup;
 			children = (
-				7E4AC9452F268D810037CA75 /* AppDelegate.swift */,
+				AA1000012F2800020037CA75 /* App */,
+				AA1000022F2800020037CA75 /* Models */,
+				AA1000032F2800020037CA75 /* Game */,
+				AA1000062F2800020037CA75 /* Scoring */,
+				AA1000072F2800020037CA75 /* ViewControllers */,
 				7E4AC9472F268D820037CA75 /* GameScene.sks */,
 				7E4AC9492F268D820037CA75 /* Actions.sks */,
-				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
-				7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */,
-				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
-				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
-				7E4AC97B2F268F000037CA75 /* PlayerNode.swift */,
-				7E4AC97D2F269A000037CA75 /* Card.swift */,
-				7E4AC97F2F269A100037CA75 /* Deck.swift */,
-				7E4AC9812F269A200037CA75 /* CardNode.swift */,
-				7E4AC9832F269A300037CA75 /* CardHandNode.swift */,
-				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
-				7E4AC9872F269A500037CA75 /* TrickNode.swift */,
-				7E4AC9892F269A600037CA75 /* GameState.swift */,
-				AA0000012F2800010037CA75 /* RoundResult.swift */,
-				AA0000032F2800010037CA75 /* ScoreCalculator.swift */,
-				AA0000052F2800010037CA75 /* BlockResult.swift */,
-				AA0000072F2800010037CA75 /* ScoreManager.swift */,
 				7E4AC94F2F268D820037CA75 /* Main.storyboard */,
 				7E4AC9522F268D850037CA75 /* Assets.xcassets */,
 				7E4AC9542F268D850037CA75 /* LaunchScreen.storyboard */,
 			);
 			path = Jocker;
+			sourceTree = "<group>";
+		};
+		AA1000012F2800020037CA75 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC9452F268D810037CA75 /* AppDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		AA1000022F2800020037CA75 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC97D2F269A000037CA75 /* Card.swift */,
+				7E4AC97F2F269A100037CA75 /* Deck.swift */,
+				7E4AC9892F269A600037CA75 /* GameState.swift */,
+				AA0000012F2800010037CA75 /* RoundResult.swift */,
+				AA0000052F2800010037CA75 /* BlockResult.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA1000032F2800020037CA75 /* Game */ = {
+			isa = PBXGroup;
+			children = (
+				AA1000042F2800020037CA75 /* Scenes */,
+				AA1000052F2800020037CA75 /* Nodes */,
+			);
+			path = Game;
+			sourceTree = "<group>";
+		};
+		AA1000042F2800020037CA75 /* Scenes */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
+				7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */,
+			);
+			path = Scenes;
+			sourceTree = "<group>";
+		};
+		AA1000052F2800020037CA75 /* Nodes */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC9812F269A200037CA75 /* CardNode.swift */,
+				7E4AC9832F269A300037CA75 /* CardHandNode.swift */,
+				7E4AC97B2F268F000037CA75 /* PlayerNode.swift */,
+				7E4AC9872F269A500037CA75 /* TrickNode.swift */,
+				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
+			);
+			path = Nodes;
+			sourceTree = "<group>";
+		};
+		AA1000062F2800020037CA75 /* Scoring */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000032F2800010037CA75 /* ScoreCalculator.swift */,
+				AA0000072F2800010037CA75 /* ScoreManager.swift */,
+			);
+			path = Scoring;
+			sourceTree = "<group>";
+		};
+		AA1000072F2800020037CA75 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
+				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
+			);
+			path = ViewControllers;
 			sourceTree = "<group>";
 		};
 		7E4AC95E2F268D860037CA75 /* JockerTests */ = {

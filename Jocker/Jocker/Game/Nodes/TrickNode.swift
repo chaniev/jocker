@@ -155,3 +155,4 @@ class TrickNode: SKNode {
         return true
     }
 }
+

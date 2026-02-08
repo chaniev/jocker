@@ -167,3 +167,4 @@ struct Card: Equatable, Hashable {
         return selfRank.rawValue > otherRank.rawValue
     }
 }
+

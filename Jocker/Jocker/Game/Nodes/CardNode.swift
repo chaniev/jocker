@@ -95,8 +95,8 @@ class CardNode: SKNode {
     private func setupRegularCardVisuals() {
         guard let suit = card.suit, let rank = card.rank else { return }
         
-        let color: SKColor = suit.color == .red ? 
-            SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0) : 
+        let color: SKColor = suit.color == .red ?
+            SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0) :
             SKColor(white: 0.1, alpha: 1.0)
         
         // Верхний левый угол - ранг (уменьшено на 20%)
@@ -328,3 +328,4 @@ class CardNode: SKNode {
         }
     }
 }
+

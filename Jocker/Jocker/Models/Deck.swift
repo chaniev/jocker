@@ -126,3 +126,4 @@ class Deck {
         return (hands, trumpCard)
     }
 }
+

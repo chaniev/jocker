@@ -38,8 +38,8 @@ class CardDemoScene: SKScene {
             let suitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
             suitLabel.text = suitName
             suitLabel.fontSize = 20
-            suitLabel.fontColor = suit.color == .red ? 
-                SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0) : 
+            suitLabel.fontColor = suit.color == .red ?
+                SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0) :
                 SKColor(white: 0.9, alpha: 1.0)
             suitLabel.horizontalAlignmentMode = .left
             suitLabel.position = CGPoint(x: 30, y: yPosition)
@@ -181,3 +181,4 @@ class CardDemoScene: SKScene {
         print("Возврат к игре...")
     }
 }
+

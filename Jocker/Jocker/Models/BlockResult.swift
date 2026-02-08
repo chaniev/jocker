@@ -26,3 +26,4 @@ struct BlockResult {
     /// Итоговые очки за блок: baseScores + premiumBonuses - premiumPenalties + zeroPremiumBonuses
     let finalScores: [Int]
 }
+
