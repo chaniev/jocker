@@ -50,21 +50,6 @@ class PlayerSelectionViewController: UIViewController {
         return button
     }()
     
-    private let startButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Начать игру", for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        button.backgroundColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 15
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOpacity = 0.3
-        button.layer.shadowOffset = CGSize(width: 0, height: 4)
-        button.layer.shadowRadius = 8
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -80,12 +65,10 @@ class PlayerSelectionViewController: UIViewController {
         view.addSubview(titleLabel)
         view.addSubview(threePlayersButton)
         view.addSubview(fourPlayersButton)
-        view.addSubview(startButton)
         
         // Добавляем действия на кнопки
         threePlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
         fourPlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
-        startButton.addTarget(self, action: #selector(startGameTapped), for: .touchUpInside)
         
         // Настраиваем constraints - кнопки расположены горизонтально
         NSLayoutConstraint.activate([
@@ -105,13 +88,7 @@ class PlayerSelectionViewController: UIViewController {
             threePlayersButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -20),
             threePlayersButton.leadingAnchor.constraint(equalTo: view.centerXAnchor, constant: 10),
             threePlayersButton.widthAnchor.constraint(equalToConstant: 200),
-            threePlayersButton.heightAnchor.constraint(equalToConstant: 80),
-            
-            // Start Button
-            startButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            startButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
-            startButton.widthAnchor.constraint(equalToConstant: 350),
-            startButton.heightAnchor.constraint(equalToConstant: 70)
+            threePlayersButton.heightAnchor.constraint(equalToConstant: 80)
         ])
     }
     
@@ -127,6 +104,8 @@ class PlayerSelectionViewController: UIViewController {
                 sender.transform = .identity
             }
         }
+        
+        startGame()
     }
     
     private func updateButtonStates() {
@@ -148,16 +127,7 @@ class PlayerSelectionViewController: UIViewController {
         }
     }
     
-    @objc private func startGameTapped() {
-        // Анимация нажатия
-        UIView.animate(withDuration: 0.1, animations: {
-            self.startButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }) { _ in
-            UIView.animate(withDuration: 0.1) {
-                self.startButton.transform = .identity
-            }
-        }
-        
+    private func startGame() {
         // Переход к игровому экрану
         let gameVC = GameViewController()
         gameVC.playerCount = selectedPlayerCount

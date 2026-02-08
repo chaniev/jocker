@@ -16,6 +16,8 @@ class GameScene: SKScene {
     private var players: [PlayerNode] = []
     private var dealButton: SKShapeNode?
     private var dealButtonLabel: SKLabelNode?
+    private var scoreButton: SKShapeNode?
+    private var scoreButtonLabel: SKLabelNode?
     
     // UI элементы для отображения состояния игры
     private var gameInfoLabel: SKLabelNode?
@@ -43,6 +45,9 @@ class GameScene: SKScene {
         
         // Создаём кнопку "Раздать карты"
         setupDealButton()
+        
+        // Создаём кнопку "Очки"
+        setupScoreButton()
         
         // Создаём индикатор состояния игры
         setupGameInfoLabel()
@@ -125,6 +130,12 @@ class GameScene: SKScene {
         // Обработка касаний для будущей игровой логики
         for touch in touches {
             let location = touch.location(in: self)
+            
+            // Проверяем, нажата ли кнопка "Очки"
+            if let button = scoreButton, button.contains(location) {
+                handleScoreButtonTap()
+                return
+            }
             
             // Проверяем, нажата ли кнопка "Раздать карты"
             if let button = dealButton, button.contains(location) {
@@ -226,6 +237,67 @@ class GameScene: SKScene {
     
     // MARK: - Кнопка "Раздать карты"
     
+    private func setupScoreButton() {
+        let buttonWidth: CGFloat = 360
+        let buttonHeight: CGFloat = 100
+        let cornerRadius: CGFloat = 24
+        
+        let buttonX: CGFloat = 50 + buttonWidth / 2
+        let buttonY: CGFloat = self.size.height - 50 - buttonHeight / 2
+        
+        let buttonRect = CGRect(
+            x: -buttonWidth / 2,
+            y: -buttonHeight / 2,
+            width: buttonWidth,
+            height: buttonHeight
+        )
+        
+        let button = SKShapeNode(rect: buttonRect, cornerRadius: cornerRadius)
+        button.position = CGPoint(x: buttonX, y: buttonY)
+        
+        button.fillColor = SKColor(red: 0.85, green: 0.2, blue: 0.2, alpha: 1.0)
+        button.strokeColor = SKColor(red: 0.65, green: 0.1, blue: 0.1, alpha: 1.0)
+        button.lineWidth = 3
+        button.zPosition = 100
+        
+        let highlightRect = CGRect(
+            x: -buttonWidth / 2,
+            y: 0,
+            width: buttonWidth,
+            height: buttonHeight / 2
+        )
+        let highlight = SKShapeNode(rect: highlightRect, cornerRadius: cornerRadius)
+        highlight.fillColor = SKColor(white: 1.0, alpha: 0.15)
+        highlight.strokeColor = .clear
+        highlight.zPosition = 1
+        button.addChild(highlight)
+        
+        self.scoreButton = button
+        self.addChild(button)
+        
+        let label = SKLabelNode(fontNamed: "Helvetica-Bold")
+        label.text = "Очки"
+        label.fontSize = 40
+        label.fontColor = .white
+        label.verticalAlignmentMode = .center
+        label.horizontalAlignmentMode = .center
+        label.position = CGPoint(x: 0, y: 0)
+        label.zPosition = 2
+        
+        let shadow = SKLabelNode(fontNamed: "Helvetica-Bold")
+        shadow.text = "Очки"
+        shadow.fontSize = 40
+        shadow.fontColor = SKColor(white: 0.0, alpha: 0.5)
+        shadow.verticalAlignmentMode = .center
+        shadow.horizontalAlignmentMode = .center
+        shadow.position = CGPoint(x: 2, y: -2)
+        shadow.zPosition = 1
+        button.addChild(shadow)
+        
+        button.addChild(label)
+        self.scoreButtonLabel = label
+    }
+    
     private func setupDealButton() {
         // Размеры кнопки (увеличены в 2 раза)
         let buttonWidth: CGFloat = 360
@@ -304,6 +376,18 @@ class GameScene: SKScene {
         
         button.run(pulse) { [weak self] in
             self?.dealCards()
+        }
+    }
+    
+    private func handleScoreButtonTap() {
+        guard let button = scoreButton else { return }
+        
+        let scaleDown = SKAction.scale(to: 0.95, duration: 0.1)
+        let scaleUp = SKAction.scale(to: 1.0, duration: 0.1)
+        let pulse = SKAction.sequence([scaleDown, scaleUp])
+        
+        button.run(pulse) {
+            print("Открыть окно очков")
         }
     }
     
