@@ -7,8 +7,8 @@
 
 import Foundation
 
-/// Информация об игроке
-class PlayerInfo {
+/// Информация об игроке (value type)
+struct PlayerInfo {
     let playerNumber: Int
     var name: String
     var score: Int = 0
@@ -21,7 +21,7 @@ class PlayerInfo {
     }
     
     /// Сброс для нового раунда
-    func resetForNewRound() {
+    mutating func resetForNewRound() {
         currentBid = 0
         tricksTaken = 0
     }

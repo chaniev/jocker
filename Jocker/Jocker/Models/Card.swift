@@ -8,11 +8,20 @@
 import Foundation
 
 /// Масть карты
-enum Suit: String, CaseIterable {
+enum Suit: String, CaseIterable, Comparable {
     case diamonds = "♦️"  // Бубны
     case hearts = "♥️"    // Черви
     case spades = "♠️"    // Пики
     case clubs = "♣️"     // Крести
+    
+    /// Порядок мастей для сортировки: бубны < черви < пики < крести
+    private static let sortOrder: [Suit] = [.diamonds, .hearts, .spades, .clubs]
+    
+    static func < (lhs: Suit, rhs: Suit) -> Bool {
+        let lhsIndex = sortOrder.firstIndex(of: lhs) ?? 0
+        let rhsIndex = sortOrder.firstIndex(of: rhs) ?? 0
+        return lhsIndex < rhsIndex
+    }
     
     var color: CardColor {
         switch self {
@@ -40,7 +49,7 @@ enum CardColor {
 }
 
 /// Ранг карты
-enum Rank: Int, CaseIterable {
+enum Rank: Int, CaseIterable, Comparable {
     case six = 6
     case seven = 7
     case eight = 8
@@ -50,6 +59,10 @@ enum Rank: Int, CaseIterable {
     case queen = 12
     case king = 13
     case ace = 14
+    
+    static func < (lhs: Rank, rhs: Rank) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
     
     var symbol: String {
         switch self {
@@ -81,61 +94,80 @@ enum Rank: Int, CaseIterable {
 }
 
 /// Модель карты
-struct Card: Equatable, Hashable {
-    let suit: Suit?  // nil для джокера
-    let rank: Rank?  // nil для джокера
-    let isJoker: Bool
+///
+/// Enum с associated values — устраняет невозможные состояния
+/// (ранее suit/rank были Optional, что допускало невалидные комбинации)
+enum Card: Equatable, Hashable, Comparable {
+    case regular(suit: Suit, rank: Rank)
+    case joker
     
-    /// Создание обычной карты
-    init(suit: Suit, rank: Rank) {
-        self.suit = suit
-        self.rank = rank
-        self.isJoker = false
+    // MARK: - Совместимые computed-свойства (обратная совместимость)
+    
+    /// Масть карты (nil для джокера)
+    var suit: Suit? {
+        if case .regular(let suit, _) = self { return suit }
+        return nil
     }
     
-    /// Создание джокера
-    init(joker: Bool) {
-        self.suit = nil
-        self.rank = nil
-        self.isJoker = joker
+    /// Ранг карты (nil для джокера)
+    var rank: Rank? {
+        if case .regular(_, let rank) = self { return rank }
+        return nil
     }
     
-    /// Описание карты
+    /// Является ли карта джокером
+    var isJoker: Bool {
+        if case .joker = self { return true }
+        return false
+    }
+    
+    // MARK: - Comparable
+    
+    /// Сортировка: обычные карты по масти, затем по рангу; джокеры в конец
+    static func < (lhs: Card, rhs: Card) -> Bool {
+        switch (lhs, rhs) {
+        case (.regular(let s1, let r1), .regular(let s2, let r2)):
+            if s1 != s2 { return s1 < s2 }
+            return r1 < r2
+        case (.regular, .joker):
+            return true   // обычные карты перед джокерами
+        case (.joker, .regular):
+            return false
+        case (.joker, .joker):
+            return false
+        }
+    }
+    
+    // MARK: - Описание
+    
+    /// Краткое описание карты
     var description: String {
-        if isJoker {
+        switch self {
+        case .joker:
             return "🃏 Джокер"
+        case .regular(let suit, let rank):
+            return "\(suit.rawValue) \(rank.symbol)"
         }
-        guard let suit = suit, let rank = rank else {
-            return "Неизвестная карта"
-        }
-        return "\(suit.rawValue) \(rank.symbol)"
     }
     
     /// Полное название карты
     var fullName: String {
-        if isJoker {
+        switch self {
+        case .joker:
             return "Джокер"
+        case .regular(let suit, let rank):
+            return "\(rank.name) \(suit.name)"
         }
-        guard let suit = suit, let rank = rank else {
-            return "Неизвестная карта"
-        }
-        return "\(rank.name) \(suit.name)"
     }
     
-    /// Сравнение карт по старшинству (без учёта козыря)
+    /// Сравнение карт по старшинству в игре (с учётом козыря)
     func beats(_ other: Card, trump: Suit?) -> Bool {
         // Джокер бьёт всё
-        if self.isJoker {
-            return true
-        }
+        if self.isJoker { return true }
+        if other.isJoker { return false }
         
-        // Если другая карта - джокер, она бьёт эту
-        if other.isJoker {
-            return false
-        }
-        
-        guard let selfSuit = self.suit, let selfRank = self.rank,
-              let otherSuit = other.suit, let otherRank = other.rank else {
+        guard case .regular(let selfSuit, let selfRank) = self,
+              case .regular(let otherSuit, let otherRank) = other else {
             return false
         }
         
@@ -144,27 +176,15 @@ struct Card: Equatable, Hashable {
             let selfIsTrump = selfSuit == trump
             let otherIsTrump = otherSuit == trump
             
-            // Козырь бьёт не козырь
-            if selfIsTrump && !otherIsTrump {
-                return true
-            }
-            if !selfIsTrump && otherIsTrump {
-                return false
-            }
-            
-            // Оба козыри - сравниваем по рангу
-            if selfIsTrump && otherIsTrump {
-                return selfRank.rawValue > otherRank.rawValue
-            }
+            if selfIsTrump && !otherIsTrump { return true }
+            if !selfIsTrump && otherIsTrump { return false }
+            if selfIsTrump && otherIsTrump { return selfRank > otherRank }
         }
         
-        // Разные масти, нет козыря - карта той же масти что первая бьёт
-        if selfSuit != otherSuit {
-            return false
-        }
+        // Разные масти без козыря — первая карта побеждает
+        if selfSuit != otherSuit { return false }
         
-        // Одинаковые масти - сравниваем по рангу
-        return selfRank.rawValue > otherRank.rawValue
+        // Одинаковые масти — сравниваем по рангу
+        return selfRank > otherRank
     }
 }
-

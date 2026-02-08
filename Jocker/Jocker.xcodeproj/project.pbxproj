@@ -40,6 +40,9 @@
 		BB0000042F2800010037CA75 /* GameBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000032F2800010037CA75 /* GameBlock.swift */; };
 		BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000052F2800010037CA75 /* PlayerInfo.swift */; };
 		BB0000082F2800010037CA75 /* GameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000072F2800010037CA75 /* GameButton.swift */; };
+		CC0000012F2800010037CA75 /* GameConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000022F2800010037CA75 /* GameConstants.swift */; };
+		CC0000032F2800010037CA75 /* GameColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F2800010037CA75 /* GameColors.swift */; };
+		CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000072F2800010037CA75 /* PokerTableNode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +99,9 @@
 		BB0000032F2800010037CA75 /* GameBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlock.swift; sourceTree = "<group>"; };
 		BB0000052F2800010037CA75 /* PlayerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfo.swift; sourceTree = "<group>"; };
 		BB0000072F2800010037CA75 /* GameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameButton.swift; sourceTree = "<group>"; };
+		CC0000022F2800010037CA75 /* GameConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameConstants.swift; sourceTree = "<group>"; };
+		CC0000042F2800010037CA75 /* GameColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameColors.swift; sourceTree = "<group>"; };
+		CC0000072F2800010037CA75 /* PokerTableNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokerTableNode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +153,7 @@
 			isa = PBXGroup;
 			children = (
 				AA1000012F2800020037CA75 /* App */,
+				CC0000052F2800010037CA75 /* Core */,
 				AA1000022F2800020037CA75 /* Models */,
 				AA1000032F2800020037CA75 /* Game */,
 				AA1000062F2800020037CA75 /* Scoring */,
@@ -176,6 +183,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		CC0000052F2800010037CA75 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000042F2800010037CA75 /* GameColors.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
 		AA1000022F2800020037CA75 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -184,6 +199,7 @@
 				7E4AC97F2F269A100037CA75 /* Deck.swift */,
 				BB0000032F2800010037CA75 /* GameBlock.swift */,
 				BB0000012F2800010037CA75 /* GamePhase.swift */,
+				CC0000022F2800010037CA75 /* GameConstants.swift */,
 				7E4AC9892F269A600037CA75 /* GameState.swift */,
 				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 				AA0000012F2800010037CA75 /* RoundResult.swift */,
@@ -216,6 +232,7 @@
 				7E4AC9832F269A300037CA75 /* CardHandNode.swift */,
 				BB0000072F2800010037CA75 /* GameButton.swift */,
 				7E4AC97B2F268F000037CA75 /* PlayerNode.swift */,
+				CC0000072F2800010037CA75 /* PokerTableNode.swift */,
 				7E4AC9872F269A500037CA75 /* TrickNode.swift */,
 				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
 			);
@@ -417,6 +434,9 @@
 				BB0000042F2800010037CA75 /* GameBlock.swift in Sources */,
 				BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
 				BB0000082F2800010037CA75 /* GameButton.swift in Sources */,
+				CC0000012F2800010037CA75 /* GameConstants.swift in Sources */,
+				CC0000032F2800010037CA75 /* GameColors.swift in Sources */,
+				CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

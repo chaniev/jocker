@@ -42,9 +42,14 @@ final class ScoreTableView: UIView {
     private let headerHeight: CGFloat = 28
     private let rowHeight: CGFloat = 24
     
+    // Лейблы создаются один раз при инициализации
+    private var headerLabels: [UILabel] = []
     private var cardsLabels: [UILabel] = []
     private var tricksLabels: [[UILabel]] = []
     private var pointsLabels: [[UILabel]] = []
+    
+    /// Флаг для предотвращения повторного создания лейблов
+    private var isLabelsBuilt = false
     
     init(playerCount: Int) {
         self.playerCount = playerCount
@@ -62,7 +67,7 @@ final class ScoreTableView: UIView {
         super.layoutSubviews()
         updateColumnWidths()
         layoutScrollView()
-        rebuildLabels()
+        repositionLabels()
         updateGridLayers()
         applyScoreDataIfNeeded()
     }
@@ -71,6 +76,8 @@ final class ScoreTableView: UIView {
         self.scoreManager = scoreManager
         applyScoreDataIfNeeded()
     }
+    
+    // MARK: - Setup
     
     private func setupView() {
         backgroundColor = .white
@@ -111,44 +118,40 @@ final class ScoreTableView: UIView {
         scrollView.contentSize = contentView.bounds.size
     }
     
-    private func rebuildLabels() {
-        contentView.subviews.forEach { $0.removeFromSuperview() }
-        buildLabels()
-    }
+    // MARK: - Создание лейблов (один раз)
     
     private func buildLabels() {
+        guard !isLabelsBuilt else { return }
+        isLabelsBuilt = true
+        
         let headerFont = UIFont.systemFont(ofSize: 14, weight: .semibold)
         let cellFont = UIFont.systemFont(ofSize: 12, weight: .regular)
         let summaryFont = UIFont.systemFont(ofSize: 12, weight: .bold)
         
-        cardsLabels = []
-        tricksLabels = Array(repeating: [], count: layout.rows.count)
-        pointsLabels = Array(repeating: [], count: layout.rows.count)
-        
+        // Заголовки игроков
+        headerLabels = []
         for playerIndex in 0..<playerCount {
             let headerLabel = UILabel()
             headerLabel.text = "Игрок \(playerIndex + 1)"
             headerLabel.font = headerFont
             headerLabel.textAlignment = .center
             headerLabel.textColor = .black
-            headerLabel.frame = CGRect(
-                x: leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth),
-                y: 0,
-                width: trickColumnWidth + pointsColumnWidth,
-                height: headerHeight
-            )
             contentView.addSubview(headerLabel)
+            headerLabels.append(headerLabel)
         }
         
+        // Строки таблицы
+        cardsLabels = []
+        tricksLabels = Array(repeating: [], count: layout.rows.count)
+        pointsLabels = Array(repeating: [], count: layout.rows.count)
+        
         for (rowIndex, rowKind) in layout.rows.enumerated() {
-            let rowY = headerHeight + CGFloat(rowIndex) * rowHeight
             let isSummary = rowKind == .subtotal || rowKind == .cumulative
             
             let cardsLabel = UILabel()
             cardsLabel.font = cellFont
             cardsLabel.textAlignment = .center
             cardsLabel.textColor = .black
-            cardsLabel.frame = CGRect(x: 0, y: rowY, width: leftColumnWidth, height: rowHeight)
             if case let .deal(cards) = rowKind {
                 cardsLabel.text = "\(cards)"
             } else {
@@ -157,14 +160,11 @@ final class ScoreTableView: UIView {
             contentView.addSubview(cardsLabel)
             cardsLabels.append(cardsLabel)
             
-            for playerIndex in 0..<playerCount {
-                let baseX = leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth)
-                
+            for _ in 0..<playerCount {
                 let tricksLabel = UILabel()
                 tricksLabel.font = cellFont
                 tricksLabel.textAlignment = .center
                 tricksLabel.textColor = .black
-                tricksLabel.frame = CGRect(x: baseX, y: rowY, width: trickColumnWidth, height: rowHeight)
                 tricksLabel.text = ""
                 contentView.addSubview(tricksLabel)
                 tricksLabels[rowIndex].append(tricksLabel)
@@ -173,18 +173,47 @@ final class ScoreTableView: UIView {
                 pointsLabel.font = isSummary ? summaryFont : cellFont
                 pointsLabel.textAlignment = .right
                 pointsLabel.textColor = .black
-                pointsLabel.frame = CGRect(
-                    x: baseX + trickColumnWidth,
-                    y: rowY,
-                    width: pointsColumnWidth - 4,
-                    height: rowHeight
-                )
                 pointsLabel.text = ""
                 contentView.addSubview(pointsLabel)
                 pointsLabels[rowIndex].append(pointsLabel)
             }
         }
     }
+    
+    // MARK: - Репозиционирование лейблов (при каждом layoutSubviews)
+    
+    /// Пересчитываем frame лейблов при изменении размеров без пересоздания
+    private func repositionLabels() {
+        // Заголовки
+        for (playerIndex, headerLabel) in headerLabels.enumerated() {
+            headerLabel.frame = CGRect(
+                x: leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth),
+                y: 0,
+                width: trickColumnWidth + pointsColumnWidth,
+                height: headerHeight
+            )
+        }
+        
+        // Строки
+        for rowIndex in 0..<layout.rows.count {
+            let rowY = headerHeight + CGFloat(rowIndex) * rowHeight
+            
+            cardsLabels[rowIndex].frame = CGRect(x: 0, y: rowY, width: leftColumnWidth, height: rowHeight)
+            
+            for playerIndex in 0..<playerCount {
+                let baseX = leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth)
+                
+                tricksLabels[rowIndex][playerIndex].frame = CGRect(
+                    x: baseX, y: rowY, width: trickColumnWidth, height: rowHeight
+                )
+                pointsLabels[rowIndex][playerIndex].frame = CGRect(
+                    x: baseX + trickColumnWidth, y: rowY, width: pointsColumnWidth - 4, height: rowHeight
+                )
+            }
+        }
+    }
+    
+    // MARK: - Данные
     
     private func applyScoreDataIfNeeded() {
         guard let scoreManager = scoreManager else { return }
@@ -327,6 +356,8 @@ final class ScoreTableView: UIView {
         return scores
     }
     
+    // MARK: - Grid
+    
     private func updateGridLayers() {
         let contentWidth = contentView.bounds.width
         let contentHeight = contentView.bounds.height
@@ -400,22 +431,25 @@ final class ScoreTableView: UIView {
         pointsColumnWidth = extra / CGFloat(playerCount)
     }
     
+    // MARK: - Layout Builder
+    
     private static func buildLayout(playerCount: Int) -> Layout {
+        let maxCardsPerPlayer = GameConstants.deckSize / playerCount
         let blockDeals: [[Int]]
         
         if playerCount == 3 {
             blockDeals = [
-                Array(1...11),
-                Array(repeating: 12, count: 3),
-                Array((1...11).reversed()),
-                Array(repeating: 12, count: 3)
+                Array(1...(maxCardsPerPlayer - 1)),
+                Array(repeating: maxCardsPerPlayer, count: playerCount),
+                Array((1...(maxCardsPerPlayer - 1)).reversed()),
+                Array(repeating: maxCardsPerPlayer, count: playerCount)
             ]
         } else {
             blockDeals = [
-                Array(1...8),
-                Array(repeating: 9, count: 4),
-                Array((1...8).reversed()),
-                Array(repeating: 9, count: 4)
+                Array(1...(maxCardsPerPlayer - 1)),
+                Array(repeating: maxCardsPerPlayer, count: playerCount),
+                Array((1...(maxCardsPerPlayer - 1)).reversed()),
+                Array(repeating: maxCardsPerPlayer, count: playerCount)
             ]
         }
         

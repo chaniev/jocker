@@ -8,7 +8,7 @@
 import Foundation
 
 /// Колода карт
-class Deck {
+struct Deck {
     private(set) var cards: [Card] = []
     
     /// Создаёт стандартную колоду для игры
@@ -18,49 +18,49 @@ class Deck {
     
     /// Создание стандартной колоды из 36 карт с 2 джокерами
     /// 6♦️ и 6♣️ заменяются на джокеров
-    private func createStandardDeck() {
+    private mutating func createStandardDeck() {
         cards.removeAll()
         
         // Добавляем бубны от 6 до туза
         for rank in Rank.allCases {
             if rank == .six {
                 // 6♦️ заменяем на джокера
-                cards.append(Card(joker: true))
+                cards.append(.joker)
             } else {
-                cards.append(Card(suit: .diamonds, rank: rank))
+                cards.append(.regular(suit: .diamonds, rank: rank))
             }
         }
         
         // Добавляем черви от 6 до туза
         for rank in Rank.allCases {
-            cards.append(Card(suit: .hearts, rank: rank))
+            cards.append(.regular(suit: .hearts, rank: rank))
         }
         
         // Добавляем пики от 7 до туза (нет шестёрки)
         for rank in Rank.allCases where rank != .six {
-            cards.append(Card(suit: .spades, rank: rank))
+            cards.append(.regular(suit: .spades, rank: rank))
         }
         
         // Добавляем крести от 7 до туза (6♣️ заменяем на джокера)
-        cards.append(Card(joker: true))  // Второй джокер
+        cards.append(.joker)  // Второй джокер
         for rank in Rank.allCases where rank != .six {
-            cards.append(Card(suit: .clubs, rank: rank))
+            cards.append(.regular(suit: .clubs, rank: rank))
         }
     }
     
     /// Перемешивание колоды
-    func shuffle() {
+    mutating func shuffle() {
         cards.shuffle()
     }
     
     /// Взять верхнюю карту
-    func drawCard() -> Card? {
+    mutating func drawCard() -> Card? {
         guard !cards.isEmpty else { return nil }
         return cards.removeFirst()
     }
     
     /// Взять несколько карт
-    func drawCards(count: Int) -> [Card] {
+    mutating func drawCards(count: Int) -> [Card] {
         var drawnCards: [Card] = []
         for _ in 0..<min(count, cards.count) {
             if let card = drawCard() {
@@ -76,12 +76,12 @@ class Deck {
     }
     
     /// Вернуть карту в колоду
-    func returnCard(_ card: Card) {
+    mutating func returnCard(_ card: Card) {
         cards.append(card)
     }
     
     /// Вернуть карты в колоду
-    func returnCards(_ cards: [Card]) {
+    mutating func returnCards(_ cards: [Card]) {
         self.cards.append(contentsOf: cards)
     }
     
@@ -91,7 +91,7 @@ class Deck {
     }
     
     /// Сброс колоды и создание новой
-    func reset() {
+    mutating func reset() {
         createStandardDeck()
     }
     
@@ -100,7 +100,7 @@ class Deck {
     ///   - playerCount: количество игроков
     ///   - cardsPerPlayer: количество карт каждому игроку
     /// - Returns: массив рук для каждого игрока и козырная карта (если есть)
-    func dealCards(playerCount: Int, cardsPerPlayer: Int) -> (hands: [[Card]], trump: Card?) {
+    mutating func dealCards(playerCount: Int, cardsPerPlayer: Int) -> (hands: [[Card]], trump: Card?) {
         var hands: [[Card]] = Array(repeating: [], count: playerCount)
         
         // Раздаём карты по очереди каждому игроку
@@ -113,17 +113,8 @@ class Deck {
         }
         
         // Верхняя карта становится козырем только если остались карты в колоде
-        // Если все карты розданы, козыря нет
-        let trumpCard: Card?
-        if cards.isEmpty {
-            // Все карты розданы - козыря нет
-            trumpCard = nil
-        } else {
-            // Остались карты - верхняя карта становится козырем
-            trumpCard = peekTopCard()
-        }
+        let trumpCard: Card? = cards.isEmpty ? nil : peekTopCard()
         
         return (hands, trumpCard)
     }
 }
-

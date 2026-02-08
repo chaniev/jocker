@@ -59,13 +59,13 @@ class GameState {
         switch currentBlock {
         case .first:
             // Блок 1: 8 раздач (1, 2, 3, 4, 5, 6, 7, 8 карт)
-            totalRoundsInBlock = (36 / playerCount) - 1  // 8 для 4 игроков
+            totalRoundsInBlock = (GameConstants.deckSize / playerCount) - 1  // 8 для 4 игроков
         case .second:
             // Блок 2: 4 раздачи по 9 карт
             totalRoundsInBlock = playerCount  // 4 для 4 игроков
         case .third:
             // Блок 3: 8 раздач (8, 7, 6, 5, 4, 3, 2, 1 карта)
-            totalRoundsInBlock = (36 / playerCount) - 1  // 8 для 4 игроков
+            totalRoundsInBlock = (GameConstants.deckSize / playerCount) - 1  // 8 для 4 игроков
         case .fourth:
             // Блок 4: 4 раздачи по 9 карт
             totalRoundsInBlock = playerCount  // 4 для 4 игроков
@@ -75,8 +75,8 @@ class GameState {
     /// Начать новый раунд
     func startNewRound() {
         // Сброс данных игроков
-        for player in players {
-            player.resetForNewRound()
+        for index in players.indices {
+            players[index].resetForNewRound()
         }
         
         // Увеличиваем счетчик раундов
@@ -117,7 +117,7 @@ class GameState {
             currentCardsPerPlayer = 9
         case .third:
             // Убывающее: 8, 7, 6, 5, 4, 3, 2, 1
-            let maxCards = (36 / playerCount) - 1  // 8 для 4 игроков
+            let maxCards = (GameConstants.deckSize / playerCount) - 1  // 8 для 4 игроков
             currentCardsPerPlayer = maxCards - currentRoundInBlock
         case .fourth:
             // Фиксированное: 9 карт для всех раздач
@@ -185,22 +185,17 @@ class GameState {
         guard phase == .playing else { return }
         
         // Подсчитываем очки через единый ScoreCalculator
-        for player in players {
+        for index in players.indices {
             let roundScore = ScoreCalculator.calculateRoundScore(
                 cardsInRound: currentCardsPerPlayer,
-                bid: player.currentBid,
-                tricksTaken: player.tricksTaken,
+                bid: players[index].currentBid,
+                tricksTaken: players[index].tricksTaken,
                 isBlind: false
             )
-            player.score += roundScore
+            players[index].score += roundScore
         }
         
         phase = .roundEnd
-        
-        // Проверяем, закончился ли блок
-        if currentRoundInBlock >= totalRoundsInBlock {
-            moveToNextBlock()
-        }
     }
     
     /// Переход к следующему блоку
@@ -230,6 +225,14 @@ class GameState {
     func getScoreboard() -> [(player: PlayerInfo, rank: Int)] {
         let sorted = players.sorted(by: { $0.score > $1.score })
         return sorted.enumerated().map { (player: $1, rank: $0 + 1) }
+    }
+    
+    // MARK: - Мутация игроков (для внешних вызовов)
+    
+    /// Установить ставку игрока (из UI)
+    func setBid(_ bid: Int, forPlayerAt index: Int) {
+        guard index >= 0, index < players.count else { return }
+        players[index].currentBid = bid
     }
     
     // MARK: - Helper Methods

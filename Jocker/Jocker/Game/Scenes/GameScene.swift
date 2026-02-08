@@ -12,8 +12,7 @@ class GameScene: SKScene {
     
     var playerCount: Int = 4
     var onScoreButtonTapped: (() -> Void)?
-    private var pokerTable: SKShapeNode?
-    private var tableInner: SKShapeNode?
+    private var pokerTable: PokerTableNode?
     private var players: [PlayerNode] = []
     private var dealButton: GameButton?
     private var scoreButton: GameButton?
@@ -21,12 +20,8 @@ class GameScene: SKScene {
     // UI элементы для отображения состояния игры
     private var gameInfoLabel: SKLabelNode?
     
-    // Размеры стола (для расчёта позиций игроков)
-    private var tableWidth: CGFloat = 0
-    private var tableHeight: CGFloat = 0
-    
     // Игровые компоненты
-    private var deck: Deck!
+    private var deck = Deck()
     private var trickNode: TrickNode!
     private var trumpIndicator: TrumpIndicator!
     private var currentTrump: Suit?
@@ -35,110 +30,38 @@ class GameScene: SKScene {
     private var hasDealtAtLeastOnce = false
     
     override func didMove(to view: SKView) {
-        // Устанавливаем фон сцены - темно-синий
-        self.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
+        self.backgroundColor = GameColors.sceneBackground
         
-        // Создаём овальный зелёный стол
         setupPokerTable()
-        
-        // Размещаем игроков вокруг стола
         setupPlayers()
-        
-        // Создаём кнопку "Раздать карты"
         setupDealButton()
-        
-        // Создаём кнопку "Очки"
         setupScoreButton()
-        
-        // Создаём индикатор состояния игры
         setupGameInfoLabel()
-        
-        // Инициализируем игровые компоненты
         setupGameComponents()
     }
     
+    // MARK: - Покерный стол
+    
     private func setupPokerTable() {
-        // Размеры овального стола для горизонтальной ориентации (уменьшены для размещения имён)
-        tableWidth = self.size.width * 0.70
-        tableHeight = self.size.height * 0.70
-        let outerTableSize = CGSize(width: tableWidth, height: tableHeight)
-        let innerTableSize = CGSize(width: tableWidth * 0.92, height: tableHeight * 0.92)
+        let table = PokerTableNode(sceneSize: self.size)
+        table.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         
-        let centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        
-        // Внешний овал стола (деревянная окантовка)
-        let outerTable = SKShapeNode(ellipseOf: outerTableSize)
-        outerTable.position = centerPosition
-        outerTable.fillColor = SKColor(red: 0.4, green: 0.2, blue: 0.1, alpha: 1.0) // Коричневый цвет дерева
-        outerTable.strokeColor = SKColor(red: 0.3, green: 0.15, blue: 0.05, alpha: 1.0)
-        outerTable.lineWidth = 3
-        outerTable.zPosition = 1
-        
-        self.pokerTable = outerTable
-        self.addChild(outerTable)
-        
-        // Внутренний овал (зелёное сукно)
-        let innerTable = SKShapeNode(ellipseOf: innerTableSize)
-        innerTable.position = centerPosition
-        
-        // Красивый зелёный цвет покерного стола
-        innerTable.fillColor = SKColor(red: 0.13, green: 0.55, blue: 0.13, alpha: 1.0) // Forest Green
-        innerTable.strokeColor = SKColor(red: 0.1, green: 0.4, blue: 0.1, alpha: 1.0)
-        innerTable.lineWidth = 2
-        innerTable.zPosition = 2
-        
-        self.tableInner = innerTable
-        self.addChild(innerTable)
-        
-        // Добавляем декоративную линию по краю зелёного поля
-        let decorativeBorderSize = CGSize(width: innerTableSize.width - 10, height: innerTableSize.height - 10)
-        let decorativeBorder = SKShapeNode(ellipseOf: decorativeBorderSize)
-        decorativeBorder.position = centerPosition
-        decorativeBorder.strokeColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 0.6) // Золотистый
-        decorativeBorder.lineWidth = 1.5
-        decorativeBorder.fillColor = .clear
-        decorativeBorder.zPosition = 3
-        self.addChild(decorativeBorder)
-        
-        // Добавляем текстуру/паттерн на зелёное поле для реалистичности
-        addTableTexture(size: innerTableSize)
+        self.pokerTable = table
+        self.addChild(table)
     }
     
-    private func addTableTexture(size: CGSize) {
-        // Создаём несколько полупрозрачных кругов для имитации текстуры сукна
-        let center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        
-        // Область для текстуры ограничена овалом
-        let maxWidth = size.width * 0.35
-        let maxHeight = size.height * 0.35
-        
-        for _ in 0..<15 {
-            let x = center.x + CGFloat.random(in: -maxWidth...maxWidth)
-            let y = center.y + CGFloat.random(in: -maxHeight...maxHeight)
-            
-            let textureSpot = SKShapeNode(circleOfRadius: CGFloat.random(in: 5...15))
-            textureSpot.position = CGPoint(x: x, y: y)
-            textureSpot.fillColor = SKColor(red: 0.1, green: 0.5, blue: 0.1, alpha: 0.05)
-            textureSpot.strokeColor = .clear
-            textureSpot.zPosition = 2.5
-            textureSpot.alpha = 0.3
-            self.addChild(textureSpot)
-        }
-    }
-    
+    // MARK: - Touch Handling
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let location = touch.location(in: self)
             
-            // Проверяем, нажата ли кнопка "Очки"
-            if let button = scoreButton, button.containsPoint(location) {
+            if let button = scoreButton, button.containsTouchPoint(location) {
                 button.animateTap()
                 return
             }
             
-            // Проверяем, нажата ли кнопка "Раздать карты"
-            if let button = dealButton, button.containsPoint(location) {
+            if let button = dealButton, button.containsTouchPoint(location) {
                 button.animateTap()
                 return
             }
@@ -154,39 +77,22 @@ class GameScene: SKScene {
         // Called before each frame is rendered
     }
     
-    private func showPlayerCount() {
-        // Добавляем текст с количеством игроков для проверки
-        let label = SKLabelNode(fontNamed: "Helvetica-Bold")
-        label.text = "Игроков: \(playerCount)"
-        label.fontSize = 24
-        label.fontColor = .white
-        label.position = CGPoint(x: self.size.width / 2, y: self.size.height - 50)
-        label.zPosition = 100
-        self.addChild(label)
-    }
-    
     // MARK: - Настройка игроков
     
     private func setupPlayers() {
         let center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         
-        // Радиусы овала для позиционирования игроков (снаружи стола)
-        let radiusX = tableWidth / 2 + 80
-        let radiusY = tableHeight / 2 + 80
+        guard let table = pokerTable else { return }
+        let radiusX = table.tableWidth / 2 + 80
+        let radiusY = table.tableHeight / 2 + 80
         
-        // Аватары для игроков (эмодзи людей)
         let avatars = ["👨‍💼", "👩‍💼", "🧔", "👨‍🦰", "👩‍🦱"]
         
         for i in 0..<playerCount {
-            // Расчёт угла для равномерного распределения
-            // Начинаем с нижней части стола и идём по часовой стрелке
             let angle = -CGFloat(i) * (2.0 * .pi / CGFloat(playerCount)) - (.pi / 2)
-            
-            // Вычисляем позицию на овале
             let x = center.x + radiusX * cos(angle)
             let y = center.y + radiusY * sin(angle)
             
-            // Создаём игрока
             let playerNode = PlayerNode(
                 playerNumber: i + 1,
                 avatar: avatars[i % avatars.count],
@@ -203,11 +109,10 @@ class GameScene: SKScene {
     // MARK: - Информация об игре
     
     private func setupGameInfoLabel() {
-        // Создаём лейбл для отображения информации об игре
         let infoLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         infoLabel.text = "Ожидание раздачи"
         infoLabel.fontSize = 24
-        infoLabel.fontColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        infoLabel.fontColor = GameColors.gold
         infoLabel.horizontalAlignmentMode = .center
         infoLabel.verticalAlignmentMode = .center
         infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - 50)
@@ -277,129 +182,119 @@ class GameScene: SKScene {
     // MARK: - Игровые компоненты
     
     private func setupGameComponents() {
-        // Колода
-        deck = Deck()
-        
-        // Игровое состояние
         gameState = GameState(playerCount: playerCount)
         gameState.startGame()
         
-        // Менеджер очков
         scoreManager = ScoreManager(gameState: gameState)
         
-        // Узел для текущей взятки
         trickNode = TrickNode()
         trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         trickNode.zPosition = 50
         addChild(trickNode)
         
-        // Индикатор козыря
         trumpIndicator = TrumpIndicator()
-        // Позиционируем в правом нижнем углу с отступом, чтобы карта полностью помещалась
-        // Высота индикатора ~180, ширина ~140, добавляем небольшой отступ от краев
         trumpIndicator.position = CGPoint(x: self.size.width - 90, y: 120)
         trumpIndicator.zPosition = 100
         addChild(trumpIndicator)
     }
     
+    // MARK: - Раздача карт (SKAction-based анимация)
+    
     private func dealCards() {
         recordCurrentRoundIfNeeded()
-        print("Раздача карт...")
-        print("Блок: \(gameState.currentBlock.rawValue), Раунд: \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)")
-        print("Карт на игрока: \(gameState.currentCardsPerPlayer)")
         
-        // Обновляем информацию об игре
         updateGameInfoLabel()
         
         // Сбрасываем колоду и перемешиваем
         deck.reset()
         deck.shuffle()
         
-        // Очищаем руки игроков
+        // Очищаем руки игроков и взятку
         for player in players {
             player.hand.removeAllCards(animated: true)
             player.resetForNewRound()
         }
+        trickNode.clearTrick(
+            toPosition: CGPoint(x: self.size.width / 2, y: self.size.height / 2),
+            animated: false
+        )
         
-        // Очищаем взятку
-        trickNode.clearTrick(toPosition: CGPoint(x: self.size.width / 2, y: self.size.height / 2), animated: false)
-        
-        // Получаем количество карт из состояния игры
         let cardsPerPlayer = gameState.currentCardsPerPlayer
         let dealResult = deck.dealCards(playerCount: playerCount, cardsPerPlayer: cardsPerPlayer)
         
-        // Раздаём карты игрокам с анимацией
+        // Строим цепочку анимаций через SKAction
+        var actions: [SKAction] = []
+        
+        // 1. Раздаём карты каждому игроку с задержкой
         for (index, player) in players.enumerated() {
             let cards = dealResult.hands[index]
-            
-            // Задержка для последовательной раздачи
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.3) {
-                player.hand.addCards(cards, animated: true)
-                
-                // Сортируем карты через 1 секунду после раздачи
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    player.hand.sortCardsStandard(animated: true)
-                }
+            let delay = SKAction.wait(forDuration: Double(index) * 0.3)
+            let deal = SKAction.run { [weak player] in
+                player?.hand.addCards(cards, animated: true)
             }
+            actions.append(SKAction.sequence([delay, deal]))
         }
         
-        // Показываем козырь (если есть)
-        if let trumpCard = dealResult.trump {
-            // Есть козырная карта
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 0.5) { [weak self] in
-                self?.trumpIndicator.setTrumpCard(trumpCard, animated: true)
-                
-                // Устанавливаем козырь (если это не джокер)
-                if !trumpCard.isJoker, let suit = trumpCard.suit {
-                    self?.currentTrump = suit
+        // 2. Сортируем карты через 1 секунду после последней раздачи
+        let sortDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 1.0)
+        let sortAction = SKAction.run { [weak self] in
+            self?.players.forEach { $0.hand.sortCardsStandard(animated: true) }
+        }
+        actions.append(SKAction.sequence([sortDelay, sortAction]))
+        
+        // 3. Показываем козырь
+        let trumpDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 0.5)
+        let trumpAction = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            if let trumpCard = dealResult.trump {
+                self.trumpIndicator.setTrumpCard(trumpCard, animated: true)
+                if case .regular(let suit, _) = trumpCard {
+                    self.currentTrump = suit
                 } else {
-                    self?.currentTrump = nil
+                    self.currentTrump = nil
                 }
-            }
-        } else {
-            // Нет козырной карты (все карты розданы)
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 0.5) { [weak self] in
-                self?.trumpIndicator.setTrumpCard(nil, animated: true)
-                self?.currentTrump = nil
+            } else {
+                self.trumpIndicator.setTrumpCard(nil, animated: true)
+                self.currentTrump = nil
             }
         }
+        actions.append(SKAction.sequence([trumpDelay, trumpAction]))
         
-        // Демонстрация: устанавливаем ставки для игроков
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 2.0) { [weak self] in
+        // 4. Демонстрация: устанавливаем ставки
+        let bidDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 2.0)
+        let bidAction = SKAction.run { [weak self] in
             guard let self = self else { return }
             for (index, player) in self.players.enumerated() {
-                let bid = (index % max(1, cardsPerPlayer)) + 1  // Случайные ставки для демонстрации
+                let bid = (index % max(1, cardsPerPlayer)) + 1
                 player.setBid(bid, animated: true)
-                self.gameState.players[index].currentBid = bid
+                self.gameState.setBid(bid, forPlayerAt: index)
             }
         }
+        actions.append(SKAction.sequence([bidDelay, bidAction]))
         
-        // Демонстрация: выделяем первого игрока
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(playerCount) * 0.3 + 3.0) { [weak self] in
+        // 5. Демонстрация: выделяем первого игрока
+        let highlightDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 3.0)
+        let highlightAction = SKAction.run { [weak self] in
             self?.players.first?.highlight(true)
         }
+        actions.append(SKAction.sequence([highlightDelay, highlightAction]))
         
-        // Подготавливаем следующий раунд для следующей раздачи
-        // Проверяем, не закончились ли раунды в текущем блоке
+        // Запускаем все действия параллельно (каждое со своей задержкой)
+        run(SKAction.group(actions), withKey: "dealSequence")
+        
+        // Подготавливаем следующий раунд
         if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
-            print("Блок \(gameState.currentBlock.rawValue) завершен!")
-            
-            // Переходим к следующему блоку
             let currentBlockNumber = gameState.currentBlock.rawValue
-            if currentBlockNumber < 4 {
-                // Вызываем метод перехода к следующему блоку
-                // Это будет сделано в startNewRound, но мы должны сбросить currentRoundInBlock
-                print("Переход к блоку \(currentBlockNumber + 1)")
-            } else {
-                print("Игра завершена!")
+            if currentBlockNumber >= GameConstants.totalBlocks {
                 return
             }
         }
         
-        // Переходим к следующему раунду
         gameState.startNewRound()
         hasDealtAtLeastOnce = true
     }
+    
+    // MARK: - Логика раунда
     
     private func recordCurrentRoundIfNeeded() {
         guard hasDealtAtLeastOnce, let scoreManager = scoreManager else { return }
@@ -463,4 +358,3 @@ class GameScene: SKScene {
         return scoreManager.currentBlockRoundResults.map { $0.count }.min() ?? 0
     }
 }
-

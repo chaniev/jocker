@@ -230,30 +230,9 @@ class CardHandNode: SKNode {
         arrangeCards(animated: animated)
     }
     
-    /// Стандартная сортировка (по масти и рангу)
+    /// Стандартная сортировка (по масти и рангу, джокеры в конец)
     func sortCardsStandard(animated: Bool = true) {
-        sortCards(by: { card1, card2 in
-            // Джокеры в конец
-            if card1.isJoker && !card2.isJoker { return false }
-            if !card1.isJoker && card2.isJoker { return true }
-            if card1.isJoker && card2.isJoker { return true }
-            
-            guard let suit1 = card1.suit, let suit2 = card2.suit,
-                  let rank1 = card1.rank, let rank2 = card2.rank else {
-                return false
-            }
-            
-            // Сортируем по масти, потом по рангу
-            if suit1 != suit2 {
-                // Порядок мастей: бубны, черви, пики, крести
-                let suitOrder: [Suit] = [.diamonds, .hearts, .spades, .clubs]
-                let index1 = suitOrder.firstIndex(of: suit1) ?? 0
-                let index2 = suitOrder.firstIndex(of: suit2) ?? 0
-                return index1 < index2
-            }
-            
-            return rank1.rawValue < rank2.rawValue
-        }, animated: animated)
+        sortCards(by: { $0 < $1 }, animated: animated)
     }
 }
 

@@ -62,7 +62,7 @@ class CardNode: SKNode {
         // Создаём рамку карты (толщина уменьшена на 20%)
         cardBorder = SKShapeNode(rect: rect, cornerRadius: CardNode.cornerRadius)
         cardBorder.fillColor = .clear
-        cardBorder.strokeColor = SKColor(white: 0.3, alpha: 1.0)
+        cardBorder.strokeColor = GameColors.cardBorder
         cardBorder.lineWidth = 4.8
         cardBorder.zPosition = 1
         addChild(cardBorder)
@@ -93,11 +93,9 @@ class CardNode: SKNode {
     }
     
     private func setupRegularCardVisuals() {
-        guard let suit = card.suit, let rank = card.rank else { return }
+        guard case .regular(let suit, let rank) = card else { return }
         
-        let color: SKColor = suit.color == .red ?
-            SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0) :
-            SKColor(white: 0.1, alpha: 1.0)
+        let color: SKColor = suit.color == .red ? GameColors.cardRed : GameColors.cardBlack
         
         // Верхний левый угол - ранг (уменьшено на 20%)
         rankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
@@ -177,7 +175,7 @@ class CardNode: SKNode {
         let textLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         textLabel.text = "JOKER"
         textLabel.fontSize = 33.6
-        textLabel.fontColor = SKColor(red: 0.5, green: 0.0, blue: 0.5, alpha: 1.0)
+        textLabel.fontColor = GameColors.jokerText
         textLabel.horizontalAlignmentMode = .center
         textLabel.verticalAlignmentMode = .center
         textLabel.position = CGPoint(x: 0, y: -84)
@@ -185,7 +183,7 @@ class CardNode: SKNode {
         addChild(textLabel)
         
         // Градиентный фон для джокера
-        cardBackground.fillColor = SKColor(red: 1.0, green: 0.95, blue: 0.8, alpha: 1.0)
+        cardBackground.fillColor = GameColors.jokerBackground
     }
     
     private func setupBackVisuals() {
@@ -194,7 +192,7 @@ class CardNode: SKNode {
         backPattern.zPosition = 2
         
         // Фон рубашки - синий с узором
-        cardBackground.fillColor = SKColor(red: 0.1, green: 0.2, blue: 0.6, alpha: 1.0)
+        cardBackground.fillColor = GameColors.cardBack
         
         // Внутренний прямоугольник (отступы уменьшены на 20%)
         let innerRect = CGRect(
@@ -300,7 +298,7 @@ class CardNode: SKNode {
             cardBorder.run(SKAction.repeatForever(pulse), withKey: "highlight")
         } else {
             cardBorder.removeAction(forKey: "highlight")
-            cardBorder.strokeColor = SKColor(white: 0.3, alpha: 1.0)
+            cardBorder.strokeColor = GameColors.cardBorder
             cardBorder.lineWidth = 2
             cardBorder.alpha = 1.0
         }

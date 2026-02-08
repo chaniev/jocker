@@ -10,6 +10,8 @@ This spec describes the source folder grouping applied to the iOS project and ho
 Jocker/Jocker/
 ├── App/
 │   └── AppDelegate.swift
+├── Core/
+│   └── GameColors.swift
 ├── Game/
 │   ├── Scenes/
 │   │   ├── GameScene.swift
@@ -19,6 +21,7 @@ Jocker/Jocker/
 │       ├── CardHandNode.swift
 │       ├── GameButton.swift
 │       ├── PlayerNode.swift
+│       ├── PokerTableNode.swift
 │       ├── TrickNode.swift
 │       └── TrumpIndicator.swift
 ├── Models/
@@ -26,6 +29,7 @@ Jocker/Jocker/
 │   ├── Card.swift
 │   ├── Deck.swift
 │   ├── GameBlock.swift
+│   ├── GameConstants.swift
 │   ├── GamePhase.swift
 │   ├── GameState.swift
 │   ├── PlayerInfo.swift
@@ -51,18 +55,21 @@ Jocker/Jocker/
 
 ```
 AppDelegate.swift -> App/AppDelegate.swift
+GameColors.swift -> Core/GameColors.swift
 GameScene.swift -> Game/Scenes/GameScene.swift
 CardDemoScene.swift -> Game/Scenes/CardDemoScene.swift
 CardNode.swift -> Game/Nodes/CardNode.swift
 CardHandNode.swift -> Game/Nodes/CardHandNode.swift
 GameButton.swift -> Game/Nodes/GameButton.swift
 PlayerNode.swift -> Game/Nodes/PlayerNode.swift
+PokerTableNode.swift -> Game/Nodes/PokerTableNode.swift
 TrickNode.swift -> Game/Nodes/TrickNode.swift
 TrumpIndicator.swift -> Game/Nodes/TrumpIndicator.swift
 BlockResult.swift -> Models/BlockResult.swift
 Card.swift -> Models/Card.swift
 Deck.swift -> Models/Deck.swift
 GameBlock.swift -> Models/GameBlock.swift
+GameConstants.swift -> Models/GameConstants.swift
 GamePhase.swift -> Models/GamePhase.swift
 GameState.swift -> Models/GameState.swift
 PlayerInfo.swift -> Models/PlayerInfo.swift
@@ -79,7 +86,7 @@ GameScene.sks -> Resources/GameScene.sks
 
 ## Xcode Project Updates
 
-- Added groups: App, Models, Game/Scenes, Game/Nodes, Scoring, ViewControllers, Resources.
+- Added groups: App, Core, Models, Game/Scenes, Game/Nodes, Scoring, ViewControllers, Resources.
 - File references updated by group placement (relative paths).
 
 ## Unit Tests
@@ -103,6 +110,6 @@ GameScene.sks -> Resources/GameScene.sks
 - New domain models go in `Models/`.
 - New SpriteKit scenes go in `Game/Scenes/`.
 - New SpriteKit nodes go in `Game/Nodes/`.
+- Core utilities (colors, constants, extensions) go in `Core/`.
 - View controllers go in `ViewControllers/`.
 - Scoring logic stays in `Scoring/`.
-

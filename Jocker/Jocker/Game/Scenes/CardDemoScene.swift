@@ -11,7 +11,7 @@ import SpriteKit
 class CardDemoScene: SKScene {
     
     override func didMove(to view: SKView) {
-        backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
+        backgroundColor = GameColors.sceneBackground
         
         setupDemo()
     }
@@ -38,9 +38,7 @@ class CardDemoScene: SKScene {
             let suitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
             suitLabel.text = suitName
             suitLabel.fontSize = 20
-            suitLabel.fontColor = suit.color == .red ?
-                SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0) :
-                SKColor(white: 0.9, alpha: 1.0)
+            suitLabel.fontColor = suit.color == .red ? GameColors.cardRed : SKColor(white: 0.9, alpha: 1.0)
             suitLabel.horizontalAlignmentMode = .left
             suitLabel.position = CGPoint(x: 30, y: yPosition)
             addChild(suitLabel)
@@ -53,7 +51,7 @@ class CardDemoScene: SKScene {
             let allRanks: [Rank] = Rank.allCases.filter { $0.rawValue >= startRank.rawValue }
             
             for rank in allRanks {
-                let card = Card(suit: suit, rank: rank)
+                let card = Card.regular(suit: suit, rank: rank)
                 let cardNode = CardNode(card: card, faceUp: true)
                 cardNode.position = CGPoint(x: xPosition, y: yPosition - 60)
                 cardNode.setScale(0.8)
@@ -69,7 +67,7 @@ class CardDemoScene: SKScene {
         let jokerLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         jokerLabel.text = "Джокеры"
         jokerLabel.fontSize = 20
-        jokerLabel.fontColor = SKColor(red: 0.5, green: 0.0, blue: 0.5, alpha: 1.0)
+        jokerLabel.fontColor = GameColors.jokerText
         jokerLabel.horizontalAlignmentMode = .left
         jokerLabel.position = CGPoint(x: 30, y: yPosition)
         addChild(jokerLabel)
@@ -78,7 +76,7 @@ class CardDemoScene: SKScene {
         
         // Два джокера
         for i in 0..<2 {
-            let joker = Card(joker: true)
+            let joker = Card.joker
             let jokerNode = CardNode(card: joker, faceUp: true)
             jokerNode.position = CGPoint(x: 50 + CGFloat(i) * 100, y: yPosition - 60)
             jokerNode.setScale(0.8)
@@ -98,14 +96,14 @@ class CardDemoScene: SKScene {
         
         yPosition -= 30
         
-        let backCard = Card(suit: .diamonds, rank: .ace)
+        let backCard = Card.regular(suit: .diamonds, rank: .ace)
         let backNode = CardNode(card: backCard, faceUp: false)
         backNode.position = CGPoint(x: 90, y: yPosition - 60)
         backNode.setScale(0.8)
         addChild(backNode)
         
         // Анимация переворота
-        let flipCard = Card(suit: .hearts, rank: .king)
+        let flipCard = Card.regular(suit: .hearts, rank: .king)
         let flipNode = CardNode(card: flipCard, faceUp: false)
         flipNode.position = CGPoint(x: 200, y: yPosition - 60)
         flipNode.setScale(0.8)
@@ -120,7 +118,7 @@ class CardDemoScene: SKScene {
         flipNode.run(SKAction.repeatForever(sequence))
         
         // Подсвеченная карта
-        let highlightCard = Card(suit: .spades, rank: .ace)
+        let highlightCard = Card.regular(suit: .spades, rank: .ace)
         let highlightNode = CardNode(card: highlightCard, faceUp: true)
         highlightNode.position = CGPoint(x: 310, y: yPosition - 60)
         highlightNode.setScale(0.8)
@@ -164,7 +162,7 @@ class CardDemoScene: SKScene {
         let instruction = SKLabelNode(fontNamed: "Helvetica")
         instruction.text = "Нажмите в любом месте, чтобы вернуться"
         instruction.fontSize = 18
-        instruction.fontColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        instruction.fontColor = GameColors.gold
         instruction.position = CGPoint(x: size.width / 2, y: 30)
         addChild(instruction)
         

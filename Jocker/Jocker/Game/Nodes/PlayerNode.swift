@@ -47,8 +47,8 @@ class PlayerNode: SKNode {
     private func setupVisuals(angle: CGFloat) {
         // Фоновый круг для аватара (увеличен в два раза)
         backgroundCircle = SKShapeNode(circleOfRadius: 90)
-        backgroundCircle.fillColor = SKColor(red: 0.2, green: 0.2, blue: 0.25, alpha: 0.9)
-        backgroundCircle.strokeColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        backgroundCircle.fillColor = GameColors.playerBackground
+        backgroundCircle.strokeColor = GameColors.gold
         backgroundCircle.lineWidth = 3
         backgroundCircle.zPosition = 0
         addChild(backgroundCircle)
@@ -123,7 +123,7 @@ class PlayerNode: SKNode {
         // Индикатор ставки
         bidLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         bidLabel.fontSize = 20
-        bidLabel.fontColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        bidLabel.fontColor = GameColors.gold
         bidLabel.horizontalAlignmentMode = .center
         bidLabel.verticalAlignmentMode = .center
         bidLabel.position = CGPoint(x: 0, y: -120)
@@ -217,9 +217,9 @@ class PlayerNode: SKNode {
         
         // Изменить цвет в зависимости от выполнения ставки
         if tricksTaken > bid {
-            trickCountLabel.fontColor = SKColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 1.0)  // Оранжевый
+            trickCountLabel.fontColor = GameColors.statusOrange
         } else if tricksTaken == bid {
-            trickCountLabel.fontColor = SKColor(red: 0.2, green: 0.8, blue: 0.2, alpha: 1.0)  // Зелёный
+            trickCountLabel.fontColor = GameColors.statusGreen
         } else {
             trickCountLabel.fontColor = .white
         }
@@ -235,7 +235,7 @@ class PlayerNode: SKNode {
     /// Подсветить игрока (когда его ход)
     func highlight(_ enabled: Bool) {
         if enabled {
-            backgroundCircle.strokeColor = SKColor(red: 0.2, green: 0.8, blue: 0.2, alpha: 1.0)
+            backgroundCircle.strokeColor = GameColors.statusGreen
             backgroundCircle.lineWidth = 5
             
             let pulse = SKAction.sequence([
@@ -245,7 +245,7 @@ class PlayerNode: SKNode {
             backgroundCircle.run(SKAction.repeatForever(pulse), withKey: "highlight")
         } else {
             backgroundCircle.removeAction(forKey: "highlight")
-            backgroundCircle.strokeColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+            backgroundCircle.strokeColor = GameColors.gold
             backgroundCircle.lineWidth = 3
             backgroundCircle.setScale(1.0)
         }

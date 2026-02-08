@@ -35,8 +35,8 @@ class GameButton: SKNode {
     init(
         title: String,
         size: CGSize = CGSize(width: 360, height: 100),
-        fillColor: SKColor = SKColor(red: 0.85, green: 0.2, blue: 0.2, alpha: 1.0),
-        strokeColor: SKColor = SKColor(red: 0.65, green: 0.1, blue: 0.1, alpha: 1.0)
+        fillColor: SKColor = GameColors.buttonFill,
+        strokeColor: SKColor = GameColors.buttonStroke
     ) {
         self.buttonSize = size
         
@@ -114,7 +114,7 @@ class GameButton: SKNode {
     }
     
     /// Проверить, содержит ли кнопка указанную точку (в координатах родителя)
-    func containsPoint(_ point: CGPoint) -> Bool {
+    func containsTouchPoint(_ point: CGPoint) -> Bool {
         let localPoint = convert(point, from: parent ?? self)
         return backgroundNode.contains(localPoint)
     }

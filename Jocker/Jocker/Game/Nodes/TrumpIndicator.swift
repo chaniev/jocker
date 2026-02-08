@@ -35,8 +35,8 @@ class TrumpIndicator: SKNode {
         
         let rect = CGRect(x: -width/2, y: -height/2, width: width, height: height)
         backgroundNode = SKShapeNode(rect: rect, cornerRadius: 12)
-        backgroundNode?.fillColor = SKColor(white: 0.2, alpha: 0.8)
-        backgroundNode?.strokeColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        backgroundNode?.fillColor = GameColors.trumpBackground
+        backgroundNode?.strokeColor = GameColors.gold
         backgroundNode?.lineWidth = 2
         backgroundNode?.zPosition = 0
         addChild(backgroundNode!)
@@ -45,7 +45,7 @@ class TrumpIndicator: SKNode {
         labelNode = SKLabelNode(fontNamed: "Helvetica-Bold")
         labelNode?.text = "Козырь"
         labelNode?.fontSize = 16
-        labelNode?.fontColor = SKColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0)
+        labelNode?.fontColor = GameColors.gold
         labelNode?.horizontalAlignmentMode = .center
         labelNode?.verticalAlignmentMode = .center
         labelNode?.position = CGPoint(x: 0, y: 60)
