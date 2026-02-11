@@ -30,8 +30,8 @@ class TrumpIndicator: SKNode {
     
     private func setupBackground() {
         // Фон для индикатора
-        let width: CGFloat = 140
-        let height: CGFloat = 180
+        let width: CGFloat = 180
+        let height: CGFloat = 230
         
         let rect = CGRect(x: -width/2, y: -height/2, width: width, height: height)
         backgroundNode = SKShapeNode(rect: rect, cornerRadius: 12)
@@ -44,11 +44,11 @@ class TrumpIndicator: SKNode {
         // Надпись "Козырь"
         labelNode = SKLabelNode(fontNamed: "Helvetica-Bold")
         labelNode?.text = "Козырь"
-        labelNode?.fontSize = 16
+        labelNode?.fontSize = 18
         labelNode?.fontColor = GameColors.gold
         labelNode?.horizontalAlignmentMode = .center
         labelNode?.verticalAlignmentMode = .center
-        labelNode?.position = CGPoint(x: 0, y: 60)
+        labelNode?.position = CGPoint(x: 0, y: 86)
         labelNode?.zPosition = 1
         addChild(labelNode!)
     }
@@ -78,17 +78,19 @@ class TrumpIndicator: SKNode {
         }
         
         // Создаём новую карту
+        let targetScale: CGFloat = 0.52
         let newCardNode = CardNode(card: card, faceUp: true)
-        newCardNode.position = CGPoint(x: 0, y: -10)
+        newCardNode.position = CGPoint(x: 0, y: -24)
+        newCardNode.setScale(targetScale)
         newCardNode.zPosition = 2
         
         if animated {
             newCardNode.alpha = 0
-            newCardNode.setScale(0.5)
+            newCardNode.setScale(0.4)
             addChild(newCardNode)
             
             let fadeIn = SKAction.fadeIn(withDuration: 0.3)
-            let scale = SKAction.scale(to: 1.0, duration: 0.3)
+            let scale = SKAction.scale(to: targetScale, duration: 0.3)
             newCardNode.run(SKAction.group([fadeIn, scale]))
         } else {
             addChild(newCardNode)
@@ -120,4 +122,3 @@ class TrumpIndicator: SKNode {
         }
     }
 }
-

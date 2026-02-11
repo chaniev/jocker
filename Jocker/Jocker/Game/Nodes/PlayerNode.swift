@@ -12,6 +12,7 @@ class PlayerNode: SKNode {
     let playerNumber: Int
     let avatar: String
     let totalPlayers: Int
+    let isLocalPlayer: Bool
     
     private var avatarNode: SKLabelNode!
     private var nameLabel: SKLabelNode!
@@ -26,82 +27,72 @@ class PlayerNode: SKNode {
     private(set) var bid: Int = 0
     private(set) var tricksTaken: Int = 0
     
-    init(playerNumber: Int, avatar: String, position: CGPoint, angle: CGFloat, totalPlayers: Int) {
+    init(
+        playerNumber: Int,
+        avatar: String,
+        position: CGPoint,
+        seatDirection: CGVector,
+        isLocalPlayer: Bool,
+        totalPlayers: Int
+    ) {
         self.playerNumber = playerNumber
         self.avatar = avatar
         self.totalPlayers = totalPlayers
+        self.isLocalPlayer = isLocalPlayer
         
         super.init()
         
         self.position = position
         self.zPosition = 10
         
-        setupVisuals(angle: angle)
-        setupCardHand(angle: angle)
+        setupVisuals(seatDirection: seatDirection)
+        setupCardHand(seatDirection: seatDirection)
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupVisuals(angle: CGFloat) {
-        // Фоновый круг для аватара (увеличен в два раза)
-        backgroundCircle = SKShapeNode(circleOfRadius: 90)
+    private func setupVisuals(seatDirection: CGVector) {
+        let avatarRadius: CGFloat = 58
+        let isSideSeat = abs(seatDirection.dx) > abs(seatDirection.dy)
+        
+        // Фоновый круг для аватара
+        backgroundCircle = SKShapeNode(circleOfRadius: avatarRadius)
         backgroundCircle.fillColor = GameColors.playerBackground
         backgroundCircle.strokeColor = GameColors.gold
         backgroundCircle.lineWidth = 3
         backgroundCircle.zPosition = 0
         addChild(backgroundCircle)
         
-        // Аватар (эмодзи) - увеличен в два раза
+        // Аватар (эмодзи)
         avatarNode = SKLabelNode(text: avatar)
-        avatarNode.fontSize = 100
+        avatarNode.fontSize = 64
         avatarNode.verticalAlignmentMode = .center
         avatarNode.horizontalAlignmentMode = .center
         avatarNode.zPosition = 1
         addChild(avatarNode)
         
-        // Имя игрока - позиционируем в зависимости от номера игрока
+        // Имя игрока
         nameLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         nameLabel.text = "Игрок \(playerNumber)"
-        nameLabel.fontSize = 54
+        nameLabel.fontSize = 40
         nameLabel.fontColor = .white
         nameLabel.verticalAlignmentMode = .center
         nameLabel.horizontalAlignmentMode = .center
         nameLabel.zPosition = 1
         
-        // Для игроков 1 и 3 имя справа, для остальных - адаптивно по углу
-        // Также для игрока 2 при 3 игроках имя справа
-        // При 4 игроках игроки 2 и 4 имеют имена под аватаром
-        if playerNumber == 1 || playerNumber == 3 || (playerNumber == 2 && totalPlayers == 3) {
-            // Имя справа от аватара
-            nameLabel.position = CGPoint(x: 180, y: 0)
-        } else if (playerNumber == 2 || playerNumber == 4) && totalPlayers == 4 {
-            // Имя под аватаром для игроков 2 и 4 при 4 игроках
-            nameLabel.position = CGPoint(x: 0, y: -120)
+        // Текст ставим снаружи от стола, чтобы не пересекался с рукой
+        if isSideSeat {
+            nameLabel.position = CGPoint(x: 0, y: -88)
         } else {
-            // Определяем позицию имени в зависимости от угла игрока
-            let normalizedAngle = angle.truncatingRemainder(dividingBy: 2 * .pi)
-            
-            if normalizedAngle >= -.pi/4 && normalizedAngle < .pi/4 {
-                // Игрок снизу - имя сверху аватара
-                nameLabel.position = CGPoint(x: 0, y: 70)
-            } else if normalizedAngle >= .pi/4 && normalizedAngle < 3 * .pi/4 {
-                // Игрок справа - имя слева от аватара
-                nameLabel.position = CGPoint(x: -120, y: 0)
-            } else if normalizedAngle >= 3 * .pi/4 || normalizedAngle < -3 * .pi/4 {
-                // Игрок сверху - имя снизу аватара
-                nameLabel.position = CGPoint(x: 0, y: -70)
-            } else {
-                // Игрок слева - имя справа от аватара
-                nameLabel.position = CGPoint(x: 120, y: 0)
-            }
+            nameLabel.position = CGPoint(x: 118, y: 0)
         }
         
         addChild(nameLabel)
         
-        // Добавляем небольшую тень для лучшей видимости (увеличена в два раза)
-        let shadow = SKShapeNode(circleOfRadius: 90)
+        // Добавляем небольшую тень для лучшей видимости
+        let shadow = SKShapeNode(circleOfRadius: avatarRadius)
         shadow.fillColor = .black
         shadow.strokeColor = .clear
         shadow.alpha = 0.3
@@ -111,65 +102,59 @@ class PlayerNode: SKNode {
         
         // Счётчик взяток
         trickCountLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        trickCountLabel.fontSize = 24
+        trickCountLabel.fontSize = 20
         trickCountLabel.fontColor = .white
         trickCountLabel.horizontalAlignmentMode = .center
         trickCountLabel.verticalAlignmentMode = .center
-        trickCountLabel.position = CGPoint(x: 0, y: -150)
+        trickCountLabel.position = isSideSeat ? CGPoint(x: 0, y: -118) : CGPoint(x: 118, y: -40)
         trickCountLabel.zPosition = 3
         trickCountLabel.text = "0/0"
         addChild(trickCountLabel)
         
         // Индикатор ставки
         bidLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        bidLabel.fontSize = 20
+        bidLabel.fontSize = 18
         bidLabel.fontColor = GameColors.gold
         bidLabel.horizontalAlignmentMode = .center
         bidLabel.verticalAlignmentMode = .center
-        bidLabel.position = CGPoint(x: 0, y: -120)
+        bidLabel.position = isSideSeat ? CGPoint(x: 0, y: -90) : CGPoint(x: 118, y: -68)
         bidLabel.zPosition = 3
         bidLabel.text = ""
         bidLabel.isHidden = true
         addChild(bidLabel)
     }
     
-    private func setupCardHand(angle: CGFloat) {
+    private func setupCardHand(seatDirection: CGVector) {
         hand = CardHandNode()
         
-        // Только игрок 1 видит свои карты лицом, остальные показываются рубашкой
-        hand.isFaceUp = (playerNumber == 1)
+        // Только локальный игрок видит свои карты лицом
+        hand.isFaceUp = isLocalPlayer
         
-        // Специальная обработка для Игрока 1 (внизу экрана)
-        if playerNumber == 1 {
-            // Карты располагаются горизонтально над игроком (как в покере)
-            hand.handPosition = CGPoint(x: 0, y: 200)  // Подняли выше
-            hand.arcAngle = 0.25  // Уменьшенный угол для более плоского веера
-            hand.cardSpacing = 35   // Сильно уменьшено для перекрывания как в покере
-            hand.cardOverlapRatio = 0.35  // Карты перекрываются на 65%
-            hand.isVertical = false  // Горизонтальное расположение
-        } else if playerNumber == 3 && totalPlayers == 4 {
-            // Для Игрока 3 (сверху) - карты под ним, на том же расстоянии что и у Игрока 1
-            hand.handPosition = CGPoint(x: 0, y: -200)  // Под игроком (отрицательное значение)
-            hand.arcAngle = 0.25  // Уменьшенный угол для более плоского веера
-            hand.cardSpacing = 35   // Сильно уменьшено для перекрывания как в покере
-            hand.cardOverlapRatio = 0.35  // Карты перекрываются на 65%
-            hand.isVertical = false  // Горизонтальное расположение
+        // Рука всегда располагается в сторону центра стола
+        let toCenter = CGVector(dx: -seatDirection.dx, dy: -seatDirection.dy)
+        let handDistance: CGFloat = isLocalPlayer ? 180 : 165
+        hand.handPosition = CGPoint(
+            x: toCenter.dx * handDistance,
+            y: toCenter.dy * handDistance
+        )
+        
+        hand.arcAngle = isLocalPlayer ? 0.34 : 0.26
+        hand.cardSpacing = isLocalPlayer ? 62 : 46
+        hand.cardOverlapRatio = isLocalPlayer ? 0.58 : 0.68
+        
+        // На боковых местах карты размещаются вертикально
+        let isSideSeat = abs(seatDirection.dx) > abs(seatDirection.dy)
+        hand.isVertical = isSideSeat
+        
+        if isSideSeat {
+            // Разворачиваем карты боковых игроков в сторону центра
+            hand.orientationRotation = seatDirection.dx < 0 ? -.pi / 2 : .pi / 2
         } else {
-            // Позиция руки относительно игрока для остальных игроков
-            let handDistance: CGFloat = 150
-            let handX = handDistance * cos(angle)
-            let handY = handDistance * sin(angle)
-            
-            hand.handPosition = CGPoint(x: handX, y: handY)
-            hand.arcAngle = 0.25  // Уменьшенный угол для более плоского веера
-            hand.cardSpacing = 35   // Сильно уменьшено для перекрывания как в покере
-            hand.cardOverlapRatio = 0.35  // Карты перекрываются на 65%
-            
-            // Определяем, должна ли рука быть вертикальной
-            let normalizedAngle = angle.truncatingRemainder(dividingBy: 2 * .pi)
-            hand.isVertical = (normalizedAngle >= .pi/4 && normalizedAngle < 3 * .pi/4) ||
-                              (normalizedAngle >= -3 * .pi/4 && normalizedAngle < -.pi/4)
+            // Верхний игрок располагает карты "вниз", к центру
+            hand.orientationRotation = seatDirection.dy > 0 ? .pi : 0
         }
+        
+        hand.setScale(isLocalPlayer ? 0.72 : 0.56)
         
         addChild(hand)
     }
@@ -251,4 +236,3 @@ class PlayerNode: SKNode {
         }
     }
 }
-

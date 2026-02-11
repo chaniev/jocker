@@ -7,6 +7,7 @@
 
 import SpriteKit
 import GameplayKit
+import UIKit
 
 class GameScene: SKScene {
     
@@ -38,6 +39,11 @@ class GameScene: SKScene {
         setupScoreButton()
         setupGameInfoLabel()
         setupGameComponents()
+        
+        // Повторный layout на следующем runloop учитывает финальные safe area insets.
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshLayout()
+        }
     }
     
     // MARK: - Покерный стол
@@ -80,24 +86,39 @@ class GameScene: SKScene {
     // MARK: - Настройка игроков
     
     private func setupPlayers() {
+        players.forEach { $0.removeFromParent() }
+        players.removeAll()
+        
         let center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         
         guard let table = pokerTable else { return }
-        let radiusX = table.tableWidth / 2 + 80
-        let radiusY = table.tableHeight / 2 + 80
+        
+        let insets = view?.safeAreaInsets ?? .zero
+        let minX = insets.left + 170
+        let maxX = size.width - insets.right - 170
+        let minY = insets.bottom + 145
+        let maxY = size.height - insets.top - 195
+        
+        let radiusX = min(table.tableWidth / 2 + 40, (maxX - minX) / 2)
+        let radiusY = min(table.tableHeight / 2 + 20, (maxY - minY) / 2)
         
         let avatars = ["👨‍💼", "👩‍💼", "🧔", "👨‍🦰", "👩‍🦱"]
+        let angles = seatAngles(for: playerCount)
         
-        for i in 0..<playerCount {
-            let angle = -CGFloat(i) * (2.0 * .pi / CGFloat(playerCount)) - (.pi / 2)
-            let x = center.x + radiusX * cos(angle)
-            let y = center.y + radiusY * sin(angle)
+        for (index, angle) in angles.enumerated() {
+            let rawX = center.x + radiusX * cos(angle)
+            let rawY = center.y + radiusY * sin(angle)
+            
+            let x = min(max(rawX, minX), maxX)
+            let y = min(max(rawY, minY), maxY)
+            let direction = CGVector(dx: cos(angle), dy: sin(angle))
             
             let playerNode = PlayerNode(
-                playerNumber: i + 1,
-                avatar: avatars[i % avatars.count],
+                playerNumber: index + 1,
+                avatar: avatars[index % avatars.count],
                 position: CGPoint(x: x, y: y),
-                angle: angle,
+                seatDirection: direction,
+                isLocalPlayer: index == 0,
                 totalPlayers: playerCount
             )
             
@@ -106,16 +127,36 @@ class GameScene: SKScene {
         }
     }
     
+    private func seatAngles(for count: Int) -> [CGFloat] {
+        switch count {
+        case 3:
+            return [-.pi / 2, 5 * .pi / 6, .pi / 6]
+        case 4:
+            return [-.pi / 2, .pi, .pi / 2, 0]
+        default:
+            guard count > 0 else { return [] }
+            var result: [CGFloat] = []
+            result.reserveCapacity(count)
+            let angleStep = (2.0 * CGFloat.pi) / CGFloat(count)
+            for index in 0..<count {
+                let angle = -CGFloat(index) * angleStep - (CGFloat.pi / 2)
+                result.append(angle)
+            }
+            return result
+        }
+    }
+    
     // MARK: - Информация об игре
     
     private func setupGameInfoLabel() {
         let infoLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         infoLabel.text = "Ожидание раздачи"
-        infoLabel.fontSize = 24
+        infoLabel.fontSize = 20
         infoLabel.fontColor = GameColors.gold
         infoLabel.horizontalAlignmentMode = .center
         infoLabel.verticalAlignmentMode = .center
-        infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - 50)
+        let insets = view?.safeAreaInsets ?? .zero
+        infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 30)
         infoLabel.zPosition = 100
         
         self.gameInfoLabel = infoLabel
@@ -146,13 +187,14 @@ class GameScene: SKScene {
     // MARK: - Кнопки
     
     private func setupScoreButton() {
-        let buttonWidth: CGFloat = 360
-        let buttonHeight: CGFloat = 100
+        let buttonWidth: CGFloat = 300
+        let buttonHeight: CGFloat = 86
+        let insets = view?.safeAreaInsets ?? .zero
         
-        let buttonX: CGFloat = 50 + buttonWidth / 2
-        let buttonY: CGFloat = self.size.height - 50 - buttonHeight / 2
+        let buttonX: CGFloat = insets.left + 34 + buttonWidth / 2
+        let buttonY: CGFloat = self.size.height - insets.top - 24 - buttonHeight / 2
         
-        let button = GameButton(title: "Очки")
+        let button = GameButton(title: "Очки", size: CGSize(width: buttonWidth, height: buttonHeight))
         button.position = CGPoint(x: buttonX, y: buttonY)
         button.onTap = { [weak self] in
             self?.onScoreButtonTapped?()
@@ -163,13 +205,14 @@ class GameScene: SKScene {
     }
     
     private func setupDealButton() {
-        let buttonWidth: CGFloat = 360
-        let buttonHeight: CGFloat = 100
+        let buttonWidth: CGFloat = 300
+        let buttonHeight: CGFloat = 86
+        let insets = view?.safeAreaInsets ?? .zero
         
-        let buttonX: CGFloat = 50 + buttonWidth / 2
-        let buttonY: CGFloat = buttonHeight / 2 + 50
+        let buttonX: CGFloat = insets.left + 34 + buttonWidth / 2
+        let buttonY: CGFloat = insets.bottom + 24 + buttonHeight / 2
         
-        let button = GameButton(title: "Раздать карты")
+        let button = GameButton(title: "Раздать карты", size: CGSize(width: buttonWidth, height: buttonHeight))
         button.position = CGPoint(x: buttonX, y: buttonY)
         button.onTap = { [weak self] in
             self?.dealCards()
@@ -188,14 +231,33 @@ class GameScene: SKScene {
         scoreManager = ScoreManager(gameState: gameState)
         
         trickNode = TrickNode()
-        trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
         trickNode.zPosition = 50
         addChild(trickNode)
         
+        let insets = view?.safeAreaInsets ?? .zero
         trumpIndicator = TrumpIndicator()
-        trumpIndicator.position = CGPoint(x: self.size.width - 90, y: 120)
+        trumpIndicator.position = CGPoint(
+            x: self.size.width - insets.right - 116,
+            y: insets.bottom + 116
+        )
         trumpIndicator.zPosition = 100
         addChild(trumpIndicator)
+    }
+    
+    private func refreshLayout() {
+        setupPlayers()
+        
+        let insets = view?.safeAreaInsets ?? .zero
+        gameInfoLabel?.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 30)
+        scoreButton?.position = CGPoint(x: insets.left + 34 + 150, y: self.size.height - insets.top - 24 - 43)
+        dealButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43)
+        
+        trickNode?.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
+        trumpIndicator?.position = CGPoint(
+            x: self.size.width - insets.right - 116,
+            y: insets.bottom + 116
+        )
     }
     
     // MARK: - Раздача карт (SKAction-based анимация)
@@ -215,7 +277,7 @@ class GameScene: SKScene {
             player.resetForNewRound()
         }
         trickNode.clearTrick(
-            toPosition: CGPoint(x: self.size.width / 2, y: self.size.height / 2),
+            toPosition: trickNode.centerPosition,
             animated: false
         )
         

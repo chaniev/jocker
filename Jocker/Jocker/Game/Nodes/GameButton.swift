@@ -22,6 +22,7 @@ class GameButton: SKNode {
     private let backgroundNode: SKShapeNode
     private let titleLabel: SKLabelNode
     private let buttonSize: CGSize
+    private let titleFontSize: CGFloat
     
     // MARK: - Initialization
     
@@ -39,6 +40,7 @@ class GameButton: SKNode {
         strokeColor: SKColor = GameColors.buttonStroke
     ) {
         self.buttonSize = size
+        self.titleFontSize = min(40, size.height * 0.42)
         
         let cornerRadius: CGFloat = 24
         let buttonRect = CGRect(
@@ -58,7 +60,7 @@ class GameButton: SKNode {
         // Текст кнопки
         titleLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         titleLabel.text = title
-        titleLabel.fontSize = 40
+        titleLabel.fontSize = titleFontSize
         titleLabel.fontColor = .white
         titleLabel.verticalAlignmentMode = .center
         titleLabel.horizontalAlignmentMode = .center
@@ -87,7 +89,7 @@ class GameButton: SKNode {
         // Тень текста
         let shadow = SKLabelNode(fontNamed: "Helvetica-Bold")
         shadow.text = title
-        shadow.fontSize = 40
+        shadow.fontSize = titleFontSize
         shadow.fontColor = SKColor(white: 0.0, alpha: 0.5)
         shadow.verticalAlignmentMode = .center
         shadow.horizontalAlignmentMode = .center
