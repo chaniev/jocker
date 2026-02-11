@@ -2,28 +2,49 @@
 
 ## Scope
 
-This spec describes the source folder grouping applied to the iOS project and how files are organized for future updates.
+This document is the source of truth for repository structure and file placement.
 
-## Current Layout (source-only)
+## Repository Layout (high level)
+
+```
+/
+├── AGENTS.md
+├── FOLDER_STRUCTURE_SPEC.md
+├── CARDS_DOCUMENTATION.md
+├── README.md
+├── README_CARDS.md
+├── XCODE_INTEGRATION.md
+├── правила игры/
+│   ├── раздача карт.txt
+│   ├── правила раздачи карт на 4 игроков.txt
+│   └── подсчет очков.txt
+└── Jocker/
+    ├── Jocker/           (main app target sources)
+    ├── JockerTests/      (unit tests)
+    └── JockerUITests/    (UI tests)
+```
+
+## App Source Layout
 
 ```
 Jocker/Jocker/
+├── AGENTS.md
 ├── App/
 │   └── AppDelegate.swift
 ├── Core/
 │   └── GameColors.swift
 ├── Game/
-│   ├── Scenes/
-│   │   ├── GameScene.swift
-│   │   └── CardDemoScene.swift
-│   └── Nodes/
-│       ├── CardNode.swift
-│       ├── CardHandNode.swift
-│       ├── GameButton.swift
-│       ├── PlayerNode.swift
-│       ├── PokerTableNode.swift
-│       ├── TrickNode.swift
-│       └── TrumpIndicator.swift
+│   ├── Nodes/
+│   │   ├── CardHandNode.swift
+│   │   ├── CardNode.swift
+│   │   ├── GameButton.swift
+│   │   ├── PlayerNode.swift
+│   │   ├── PokerTableNode.swift
+│   │   ├── TrickNode.swift
+│   │   └── TrumpIndicator.swift
+│   └── Scenes/
+│       ├── CardDemoScene.swift
+│       └── GameScene.swift
 ├── Models/
 │   ├── BlockResult.swift
 │   ├── Card.swift
@@ -34,6 +55,9 @@ Jocker/Jocker/
 │   ├── GameState.swift
 │   ├── PlayerInfo.swift
 │   └── RoundResult.swift
+├── Resources/
+│   ├── Actions.sks
+│   └── GameScene.sks
 ├── Scoring/
 │   ├── ScoreCalculator.swift
 │   └── ScoreManager.swift
@@ -42,74 +66,67 @@ Jocker/Jocker/
 │   ├── PlayerSelectionViewController.swift
 │   ├── ScoreTableView.swift
 │   └── ScoreTableViewController.swift
-├── Resources/
-│   ├── Actions.sks
-│   └── GameScene.sks
 ├── Assets.xcassets/
 └── Base.lproj/
     ├── LaunchScreen.storyboard
     └── Main.storyboard
 ```
 
-## Canonical File Paths
+## Test Targets Layout
 
 ```
-AppDelegate.swift -> App/AppDelegate.swift
-GameColors.swift -> Core/GameColors.swift
-GameScene.swift -> Game/Scenes/GameScene.swift
-CardDemoScene.swift -> Game/Scenes/CardDemoScene.swift
-CardNode.swift -> Game/Nodes/CardNode.swift
-CardHandNode.swift -> Game/Nodes/CardHandNode.swift
-GameButton.swift -> Game/Nodes/GameButton.swift
-PlayerNode.swift -> Game/Nodes/PlayerNode.swift
-PokerTableNode.swift -> Game/Nodes/PokerTableNode.swift
-TrickNode.swift -> Game/Nodes/TrickNode.swift
-TrumpIndicator.swift -> Game/Nodes/TrumpIndicator.swift
-BlockResult.swift -> Models/BlockResult.swift
-Card.swift -> Models/Card.swift
-Deck.swift -> Models/Deck.swift
-GameBlock.swift -> Models/GameBlock.swift
-GameConstants.swift -> Models/GameConstants.swift
-GamePhase.swift -> Models/GamePhase.swift
-GameState.swift -> Models/GameState.swift
-PlayerInfo.swift -> Models/PlayerInfo.swift
-RoundResult.swift -> Models/RoundResult.swift
-ScoreCalculator.swift -> Scoring/ScoreCalculator.swift
-ScoreManager.swift -> Scoring/ScoreManager.swift
-GameViewController.swift -> ViewControllers/GameViewController.swift
-PlayerSelectionViewController.swift -> ViewControllers/PlayerSelectionViewController.swift
-ScoreTableView.swift -> ViewControllers/ScoreTableView.swift
-ScoreTableViewController.swift -> ViewControllers/ScoreTableViewController.swift
-Actions.sks -> Resources/Actions.sks
-GameScene.sks -> Resources/GameScene.sks
+Jocker/JockerTests/
+├── AGENTS.md
+├── JockerTests.swift
+├── ScoreCalculatorTests.swift
+└── ScoreManagerTests.swift
+
+Jocker/JockerUITests/
+├── AGENTS.md
+├── JockerUITests.swift
+└── JockerUITestsLaunchTests.swift
 ```
 
-## Xcode Project Updates
+## Canonical Paths
 
-- Added groups: App, Core, Models, Game/Scenes, Game/Nodes, Scoring, ViewControllers, Resources.
-- File references updated by group placement (relative paths).
+Use repository-relative paths in docs and reviews:
 
-## Unit Tests
+- `Jocker/Jocker/App/AppDelegate.swift`
+- `Jocker/Jocker/Core/GameColors.swift`
+- `Jocker/Jocker/Game/Scenes/GameScene.swift`
+- `Jocker/Jocker/Game/Scenes/CardDemoScene.swift`
+- `Jocker/Jocker/Game/Nodes/CardNode.swift`
+- `Jocker/Jocker/Game/Nodes/CardHandNode.swift`
+- `Jocker/Jocker/Game/Nodes/GameButton.swift`
+- `Jocker/Jocker/Game/Nodes/PlayerNode.swift`
+- `Jocker/Jocker/Game/Nodes/PokerTableNode.swift`
+- `Jocker/Jocker/Game/Nodes/TrickNode.swift`
+- `Jocker/Jocker/Game/Nodes/TrumpIndicator.swift`
+- `Jocker/Jocker/Models/BlockResult.swift`
+- `Jocker/Jocker/Models/Card.swift`
+- `Jocker/Jocker/Models/Deck.swift`
+- `Jocker/Jocker/Models/GameBlock.swift`
+- `Jocker/Jocker/Models/GameConstants.swift`
+- `Jocker/Jocker/Models/GamePhase.swift`
+- `Jocker/Jocker/Models/GameState.swift`
+- `Jocker/Jocker/Models/PlayerInfo.swift`
+- `Jocker/Jocker/Models/RoundResult.swift`
+- `Jocker/Jocker/Scoring/ScoreCalculator.swift`
+- `Jocker/Jocker/Scoring/ScoreManager.swift`
+- `Jocker/Jocker/ViewControllers/GameViewController.swift`
+- `Jocker/Jocker/ViewControllers/PlayerSelectionViewController.swift`
+- `Jocker/Jocker/ViewControllers/ScoreTableView.swift`
+- `Jocker/Jocker/ViewControllers/ScoreTableViewController.swift`
+- `Jocker/Jocker/Resources/Actions.sks`
+- `Jocker/Jocker/Resources/GameScene.sks`
 
-- `JockerTests` contains:
-  - `JockerTests.swift`
-  - `ScoreCalculatorTests.swift`
-  - `ScoreManagerTests.swift`
-- `JockerUITests` contains:
-  - `JockerUITests.swift`
-  - `JockerUITestsLaunchTests.swift`
+## Placement Conventions
 
-## Notes
-
-- `Actions.sks` and `GameScene.sks` are stored under `Jocker/Jocker/Resources`.
-- Assets and storyboards remain under `Assets.xcassets` and `Base.lproj`.
-
-## Future Conventions
-
-- One type per file: when creating a new class/enum/interface, create a new file with the same name.
-- New domain models go in `Models/`.
-- New SpriteKit scenes go in `Game/Scenes/`.
-- New SpriteKit nodes go in `Game/Nodes/`.
-- Core utilities (colors, constants, extensions) go in `Core/`.
-- View controllers go in `ViewControllers/`.
-- Scoring logic stays in `Scoring/`.
+- One type per file: each new class/enum/protocol/struct is created in a separate file with matching name.
+- Scene classes are placed in `Jocker/Jocker/Game/Scenes/`.
+- SpriteKit node classes are placed in `Jocker/Jocker/Game/Nodes/`.
+- Domain and state models are placed in `Jocker/Jocker/Models/`.
+- Scoring logic is placed in `Jocker/Jocker/Scoring/`.
+- UIKit controllers and views are placed in `Jocker/Jocker/ViewControllers/`.
+- Shared core primitives (colors, global helpers, shared extensions) are placed in `Jocker/Jocker/Core/`.
+- Resource files (`.sks`, assets, storyboards) stay under `Jocker/Jocker/Resources/`, `Jocker/Jocker/Assets.xcassets/`, and `Jocker/Jocker/Base.lproj/`.
