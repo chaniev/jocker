@@ -293,7 +293,7 @@ class GameScene: SKScene {
     // MARK: - Раздача карт (SKAction-based анимация)
     
     private func dealCards() {
-        recordCurrentRoundIfNeeded()
+        prepareRoundForDealingIfNeeded()
         
         updateGameInfoLabel()
         
@@ -362,15 +362,6 @@ class GameScene: SKScene {
         // Запускаем все действия параллельно (каждое со своей задержкой)
         run(SKAction.group(actions), withKey: "dealSequence")
         
-        // Подготавливаем следующий раунд
-        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
-            let currentBlockNumber = gameState.currentBlock.rawValue
-            if currentBlockNumber >= GameConstants.totalBlocks {
-                return
-            }
-        }
-        
-        gameState.startNewRound()
         hasDealtAtLeastOnce = true
     }
     
@@ -378,7 +369,8 @@ class GameScene: SKScene {
     
     private func recordCurrentRoundIfNeeded() {
         guard hasDealtAtLeastOnce, let scoreManager = scoreManager else { return }
-        guard recordedRoundsInCurrentBlock() < gameState.currentRoundInBlock else { return }
+        let expectedRecordedRounds = gameState.currentRoundInBlock + 1
+        guard recordedRoundsInCurrentBlock() < expectedRecordedRounds else { return }
         
         let cardsInRound = gameState.currentCardsPerPlayer
         var results: [RoundResult] = []
@@ -397,9 +389,24 @@ class GameScene: SKScene {
         
         scoreManager.recordRoundResults(results)
         
-        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
+        if expectedRecordedRounds >= gameState.totalRoundsInBlock {
             _ = scoreManager.finalizeBlock(blockNumber: gameState.currentBlock.rawValue)
         }
+    }
+
+    private func prepareRoundForDealingIfNeeded() {
+        guard hasDealtAtLeastOnce else { return }
+
+        recordCurrentRoundIfNeeded()
+
+        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
+            let currentBlockNumber = gameState.currentBlock.rawValue
+            if currentBlockNumber >= GameConstants.totalBlocks {
+                return
+            }
+        }
+
+        gameState.startNewRound()
     }
     
     private func registerTrickWin(for playerIndex: Int) {

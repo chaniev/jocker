@@ -34,6 +34,7 @@
 		AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000072F2800010037CA75 /* ScoreManager.swift */; };
 		AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */; };
 		AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */; };
+		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
 		AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */; };
 		AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000032F2A00010037CA75 /* ScoreTableView.swift */; };
 		AA3000022F2B00010037CA75 /* TricksOrderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */; };
@@ -94,6 +95,7 @@
 		AA0000072F2800010037CA75 /* ScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManager.swift; sourceTree = "<group>"; };
 		AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculatorTests.swift; sourceTree = "<group>"; };
 		AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManagerTests.swift; sourceTree = "<group>"; };
+		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
 		AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableViewController.swift; sourceTree = "<group>"; };
 		AA2000032F2A00010037CA75 /* ScoreTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableView.swift; sourceTree = "<group>"; };
 		AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TricksOrderViewController.swift; sourceTree = "<group>"; };
@@ -266,6 +268,7 @@
 			isa = PBXGroup;
 			children = (
 				7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
+				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
 				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
 			);
@@ -449,6 +452,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
+				DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
 				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,
 				AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */,
 			);
