@@ -19,6 +19,7 @@ class GameScene: SKScene {
     private var dealButton: GameButton?
     private var tricksButton: GameButton?
     private var scoreButton: GameButton?
+    private var turnIndicator: TurnIndicatorNode?
     
     // UI элементы для отображения состояния игры
     private var gameInfoLabel: SKLabelNode?
@@ -43,6 +44,9 @@ class GameScene: SKScene {
         setupScoreButton()
         setupGameInfoLabel()
         setupGameComponents()
+        setupTurnIndicator()
+        updateGameInfoLabel()
+        updateTurnUI(animated: false)
         
         // Повторный layout на следующем runloop учитывает финальные safe area insets.
         DispatchQueue.main.async { [weak self] in
@@ -82,6 +86,15 @@ class GameScene: SKScene {
             }
             
             if let playerIndex = playerIndex(at: location) {
+                guard gameState.phase == .playing else { return }
+                
+                if playerIndex == gameState.currentPlayer {
+                    gameState.playCard(byPlayer: playerIndex)
+                    updateGameInfoLabel()
+                    updateTurnUI(animated: true)
+                    return
+                }
+                
                 registerTrickWin(for: playerIndex)
                 return
             }
@@ -190,8 +203,57 @@ class GameScene: SKScene {
         
         let roundInfo = "Раунд \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)"
         let cardsInfo = "Карт: \(gameState.currentCardsPerPlayer)"
+        let phaseInfo: String
+        switch gameState.phase {
+        case .notStarted:
+            phaseInfo = "Старт"
+        case .bidding:
+            phaseInfo = "Ставки"
+        case .playing:
+            phaseInfo = "Игра"
+        case .roundEnd:
+            phaseInfo = "Конец"
+        case .gameEnd:
+            phaseInfo = "Финиш"
+        }
         
-        label.text = "\(blockName) | \(roundInfo) | \(cardsInfo)"
+        let currentPlayerIndex = min(max(gameState.currentPlayer, 0), max(0, gameState.players.count - 1))
+        let currentPlayerName = gameState.players.indices.contains(currentPlayerIndex) ? gameState.players[currentPlayerIndex].name : "Игрок \(currentPlayerIndex + 1)"
+        let turnInfo = "Ход: \(currentPlayerName)"
+        
+        label.text = "\(blockName) | \(roundInfo) | \(cardsInfo) | \(phaseInfo) | \(turnInfo)"
+    }
+    
+    private func setupTurnIndicator() {
+        let indicator = TurnIndicatorNode()
+        indicator.zPosition = 220
+        addChild(indicator)
+        self.turnIndicator = indicator
+    }
+    
+    private func updateTurnUI(animated: Bool) {
+        guard !players.isEmpty else {
+            turnIndicator?.hide()
+            return
+        }
+        
+        let activeIndex = min(max(gameState.currentPlayer, 0), players.count - 1)
+        for (index, player) in players.enumerated() {
+            player.highlight(index == activeIndex)
+        }
+        
+        if gameState.phase == .gameEnd || gameState.phase == .notStarted {
+            turnIndicator?.hide()
+            return
+        }
+        
+        let activePlayer = players[activeIndex]
+        turnIndicator?.setTurnOwnerPosition(activePlayer.position, seatDirection: activePlayer.seatDirection, animated: animated)
+        
+        if let localPlayer = players.first(where: { $0.isLocalPlayer }) {
+            let shouldDim = (gameState.phase == .playing) && (localPlayer.playerNumber - 1 != activeIndex)
+            localPlayer.setHandDimmed(shouldDim, animated: animated)
+        }
     }
     
     // MARK: - Кнопки
@@ -288,6 +350,8 @@ class GameScene: SKScene {
             x: self.size.width - insets.right - 116,
             y: insets.bottom + 116
         )
+        
+        updateTurnUI(animated: false)
     }
     
     // MARK: - Раздача карт (SKAction-based анимация)
@@ -296,6 +360,7 @@ class GameScene: SKScene {
         prepareRoundForDealingIfNeeded()
         
         updateGameInfoLabel()
+        updateTurnUI(animated: false)
         
         // Сбрасываем колоду и перемешиваем
         deck.reset()
@@ -352,10 +417,10 @@ class GameScene: SKScene {
         }
         actions.append(SKAction.sequence([trumpDelay, trumpAction]))
         
-        // 4. Демонстрация: выделяем первого игрока
+        // 4. Выделяем текущего игрока
         let highlightDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 2.2)
         let highlightAction = SKAction.run { [weak self] in
-            self?.players.first?.highlight(true)
+            self?.updateTurnUI(animated: true)
         }
         actions.append(SKAction.sequence([highlightDelay, highlightAction]))
         
@@ -414,6 +479,8 @@ class GameScene: SKScene {
         gameState.completeTrick(winner: playerIndex)
         players[playerIndex].incrementTricks()
         completeRoundIfNeeded()
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
     }
     
     private func completeRoundIfNeeded() {
@@ -454,6 +521,10 @@ class GameScene: SKScene {
             gameState.setBid(bid, forPlayerAt: index)
             players[index].setBid(bid, animated: true)
         }
+        
+        gameState.beginPlayingAfterBids()
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
     }
     
     private func presentTricksOrder() {

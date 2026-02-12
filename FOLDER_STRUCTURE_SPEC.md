@@ -40,6 +40,7 @@ Jocker/Jocker/
 │   │   ├── GameButton.swift
 │   │   ├── PlayerNode.swift
 │   │   ├── PokerTableNode.swift
+│   │   ├── TurnIndicatorNode.swift
 │   │   ├── TrickNode.swift
 │   │   └── TrumpIndicator.swift
 │   └── Scenes/
@@ -101,6 +102,7 @@ Use repository-relative paths in docs and reviews:
 - `Jocker/Jocker/Game/Nodes/GameButton.swift`
 - `Jocker/Jocker/Game/Nodes/PlayerNode.swift`
 - `Jocker/Jocker/Game/Nodes/PokerTableNode.swift`
+- `Jocker/Jocker/Game/Nodes/TurnIndicatorNode.swift`
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`
 - `Jocker/Jocker/Game/Nodes/TrumpIndicator.swift`
 - `Jocker/Jocker/Models/BlockResult.swift`

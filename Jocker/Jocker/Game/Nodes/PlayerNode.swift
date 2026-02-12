@@ -14,6 +14,7 @@ class PlayerNode: SKNode {
     let totalPlayers: Int
     let isLocalPlayer: Bool
     let shouldRevealCards: Bool
+    let seatDirection: CGVector
     
     private var avatarNode: SKLabelNode!
     private var nameLabel: SKLabelNode!
@@ -42,6 +43,7 @@ class PlayerNode: SKNode {
         self.totalPlayers = totalPlayers
         self.isLocalPlayer = isLocalPlayer
         self.shouldRevealCards = shouldRevealCards
+        self.seatDirection = seatDirection
         
         super.init()
         
@@ -236,6 +238,18 @@ class PlayerNode: SKNode {
             backgroundCircle.strokeColor = GameColors.gold
             backgroundCircle.lineWidth = 3
             backgroundCircle.setScale(1.0)
+        }
+    }
+    
+    func setHandDimmed(_ isDimmed: Bool, animated: Bool) {
+        let targetAlpha: CGFloat = isDimmed ? 0.45 : 1.0
+        hand.removeAction(forKey: "handDim")
+        
+        if animated {
+            let action = SKAction.fadeAlpha(to: targetAlpha, duration: 0.18)
+            hand.run(action, withKey: "handDim")
+        } else {
+            hand.alpha = targetAlpha
         }
     }
 }

@@ -235,6 +235,13 @@ class GameState {
         players[index].currentBid = bid
     }
     
+    /// Перейти в фазу розыгрыша после того, как ставки выставлены извне (UI).
+    func beginPlayingAfterBids() {
+        guard phase == .bidding else { return }
+        phase = .playing
+        currentPlayer = (currentDealer + 1) % playerCount
+    }
+    
     // MARK: - Helper Methods
     
     /// Получить информацию об игроке
@@ -273,4 +280,3 @@ class GameState {
         }
     }
 }
-

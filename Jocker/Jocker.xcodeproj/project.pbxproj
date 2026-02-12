@@ -45,6 +45,7 @@
 		CC0000012F2800010037CA75 /* GameConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000022F2800010037CA75 /* GameConstants.swift */; };
 		CC0000032F2800010037CA75 /* GameColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F2800010037CA75 /* GameColors.swift */; };
 		CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000072F2800010037CA75 /* PokerTableNode.swift */; };
+		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +107,7 @@
 		CC0000022F2800010037CA75 /* GameConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameConstants.swift; sourceTree = "<group>"; };
 		CC0000042F2800010037CA75 /* GameColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameColors.swift; sourceTree = "<group>"; };
 		CC0000072F2800010037CA75 /* PokerTableNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokerTableNode.swift; sourceTree = "<group>"; };
+		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -237,6 +239,7 @@
 				BB0000072F2800010037CA75 /* GameButton.swift */,
 				7E4AC97B2F268F000037CA75 /* PlayerNode.swift */,
 				CC0000072F2800010037CA75 /* PokerTableNode.swift */,
+				EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */,
 				7E4AC9872F269A500037CA75 /* TrickNode.swift */,
 				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
 			);
@@ -444,6 +447,7 @@
 				CC0000012F2800010037CA75 /* GameConstants.swift in Sources */,
 				CC0000032F2800010037CA75 /* GameColors.swift in Sources */,
 				CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */,
+				EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
