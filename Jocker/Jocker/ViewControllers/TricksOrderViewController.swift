@@ -23,6 +23,7 @@ final class TricksOrderViewController: UIViewController {
     private weak var errorLabel: UILabel?
     
     private var valueLabelsByPlayerIndex: [Int: UILabel] = [:]
+    private var nameLabelsByPlayerIndex: [Int: UILabel] = [:]
     
     init(
         playerNames: [String],
@@ -143,9 +144,10 @@ final class TricksOrderViewController: UIViewController {
             let playerLabel = UILabel()
             playerLabel.numberOfLines = 1
             playerLabel.font = .systemFont(ofSize: isUltraCompactLayout ? 15 : (isCompactLayout ? 16 : 17), weight: .semibold)
-            playerLabel.text = rowTitleText(orderPosition: orderPosition, playerIndex: playerIndex)
+            playerLabel.text = rowTitleText(orderPosition: orderPosition, playerIndex: playerIndex, bid: bids[playerIndex])
             playerLabel.textColor = (playerIndex == dealerIndex) ? .systemOrange : .black
             playerLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+            nameLabelsByPlayerIndex[playerIndex] = playerLabel
             
             let valueLabel = UILabel()
             valueLabel.font = .monospacedDigitSystemFont(ofSize: isUltraCompactLayout ? 17 : (isCompactLayout ? 18 : 19), weight: .bold)
@@ -257,13 +259,24 @@ final class TricksOrderViewController: UIViewController {
         return "Взяток: \(maxTricks) • D: \(dealerName) • 1-й: \(firstBidderName)"
     }
     
-    private func rowTitleText(orderPosition: Int, playerIndex: Int) -> String {
+    private func rowTitleText(orderPosition: Int, playerIndex: Int, bid: Int) -> String {
         let orderNumber = orderPosition + 1
         let name = playerNames.indices.contains(playerIndex) ? playerNames[playerIndex] : "Игрок \(playerIndex + 1)"
+        let nameWithBid = "\(name) (\(bid))"
         if playerIndex == dealerIndex {
-            return "\(orderNumber). \(name) (раздающий)"
+            return "\(orderNumber). \(nameWithBid) (раздающий)"
         }
-        return "\(orderNumber). \(name)"
+        return "\(orderNumber). \(nameWithBid)"
+    }
+
+    private func updatePlayerNameLabel(for playerIndex: Int) {
+        guard let orderPosition = biddingOrder.firstIndex(of: playerIndex) else { return }
+        guard bids.indices.contains(playerIndex) else { return }
+        nameLabelsByPlayerIndex[playerIndex]?.text = rowTitleText(
+            orderPosition: orderPosition,
+            playerIndex: playerIndex,
+            bid: bids[playerIndex]
+        )
     }
 
     @objc private func handleStepperChanged(_ stepper: UIStepper) {
@@ -273,6 +286,7 @@ final class TricksOrderViewController: UIViewController {
         let newBid = min(max(Int(stepper.value.rounded()), 0), maxTricks)
         bids[playerIndex] = newBid
         valueLabelsByPlayerIndex[playerIndex]?.text = "\(newBid)"
+        updatePlayerNameLabel(for: playerIndex)
         updateSummaryAndValidation()
     }
 
