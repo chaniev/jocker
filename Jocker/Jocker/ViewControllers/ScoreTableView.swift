@@ -37,7 +37,7 @@ final class ScoreTableView: UIView {
     private let thickGridLayer = CAShapeLayer()
     
     private var leftColumnWidth: CGFloat = 36
-    private var trickColumnWidth: CGFloat = 24
+    private var trickColumnWidth: CGFloat = 44
     private var pointsColumnWidth: CGFloat = 64
     private let headerHeight: CGFloat = 28
     private let rowHeight: CGFloat = 24
@@ -282,7 +282,7 @@ final class ScoreTableView: UIView {
             }
             
             let roundResult = results[playerIndex][roundIndex]
-            tricksLabel.text = "\(roundResult.tricksTaken)"
+            tricksLabel.text = "\(roundResult.bid)/\(roundResult.tricksTaken)"
             pointsLabel.text = "\(roundResult.score)"
         }
     }
@@ -412,7 +412,7 @@ final class ScoreTableView: UIView {
     
     private func updateColumnWidths() {
         let minLeft: CGFloat = 36
-        let minTricks: CGFloat = 24
+        let minTricks: CGFloat = 44
         let minPoints: CGFloat = 64
         
         let availableWidth = max(bounds.width, 1)

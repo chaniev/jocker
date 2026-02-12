@@ -13,9 +13,11 @@ class GameScene: SKScene {
     
     var playerCount: Int = 4
     var onScoreButtonTapped: (() -> Void)?
+    var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int]) -> Void)?
     private var pokerTable: PokerTableNode?
     private var players: [PlayerNode] = []
     private var dealButton: GameButton?
+    private var tricksButton: GameButton?
     private var scoreButton: GameButton?
     
     // UI элементы для отображения состояния игры
@@ -37,6 +39,7 @@ class GameScene: SKScene {
         setupPokerTable()
         setupPlayers()
         setupDealButton()
+        setupTricksButton()
         setupScoreButton()
         setupGameInfoLabel()
         setupGameComponents()
@@ -69,6 +72,11 @@ class GameScene: SKScene {
             }
             
             if let button = dealButton, button.containsTouchPoint(location) {
+                button.animateTap()
+                return
+            }
+
+            if let button = tricksButton, button.containsTouchPoint(location) {
                 button.animateTap()
                 return
             }
@@ -206,6 +214,25 @@ class GameScene: SKScene {
         self.addChild(button)
     }
     
+    private func setupTricksButton() {
+        let buttonWidth: CGFloat = 300
+        let buttonHeight: CGFloat = 86
+        let insets = view?.safeAreaInsets ?? .zero
+        
+        let buttonX: CGFloat = insets.left + 34 + buttonWidth / 2
+        let dealButtonY: CGFloat = insets.bottom + 24 + buttonHeight / 2
+        let buttonY: CGFloat = dealButtonY + buttonHeight + 16
+        
+        let button = GameButton(title: "Взятки", size: CGSize(width: buttonWidth, height: buttonHeight))
+        button.position = CGPoint(x: buttonX, y: buttonY)
+        button.onTap = { [weak self] in
+            self?.presentTricksOrder()
+        }
+        
+        self.tricksButton = button
+        self.addChild(button)
+    }
+    
     private func setupDealButton() {
         let buttonWidth: CGFloat = 300
         let buttonHeight: CGFloat = 86
@@ -254,6 +281,7 @@ class GameScene: SKScene {
         gameInfoLabel?.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 30)
         scoreButton?.position = CGPoint(x: insets.left + 34 + 150, y: self.size.height - insets.top - 24 - 43)
         dealButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43)
+        tricksButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43 + 86 + 16)
         
         trickNode?.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
         trumpIndicator?.position = CGPoint(
@@ -324,20 +352,8 @@ class GameScene: SKScene {
         }
         actions.append(SKAction.sequence([trumpDelay, trumpAction]))
         
-        // 4. Демонстрация: устанавливаем ставки
-        let bidDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 2.0)
-        let bidAction = SKAction.run { [weak self] in
-            guard let self = self else { return }
-            for (index, player) in self.players.enumerated() {
-                let bid = (index % max(1, cardsPerPlayer)) + 1
-                player.setBid(bid, animated: true)
-                self.gameState.setBid(bid, forPlayerAt: index)
-            }
-        }
-        actions.append(SKAction.sequence([bidDelay, bidAction]))
-        
-        // 5. Демонстрация: выделяем первого игрока
-        let highlightDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 3.0)
+        // 4. Демонстрация: выделяем первого игрока
+        let highlightDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 2.2)
         let highlightAction = SKAction.run { [weak self] in
             self?.players.first?.highlight(true)
         }
@@ -420,5 +436,22 @@ class GameScene: SKScene {
     private func recordedRoundsInCurrentBlock() -> Int {
         guard let scoreManager = scoreManager else { return 0 }
         return scoreManager.currentBlockRoundResults.map { $0.count }.min() ?? 0
+    }
+
+    func applyOrderedTricks(_ bids: [Int]) {
+        guard bids.count == playerCount else { return }
+        let maxBid = max(0, gameState.currentCardsPerPlayer)
+        
+        for (index, rawBid) in bids.enumerated() {
+            let bid = min(max(rawBid, 0), maxBid)
+            gameState.setBid(bid, forPlayerAt: index)
+            players[index].setBid(bid, animated: true)
+        }
+    }
+    
+    private func presentTricksOrder() {
+        let playerNames = gameState.players.map { $0.name }
+        let currentBids = gameState.players.map { $0.currentBid }
+        onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids)
     }
 }

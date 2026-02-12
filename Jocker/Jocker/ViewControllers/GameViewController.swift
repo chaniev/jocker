@@ -34,6 +34,16 @@ class GameViewController: UIViewController {
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
         }
+        scene.onTricksButtonTapped = { [weak self, weak scene] playerNames, maxTricks, currentBids in
+            guard let self = self else { return }
+            self.presentTricksOrder(
+                playerNames: playerNames,
+                maxTricks: maxTricks,
+                currentBids: currentBids
+            ) { bids in
+                scene?.applyOrderedTricks(bids)
+            }
+        }
         self.gameScene = scene
         
         // Показываем сцену
@@ -47,6 +57,23 @@ class GameViewController: UIViewController {
         scoreVC.modalTransitionStyle = .crossDissolve
         present(scoreVC, animated: true, completion: nil)
     }
+    
+    private func presentTricksOrder(
+        playerNames: [String],
+        maxTricks: Int,
+        currentBids: [Int],
+        onSubmit: @escaping ([Int]) -> Void
+    ) {
+        let orderVC = TricksOrderViewController(
+            playerNames: playerNames,
+            maxTricks: maxTricks,
+            currentBids: currentBids,
+            onSubmit: onSubmit
+        )
+        orderVC.modalPresentationStyle = .overFullScreen
+        orderVC.modalTransitionStyle = .crossDissolve
+        present(orderVC, animated: true)
+    }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         // Только горизонтальная ориентация
@@ -57,4 +84,3 @@ class GameViewController: UIViewController {
         return true
     }
 }
-

@@ -65,7 +65,8 @@ Jocker/Jocker/
 │   ├── GameViewController.swift
 │   ├── PlayerSelectionViewController.swift
 │   ├── ScoreTableView.swift
-│   └── ScoreTableViewController.swift
+│   ├── ScoreTableViewController.swift
+│   └── TricksOrderViewController.swift
 ├── Assets.xcassets/
 └── Base.lproj/
     ├── LaunchScreen.storyboard
@@ -117,6 +118,7 @@ Use repository-relative paths in docs and reviews:
 - `Jocker/Jocker/ViewControllers/PlayerSelectionViewController.swift`
 - `Jocker/Jocker/ViewControllers/ScoreTableView.swift`
 - `Jocker/Jocker/ViewControllers/ScoreTableViewController.swift`
+- `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`
 - `Jocker/Jocker/Resources/Actions.sks`
 - `Jocker/Jocker/Resources/GameScene.sks`
 
