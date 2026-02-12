@@ -13,6 +13,7 @@ class PlayerNode: SKNode {
     let avatar: String
     let totalPlayers: Int
     let isLocalPlayer: Bool
+    let shouldRevealCards: Bool
     
     private var avatarNode: SKLabelNode!
     private var nameLabel: SKLabelNode!
@@ -33,12 +34,14 @@ class PlayerNode: SKNode {
         position: CGPoint,
         seatDirection: CGVector,
         isLocalPlayer: Bool,
+        shouldRevealCards: Bool = false,
         totalPlayers: Int
     ) {
         self.playerNumber = playerNumber
         self.avatar = avatar
         self.totalPlayers = totalPlayers
         self.isLocalPlayer = isLocalPlayer
+        self.shouldRevealCards = shouldRevealCards
         
         super.init()
         
@@ -127,8 +130,8 @@ class PlayerNode: SKNode {
     private func setupCardHand(seatDirection: CGVector) {
         hand = CardHandNode()
         
-        // Только локальный игрок видит свои карты лицом
-        hand.isFaceUp = isLocalPlayer
+        // В режиме раскрытия показываем карты всех игроков.
+        hand.isFaceUp = isLocalPlayer || shouldRevealCards
         
         // Рука всегда располагается в сторону центра стола
         let toCenter = CGVector(dx: -seatDirection.dx, dy: -seatDirection.dy)

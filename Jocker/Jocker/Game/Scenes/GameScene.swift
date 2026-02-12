@@ -29,6 +29,7 @@ class GameScene: SKScene {
     private var gameState: GameState!
     private(set) var scoreManager: ScoreManager?
     private var hasDealtAtLeastOnce = false
+    private let shouldRevealAllPlayersCards = true
     
     override func didMove(to view: SKView) {
         self.backgroundColor = GameColors.sceneBackground
@@ -119,6 +120,7 @@ class GameScene: SKScene {
                 position: CGPoint(x: x, y: y),
                 seatDirection: direction,
                 isLocalPlayer: index == 0,
+                shouldRevealCards: shouldRevealAllPlayersCards,
                 totalPlayers: playerCount
             )
             
