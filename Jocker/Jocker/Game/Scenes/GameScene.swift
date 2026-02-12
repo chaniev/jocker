@@ -13,7 +13,7 @@ class GameScene: SKScene {
     
     var playerCount: Int = 4
     var onScoreButtonTapped: (() -> Void)?
-    var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int]) -> Void)?
+    var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
     private var pokerTable: PokerTableNode?
     private var players: [PlayerNode] = []
     private var dealButton: GameButton?
@@ -452,6 +452,6 @@ class GameScene: SKScene {
     private func presentTricksOrder() {
         let playerNames = gameState.players.map { $0.name }
         let currentBids = gameState.players.map { $0.currentBid }
-        onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids)
+        onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids, gameState.currentDealer)
     }
 }

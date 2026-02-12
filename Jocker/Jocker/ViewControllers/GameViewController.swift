@@ -34,12 +34,13 @@ class GameViewController: UIViewController {
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
         }
-        scene.onTricksButtonTapped = { [weak self, weak scene] playerNames, maxTricks, currentBids in
+        scene.onTricksButtonTapped = { [weak self, weak scene] playerNames, maxTricks, currentBids, dealerIndex in
             guard let self = self else { return }
             self.presentTricksOrder(
                 playerNames: playerNames,
                 maxTricks: maxTricks,
-                currentBids: currentBids
+                currentBids: currentBids,
+                dealerIndex: dealerIndex
             ) { bids in
                 scene?.applyOrderedTricks(bids)
             }
@@ -62,12 +63,14 @@ class GameViewController: UIViewController {
         playerNames: [String],
         maxTricks: Int,
         currentBids: [Int],
+        dealerIndex: Int,
         onSubmit: @escaping ([Int]) -> Void
     ) {
         let orderVC = TricksOrderViewController(
             playerNames: playerNames,
             maxTricks: maxTricks,
             currentBids: currentBids,
+            dealerIndex: dealerIndex,
             onSubmit: onSubmit
         )
         orderVC.modalPresentationStyle = .overFullScreen
