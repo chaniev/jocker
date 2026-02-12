@@ -40,7 +40,7 @@ class GameButton: SKNode {
         strokeColor: SKColor = GameColors.buttonStroke
     ) {
         self.buttonSize = size
-        self.titleFontSize = min(40, size.height * 0.42)
+        self.titleFontSize = min(34, size.height * 0.38)
         
         let cornerRadius: CGFloat = 24
         let buttonRect = CGRect(
@@ -54,14 +54,14 @@ class GameButton: SKNode {
         backgroundNode = SKShapeNode(rect: buttonRect, cornerRadius: cornerRadius)
         backgroundNode.fillColor = fillColor
         backgroundNode.strokeColor = strokeColor
-        backgroundNode.lineWidth = 3
+        backgroundNode.lineWidth = 2.5
         backgroundNode.zPosition = 0
         
         // Текст кнопки
-        titleLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         titleLabel.text = title
         titleLabel.fontSize = titleFontSize
-        titleLabel.fontColor = .white
+        titleLabel.fontColor = GameColors.buttonText
         titleLabel.verticalAlignmentMode = .center
         titleLabel.horizontalAlignmentMode = .center
         titleLabel.position = .zero
@@ -81,19 +81,19 @@ class GameButton: SKNode {
             height: size.height / 2
         )
         let highlight = SKShapeNode(rect: highlightRect, cornerRadius: cornerRadius)
-        highlight.fillColor = SKColor(white: 1.0, alpha: 0.15)
+        highlight.fillColor = GameColors.buttonHighlight
         highlight.strokeColor = .clear
         highlight.zPosition = 1
         backgroundNode.addChild(highlight)
         
         // Тень текста
-        let shadow = SKLabelNode(fontNamed: "Helvetica-Bold")
+        let shadow = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         shadow.text = title
         shadow.fontSize = titleFontSize
-        shadow.fontColor = SKColor(white: 0.0, alpha: 0.5)
+        shadow.fontColor = SKColor(white: 0.0, alpha: 0.42)
         shadow.verticalAlignmentMode = .center
         shadow.horizontalAlignmentMode = .center
-        shadow.position = CGPoint(x: 2, y: -2)
+        shadow.position = CGPoint(x: 0, y: -2)
         shadow.zPosition = 1
         backgroundNode.addChild(shadow)
         

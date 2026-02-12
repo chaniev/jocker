@@ -23,8 +23,8 @@ class GameViewController: UIViewController {
         view.addSubview(skView)
         
         // Настройка отладочных параметров
-        skView.showsFPS = true
-        skView.showsNodeCount = true
+        skView.showsFPS = false
+        skView.showsNodeCount = false
         skView.ignoresSiblingOrder = true
         
         // Создаём сцену для горизонтальной ориентации

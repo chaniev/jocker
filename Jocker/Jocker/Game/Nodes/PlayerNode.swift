@@ -79,10 +79,10 @@ class PlayerNode: SKNode {
         addChild(avatarNode)
         
         // Имя игрока
-        nameLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        nameLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
         nameLabel.text = "Игрок \(playerNumber)"
-        nameLabel.fontSize = 40
-        nameLabel.fontColor = .white
+        nameLabel.fontSize = 34
+        nameLabel.fontColor = GameColors.textPrimary
         nameLabel.verticalAlignmentMode = .center
         nameLabel.horizontalAlignmentMode = .center
         nameLabel.zPosition = 1
@@ -106,9 +106,9 @@ class PlayerNode: SKNode {
         addChild(shadow)
         
         // Счётчик взяток
-        trickCountLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        trickCountLabel.fontSize = 20
-        trickCountLabel.fontColor = .white
+        trickCountLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
+        trickCountLabel.fontSize = 22
+        trickCountLabel.fontColor = GameColors.textSecondary
         trickCountLabel.horizontalAlignmentMode = .center
         trickCountLabel.verticalAlignmentMode = .center
         trickCountLabel.position = isSideSeat ? CGPoint(x: 0, y: -118) : CGPoint(x: 118, y: -40)
@@ -117,8 +117,8 @@ class PlayerNode: SKNode {
         addChild(trickCountLabel)
         
         // Индикатор ставки
-        bidLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        bidLabel.fontSize = 18
+        bidLabel = SKLabelNode(fontNamed: "AvenirNext-Medium")
+        bidLabel.fontSize = 19
         bidLabel.fontColor = GameColors.gold
         bidLabel.horizontalAlignmentMode = .center
         bidLabel.verticalAlignmentMode = .center
@@ -188,7 +188,7 @@ class PlayerNode: SKNode {
     
     /// Обновить отображение ставки
     private func updateBidDisplay(animated: Bool) {
-        bidLabel.text = "Ставка: \(bid)"
+        bidLabel.text = "Ставка \(bid)"
         bidLabel.isHidden = false
         
         if animated {
@@ -211,7 +211,7 @@ class PlayerNode: SKNode {
         } else if tricksTaken == bid {
             trickCountLabel.fontColor = GameColors.statusGreen
         } else {
-            trickCountLabel.fontColor = .white
+            trickCountLabel.fontColor = GameColors.textSecondary
         }
         
         // Анимация изменения

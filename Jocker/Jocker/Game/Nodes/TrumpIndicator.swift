@@ -34,18 +34,18 @@ class TrumpIndicator: SKNode {
         let height: CGFloat = 230
         
         let rect = CGRect(x: -width/2, y: -height/2, width: width, height: height)
-        backgroundNode = SKShapeNode(rect: rect, cornerRadius: 12)
+        backgroundNode = SKShapeNode(rect: rect, cornerRadius: 14)
         backgroundNode?.fillColor = GameColors.trumpBackground
-        backgroundNode?.strokeColor = GameColors.gold
+        backgroundNode?.strokeColor = GameColors.goldTranslucent
         backgroundNode?.lineWidth = 2
         backgroundNode?.zPosition = 0
         addChild(backgroundNode!)
         
         // Надпись "Козырь"
-        labelNode = SKLabelNode(fontNamed: "Helvetica-Bold")
+        labelNode = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         labelNode?.text = "Козырь"
-        labelNode?.fontSize = 18
-        labelNode?.fontColor = GameColors.gold
+        labelNode?.fontSize = 20
+        labelNode?.fontColor = GameColors.textPrimary
         labelNode?.horizontalAlignmentMode = .center
         labelNode?.verticalAlignmentMode = .center
         labelNode?.position = CGPoint(x: 0, y: 86)
@@ -74,6 +74,7 @@ class TrumpIndicator: SKNode {
         guard let card = card else {
             // Нет козыря
             labelNode?.text = "Козырь выбирает игрок"
+            labelNode?.fontColor = GameColors.textSecondary
             return
         }
         
@@ -100,6 +101,7 @@ class TrumpIndicator: SKNode {
         
         // Обновляем текст - всегда "Козырь" когда есть карта (включая джокера)
         labelNode?.text = "Козырь"
+        labelNode?.fontColor = GameColors.textPrimary
     }
     
     /// Скрыть индикатор

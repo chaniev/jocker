@@ -56,7 +56,16 @@ final class TricksOrderViewController: UIViewController {
     }
     
     private func setupView() {
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        let overlayColor = UIColor(red: 0.04, green: 0.07, blue: 0.12, alpha: 0.58)
+        let surfaceColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 0.98)
+        let rowColor = UIColor(red: 0.14, green: 0.20, blue: 0.30, alpha: 0.70)
+        let borderColor = UIColor(red: 0.31, green: 0.40, blue: 0.55, alpha: 0.85)
+        let titleColor = UIColor(red: 0.95, green: 0.97, blue: 1.00, alpha: 1.0)
+        let subtitleColor = UIColor(red: 0.72, green: 0.79, blue: 0.90, alpha: 1.0)
+        let accentColor = UIColor(red: 0.16, green: 0.39, blue: 0.77, alpha: 1.0)
+        let dealerColor = UIColor(red: 0.93, green: 0.76, blue: 0.33, alpha: 1.0)
+        
+        view.backgroundColor = overlayColor
 
         let playerCount = max(1, playerNames.count)
         let isCompactLayout = playerCount >= 4
@@ -74,8 +83,10 @@ final class TricksOrderViewController: UIViewController {
         
         let containerView = UIView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = .white
+        containerView.backgroundColor = surfaceColor
         containerView.layer.cornerRadius = 16
+        containerView.layer.borderWidth = 1
+        containerView.layer.borderColor = borderColor.cgColor
         containerView.clipsToBounds = true
         view.addSubview(containerView)
         self.containerView = containerView
@@ -96,24 +107,25 @@ final class TricksOrderViewController: UIViewController {
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = "Заказ взяток"
-        titleLabel.font = .systemFont(ofSize: isUltraCompactLayout ? 20 : (isCompactLayout ? 22 : 24), weight: .bold)
+        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: isUltraCompactLayout ? 20 : (isCompactLayout ? 22 : 24))
         titleLabel.textAlignment = .center
+        titleLabel.textColor = titleColor
         containerView.addSubview(titleLabel)
         
         let subtitleLabel = UILabel()
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.text = subtitleText()
-        subtitleLabel.font = .systemFont(ofSize: isUltraCompactLayout ? 12 : (isCompactLayout ? 13 : 14), weight: .medium)
+        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: isUltraCompactLayout ? 12 : (isCompactLayout ? 13 : 14))
         subtitleLabel.textAlignment = .center
-        subtitleLabel.textColor = .darkGray
+        subtitleLabel.textColor = subtitleColor
         subtitleLabel.numberOfLines = isUltraCompactLayout ? 1 : (isCompactLayout ? 2 : 1)
         containerView.addSubview(subtitleLabel)
         
         let summaryLabel = UILabel()
         summaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        summaryLabel.font = .systemFont(ofSize: isUltraCompactLayout ? 14 : (isCompactLayout ? 15 : 16), weight: .semibold)
+        summaryLabel.font = UIFont(name: "AvenirNext-DemiBold", size: isUltraCompactLayout ? 14 : (isCompactLayout ? 15 : 16))
         summaryLabel.textAlignment = .center
-        summaryLabel.textColor = .black
+        summaryLabel.textColor = titleColor
         summaryLabel.numberOfLines = isUltraCompactLayout ? 2 : 1
         containerView.addSubview(summaryLabel)
         self.summaryLabel = summaryLabel
@@ -137,22 +149,27 @@ final class TricksOrderViewController: UIViewController {
             row.axis = .horizontal
             row.spacing = 12
             row.alignment = .center
+            row.isLayoutMarginsRelativeArrangement = true
+            row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10)
+            row.backgroundColor = rowColor
+            row.layer.cornerRadius = 10
             let rowHeightConstraint = row.heightAnchor.constraint(equalToConstant: rowHeight)
             rowHeightConstraint.priority = .required
             rowHeightConstraint.isActive = true
             
             let playerLabel = UILabel()
             playerLabel.numberOfLines = 1
-            playerLabel.font = .systemFont(ofSize: isUltraCompactLayout ? 15 : (isCompactLayout ? 16 : 17), weight: .semibold)
+            playerLabel.font = UIFont(name: "AvenirNext-DemiBold", size: isUltraCompactLayout ? 15 : (isCompactLayout ? 16 : 17))
             playerLabel.text = rowTitleText(orderPosition: orderPosition, playerIndex: playerIndex, bid: bids[playerIndex])
-            playerLabel.textColor = (playerIndex == dealerIndex) ? .systemOrange : .black
+            playerLabel.textColor = (playerIndex == dealerIndex) ? dealerColor : titleColor
             playerLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
             nameLabelsByPlayerIndex[playerIndex] = playerLabel
             
             let valueLabel = UILabel()
-            valueLabel.font = .monospacedDigitSystemFont(ofSize: isUltraCompactLayout ? 17 : (isCompactLayout ? 18 : 19), weight: .bold)
+            valueLabel.font = UIFont.monospacedDigitSystemFont(ofSize: isUltraCompactLayout ? 17 : (isCompactLayout ? 18 : 19), weight: .bold)
             valueLabel.textAlignment = .right
             valueLabel.text = "\(bids[playerIndex])"
+            valueLabel.textColor = titleColor
             valueLabel.setContentHuggingPriority(.required, for: .horizontal)
             valueLabel.widthAnchor.constraint(equalToConstant: 32).isActive = true
             valueLabelsByPlayerIndex[playerIndex] = valueLabel
@@ -163,6 +180,7 @@ final class TricksOrderViewController: UIViewController {
             stepper.stepValue = 1
             stepper.value = Double(bids[playerIndex])
             stepper.tag = playerIndex
+            stepper.tintColor = accentColor
             stepper.addTarget(self, action: #selector(handleStepperChanged(_:)), for: .valueChanged)
             
             row.addArrangedSubview(playerLabel)
@@ -174,9 +192,9 @@ final class TricksOrderViewController: UIViewController {
         
         let errorLabel = UILabel()
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
-        errorLabel.font = .systemFont(ofSize: 14, weight: .semibold)
+        errorLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 14)
         errorLabel.textAlignment = .center
-        errorLabel.textColor = .systemRed
+        errorLabel.textColor = UIColor(red: 1.0, green: 0.63, blue: 0.39, alpha: 1.0)
         errorLabel.numberOfLines = 0
         containerView.addSubview(errorLabel)
         self.errorLabel = errorLabel
@@ -190,16 +208,16 @@ final class TricksOrderViewController: UIViewController {
         
         let cancelButton = UIButton(type: .system)
         cancelButton.setTitle("Отмена", for: .normal)
-        cancelButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
-        cancelButton.backgroundColor = UIColor.systemGray5
-        cancelButton.setTitleColor(.label, for: .normal)
+        cancelButton.titleLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 18)
+        cancelButton.backgroundColor = UIColor(red: 0.22, green: 0.28, blue: 0.38, alpha: 1.0)
+        cancelButton.setTitleColor(titleColor, for: .normal)
         cancelButton.layer.cornerRadius = 12
         cancelButton.addTarget(self, action: #selector(handleCancelButton), for: .touchUpInside)
         
         let confirmButton = UIButton(type: .system)
         confirmButton.setTitle("Подтвердить", for: .normal)
-        confirmButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
-        confirmButton.backgroundColor = UIColor.systemBlue
+        confirmButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 18)
+        confirmButton.backgroundColor = accentColor
         confirmButton.setTitleColor(.white, for: .normal)
         confirmButton.layer.cornerRadius = 12
         confirmButton.addTarget(self, action: #selector(handleConfirmButton), for: .touchUpInside)

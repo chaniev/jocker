@@ -51,6 +51,13 @@ final class ScoreTableView: UIView {
     /// Флаг для предотвращения повторного создания лейблов
     private var isLabelsBuilt = false
     
+    private let surfaceColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0)
+    private let gridThinColor = UIColor(red: 0.30, green: 0.38, blue: 0.52, alpha: 0.65)
+    private let gridThickColor = UIColor(red: 0.54, green: 0.63, blue: 0.77, alpha: 0.9)
+    private let textPrimaryColor = UIColor(red: 0.95, green: 0.97, blue: 1.00, alpha: 1.0)
+    private let textSecondaryColor = UIColor(red: 0.73, green: 0.80, blue: 0.90, alpha: 1.0)
+    private let summaryColor = UIColor(red: 0.93, green: 0.76, blue: 0.33, alpha: 1.0)
+    
     init(playerCount: Int) {
         self.playerCount = playerCount
         self.layout = ScoreTableView.buildLayout(playerCount: playerCount)
@@ -80,13 +87,14 @@ final class ScoreTableView: UIView {
     // MARK: - Setup
     
     private func setupView() {
-        backgroundColor = .white
+        backgroundColor = surfaceColor
         
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.showsVerticalScrollIndicator = true
         scrollView.showsHorizontalScrollIndicator = true
         scrollView.alwaysBounceVertical = true
         scrollView.alwaysBounceHorizontal = true
+        scrollView.indicatorStyle = .white
         addSubview(scrollView)
         
         NSLayoutConstraint.activate([
@@ -96,15 +104,15 @@ final class ScoreTableView: UIView {
             scrollView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
         
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = surfaceColor
         scrollView.addSubview(contentView)
         
         thinGridLayer.fillColor = UIColor.clear.cgColor
-        thinGridLayer.strokeColor = UIColor(white: 0.85, alpha: 1.0).cgColor
+        thinGridLayer.strokeColor = gridThinColor.cgColor
         thinGridLayer.lineWidth = 0.5
         
         thickGridLayer.fillColor = UIColor.clear.cgColor
-        thickGridLayer.strokeColor = UIColor(white: 0.45, alpha: 1.0).cgColor
+        thickGridLayer.strokeColor = gridThickColor.cgColor
         thickGridLayer.lineWidth = 2.0
         
         contentView.layer.addSublayer(thinGridLayer)
@@ -124,9 +132,9 @@ final class ScoreTableView: UIView {
         guard !isLabelsBuilt else { return }
         isLabelsBuilt = true
         
-        let headerFont = UIFont.systemFont(ofSize: 14, weight: .semibold)
-        let cellFont = UIFont.systemFont(ofSize: 12, weight: .regular)
-        let summaryFont = UIFont.systemFont(ofSize: 12, weight: .bold)
+        let headerFont = UIFont(name: "AvenirNext-Bold", size: 14)
+        let cellFont = UIFont(name: "AvenirNext-Medium", size: 12)
+        let summaryFont = UIFont(name: "AvenirNext-DemiBold", size: 12)
         
         // Заголовки игроков
         headerLabels = []
@@ -135,7 +143,7 @@ final class ScoreTableView: UIView {
             headerLabel.text = "Игрок \(playerIndex + 1)"
             headerLabel.font = headerFont
             headerLabel.textAlignment = .center
-            headerLabel.textColor = .black
+            headerLabel.textColor = textPrimaryColor
             contentView.addSubview(headerLabel)
             headerLabels.append(headerLabel)
         }
@@ -151,7 +159,7 @@ final class ScoreTableView: UIView {
             let cardsLabel = UILabel()
             cardsLabel.font = cellFont
             cardsLabel.textAlignment = .center
-            cardsLabel.textColor = .black
+            cardsLabel.textColor = textSecondaryColor
             if case let .deal(cards) = rowKind {
                 cardsLabel.text = "\(cards)"
             } else {
@@ -164,7 +172,7 @@ final class ScoreTableView: UIView {
                 let tricksLabel = UILabel()
                 tricksLabel.font = cellFont
                 tricksLabel.textAlignment = .center
-                tricksLabel.textColor = .black
+                tricksLabel.textColor = textSecondaryColor
                 tricksLabel.text = ""
                 contentView.addSubview(tricksLabel)
                 tricksLabels[rowIndex].append(tricksLabel)
@@ -172,7 +180,7 @@ final class ScoreTableView: UIView {
                 let pointsLabel = UILabel()
                 pointsLabel.font = isSummary ? summaryFont : cellFont
                 pointsLabel.textAlignment = .right
-                pointsLabel.textColor = .black
+                pointsLabel.textColor = isSummary ? summaryColor : textPrimaryColor
                 pointsLabel.text = ""
                 contentView.addSubview(pointsLabel)
                 pointsLabels[rowIndex].append(pointsLabel)

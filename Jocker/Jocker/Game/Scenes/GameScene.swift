@@ -172,14 +172,14 @@ class GameScene: SKScene {
     // MARK: - Информация об игре
     
     private func setupGameInfoLabel() {
-        let infoLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        let infoLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         infoLabel.text = "Ожидание раздачи"
-        infoLabel.fontSize = 20
-        infoLabel.fontColor = GameColors.gold
+        infoLabel.fontSize = 24
+        infoLabel.fontColor = GameColors.textPrimary
         infoLabel.horizontalAlignmentMode = .center
         infoLabel.verticalAlignmentMode = .center
         let insets = view?.safeAreaInsets ?? .zero
-        infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 30)
+        infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 34)
         infoLabel.zPosition = 100
         
         self.gameInfoLabel = infoLabel
@@ -221,7 +221,7 @@ class GameScene: SKScene {
         let currentPlayerName = gameState.players.indices.contains(currentPlayerIndex) ? gameState.players[currentPlayerIndex].name : "Игрок \(currentPlayerIndex + 1)"
         let turnInfo = "Ход: \(currentPlayerName)"
         
-        label.text = "\(blockName) | \(roundInfo) | \(cardsInfo) | \(phaseInfo) | \(turnInfo)"
+        label.text = "\(blockName)  •  \(roundInfo)  •  \(cardsInfo)  •  \(phaseInfo)  •  \(turnInfo)"
     }
     
     private func setupTurnIndicator() {
@@ -340,7 +340,7 @@ class GameScene: SKScene {
         setupPlayers()
         
         let insets = view?.safeAreaInsets ?? .zero
-        gameInfoLabel?.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 30)
+        gameInfoLabel?.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 34)
         scoreButton?.position = CGPoint(x: insets.left + 34 + 150, y: self.size.height - insets.top - 24 - 43)
         dealButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43)
         tricksButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43 + 86 + 16)

@@ -21,15 +21,15 @@ final class TurnIndicatorNode: SKNode {
             rectOf: backgroundSize,
             cornerRadius: cornerRadius
         )
-        backgroundNode.fillColor = GameColors.statusGreen
-        backgroundNode.strokeColor = .white
+        backgroundNode.fillColor = GameColors.buttonFill
+        backgroundNode.strokeColor = GameColors.buttonStroke
         backgroundNode.lineWidth = 2
         backgroundNode.zPosition = 0
         
-        labelNode = SKLabelNode(fontNamed: "Helvetica-Bold")
+        labelNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
         labelNode.text = "ХОД"
-        labelNode.fontSize = 18
-        labelNode.fontColor = .black
+        labelNode.fontSize = 17
+        labelNode.fontColor = GameColors.buttonText
         labelNode.verticalAlignmentMode = .center
         labelNode.horizontalAlignmentMode = .center
         labelNode.position = CGPoint(x: 0, y: 2)
@@ -42,7 +42,7 @@ final class TurnIndicatorNode: SKNode {
         arrowPath.closeSubpath()
         
         arrowNode = SKShapeNode(path: arrowPath)
-        arrowNode.fillColor = .white
+        arrowNode.fillColor = GameColors.buttonFill
         arrowNode.strokeColor = .clear
         arrowNode.position = CGPoint(x: 0, y: -(backgroundSize.height / 2) - 10)
         arrowNode.zPosition = 0
