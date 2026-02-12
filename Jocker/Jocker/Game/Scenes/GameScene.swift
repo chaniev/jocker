@@ -492,18 +492,20 @@ class GameScene: SKScene {
     }
     
     private func playerIndex(at point: CGPoint) -> Int? {
-        let nodesAtPoint = nodes(at: point)
-        for node in nodesAtPoint {
-            if let playerNode = node as? PlayerNode {
-                return playerNode.playerNumber - 1
-            }
-            if let playerNode = node.parent as? PlayerNode {
-                return playerNode.playerNumber - 1
-            }
-            if let playerNode = node.parent?.parent as? PlayerNode {
-                return playerNode.playerNumber - 1
+        for node in nodes(at: point) {
+            var currentNode: SKNode? = node
+            var guardSteps = 0
+            
+            while let unwrapped = currentNode, guardSteps < 12 {
+                if let playerNode = unwrapped as? PlayerNode {
+                    return playerNode.playerNumber - 1
+                }
+                
+                currentNode = unwrapped.parent
+                guardSteps += 1
             }
         }
+        
         return nil
     }
     

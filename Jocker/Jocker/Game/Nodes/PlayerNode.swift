@@ -138,10 +138,11 @@ class PlayerNode: SKNode {
         // Рука всегда располагается в сторону центра стола
         let toCenter = CGVector(dx: -seatDirection.dx, dy: -seatDirection.dy)
         let handDistance: CGFloat = isLocalPlayer ? 180 : 165
-        hand.handPosition = CGPoint(
+        hand.position = CGPoint(
             x: toCenter.dx * handDistance,
             y: toCenter.dy * handDistance
         )
+        hand.handPosition = .zero
         
         hand.arcAngle = isLocalPlayer ? 0.34 : 0.26
         hand.cardSpacing = isLocalPlayer ? 62 : 46
