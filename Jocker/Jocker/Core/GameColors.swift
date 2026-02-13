@@ -31,16 +31,16 @@ enum GameColors {
     
     // MARK: - Покерный стол
     
-    /// Коричневая окантовка стола (дерево)
-    static let tableBorder = SKColor(red: 0.31, green: 0.20, blue: 0.11, alpha: 1.0)
-    /// Тёмная обводка стола
-    static let tableBorderStroke = SKColor(red: 0.21, green: 0.13, blue: 0.07, alpha: 1.0)
-    /// Приглушённое зелёно-бирюзовое сукно
-    static let tableFelt = SKColor(red: 0.10, green: 0.39, blue: 0.28, alpha: 1.0)
-    /// Обводка зелёного сукна
-    static let tableFeltStroke = SKColor(red: 0.07, green: 0.29, blue: 0.21, alpha: 1.0)
-    /// Текстурные пятна на сукне
-    static let tableTexture = SKColor(red: 0.94, green: 0.99, blue: 0.96, alpha: 0.05)
+    /// Тёмная окантовка стола (резиновый/кожаный борт)
+    static let tableBorder = SKColor(red: 0.08, green: 0.09, blue: 0.11, alpha: 1.0)
+    /// Обводка борта (лёгкий блик)
+    static let tableBorderStroke = SKColor(red: 0.18, green: 0.19, blue: 0.22, alpha: 1.0)
+    /// Тёмно-зелёное сукно
+    static let tableFelt = SKColor(red: 0.05, green: 0.34, blue: 0.18, alpha: 1.0)
+    /// Обводка сукна / внутренние линии
+    static let tableFeltStroke = SKColor(red: 0.10, green: 0.53, blue: 0.29, alpha: 1.0)
+    /// Доп. цвет для текстур/паттернов на сукне
+    static let tableTexture = SKColor(white: 0.0, alpha: 0.07)
     
     // MARK: - Кнопки
     
