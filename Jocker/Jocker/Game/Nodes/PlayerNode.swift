@@ -159,7 +159,7 @@ class PlayerNode: SKNode {
             hand.orientationRotation = seatDirection.dy > 0 ? .pi : 0
         }
         
-        hand.setScale(isLocalPlayer ? 0.72 : 0.56)
+        hand.setScale(0.64)
         
         addChild(hand)
     }
