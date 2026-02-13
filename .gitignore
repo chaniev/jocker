@@ -5,6 +5,10 @@
 ## User settings
 xcuserdata/
 
+## Local build artifacts
+.derivedData/
+DerivedData/
+
 ## Obj-C/Swift specific
 *.hmap
 
