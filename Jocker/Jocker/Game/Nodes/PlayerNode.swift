@@ -144,7 +144,6 @@ class PlayerNode: SKNode {
         )
         hand.handPosition = .zero
         
-        hand.arcAngle = isLocalPlayer ? 0.34 : 0.26
         hand.cardSpacing = isLocalPlayer ? 62 : 46
         hand.cardOverlapRatio = isLocalPlayer ? 0.58 : 0.68
         
