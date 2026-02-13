@@ -121,24 +121,28 @@ class GameScene: SKScene {
         let minY = insets.bottom + 145
         let maxY = size.height - insets.top - 195
         
-        let radiusX = min(table.tableWidth / 2 + 40, (maxX - minX) / 2)
-        let radiusY = min(table.tableHeight / 2 + 20, (maxY - minY) / 2)
-        
         let avatars = ["👨‍💼", "👩‍💼", "🧔", "👨‍🦰", "👩‍🦱"]
-        let angles = seatAngles(for: playerCount)
+        let verticalOffset = min(table.tableHeight / 2 + 20, (maxY - minY) / 2)
+        let topY = min(maxY, center.y + verticalOffset)
+        let bottomY = max(minY, center.y - verticalOffset)
         
-        for (index, angle) in angles.enumerated() {
-            let rawX = center.x + radiusX * cos(angle)
-            let rawY = center.y + radiusY * sin(angle)
-            
-            let x = min(max(rawX, minX), maxX)
-            let y = min(max(rawY, minY), maxY)
-            let direction = CGVector(dx: cos(angle), dy: sin(angle))
+        let positions = wideSideSeatPositions(
+            for: playerCount,
+            centerX: center.x,
+            minX: minX,
+            maxX: maxX,
+            topY: topY,
+            bottomY: bottomY,
+            tableWidth: table.tableWidth
+        )
+        
+        for (index, position) in positions.enumerated() {
+            let direction = CGVector(dx: 0, dy: position.y >= center.y ? 1 : -1)
             
             let playerNode = PlayerNode(
                 playerNumber: index + 1,
                 avatar: avatars[index % avatars.count],
-                position: CGPoint(x: x, y: y),
+                position: position,
                 seatDirection: direction,
                 isLocalPlayer: index == 0,
                 shouldRevealCards: shouldRevealAllPlayersCards,
@@ -150,22 +154,56 @@ class GameScene: SKScene {
         }
     }
     
-    private func seatAngles(for count: Int) -> [CGFloat] {
+    private func wideSideSeatPositions(
+        for count: Int,
+        centerX: CGFloat,
+        minX: CGFloat,
+        maxX: CGFloat,
+        topY: CGFloat,
+        bottomY: CGFloat,
+        tableWidth: CGFloat
+    ) -> [CGPoint] {
+        guard count > 0 else { return [] }
+        
+        let halfSpan = max(80, min(tableWidth * 0.24, (maxX - minX) / 2 - 24))
+        let clampedCenterX = min(max(centerX, minX), maxX)
+        let clampX: (CGFloat) -> CGFloat = { x in
+            min(max(x, minX), maxX)
+        }
+        
         switch count {
         case 3:
-            return [-.pi / 2, 5 * .pi / 6, .pi / 6]
+            let topXs = symmetricXPositions(count: 2, centerX: clampedCenterX, halfSpan: halfSpan)
+            return [
+                CGPoint(x: clampedCenterX, y: bottomY),
+                CGPoint(x: clampX(topXs[0]), y: topY),
+                CGPoint(x: clampX(topXs[1]), y: topY)
+            ]
         case 4:
-            return [-.pi / 2, .pi, .pi / 2, 0]
+            let sideXs = symmetricXPositions(count: 2, centerX: clampedCenterX, halfSpan: halfSpan)
+            return [
+                CGPoint(x: clampX(sideXs[0]), y: bottomY),
+                CGPoint(x: clampX(sideXs[0]), y: topY),
+                CGPoint(x: clampX(sideXs[1]), y: topY),
+                CGPoint(x: clampX(sideXs[1]), y: bottomY)
+            ]
         default:
-            guard count > 0 else { return [] }
-            var result: [CGFloat] = []
-            result.reserveCapacity(count)
-            let angleStep = (2.0 * CGFloat.pi) / CGFloat(count)
-            for index in 0..<count {
-                let angle = -CGFloat(index) * angleStep - (CGFloat.pi / 2)
-                result.append(angle)
-            }
-            return result
+            let bottomCount = (count + 1) / 2
+            let topCount = count - bottomCount
+            let bottomXs = symmetricXPositions(count: bottomCount, centerX: clampedCenterX, halfSpan: halfSpan)
+            let topXs = symmetricXPositions(count: topCount, centerX: clampedCenterX, halfSpan: halfSpan)
+            
+            return bottomXs.map { CGPoint(x: clampX($0), y: bottomY) } + topXs.map { CGPoint(x: clampX($0), y: topY) }
+        }
+    }
+    
+    private func symmetricXPositions(count: Int, centerX: CGFloat, halfSpan: CGFloat) -> [CGFloat] {
+        guard count > 0 else { return [] }
+        guard count > 1 else { return [centerX] }
+        
+        let step = (halfSpan * 2) / CGFloat(count - 1)
+        return (0..<count).map { index in
+            centerX - halfSpan + CGFloat(index) * step
         }
     }
     
