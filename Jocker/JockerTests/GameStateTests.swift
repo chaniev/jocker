@@ -78,6 +78,19 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentDealer, 0)
     }
 
+    func testStartNewRound_onFinalRoundKeepsGameEndPhase() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame()
+
+        while gameState.currentBlock != .fourth || gameState.currentRoundInBlock < gameState.totalRoundsInBlock - 1 {
+            gameState.startNewRound()
+        }
+
+        gameState.startNewRound()
+
+        XCTAssertEqual(gameState.phase, .gameEnd)
+    }
+
     func testDeckDealCards_firstCardGoesToStartingPlayer() {
         var deck = Deck()
 

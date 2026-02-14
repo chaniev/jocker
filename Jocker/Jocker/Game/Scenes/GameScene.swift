@@ -10,6 +10,10 @@ import GameplayKit
 import UIKit
 
 class GameScene: SKScene {
+    private struct RoundRecordKey: Equatable {
+        let block: Int
+        let round: Int
+    }
     
     var playerCount: Int = 4
     var onScoreButtonTapped: (() -> Void)?
@@ -34,6 +38,7 @@ class GameScene: SKScene {
     private(set) var scoreManager: ScoreManager?
     private var hasDealtAtLeastOnce = false
     private var isResolvingTrick = false
+    private var lastRecordedRoundKey: RoundRecordKey?
     private let shouldRevealAllPlayersCards = true
 
     var scoreTableFirstPlayerIndex: Int {
@@ -414,7 +419,11 @@ class GameScene: SKScene {
         removeAction(forKey: "resolveTrick")
         isResolvingTrick = false
 
-        prepareRoundForDealingIfNeeded()
+        guard prepareRoundForDealingIfNeeded() else {
+            updateGameInfoLabel()
+            updateTurnUI(animated: true)
+            return
+        }
         
         updateGameInfoLabel()
         updateTurnUI(animated: false)
@@ -498,8 +507,13 @@ class GameScene: SKScene {
     
     private func recordCurrentRoundIfNeeded() {
         guard hasDealtAtLeastOnce, let scoreManager = scoreManager else { return }
-        let expectedRecordedRounds = gameState.currentRoundInBlock + 1
-        guard recordedRoundsInCurrentBlock() < expectedRecordedRounds else { return }
+        guard gameState.phase == .roundEnd || gameState.phase == .gameEnd else { return }
+
+        let roundKey = RoundRecordKey(
+            block: gameState.currentBlock.rawValue,
+            round: gameState.currentRoundInBlock
+        )
+        guard lastRecordedRoundKey != roundKey else { return }
         
         let cardsInRound = gameState.currentCardsPerPlayer
         var results: [RoundResult] = []
@@ -518,24 +532,34 @@ class GameScene: SKScene {
         
         scoreManager.recordRoundResults(results)
         
-        if expectedRecordedRounds >= gameState.totalRoundsInBlock {
+        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
             _ = scoreManager.finalizeBlock(blockNumber: gameState.currentBlock.rawValue)
         }
+
+        lastRecordedRoundKey = roundKey
     }
 
-    private func prepareRoundForDealingIfNeeded() {
-        guard hasDealtAtLeastOnce else { return }
+    private func prepareRoundForDealingIfNeeded() -> Bool {
+        guard gameState.phase != .gameEnd else { return false }
+        guard hasDealtAtLeastOnce else { return true }
 
         recordCurrentRoundIfNeeded()
 
-        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
-            let currentBlockNumber = gameState.currentBlock.rawValue
-            if currentBlockNumber >= GameConstants.totalBlocks {
-                return
-            }
+        let currentRoundKey = RoundRecordKey(
+            block: gameState.currentBlock.rawValue,
+            round: gameState.currentRoundInBlock
+        )
+        let isFinalRoundOfFinalBlock =
+            currentRoundKey.block >= GameConstants.totalBlocks &&
+            gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock
+
+        if isFinalRoundOfFinalBlock, lastRecordedRoundKey == currentRoundKey {
+            gameState.markGameEnded()
+            return false
         }
 
         gameState.startNewRound()
+        return true
     }
     
     private func registerTrickWin(for playerIndex: Int) {
@@ -772,11 +796,6 @@ class GameScene: SKScene {
         return nil
     }
     
-    private func recordedRoundsInCurrentBlock() -> Int {
-        guard let scoreManager = scoreManager else { return 0 }
-        return scoreManager.currentBlockRoundResults.map { $0.count }.min() ?? 0
-    }
-
     func applyOrderedTricks(_ bids: [Int]) {
         guard bids.count == playerCount else { return }
         let maxBid = max(0, gameState.currentCardsPerPlayer)

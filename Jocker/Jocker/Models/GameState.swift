@@ -74,6 +74,8 @@ class GameState {
     
     /// Начать новый раунд
     func startNewRound() {
+        guard phase != .gameEnd else { return }
+
         // Сброс данных игроков
         for index in players.indices {
             players[index].resetForNewRound()
@@ -86,6 +88,9 @@ class GameState {
         if currentRoundInBlock >= totalRoundsInBlock {
             // Переходим к следующему блоку
             moveToNextBlock()
+            if phase == .gameEnd {
+                return
+            }
         }
         
         // Обновляем дилера (следующий по кругу)
@@ -240,6 +245,11 @@ class GameState {
         guard phase == .bidding else { return }
         phase = .playing
         currentPlayer = (currentDealer + 1) % playerCount
+    }
+
+    /// Явно завершить игру (используется сценой после финальной раздачи)
+    func markGameEnded() {
+        phase = .gameEnd
     }
     
     // MARK: - Helper Methods
