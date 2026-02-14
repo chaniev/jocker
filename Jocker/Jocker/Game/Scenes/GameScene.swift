@@ -427,15 +427,22 @@ class GameScene: SKScene {
         )
         
         let cardsPerPlayer = gameState.currentCardsPerPlayer
-        let dealResult = deck.dealCards(playerCount: playerCount, cardsPerPlayer: cardsPerPlayer)
+        let firstPlayerToDeal = (gameState.currentDealer + 1) % playerCount
+        let dealResult = deck.dealCards(
+            playerCount: playerCount,
+            cardsPerPlayer: cardsPerPlayer,
+            startingPlayerIndex: firstPlayerToDeal
+        )
         
         // Строим цепочку анимаций через SKAction
         var actions: [SKAction] = []
         
         // 1. Раздаём карты каждому игроку с задержкой
-        for (index, player) in players.enumerated() {
-            let cards = dealResult.hands[index]
-            let delay = SKAction.wait(forDuration: Double(index) * 0.3)
+        for offset in 0..<playerCount {
+            let playerIndex = (firstPlayerToDeal + offset) % playerCount
+            let player = players[playerIndex]
+            let cards = dealResult.hands[playerIndex]
+            let delay = SKAction.wait(forDuration: Double(offset) * 0.3)
             let deal = SKAction.run { [weak player] in
                 player?.hand.addCards(cards, animated: true)
             }

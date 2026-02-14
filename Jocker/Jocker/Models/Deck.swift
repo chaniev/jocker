@@ -99,13 +99,22 @@ struct Deck {
     /// - Parameters:
     ///   - playerCount: количество игроков
     ///   - cardsPerPlayer: количество карт каждому игроку
+    ///   - startingPlayerIndex: индекс игрока, который получает первую карту
     /// - Returns: массив рук для каждого игрока и козырная карта (если есть)
-    mutating func dealCards(playerCount: Int, cardsPerPlayer: Int) -> (hands: [[Card]], trump: Card?) {
+    mutating func dealCards(
+        playerCount: Int,
+        cardsPerPlayer: Int,
+        startingPlayerIndex: Int = 0
+    ) -> (hands: [[Card]], trump: Card?) {
         var hands: [[Card]] = Array(repeating: [], count: playerCount)
+        let normalizedStartIndex = playerCount > 0
+            ? ((startingPlayerIndex % playerCount) + playerCount) % playerCount
+            : 0
         
         // Раздаём карты по очереди каждому игроку
         for _ in 0..<cardsPerPlayer {
-            for playerIndex in 0..<playerCount {
+            for offset in 0..<playerCount {
+                let playerIndex = (normalizedStartIndex + offset) % playerCount
                 if let card = drawCard() {
                     hands[playerIndex].append(card)
                 }
