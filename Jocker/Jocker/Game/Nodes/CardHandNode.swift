@@ -12,6 +12,11 @@ class CardHandNode: SKNode {
     
     // MARK: - Properties
     
+    private enum ActionKey {
+        static let addCardsSequence = "CardHandNode.addCardsSequence"
+        static let flipAllCardsSequence = "CardHandNode.flipAllCardsSequence"
+    }
+    
     private(set) var cards: [Card] = []
     private(set) var cardNodes: [CardNode] = []
     
@@ -26,6 +31,12 @@ class CardHandNode: SKNode {
     var onCardSelected: ((Card, CardNode) -> Void)?
     
     // MARK: - Public Methods
+    
+    /// Отменить отложенные операции добавления/переворота карт.
+    func cancelPendingCardActions() {
+        removeAction(forKey: ActionKey.addCardsSequence)
+        removeAction(forKey: ActionKey.flipAllCardsSequence)
+    }
     
     /// Добавить карту в руку
     func addCard(_ card: Card, animated: Bool = true) {
@@ -54,14 +65,25 @@ class CardHandNode: SKNode {
     
     /// Добавить несколько карт
     func addCards(_ cards: [Card], animated: Bool = true) {
+        removeAction(forKey: ActionKey.addCardsSequence)
+
         if animated {
-            var delay: TimeInterval = 0
-            for card in cards {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            var sequence: [SKAction] = []
+            sequence.reserveCapacity(max(0, cards.count * 2 - 1))
+
+            for (index, card) in cards.enumerated() {
+                if index > 0 {
+                    sequence.append(SKAction.wait(forDuration: 0.1))
+                }
+
+                let action = SKAction.run { [weak self] in
                     self?.addCard(card, animated: true)
                 }
-                delay += 0.1
+                sequence.append(action)
             }
+
+            guard !sequence.isEmpty else { return }
+            run(SKAction.sequence(sequence), withKey: ActionKey.addCardsSequence)
         } else {
             for card in cards {
                 addCard(card, animated: false)
@@ -86,6 +108,8 @@ class CardHandNode: SKNode {
     
     /// Очистить всю руку
     func removeAllCards(animated: Bool = true) {
+        cancelPendingCardActions()
+
         if animated {
             for (index, cardNode) in cardNodes.enumerated() {
                 let delay = TimeInterval(index) * 0.05
@@ -154,19 +178,27 @@ class CardHandNode: SKNode {
     
     /// Перевернуть все карты
     func flipAllCards(faceUp: Bool, animated: Bool = true) {
+        removeAction(forKey: ActionKey.flipAllCardsSequence)
         self.isFaceUp = faceUp
         
-        for (index, cardNode) in cardNodes.enumerated() {
-            if cardNode.isFaceUp != faceUp {
-                if animated {
-                    let delay = TimeInterval(index) * 0.05
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        cardNode.flip(animated: true)
-                    }
-                } else {
-                    cardNode.flip(animated: false)
+        if animated {
+            var delayedFlips: [SKAction] = []
+            
+            for (index, cardNode) in cardNodes.enumerated() where cardNode.isFaceUp != faceUp {
+                let wait = SKAction.wait(forDuration: TimeInterval(index) * 0.05)
+                let flip = SKAction.run { [weak cardNode] in
+                    cardNode?.flip(animated: true)
                 }
+                delayedFlips.append(SKAction.sequence([wait, flip]))
             }
+            
+            guard !delayedFlips.isEmpty else { return }
+            run(SKAction.group(delayedFlips), withKey: ActionKey.flipAllCardsSequence)
+            return
+        }
+
+        for cardNode in cardNodes where cardNode.isFaceUp != faceUp {
+            cardNode.flip(animated: false)
         }
     }
     
