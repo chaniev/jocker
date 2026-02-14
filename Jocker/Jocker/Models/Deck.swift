@@ -126,4 +126,35 @@ struct Deck {
         
         return (hands, trumpCard)
     }
+
+    /// Выбор первого раздающего:
+    /// 1) верхняя карта уходит "на кон" (в центр),
+    /// 2) затем карты по одной выдаются игрокам по кругу,
+    ///    пока кому-либо не попадётся туз.
+    /// - Parameters:
+    ///   - playerCount: количество игроков
+    ///   - startingPlayerIndex: индекс первого игрока в круге раздачи (обычно слева)
+    /// - Returns: индекс игрока, получившего первого туза
+    mutating func selectFirstDealer(
+        playerCount: Int,
+        startingPlayerIndex: Int
+    ) -> Int {
+        guard playerCount > 0 else { return 0 }
+
+        let normalizedStartIndex = ((startingPlayerIndex % playerCount) + playerCount) % playerCount
+
+        // Верхняя карта уходит в центр кона и не участвует в выборе раздающего.
+        _ = drawCard()
+
+        var currentPlayerIndex = normalizedStartIndex
+        while let card = drawCard() {
+            if card.rank == .ace {
+                return currentPlayerIndex
+            }
+            currentPlayerIndex = (currentPlayerIndex + 1) % playerCount
+        }
+
+        // На полной колоде до этого дойти нельзя, но оставляем безопасный fallback.
+        return normalizedStartIndex
+    }
 }

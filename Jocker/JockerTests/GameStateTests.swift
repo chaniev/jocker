@@ -21,6 +21,15 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentDealer, 0)
     }
 
+    func testStartGame_setsProvidedInitialDealer() {
+        let gameState = GameState(playerCount: 4)
+
+        gameState.startGame(initialDealerIndex: 2)
+
+        XCTAssertEqual(gameState.currentDealer, 2)
+        XCTAssertEqual(gameState.currentPlayer, 3)
+    }
+
     func testStartNewRound_progressesCardsInFirstBlockAndMovesToSecond() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()
@@ -136,5 +145,17 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(result.hands[1], [.regular(suit: .diamonds, rank: .seven)])
         XCTAssertEqual(result.hands[2], [.regular(suit: .diamonds, rank: .eight)])
         XCTAssertEqual(result.hands[3], [.regular(suit: .diamonds, rank: .nine)])
+    }
+
+    func testDeckSelectFirstDealer_startsFromProvidedSeatAndFindsFirstAce() {
+        var deck = Deck()
+
+        let dealerIndex = deck.selectFirstDealer(playerCount: 4, startingPlayerIndex: 1)
+
+        XCTAssertEqual(
+            dealerIndex,
+            0,
+            "После сброса верхней карты в центр первый туз должен прийти игроку с индексом 0."
+        )
     }
 }

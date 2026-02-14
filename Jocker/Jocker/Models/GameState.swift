@@ -40,10 +40,10 @@ class GameState {
     // MARK: - Game Flow
     
     /// Начать игру
-    func startGame() {
+    func startGame(initialDealerIndex: Int = 0) {
         currentBlock = .first
         currentRoundInBlock = 0
-        currentDealer = 0
+        currentDealer = normalizedPlayerIndex(initialDealerIndex)
         currentCardsPerPlayer = GameConstants.cardsPerPlayer(
             for: currentBlock,
             roundIndex: currentRoundInBlock,
@@ -55,7 +55,7 @@ class GameState {
         phase = .bidding
         
         // Следующий игрок после дилера начинает ставки
-        currentPlayer = (currentDealer + 1) % playerCount
+        currentPlayer = normalizedPlayerIndex(currentDealer + 1)
     }
     
     /// Рассчитать количество раундов в текущем блоке
@@ -88,10 +88,10 @@ class GameState {
         }
         
         // Обновляем дилера (следующий по кругу)
-        currentDealer = (currentDealer + 1) % playerCount
+        currentDealer = normalizedPlayerIndex(currentDealer + 1)
         
         // Следующий игрок после дилера начинает
-        currentPlayer = (currentDealer + 1) % playerCount
+        currentPlayer = normalizedPlayerIndex(currentDealer + 1)
         
         // Обновляем количество карт в зависимости от блока
         updateCardsPerPlayer()
@@ -119,13 +119,13 @@ class GameState {
         players[playerIndex].currentBid = bid
         
         // Переход к следующему игроку
-        currentPlayer = (currentPlayer + 1) % playerCount
+        currentPlayer = normalizedPlayerIndex(currentPlayer + 1)
         
         // Проверяем, все ли сделали ставки
-        if currentPlayer == (currentDealer + 1) % playerCount {
+        if currentPlayer == normalizedPlayerIndex(currentDealer + 1) {
             // Все игроки сделали ставки
             phase = .playing
-            currentPlayer = (currentDealer + 1) % playerCount
+            currentPlayer = normalizedPlayerIndex(currentDealer + 1)
             return true
         }
         
@@ -153,7 +153,7 @@ class GameState {
         guard phase == .playing else { return }
         
         // Переход к следующему игроку
-        currentPlayer = (currentPlayer + 1) % playerCount
+        currentPlayer = normalizedPlayerIndex(currentPlayer + 1)
     }
     
     /// Завершить взятку
@@ -225,7 +225,7 @@ class GameState {
     func beginPlayingAfterBids() {
         guard phase == .bidding else { return }
         phase = .playing
-        currentPlayer = (currentDealer + 1) % playerCount
+        currentPlayer = normalizedPlayerIndex(currentDealer + 1)
     }
 
     /// Явно завершить игру (используется сценой после финальной раздачи)
@@ -263,5 +263,10 @@ class GameState {
             for: currentBlock,
             playerCount: playerCount
         )
+    }
+
+    private func normalizedPlayerIndex(_ index: Int) -> Int {
+        guard playerCount > 0 else { return 0 }
+        return ((index % playerCount) + playerCount) % playerCount
     }
 }

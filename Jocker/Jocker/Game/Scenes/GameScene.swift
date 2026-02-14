@@ -10,6 +10,10 @@ import GameplayKit
 import UIKit
 
 class GameScene: SKScene {
+    private enum ActionKey {
+        static let firstDealerSelection = "GameScene.firstDealerSelection"
+    }
+
     var playerCount: Int = 4
     var onScoreButtonTapped: (() -> Void)?
     var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
@@ -37,14 +41,14 @@ class GameScene: SKScene {
     }()
     private var currentTrump: Suit?
     private lazy var gameState: GameState = {
-        let state = GameState(playerCount: playerCount)
-        state.startGame()
-        return state
+        return GameState(playerCount: playerCount)
     }()
     private var firstDealerIndex: Int = 0
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     private let coordinator = GameSceneCoordinator()
     private let shouldRevealAllPlayersCards = true
+    private var isSelectingFirstDealer = false
+    private var firstDealerAnnouncementNode: SKNode?
 
     var scoreTableFirstPlayerIndex: Int {
         guard playerCount > 0 else { return 0 }
@@ -64,6 +68,7 @@ class GameScene: SKScene {
         setupTurnIndicator()
         updateGameInfoLabel()
         updateTurnUI(animated: false)
+        beginFirstDealerSelectionFlow()
         
         // Повторный layout на следующем runloop учитывает финальные safe area insets.
         DispatchQueue.main.async { [weak self] in
@@ -84,7 +89,7 @@ class GameScene: SKScene {
     // MARK: - Touch Handling
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !coordinator.isInteractionLocked else { return }
+        guard !coordinator.isInteractionLocked, !isSelectingFirstDealer else { return }
 
         for touch in touches {
             let location = touch.location(in: self)
@@ -389,6 +394,75 @@ class GameScene: SKScene {
             addChild(trumpIndicator)
         }
     }
+
+    private func beginFirstDealerSelectionFlow() {
+        guard !isSelectingFirstDealer else { return }
+        isSelectingFirstDealer = true
+        showFirstDealerAnnouncement()
+
+        run(
+            .sequence([
+                .wait(forDuration: 3.0),
+                .run { [weak self] in
+                    self?.finishFirstDealerSelectionFlow()
+                }
+            ]),
+            withKey: ActionKey.firstDealerSelection
+        )
+    }
+
+    private func finishFirstDealerSelectionFlow() {
+        let selectedDealerIndex = determineFirstDealerIndex()
+        firstDealerIndex = selectedDealerIndex
+        gameState.startGame(initialDealerIndex: selectedDealerIndex)
+
+        firstDealerAnnouncementNode?.removeFromParent()
+        firstDealerAnnouncementNode = nil
+        isSelectingFirstDealer = false
+
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
+    }
+
+    private func determineFirstDealerIndex() -> Int {
+        guard playerCount > 0 else { return 0 }
+
+        deck.reset()
+        deck.shuffle()
+
+        // Начинаем выбор с игрока слева относительно первого места (индекс 0).
+        let firstPlayerOnLeft = playerCount > 1 ? 1 : 0
+        return deck.selectFirstDealer(
+            playerCount: playerCount,
+            startingPlayerIndex: firstPlayerOnLeft
+        )
+    }
+
+    private func showFirstDealerAnnouncement() {
+        firstDealerAnnouncementNode?.removeFromParent()
+
+        let container = SKNode()
+        container.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        container.zPosition = 300
+
+        let background = SKShapeNode(rectOf: CGSize(width: 460, height: 118), cornerRadius: 18)
+        background.fillColor = GameColors.panelBackground
+        background.strokeColor = GameColors.goldTranslucent
+        background.lineWidth = 2
+        container.addChild(background)
+
+        let label = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        label.text = "На раздающего"
+        label.fontSize = 44
+        label.fontColor = GameColors.textPrimary
+        label.horizontalAlignmentMode = .center
+        label.verticalAlignmentMode = .center
+        label.position = .zero
+        container.addChild(label)
+
+        addChild(container)
+        firstDealerAnnouncementNode = container
+    }
     
     private func refreshLayout() {
         setupPlayers()
@@ -404,6 +478,7 @@ class GameScene: SKScene {
             x: self.size.width - insets.right - 116,
             y: insets.bottom + 116
         )
+        firstDealerAnnouncementNode?.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         
         updateTurnUI(animated: false)
     }
@@ -411,6 +486,8 @@ class GameScene: SKScene {
     // MARK: - Раздача карт (SKAction-based анимация)
     
     private func dealCards() {
+        guard gameState.phase != .notStarted else { return }
+
         coordinator.cancelPendingTrickResolution(on: self)
         
         guard coordinator.prepareForDealing(
