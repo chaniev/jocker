@@ -57,7 +57,6 @@ final class ScoreTableView: UIView {
     private let gridThickColor = UIColor(red: 0.52, green: 0.58, blue: 0.68, alpha: 1.0)
     private let textPrimaryColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0)
     private let textSecondaryColor = UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0)
-    private let summaryColor = UIColor(red: 0.93, green: 0.76, blue: 0.33, alpha: 1.0)
     
     init(playerCount: Int, displayStartPlayerIndex: Int = 0) {
         self.playerCount = playerCount
@@ -186,7 +185,7 @@ final class ScoreTableView: UIView {
                 let pointsLabel = UILabel()
                 pointsLabel.font = isSummary ? summaryFont : cellFont
                 pointsLabel.textAlignment = .right
-                pointsLabel.textColor = isSummary ? summaryColor : textPrimaryColor
+                pointsLabel.textColor = textPrimaryColor
                 pointsLabel.text = ""
                 contentView.addSubview(pointsLabel)
                 pointsLabels[rowIndex].append(pointsLabel)
