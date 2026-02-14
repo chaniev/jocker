@@ -67,6 +67,9 @@ Jocker/Jocker/
 │   ├── GameConstants.swift
 │   ├── GamePhase.swift
 │   ├── GameState.swift
+│   ├── JokerLeadDeclaration.swift
+│   ├── JokerPlayStyle.swift
+│   ├── PlayedTrickCard.swift
 │   ├── PlayerInfo.swift
 │   ├── RoundResult.swift
 │   └── TrickTakingResolver.swift

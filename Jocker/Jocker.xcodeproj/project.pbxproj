@@ -54,6 +54,9 @@
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
 		F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000012F4100010037CA75 /* TrickTakingResolver.swift */; };
 		F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */; };
+		F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */; };
+		F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000052F5200010037CA75 /* JokerPlayStyle.swift */; };
+		F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000062F5200010037CA75 /* PlayedTrickCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -124,6 +127,9 @@
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
+		F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerLeadDeclaration.swift; sourceTree = "<group>"; };
+		F20000052F5200010037CA75 /* JokerPlayStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerPlayStyle.swift; sourceTree = "<group>"; };
+		F20000062F5200010037CA75 /* PlayedTrickCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayedTrickCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -224,6 +230,9 @@
 					BB0000012F2800010037CA75 /* GamePhase.swift */,
 					CC0000022F2800010037CA75 /* GameConstants.swift */,
 					7E4AC9892F269A600037CA75 /* GameState.swift */,
+					F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */,
+					F20000052F5200010037CA75 /* JokerPlayStyle.swift */,
+					F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
 				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 				AA0000012F2800010037CA75 /* RoundResult.swift */,
 				F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
@@ -474,6 +483,9 @@
 				7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */,
 				7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */,
 				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
+				F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */,
+				F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */,
+				F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
 				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 				C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
 				C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,

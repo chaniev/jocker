@@ -12,7 +12,8 @@ class TrickNode: SKNode {
     
     // MARK: - Properties
     
-    private(set) var playedCards: [(card: Card, player: Int, cardNode: CardNode)] = []
+    private(set) var playedCards: [PlayedTrickCard] = []
+    private var playedCardNodes: [CardNode] = []
     var centerPosition: CGPoint = .zero
     var cardRadius: CGFloat = 100  // Радиус размещения карт вокруг центра
     
@@ -22,11 +23,24 @@ class TrickNode: SKNode {
     func playCard(
         _ card: Card,
         fromPlayer playerNumber: Int,
+        jokerPlayStyle: JokerPlayStyle = .faceUp,
+        jokerLeadDeclaration: JokerLeadDeclaration? = nil,
         to targetPosition: CGPoint? = nil,
         animated: Bool = true
     ) -> CardNode {
-        let cardNode = CardNode(card: card, faceUp: true)
+        let resolvedJokerStyle: JokerPlayStyle = card.isJoker ? jokerPlayStyle : .faceUp
+        let shouldShowFaceUp = !card.isJoker || resolvedJokerStyle == .faceUp
+        let cardNode = CardNode(card: card, faceUp: shouldShowFaceUp)
         cardNode.zPosition = CGFloat(playedCards.count)
+
+        let playerIndex = max(0, playerNumber - 1)
+        let declaration = (card.isJoker && playedCards.isEmpty) ? jokerLeadDeclaration : nil
+        let playedCard = PlayedTrickCard(
+            playerIndex: playerIndex,
+            card: card,
+            jokerPlayStyle: resolvedJokerStyle,
+            jokerLeadDeclaration: declaration
+        )
         
         // Вычисляем позицию для карты
         let resolvedTargetPosition: CGPoint
@@ -39,7 +53,8 @@ class TrickNode: SKNode {
             resolvedTargetPosition = CGPoint(x: x, y: y)
         }
         
-        playedCards.append((card, playerNumber, cardNode))
+        playedCards.append(playedCard)
+        playedCardNodes.append(cardNode)
         addChild(cardNode)
         
         if animated {
@@ -63,16 +78,16 @@ class TrickNode: SKNode {
     
     /// Очистить взятку (забрать карты)
     func clearTrick(toPosition position: CGPoint, animated: Bool = true, completion: (() -> Void)? = nil) {
-        guard !playedCards.isEmpty else {
+        guard !playedCardNodes.isEmpty else {
             completion?()
             return
         }
         
         if animated {
             var completionCount = 0
-            let totalCards = playedCards.count
+            let totalCards = playedCardNodes.count
             
-            for (_, _, cardNode) in playedCards {
+            for cardNode in playedCardNodes {
                 let move = SKAction.move(to: position, duration: 0.4)
                 let fadeOut = SKAction.fadeOut(withDuration: 0.3)
                 let scale = SKAction.scale(to: 0.5, duration: 0.4)
@@ -88,69 +103,65 @@ class TrickNode: SKNode {
                 }
             }
         } else {
-            playedCards.forEach { $0.cardNode.removeFromParent() }
+            playedCardNodes.forEach { $0.removeFromParent() }
             completion?()
         }
         
+        playedCardNodes.removeAll()
         playedCards.removeAll()
     }
     
     /// Определить победителя взятки
     func determineWinner(trump: Suit?) -> Int? {
-        let normalizedCards = playedCards.map { entry in
-            (playerIndex: entry.player - 1, card: entry.card)
-        }
-
         guard let winnerIndex = TrickTakingResolver.winnerPlayerIndex(
-            playedCards: normalizedCards,
+            playedCards: playedCards,
             trump: trump
         ) else {
             return nil
         }
 
-        // Внутри TrickNode игрок хранится как номер (1...N), возвращаем совместимый формат.
+        // Возвращаем формат номера игрока (1...N) для совместимости с существующим API.
         return winnerIndex + 1
     }
     
     /// Получить карты текущей взятки
     func getCards() -> [Card] {
-        return playedCards.map { $0.card }
+        return playedCards.map(\.card)
     }
     
     /// Проверить, можно ли сыграть карту
     func canPlayCard(_ card: Card, fromHand hand: [Card], trump: Suit?) -> Bool {
         // Если это первая карта - можно любую
         guard !playedCards.isEmpty else { return true }
-        
-        let leadCard = playedCards[0].card
-        
+
         // Джокер можно всегда
         if card.isJoker {
             return true
         }
-        
-        guard let leadSuit = leadCard.suit else {
-            // Первая карта - джокер, можно любую
+
+        guard let cardSuit = card.suit else {
             return true
         }
-        
-        guard let cardSuit = card.suit else {
-            return true  // Джокер
+
+        // "Хочу" при заходе с джокера: остальные карты можно класть без ограничений.
+        if isWishLeadMode {
+            return true
         }
-        
+
+        guard let leadSuit = effectiveLeadSuit else {
+            return true
+        }
+
         // Должны следовать в масть
         if cardSuit == leadSuit {
             return true
         }
-        
+
         // Проверяем, есть ли карты нужной масти в руке
-        let hasLeadSuit = hand.contains { card in
-            if let suit = card.suit {
-                return suit == leadSuit
-            }
-            return false
+        let hasLeadSuit = hand.contains { handCard in
+            handCard.suit == leadSuit
         }
-        
+
         if hasLeadSuit {
             // Есть карты нужной масти - нельзя играть другую масть
             return false
@@ -160,10 +171,7 @@ class TrickNode: SKNode {
         // если есть козырь в руке, обязаны сыграть козырь (или джокер, обработан выше).
         if let trump {
             let hasTrump = hand.contains { handCard in
-                if let suit = handCard.suit {
-                    return suit == trump
-                }
-                return false
+                handCard.suit == trump
             }
 
             if hasTrump {
@@ -173,5 +181,32 @@ class TrickNode: SKNode {
 
         // Нет ни масти первого хода, ни козыря — можно любую карту.
         return true
+    }
+
+    private var effectiveLeadSuit: Suit? {
+        guard let leadCard = playedCards.first else { return nil }
+
+        if !leadCard.card.isJoker {
+            return leadCard.card.suit
+        }
+
+        switch leadCard.jokerLeadDeclaration {
+        case .above(let suit), .takes(let suit):
+            return suit
+        case .wish, .none:
+            return nil
+        }
+    }
+
+    private var isWishLeadMode: Bool {
+        guard let leadCard = playedCards.first else { return false }
+        guard leadCard.card.isJoker else { return false }
+
+        switch leadCard.jokerLeadDeclaration {
+        case .wish, .none:
+            return true
+        case .above, .takes:
+            return false
+        }
     }
 }

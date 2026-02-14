@@ -20,12 +20,8 @@ final class GameTurnService {
     func trickWinnerIndex(trickNode: TrickNode, playerCount: Int, trump: Suit?) -> Int? {
         guard trickNode.playedCards.count == playerCount else { return nil }
 
-        let trickCards = trickNode.playedCards.map { entry in
-            (playerIndex: entry.player - 1, card: entry.card)
-        }
-
         return TrickTakingResolver.winnerPlayerIndex(
-            playedCards: trickCards,
+            playedCards: trickNode.playedCards,
             trump: trump
         )
     }

@@ -31,9 +31,30 @@
 ### `Jocker/Jocker/Models/TrickTakingResolver.swift`
 
 - Чистый алгоритм определения победителя взятки:
-  - джокер старше;
-  - иначе приоритет козыря;
-  - иначе старшая карта масти первого хода.
+  - поддерживает `JokerLeadDeclaration` (`wish`, `above`, `takes`);
+  - учитывает `JokerPlayStyle` (`faceUp`, `faceDown`);
+  - для обычного хода: приоритет джокера лицом вверх, затем козыря, затем масти первого хода.
+
+### `Jocker/Jocker/Models/JokerLeadDeclaration.swift`
+
+- Объявление при первом ходе джокером:
+  - `wish`
+  - `above(suit:)`
+  - `takes(suit:)`
+
+### `Jocker/Jocker/Models/JokerPlayStyle.swift`
+
+- Способ выкладывания джокера:
+  - `faceUp`
+  - `faceDown` (подпихивание)
+
+### `Jocker/Jocker/Models/PlayedTrickCard.swift`
+
+- Контейнер карты во взятке с контекстом розыгрыша джокера:
+  - индекс игрока;
+  - карта;
+  - стиль выкладывания джокера;
+  - объявление первого джокера.
 
 ## Узлы SpriteKit
 
@@ -60,7 +81,9 @@
 ### `Jocker/Jocker/Game/Nodes/TrickNode.swift`
 
 - Хранит карты текущей взятки (`playedCards`).
+- Хранит контекст джокера для каждой карты (`PlayedTrickCard`).
 - Проверяет валидность хода (`canPlayCard`).
+- Учитывает режимы `wish/above/takes` для первого джокера.
 - Очищает взятку анимацией (`clearTrick`).
 
 ### `Jocker/Jocker/Game/Nodes/TrumpIndicator.swift`
