@@ -28,6 +28,7 @@ final class ScoreTableView: UIView {
     }
     
     private let playerCount: Int
+    private let playerDisplayOrder: [Int]
     private let layout: Layout
     private var scoreManager: ScoreManager?
     
@@ -58,8 +59,12 @@ final class ScoreTableView: UIView {
     private let textSecondaryColor = UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0)
     private let summaryColor = UIColor(red: 0.93, green: 0.76, blue: 0.33, alpha: 1.0)
     
-    init(playerCount: Int) {
+    init(playerCount: Int, displayStartPlayerIndex: Int = 0) {
         self.playerCount = playerCount
+        self.playerDisplayOrder = ScoreTableView.buildPlayerDisplayOrder(
+            playerCount: playerCount,
+            startIndex: displayStartPlayerIndex
+        )
         self.layout = ScoreTableView.buildLayout(playerCount: playerCount)
         super.init(frame: .zero)
         setupView()
@@ -138,7 +143,8 @@ final class ScoreTableView: UIView {
         
         // Заголовки игроков
         headerLabels = []
-        for playerIndex in 0..<playerCount {
+        for displayIndex in 0..<playerCount {
+            let playerIndex = playerDisplayOrder[displayIndex]
             let headerLabel = UILabel()
             headerLabel.text = "Игрок \(playerIndex + 1)"
             headerLabel.font = headerFont
@@ -275,9 +281,10 @@ final class ScoreTableView: UIView {
             results = nil
         }
         
-        for playerIndex in 0..<playerCount {
-            let tricksLabel = tricksLabels[rowIndex][playerIndex]
-            let pointsLabel = pointsLabels[rowIndex][playerIndex]
+        for displayIndex in 0..<playerCount {
+            let playerIndex = playerDisplayOrder[displayIndex]
+            let tricksLabel = tricksLabels[rowIndex][displayIndex]
+            let pointsLabel = pointsLabels[rowIndex][displayIndex]
             
             guard
                 let results = results,
@@ -311,9 +318,10 @@ final class ScoreTableView: UIView {
             scores = nil
         }
         
-        for playerIndex in 0..<playerCount {
-            tricksLabels[rowIndex][playerIndex].text = ""
-            pointsLabels[rowIndex][playerIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
+        for displayIndex in 0..<playerCount {
+            let playerIndex = playerDisplayOrder[displayIndex]
+            tricksLabels[rowIndex][displayIndex].text = ""
+            pointsLabels[rowIndex][displayIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
         }
     }
     
@@ -333,9 +341,10 @@ final class ScoreTableView: UIView {
             scores = nil
         }
         
-        for playerIndex in 0..<playerCount {
-            tricksLabels[rowIndex][playerIndex].text = ""
-            pointsLabels[rowIndex][playerIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
+        for displayIndex in 0..<playerCount {
+            let playerIndex = playerDisplayOrder[displayIndex]
+            tricksLabels[rowIndex][displayIndex].text = ""
+            pointsLabels[rowIndex][displayIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
         }
     }
     
@@ -487,5 +496,13 @@ final class ScoreTableView: UIView {
         }
         
         return Layout(rows: rows, blockEndRowIndices: blockEndRowIndices, rowMappings: rowMappings)
+    }
+
+    private static func buildPlayerDisplayOrder(playerCount: Int, startIndex: Int) -> [Int] {
+        guard playerCount > 0 else { return [] }
+        let normalizedStart = ((startIndex % playerCount) + playerCount) % playerCount
+        return (0..<playerCount).map { offset in
+            (normalizedStart + offset) % playerCount
+        }
     }
 }

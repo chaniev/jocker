@@ -30,10 +30,16 @@ class GameScene: SKScene {
     private var trumpIndicator: TrumpIndicator!
     private var currentTrump: Suit?
     private var gameState: GameState!
+    private var firstDealerIndex: Int = 0
     private(set) var scoreManager: ScoreManager?
     private var hasDealtAtLeastOnce = false
     private var isResolvingTrick = false
     private let shouldRevealAllPlayersCards = true
+
+    var scoreTableFirstPlayerIndex: Int {
+        guard playerCount > 0 else { return 0 }
+        return (firstDealerIndex + 1) % playerCount
+    }
     
     override func didMove(to view: SKView) {
         self.backgroundColor = GameColors.sceneBackground
@@ -365,6 +371,7 @@ class GameScene: SKScene {
     private func setupGameComponents() {
         gameState = GameState(playerCount: playerCount)
         gameState.startGame()
+        firstDealerIndex = gameState.currentDealer
         
         scoreManager = ScoreManager(gameState: gameState)
         

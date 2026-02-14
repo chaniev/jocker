@@ -52,8 +52,11 @@ class GameViewController: UIViewController {
     }
 
     private func presentScoreTable() {
-        guard let scoreManager = gameScene?.scoreManager else { return }
-        let scoreVC = ScoreTableViewController(scoreManager: scoreManager)
+        guard let scene = gameScene, let scoreManager = scene.scoreManager else { return }
+        let scoreVC = ScoreTableViewController(
+            scoreManager: scoreManager,
+            firstColumnPlayerIndex: scene.scoreTableFirstPlayerIndex
+        )
         scoreVC.modalPresentationStyle = .fullScreen
         scoreVC.modalTransitionStyle = .crossDissolve
         present(scoreVC, animated: true, completion: nil)
