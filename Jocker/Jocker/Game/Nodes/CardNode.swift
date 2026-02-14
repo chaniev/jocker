@@ -101,39 +101,42 @@ class CardNode: SKNode {
         let color: SKColor = suit.color == .red ? GameColors.cardRed : GameColors.cardBlack
         
         // Верхний левый угол - ранг (уменьшено на 20%)
-        rankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
-        rankLabel.text = rank.symbol
-        rankLabel.fontSize = 43.2
-        rankLabel.fontColor = color
-        rankLabel.horizontalAlignmentMode = .left
-        rankLabel.verticalAlignmentMode = .top
-        rankLabel.position = CGPoint(
+        let topRankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        topRankLabel.text = rank.symbol
+        topRankLabel.fontSize = 43.2
+        topRankLabel.fontColor = color
+        topRankLabel.horizontalAlignmentMode = .left
+        topRankLabel.verticalAlignmentMode = .top
+        topRankLabel.position = CGPoint(
             x: -CardNode.cardWidth / 2 + 19.2,
             y: CardNode.cardHeight / 2 - 19.2
         )
-        rankLabel.zPosition = 2
-        addChild(rankLabel)
+        topRankLabel.zPosition = 2
+        addChild(topRankLabel)
+        rankLabel = topRankLabel
         
         // Верхний левый угол - масть (уменьшено на 20%)
-        suitLabel = SKLabelNode(text: suit.rawValue)
-        suitLabel.fontSize = 38.4
-        suitLabel.horizontalAlignmentMode = .left
-        suitLabel.verticalAlignmentMode = .top
-        suitLabel.position = CGPoint(
+        let topSuitLabel = SKLabelNode(text: suit.rawValue)
+        topSuitLabel.fontSize = 38.4
+        topSuitLabel.horizontalAlignmentMode = .left
+        topSuitLabel.verticalAlignmentMode = .top
+        topSuitLabel.position = CGPoint(
             x: -CardNode.cardWidth / 2 + 19.2,
             y: CardNode.cardHeight / 2 - 62.4
         )
-        suitLabel.zPosition = 2
-        addChild(suitLabel)
+        topSuitLabel.zPosition = 2
+        addChild(topSuitLabel)
+        suitLabel = topSuitLabel
         
         // Центральная масть (большая) - уменьшено на 20%
-        centerSuitLabel = SKLabelNode(text: suit.rawValue)
-        centerSuitLabel.fontSize = 115.2
-        centerSuitLabel.horizontalAlignmentMode = .center
-        centerSuitLabel.verticalAlignmentMode = .center
-        centerSuitLabel.position = CGPoint(x: 0, y: 0)
-        centerSuitLabel.zPosition = 2
-        addChild(centerSuitLabel)
+        let middleSuitLabel = SKLabelNode(text: suit.rawValue)
+        middleSuitLabel.fontSize = 115.2
+        middleSuitLabel.horizontalAlignmentMode = .center
+        middleSuitLabel.verticalAlignmentMode = .center
+        middleSuitLabel.position = CGPoint(x: 0, y: 0)
+        middleSuitLabel.zPosition = 2
+        addChild(middleSuitLabel)
+        centerSuitLabel = middleSuitLabel
         
         // Нижний правый угол - ранг (перевёрнутый) - уменьшено на 20%
         let bottomRankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
