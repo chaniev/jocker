@@ -111,6 +111,17 @@ final class GameStateTests: XCTestCase {
         gameState.startNewRound()
         XCTAssertEqual(gameState.currentDealer, 0)
     }
+    
+    func testSetPlayerNames_appliesProvidedNamesAndFallbacksForEmptyValues() {
+        let gameState = GameState(playerCount: 4)
+        
+        gameState.setPlayerNames(["Анна", "  ", "Борис"])
+        
+        XCTAssertEqual(gameState.players[0].name, "Анна")
+        XCTAssertEqual(gameState.players[1].name, "Игрок 2")
+        XCTAssertEqual(gameState.players[2].name, "Борис")
+        XCTAssertEqual(gameState.players[3].name, "Игрок 4")
+    }
 
     func testStartNewRound_onFinalRoundKeepsGameEndPhase() {
         let gameState = GameState(playerCount: 4)

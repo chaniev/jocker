@@ -29,6 +29,7 @@ final class ScoreTableView: UIView {
     
     private let playerCount: Int
     private let playerDisplayOrder: [Int]
+    private let playerNames: [String]
     private let layout: Layout
     private var scoreManager: ScoreManager?
     
@@ -58,12 +59,17 @@ final class ScoreTableView: UIView {
     private let textPrimaryColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0)
     private let textSecondaryColor = UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0)
     
-    init(playerCount: Int, displayStartPlayerIndex: Int = 0) {
+    init(
+        playerCount: Int,
+        displayStartPlayerIndex: Int = 0,
+        playerNames: [String] = []
+    ) {
         self.playerCount = playerCount
         self.playerDisplayOrder = ScoreTableView.buildPlayerDisplayOrder(
             playerCount: playerCount,
             startIndex: displayStartPlayerIndex
         )
+        self.playerNames = playerNames
         self.layout = ScoreTableView.buildLayout(playerCount: playerCount)
         super.init(frame: .zero)
         setupView()
@@ -145,10 +151,13 @@ final class ScoreTableView: UIView {
         for displayIndex in 0..<playerCount {
             let playerIndex = playerDisplayOrder[displayIndex]
             let headerLabel = UILabel()
-            headerLabel.text = "Игрок \(playerIndex + 1)"
+            headerLabel.text = displayName(for: playerIndex)
             headerLabel.font = headerFont
             headerLabel.textAlignment = .center
             headerLabel.textColor = textPrimaryColor
+            headerLabel.adjustsFontSizeToFitWidth = true
+            headerLabel.minimumScaleFactor = 0.65
+            headerLabel.lineBreakMode = .byTruncatingTail
             contentView.addSubview(headerLabel)
             headerLabels.append(headerLabel)
         }
@@ -261,6 +270,15 @@ final class ScoreTableView: UIView {
                 )
             }
         }
+    }
+    
+    private func displayName(for playerIndex: Int) -> String {
+        guard playerNames.indices.contains(playerIndex) else {
+            return "Игрок \(playerIndex + 1)"
+        }
+        
+        let trimmedName = playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedName.isEmpty ? "Игрок \(playerIndex + 1)" : trimmedName
     }
     
     private func applyDealRow(

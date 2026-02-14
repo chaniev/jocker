@@ -12,6 +12,7 @@ import GameplayKit
 class GameViewController: UIViewController {
     
     var playerCount: Int = 4
+    var playerNames: [String] = []
     private var gameScene: GameScene?
 
     override func viewDidLoad() {
@@ -31,6 +32,7 @@ class GameViewController: UIViewController {
         let scene = GameScene(size: CGSize(width: 2556, height: 1179))
         scene.scaleMode = .aspectFill
         scene.playerCount = playerCount
+        scene.playerNames = playerNames
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
         }
@@ -56,7 +58,8 @@ class GameViewController: UIViewController {
         let scoreManager = scene.scoreManager
         let scoreVC = ScoreTableViewController(
             scoreManager: scoreManager,
-            firstColumnPlayerIndex: scene.scoreTableFirstPlayerIndex
+            firstColumnPlayerIndex: scene.scoreTableFirstPlayerIndex,
+            playerNames: scene.currentPlayerNames
         )
         scoreVC.modalPresentationStyle = .fullScreen
         scoreVC.modalTransitionStyle = .crossDissolve

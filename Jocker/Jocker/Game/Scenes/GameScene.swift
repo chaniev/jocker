@@ -15,6 +15,7 @@ class GameScene: SKScene {
     }
 
     var playerCount: Int = 4
+    var playerNames: [String] = []
     var onScoreButtonTapped: (() -> Void)?
     var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
     private var pokerTable: PokerTableNode?
@@ -55,8 +56,14 @@ class GameScene: SKScene {
         return (firstDealerIndex + 1) % playerCount
     }
     
+    var currentPlayerNames: [String] {
+        return gameState.players.map { $0.name }
+    }
+    
     override func didMove(to view: SKView) {
         self.backgroundColor = GameColors.sceneBackground
+        
+        applyConfiguredPlayerNames()
         
         setupPokerTable()
         setupPlayers()
@@ -74,6 +81,10 @@ class GameScene: SKScene {
         DispatchQueue.main.async { [weak self] in
             self?.refreshLayout()
         }
+    }
+    
+    private func applyConfiguredPlayerNames() {
+        gameState.setPlayerNames(playerNames)
     }
     
     // MARK: - Покерный стол
@@ -168,9 +179,13 @@ class GameScene: SKScene {
         
         for (index, position) in positions.enumerated() {
             let direction = CGVector(dx: 0, dy: position.y >= center.y ? 1 : -1)
+            let playerName = gameState.players.indices.contains(index)
+                ? gameState.players[index].name
+                : "Игрок \(index + 1)"
             
             let playerNode = PlayerNode(
                 playerNumber: index + 1,
+                playerName: playerName,
                 avatar: avatars[index % avatars.count],
                 position: position,
                 seatDirection: direction,

@@ -12,11 +12,16 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
     private let tableView: ScoreTableView
     private let scoreManager: ScoreManager
     
-    init(scoreManager: ScoreManager, firstColumnPlayerIndex: Int = 0) {
+    init(
+        scoreManager: ScoreManager,
+        firstColumnPlayerIndex: Int = 0,
+        playerNames: [String] = []
+    ) {
         self.scoreManager = scoreManager
         self.tableView = ScoreTableView(
             playerCount: scoreManager.playerCount,
-            displayStartPlayerIndex: firstColumnPlayerIndex
+            displayStartPlayerIndex: firstColumnPlayerIndex,
+            playerNames: playerNames
         )
         super.init(nibName: nil, bundle: nil)
     }

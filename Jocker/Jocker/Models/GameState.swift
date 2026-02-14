@@ -58,6 +58,22 @@ class GameState {
         currentPlayer = normalizedPlayerIndex(currentDealer + 1)
     }
     
+    /// Установить имена игроков.
+    ///
+    /// Для пустых значений применяются стандартные имена вида "Игрок N".
+    func setPlayerNames(_ names: [String]) {
+        for index in players.indices {
+            let fallbackName = "Игрок \(index + 1)"
+            guard names.indices.contains(index) else {
+                players[index].name = fallbackName
+                continue
+            }
+            
+            let trimmedName = names[index].trimmingCharacters(in: .whitespacesAndNewlines)
+            players[index].name = trimmedName.isEmpty ? fallbackName : trimmedName
+        }
+    }
+    
     /// Рассчитать количество раундов в текущем блоке
     private func calculateRoundsInBlock() {
         totalRoundsInBlock = GameConstants.deals(

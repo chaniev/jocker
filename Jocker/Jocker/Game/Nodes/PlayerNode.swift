@@ -31,6 +31,7 @@ class PlayerNode: SKNode {
     
     init(
         playerNumber: Int,
+        playerName: String,
         avatar: String,
         position: CGPoint,
         seatDirection: CGVector,
@@ -56,7 +57,7 @@ class PlayerNode: SKNode {
         self.position = position
         self.zPosition = 10
         
-        setupVisuals(seatDirection: seatDirection)
+        setupVisuals(seatDirection: seatDirection, playerName: playerName)
         setupCardHand(seatDirection: seatDirection)
     }
     
@@ -64,7 +65,7 @@ class PlayerNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupVisuals(seatDirection: CGVector) {
+    private func setupVisuals(seatDirection: CGVector, playerName: String) {
         let avatarRadius: CGFloat = 58
         let isSideSeat = abs(seatDirection.dx) > abs(seatDirection.dy)
         
@@ -93,7 +94,7 @@ class PlayerNode: SKNode {
         addChild(avatarNode)
         
         // Имя игрока
-        nameLabel.text = "Игрок \(playerNumber)"
+        nameLabel.text = playerName
         nameLabel.fontSize = 34
         nameLabel.fontColor = GameColors.textPrimary
         nameLabel.verticalAlignmentMode = .center
