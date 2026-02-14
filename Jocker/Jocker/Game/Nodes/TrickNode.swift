@@ -99,22 +99,19 @@ class TrickNode: SKNode {
     
     /// Определить победителя взятки
     func determineWinner(trump: Suit?) -> Int? {
-        guard !playedCards.isEmpty else { return nil }
-        
-        let firstCard = playedCards[0].card
-        var winningIndex = 0
-        var winningCard = firstCard
-        
-        for (index, (card, _, _)) in playedCards.enumerated() {
-            if index == 0 { continue }
-            
-            if card.beats(winningCard, trump: trump) {
-                winningCard = card
-                winningIndex = index
-            }
+        let normalizedCards = playedCards.map { entry in
+            (playerIndex: entry.player - 1, card: entry.card)
         }
-        
-        return playedCards[winningIndex].player
+
+        guard let winnerIndex = TrickTakingResolver.winnerPlayerIndex(
+            playedCards: normalizedCards,
+            trump: trump
+        ) else {
+            return nil
+        }
+
+        // Внутри TrickNode игрок хранится как номер (1...N), возвращаем совместимый формат.
+        return winnerIndex + 1
     }
     
     /// Получить карты текущей взятки

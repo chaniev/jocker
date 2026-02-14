@@ -46,6 +46,8 @@
 		CC0000032F2800010037CA75 /* GameColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F2800010037CA75 /* GameColors.swift */; };
 		CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000072F2800010037CA75 /* PokerTableNode.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
+		F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000012F4100010037CA75 /* TrickTakingResolver.swift */; };
+		F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +110,8 @@
 		CC0000042F2800010037CA75 /* GameColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameColors.swift; sourceTree = "<group>"; };
 		CC0000072F2800010037CA75 /* PokerTableNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokerTableNode.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
+		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
+		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -209,6 +213,7 @@
 				7E4AC9892F269A600037CA75 /* GameState.swift */,
 				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 				AA0000012F2800010037CA75 /* RoundResult.swift */,
+				F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -274,6 +279,7 @@
 				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
 				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
+				F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */,
 			);
 			path = JockerTests;
 			sourceTree = "<group>";
@@ -448,6 +454,7 @@
 				CC0000032F2800010037CA75 /* GameColors.swift in Sources */,
 				CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */,
 				EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */,
+				F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,6 +466,7 @@
 				DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
 				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,
 				AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */,
+				F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -55,7 +55,8 @@ Jocker/Jocker/
 │   ├── GamePhase.swift
 │   ├── GameState.swift
 │   ├── PlayerInfo.swift
-│   └── RoundResult.swift
+│   ├── RoundResult.swift
+│   └── TrickTakingResolver.swift
 ├── Resources/
 │   ├── Actions.sks
 │   └── GameScene.sks
@@ -80,6 +81,7 @@ Jocker/Jocker/
 Jocker/JockerTests/
 ├── AGENTS.md
 ├── JockerTests.swift
+├── TrickTakingResolverTests.swift
 ├── ScoreCalculatorTests.swift
 └── ScoreManagerTests.swift
 
@@ -114,6 +116,7 @@ Use repository-relative paths in docs and reviews:
 - `Jocker/Jocker/Models/GameState.swift`
 - `Jocker/Jocker/Models/PlayerInfo.swift`
 - `Jocker/Jocker/Models/RoundResult.swift`
+- `Jocker/Jocker/Models/TrickTakingResolver.swift`
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`
 - `Jocker/Jocker/Scoring/ScoreManager.swift`
 - `Jocker/Jocker/ViewControllers/GameViewController.swift`
@@ -123,6 +126,7 @@ Use repository-relative paths in docs and reviews:
 - `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`
 - `Jocker/Jocker/Resources/Actions.sks`
 - `Jocker/Jocker/Resources/GameScene.sks`
+- `Jocker/JockerTests/TrickTakingResolverTests.swift`
 
 ## Placement Conventions
 

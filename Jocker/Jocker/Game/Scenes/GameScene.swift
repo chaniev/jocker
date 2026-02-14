@@ -32,6 +32,7 @@ class GameScene: SKScene {
     private var gameState: GameState!
     private(set) var scoreManager: ScoreManager?
     private var hasDealtAtLeastOnce = false
+    private var isResolvingTrick = false
     private let shouldRevealAllPlayersCards = true
     
     override func didMove(to view: SKView) {
@@ -67,6 +68,8 @@ class GameScene: SKScene {
     // MARK: - Touch Handling
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard !isResolvingTrick else { return }
+
         for touch in touches {
             let location = touch.location(in: self)
             
@@ -101,8 +104,7 @@ class GameScene: SKScene {
                     playAutomaticCard(for: playerIndex)
                     return
                 }
-                
-                registerTrickWin(for: playerIndex)
+
                 return
             }
         }
@@ -402,6 +404,9 @@ class GameScene: SKScene {
     // MARK: - Раздача карт (SKAction-based анимация)
     
     private func dealCards() {
+        removeAction(forKey: "resolveTrick")
+        isResolvingTrick = false
+
         prepareRoundForDealingIfNeeded()
         
         updateGameInfoLabel()
@@ -541,13 +546,18 @@ class GameScene: SKScene {
     }
     
     private func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {
-        guard gameState.phase == .playing else { return false }
         guard players.indices.contains(playerIndex) else { return false }
         
         let player = players[playerIndex]
         
         // По пользовательскому сценарию ручной выбор карты доступен только у локального игрока.
         guard player.isLocalPlayer else { return false }
+
+        if gameState.phase == .bidding {
+            gameState.beginPlayingAfterBids()
+        }
+
+        guard gameState.phase == .playing else { return false }
         guard playerIndex == gameState.currentPlayer else { return false }
         
         guard let card = player.hand.removeCardNode(cardNode, animated: true) else { return false }
@@ -578,11 +588,51 @@ class GameScene: SKScene {
         )
         
         gameState.playCard(byPlayer: playerIndex)
+
+        if resolveTrickIfNeeded() {
+            return
+        }
+
         updateGameInfoLabel()
         updateTurnUI(animated: true)
     }
+
+    @discardableResult
+    private func resolveTrickIfNeeded() -> Bool {
+        guard !isResolvingTrick else { return true }
+        guard trickNode.playedCards.count == playerCount else { return false }
+
+        let trickCards = trickNode.playedCards.map { entry in
+            (playerIndex: entry.player - 1, card: entry.card)
+        }
+
+        guard let winnerIndex = TrickTakingResolver.winnerPlayerIndex(
+            playedCards: trickCards,
+            trump: currentTrump
+        ) else {
+            return false
+        }
+
+        isResolvingTrick = true
+
+        let wait = SKAction.wait(forDuration: 0.55)
+        let resolve = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            self.registerTrickWin(for: winnerIndex)
+            self.isResolvingTrick = false
+        }
+
+        run(SKAction.sequence([wait, resolve]), withKey: "resolveTrick")
+        return true
+    }
     
     private func selectedHandCard(at point: CGPoint) -> (playerIndex: Int, cardNode: CardNode)? {
+        if let localPlayerIndex = players.firstIndex(where: { $0.isLocalPlayer }),
+           players.indices.contains(localPlayerIndex),
+           let localCardNode = selectedCard(in: players[localPlayerIndex].hand, at: point) {
+            return (localPlayerIndex, localCardNode)
+        }
+
         for node in nodes(at: point) {
             guard let tappedCardNode = cardNode(from: node) else { continue }
             
@@ -614,6 +664,32 @@ class GameScene: SKScene {
             return (playerNode.playerNumber - 1, tappedCardNode)
         }
         
+        return nil
+    }
+
+    private func selectedCard(in hand: CardHandNode, at point: CGPoint) -> CardNode? {
+        let tapPadding: CGFloat = 12
+        let cardBounds = CGRect(
+            x: -CardNode.cardWidth / 2 - tapPadding,
+            y: -CardNode.cardHeight / 2 - tapPadding,
+            width: CardNode.cardWidth + tapPadding * 2,
+            height: CardNode.cardHeight + tapPadding * 2
+        )
+
+        let cardsSortedByTop = hand.cardNodes.sorted { lhs, rhs in
+            if lhs.zPosition == rhs.zPosition {
+                return lhs.position.x > rhs.position.x
+            }
+            return lhs.zPosition > rhs.zPosition
+        }
+
+        for cardNode in cardsSortedByTop {
+            let pointInCard = convert(point, to: cardNode)
+            if cardBounds.contains(pointInCard) {
+                return cardNode
+            }
+        }
+
         return nil
     }
     
