@@ -389,8 +389,10 @@ final class ScoreTableView: UIView {
         }()
         
         var xPositions: [CGFloat] = [0]
+        var currentX: CGFloat = 0
         for width in columnWidths {
-            xPositions.append(xPositions.last! + width)
+            currentX += width
+            xPositions.append(currentX)
         }
         
         var yPositions: [CGFloat] = [0, headerHeight]
