@@ -14,6 +14,16 @@ class GameScene: SKScene {
         static let firstDealerSelection = "GameScene.firstDealerSelection"
     }
 
+    private enum LayoutMetrics {
+        static let actionButtonSize = CGSize(width: 300, height: 86)
+        static let actionButtonHorizontalInset: CGFloat = 34
+        static let actionButtonBottomInset: CGFloat = 24
+        static let actionButtonSpacing: CGFloat = 16
+        static let gameInfoTopInset: CGFloat = 34
+        static let trickCenterYOffset: CGFloat = 20
+        static let trumpIndicatorInset: CGFloat = 116
+    }
+
     var playerCount: Int = 4
     var playerNames: [String] = []
     var onScoreButtonTapped: (() -> Void)?
@@ -25,10 +35,10 @@ class GameScene: SKScene {
     private var tricksButton: GameButton?
     private var scoreButton: GameButton?
     private var turnIndicator: TurnIndicatorNode?
-    
+
     // UI элементы для отображения состояния игры
     private var gameInfoLabel: SKLabelNode?
-    
+
     // Игровые компоненты
     private var deck = Deck()
     private lazy var trickNode: TrickNode = {
@@ -53,20 +63,24 @@ class GameScene: SKScene {
     private var isAwaitingJokerDecision = false
     private var firstDealerAnnouncementNode: SKNode?
 
+    private var isInteractionBlocked: Bool {
+        return coordinator.isInteractionLocked || isSelectingFirstDealer || isAwaitingJokerDecision
+    }
+
     var scoreTableFirstPlayerIndex: Int {
         guard playerCount > 0 else { return 0 }
         return (firstDealerIndex + 1) % playerCount
     }
-    
+
     var currentPlayerNames: [String] {
         return gameState.players.map { $0.name }
     }
-    
+
     override func didMove(to view: SKView) {
         self.backgroundColor = GameColors.sceneBackground
-        
+
         applyConfiguredPlayerNames()
-        
+
         setupPokerTable()
         setupPlayers()
         setupDealButton()
@@ -78,40 +92,40 @@ class GameScene: SKScene {
         updateGameInfoLabel()
         updateTurnUI(animated: false)
         beginFirstDealerSelectionFlow()
-        
+
         // Повторный layout на следующем runloop учитывает финальные safe area insets.
         DispatchQueue.main.async { [weak self] in
             self?.refreshLayout()
         }
     }
-    
+
     private func applyConfiguredPlayerNames() {
         gameState.setPlayerNames(playerNames)
     }
-    
+
     // MARK: - Покерный стол
-    
+
     private func setupPokerTable() {
         let table = PokerTableNode(sceneSize: self.size)
         table.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        
+
         self.pokerTable = table
         self.addChild(table)
     }
-    
+
     // MARK: - Touch Handling
-    
+
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !coordinator.isInteractionLocked, !isSelectingFirstDealer, !isAwaitingJokerDecision else { return }
+        guard !isInteractionBlocked else { return }
 
         for touch in touches {
             let location = touch.location(in: self)
-            
+
             if let button = scoreButton, button.containsTouchPoint(location) {
                 button.animateTap()
                 return
             }
-            
+
             if let button = dealButton, button.containsTouchPoint(location) {
                 button.animateTap()
                 return
@@ -121,20 +135,20 @@ class GameScene: SKScene {
                 button.animateTap()
                 return
             }
-            
+
             if let selectedCard = selectedHandCard(at: location),
                handleSelectedCardTap(playerIndex: selectedCard.playerIndex, cardNode: selectedCard.cardNode) {
                 return
             }
-            
+
             if let playerIndex = playerIndex(at: location) {
                 guard gameState.phase == .playing else { return }
-                
+
                 if playerIndex == gameState.currentPlayer {
                     if players.indices.contains(playerIndex), players[playerIndex].isLocalPlayer {
                         return
                     }
-                    
+
                     playAutomaticCard(for: playerIndex)
                     return
                 }
@@ -143,32 +157,32 @@ class GameScene: SKScene {
             }
         }
     }
-    
+
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
     }
-    
+
     // MARK: - Настройка игроков
-    
+
     private func setupPlayers() {
         players.forEach { $0.removeFromParent() }
         players.removeAll()
-        
+
         let center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        
+
         guard let table = pokerTable else { return }
-        
+
         let insets = view?.safeAreaInsets ?? .zero
         let minX = insets.left + 170
         let maxX = size.width - insets.right - 170
         let minY = insets.bottom + 145
         let maxY = size.height - insets.top - 195
-        
+
         let avatars = ["👨‍💼", "👩‍💼", "🧔", "👨‍🦰", "👩‍🦱"]
         let verticalOffset = min(table.tableHeight / 2 + 20, (maxY - minY) / 2)
         let topY = min(maxY, center.y + verticalOffset)
         let bottomY = max(minY, center.y - verticalOffset)
-        
+
         let positions = wideSideSeatPositions(
             for: playerCount,
             centerX: center.x,
@@ -178,13 +192,13 @@ class GameScene: SKScene {
             bottomY: bottomY,
             tableWidth: table.tableWidth
         )
-        
+
         for (index, position) in positions.enumerated() {
             let direction = CGVector(dx: 0, dy: position.y >= center.y ? 1 : -1)
             let playerName = gameState.players.indices.contains(index)
                 ? gameState.players[index].name
                 : "Игрок \(index + 1)"
-            
+
             let playerNode = PlayerNode(
                 playerNumber: index + 1,
                 playerName: playerName,
@@ -195,12 +209,12 @@ class GameScene: SKScene {
                 shouldRevealCards: shouldRevealAllPlayersCards,
                 totalPlayers: playerCount
             )
-            
+
             players.append(playerNode)
             self.addChild(playerNode)
         }
     }
-    
+
     private func wideSideSeatPositions(
         for count: Int,
         centerX: CGFloat,
@@ -211,13 +225,13 @@ class GameScene: SKScene {
         tableWidth: CGFloat
     ) -> [CGPoint] {
         guard count > 0 else { return [] }
-        
+
         let halfSpan = max(80, min(tableWidth * 0.24, (maxX - minX) / 2 - 24))
         let clampedCenterX = min(max(centerX, minX), maxX)
         let clampX: (CGFloat) -> CGFloat = { x in
             min(max(x, minX), maxX)
         }
-        
+
         switch count {
         case 3:
             let topXs = symmetricXPositions(count: 2, centerX: clampedCenterX, halfSpan: halfSpan)
@@ -239,23 +253,23 @@ class GameScene: SKScene {
             let topCount = count - bottomCount
             let bottomXs = symmetricXPositions(count: bottomCount, centerX: clampedCenterX, halfSpan: halfSpan)
             let topXs = symmetricXPositions(count: topCount, centerX: clampedCenterX, halfSpan: halfSpan)
-            
+
             return bottomXs.map { CGPoint(x: clampX($0), y: bottomY) } + topXs.map { CGPoint(x: clampX($0), y: topY) }
         }
     }
-    
+
     private func symmetricXPositions(count: Int, centerX: CGFloat, halfSpan: CGFloat) -> [CGFloat] {
         guard count > 0 else { return [] }
         guard count > 1 else { return [centerX] }
-        
+
         let step = (halfSpan * 2) / CGFloat(count - 1)
         return (0..<count).map { index in
             centerX - halfSpan + CGFloat(index) * step
         }
     }
-    
+
     // MARK: - Информация об игре
-    
+
     private func setupGameInfoLabel() {
         let infoLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         infoLabel.text = "Ожидание раздачи"
@@ -263,150 +277,114 @@ class GameScene: SKScene {
         infoLabel.fontColor = GameColors.textPrimary
         infoLabel.horizontalAlignmentMode = .center
         infoLabel.verticalAlignmentMode = .center
-        let insets = view?.safeAreaInsets ?? .zero
-        infoLabel.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 34)
+        infoLabel.position = gameInfoLabelPosition(insets: safeInsets())
         infoLabel.zPosition = 100
-        
+
         self.gameInfoLabel = infoLabel
         self.addChild(infoLabel)
     }
-    
+
     private func updateGameInfoLabel() {
         guard let label = gameInfoLabel else { return }
-        
+
         let blockName = GameBlockFormatter.shortTitle(
             for: gameState.currentBlock,
             playerCount: playerCount
         )
-        
+
         let roundInfo = "Раунд \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)"
         let cardsInfo = "Карт: \(gameState.currentCardsPerPlayer)"
-        let phaseInfo: String
-        switch gameState.phase {
-        case .notStarted:
-            phaseInfo = "Старт"
-        case .bidding:
-            phaseInfo = "Ставки"
-        case .playing:
-            phaseInfo = "Игра"
-        case .roundEnd:
-            phaseInfo = "Конец"
-        case .gameEnd:
-            phaseInfo = "Финиш"
-        }
-        
+        let phaseInfo = phaseTitle(for: gameState.phase)
+
         let currentPlayerIndex = min(max(gameState.currentPlayer, 0), max(0, gameState.players.count - 1))
         let currentPlayerName = gameState.players.indices.contains(currentPlayerIndex) ? gameState.players[currentPlayerIndex].name : "Игрок \(currentPlayerIndex + 1)"
         let turnInfo = "Ход: \(currentPlayerName)"
-        
+
         label.text = "\(blockName)  •  \(roundInfo)  •  \(cardsInfo)  •  \(phaseInfo)  •  \(turnInfo)"
     }
-    
+
     private func setupTurnIndicator() {
         let indicator = TurnIndicatorNode()
         indicator.zPosition = 220
         addChild(indicator)
         self.turnIndicator = indicator
     }
-    
+
     private func updateTurnUI(animated: Bool) {
         guard !players.isEmpty else {
             turnIndicator?.hide()
             return
         }
-        
+
         let activeIndex = min(max(gameState.currentPlayer, 0), players.count - 1)
         for (index, player) in players.enumerated() {
             player.highlight(index == activeIndex)
         }
-        
+
         if gameState.phase == .gameEnd || gameState.phase == .notStarted {
             turnIndicator?.hide()
             return
         }
-        
+
         let activePlayer = players[activeIndex]
         turnIndicator?.setTurnOwnerPosition(activePlayer.position, seatDirection: activePlayer.seatDirection, animated: animated)
-        
+
         if let localPlayer = players.first(where: { $0.isLocalPlayer }) {
             let shouldDim = (gameState.phase == .playing) && (localPlayer.playerNumber - 1 != activeIndex)
             localPlayer.setHandDimmed(shouldDim, animated: animated)
         }
     }
-    
+
     // MARK: - Кнопки
-    
+
     private func setupScoreButton() {
-        let buttonWidth: CGFloat = 300
-        let buttonHeight: CGFloat = 86
-        let insets = view?.safeAreaInsets ?? .zero
-        
-        let buttonX: CGFloat = insets.left + 34 + buttonWidth / 2
-        let buttonY: CGFloat = self.size.height - insets.top - 24 - buttonHeight / 2
-        
-        let button = GameButton(title: "Очки", size: CGSize(width: buttonWidth, height: buttonHeight))
-        button.position = CGPoint(x: buttonX, y: buttonY)
-        button.onTap = { [weak self] in
+        let button = makeActionButton(
+            title: "Очки",
+            position: scoreButtonPosition(insets: safeInsets())
+        ) { [weak self] in
             self?.onScoreButtonTapped?()
         }
-        
+
         self.scoreButton = button
         self.addChild(button)
     }
-    
+
     private func setupTricksButton() {
-        let buttonWidth: CGFloat = 300
-        let buttonHeight: CGFloat = 86
-        let insets = view?.safeAreaInsets ?? .zero
-        
-        let buttonX: CGFloat = insets.left + 34 + buttonWidth / 2
-        let dealButtonY: CGFloat = insets.bottom + 24 + buttonHeight / 2
-        let buttonY: CGFloat = dealButtonY + buttonHeight + 16
-        
-        let button = GameButton(title: "Взятки", size: CGSize(width: buttonWidth, height: buttonHeight))
-        button.position = CGPoint(x: buttonX, y: buttonY)
-        button.onTap = { [weak self] in
+        let button = makeActionButton(
+            title: "Взятки",
+            position: tricksButtonPosition(insets: safeInsets())
+        ) { [weak self] in
             self?.presentTricksOrder()
         }
-        
+
         self.tricksButton = button
         self.addChild(button)
     }
-    
+
     private func setupDealButton() {
-        let buttonWidth: CGFloat = 300
-        let buttonHeight: CGFloat = 86
-        let insets = view?.safeAreaInsets ?? .zero
-        
-        let buttonX: CGFloat = insets.left + 34 + buttonWidth / 2
-        let buttonY: CGFloat = insets.bottom + 24 + buttonHeight / 2
-        
-        let button = GameButton(title: "Раздать карты", size: CGSize(width: buttonWidth, height: buttonHeight))
-        button.position = CGPoint(x: buttonX, y: buttonY)
-        button.onTap = { [weak self] in
+        let button = makeActionButton(
+            title: "Раздать карты",
+            position: dealButtonPosition(insets: safeInsets())
+        ) { [weak self] in
             self?.dealCards()
         }
-        
+
         self.dealButton = button
         self.addChild(button)
     }
-    
+
     // MARK: - Игровые компоненты
-    
+
     private func setupGameComponents() {
         firstDealerIndex = gameState.currentDealer
         _ = scoreManager
-        
-        trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
+
+        trickNode.centerPosition = trickCenterPosition()
         if trickNode.parent == nil {
             addChild(trickNode)
         }
-        
-        let insets = view?.safeAreaInsets ?? .zero
-        trumpIndicator.position = CGPoint(
-            x: self.size.width - insets.right - 116,
-            y: insets.bottom + 116
-        )
+
+        trumpIndicator.position = trumpIndicatorPosition(insets: safeInsets())
         if trumpIndicator.parent == nil {
             addChild(trumpIndicator)
         }
@@ -480,33 +458,124 @@ class GameScene: SKScene {
         addChild(container)
         firstDealerAnnouncementNode = container
     }
-    
+
     private func refreshLayout() {
         setupPlayers()
-        
-        let insets = view?.safeAreaInsets ?? .zero
-        gameInfoLabel?.position = CGPoint(x: self.size.width / 2, y: self.size.height - insets.top - 34)
-        scoreButton?.position = CGPoint(x: insets.left + 34 + 150, y: self.size.height - insets.top - 24 - 43)
-        dealButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43)
-        tricksButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43 + 86 + 16)
-        
-        trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
-        trumpIndicator.position = CGPoint(
-            x: self.size.width - insets.right - 116,
-            y: insets.bottom + 116
-        )
+
+        let insets = safeInsets()
+        gameInfoLabel?.position = gameInfoLabelPosition(insets: insets)
+        scoreButton?.position = scoreButtonPosition(insets: insets)
+        dealButton?.position = dealButtonPosition(insets: insets)
+        tricksButton?.position = tricksButtonPosition(insets: insets)
+
+        trickNode.centerPosition = trickCenterPosition()
+        trumpIndicator.position = trumpIndicatorPosition(insets: insets)
         firstDealerAnnouncementNode?.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-        
+
         updateTurnUI(animated: false)
     }
-    
+
+    private func safeInsets() -> UIEdgeInsets {
+        return view?.safeAreaInsets ?? .zero
+    }
+
+    private func actionButtonX(insets: UIEdgeInsets) -> CGFloat {
+        return insets.left + LayoutMetrics.actionButtonHorizontalInset + LayoutMetrics.actionButtonSize.width / 2
+    }
+
+    private func dealButtonPosition(insets: UIEdgeInsets) -> CGPoint {
+        return CGPoint(
+            x: actionButtonX(insets: insets),
+            y: insets.bottom + LayoutMetrics.actionButtonBottomInset + LayoutMetrics.actionButtonSize.height / 2
+        )
+    }
+
+    private func tricksButtonPosition(insets: UIEdgeInsets) -> CGPoint {
+        let dealPosition = dealButtonPosition(insets: insets)
+        return CGPoint(
+            x: dealPosition.x,
+            y: dealPosition.y + LayoutMetrics.actionButtonSize.height + LayoutMetrics.actionButtonSpacing
+        )
+    }
+
+    private func scoreButtonPosition(insets: UIEdgeInsets) -> CGPoint {
+        return CGPoint(
+            x: actionButtonX(insets: insets),
+            y: size.height - insets.top - LayoutMetrics.actionButtonBottomInset - LayoutMetrics.actionButtonSize.height / 2
+        )
+    }
+
+    private func gameInfoLabelPosition(insets: UIEdgeInsets) -> CGPoint {
+        return CGPoint(
+            x: size.width / 2,
+            y: size.height - insets.top - LayoutMetrics.gameInfoTopInset
+        )
+    }
+
+    private func trickCenterPosition() -> CGPoint {
+        return CGPoint(x: size.width / 2, y: size.height / 2 + LayoutMetrics.trickCenterYOffset)
+    }
+
+    private func trumpIndicatorPosition(insets: UIEdgeInsets) -> CGPoint {
+        return CGPoint(
+            x: size.width - insets.right - LayoutMetrics.trumpIndicatorInset,
+            y: insets.bottom + LayoutMetrics.trumpIndicatorInset
+        )
+    }
+
+    private func makeActionButton(
+        title: String,
+        position: CGPoint,
+        onTap: @escaping () -> Void
+    ) -> GameButton {
+        let button = GameButton(title: title, size: LayoutMetrics.actionButtonSize)
+        button.position = position
+        button.onTap = onTap
+        return button
+    }
+
+    private func phaseTitle(for phase: GamePhase) -> String {
+        switch phase {
+        case .notStarted:
+            return "Старт"
+        case .bidding:
+            return "Ставки"
+        case .playing:
+            return "Игра"
+        case .roundEnd:
+            return "Конец"
+        case .gameEnd:
+            return "Финиш"
+        }
+    }
+
+    private func findAncestor<T: SKNode>(
+        from node: SKNode,
+        as _: T.Type,
+        maxDepth: Int
+    ) -> T? {
+        var currentNode: SKNode? = node
+        var depth = 0
+
+        while let unwrapped = currentNode, depth < maxDepth {
+            if let targetNode = unwrapped as? T {
+                return targetNode
+            }
+
+            currentNode = unwrapped.parent
+            depth += 1
+        }
+
+        return nil
+    }
+
     // MARK: - Раздача карт (SKAction-based анимация)
-    
+
     private func dealCards() {
         guard gameState.phase != .notStarted else { return }
 
         coordinator.cancelPendingTrickResolution(on: self)
-        
+
         guard coordinator.prepareForDealing(
             gameState: gameState,
             scoreManager: scoreManager,
@@ -516,14 +585,14 @@ class GameScene: SKScene {
             updateTurnUI(animated: true)
             return
         }
-        
+
         updateGameInfoLabel()
         updateTurnUI(animated: false)
-        
+
         // Сбрасываем колоду и перемешиваем
         deck.reset()
         deck.shuffle()
-        
+
         // Очищаем руки игроков и взятку
         for player in players {
             player.hand.removeAllCards(animated: true)
@@ -533,7 +602,7 @@ class GameScene: SKScene {
             toPosition: trickNode.centerPosition,
             animated: false
         )
-        
+
         let cardsPerPlayer = gameState.currentCardsPerPlayer
         let firstPlayerToDeal = (gameState.currentDealer + 1) % playerCount
         let dealResult = deck.dealCards(
@@ -541,7 +610,7 @@ class GameScene: SKScene {
             cardsPerPlayer: cardsPerPlayer,
             startingPlayerIndex: firstPlayerToDeal
         )
-        
+
         coordinator.runDealAnimation(
             on: self,
             playerCount: playerCount,
@@ -557,10 +626,10 @@ class GameScene: SKScene {
                 self?.updateTurnUI(animated: true)
             }
         )
-        
+
         coordinator.markDidDeal()
     }
-    
+
     private func registerTrickWin(for playerIndex: Int) {
         guard playerIndex >= 0, playerIndex < playerCount else { return }
         trickNode.clearTrick(
@@ -577,10 +646,10 @@ class GameScene: SKScene {
         updateGameInfoLabel()
         updateTurnUI(animated: true)
     }
-    
+
     private func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {
         guard players.indices.contains(playerIndex) else { return false }
-        
+
         let player = players[playerIndex]
 
         if gameState.phase == .bidding {
@@ -607,17 +676,17 @@ class GameScene: SKScene {
         playCardOnTable(card, by: playerIndex)
         return true
     }
-    
+
     private func playAutomaticCard(for playerIndex: Int) {
         guard players.indices.contains(playerIndex) else { return }
-        
+
         guard !players[playerIndex].hand.cards.isEmpty else {
             gameState.playCard(byPlayer: playerIndex)
             updateGameInfoLabel()
             updateTurnUI(animated: true)
             return
         }
-        
+
         guard let card = coordinator.automaticCard(
             for: playerIndex,
             players: players,
@@ -636,7 +705,7 @@ class GameScene: SKScene {
             jokerLeadDeclaration: decision.leadDeclaration
         )
     }
-    
+
     private func playCardOnTable(
         _ card: Card,
         by playerIndex: Int,
@@ -652,7 +721,7 @@ class GameScene: SKScene {
             to: targetPosition,
             animated: true
         )
-        
+
         gameState.playCard(byPlayer: playerIndex)
 
         if resolveTrickIfNeeded() {
@@ -675,7 +744,7 @@ class GameScene: SKScene {
             self.registerTrickWin(for: winnerIndex)
         }
     }
-    
+
     private func selectedHandCard(at point: CGPoint) -> (playerIndex: Int, cardNode: CardNode)? {
         if let localPlayerIndex = players.firstIndex(where: { $0.isLocalPlayer }),
            players.indices.contains(localPlayerIndex),
@@ -685,35 +754,15 @@ class GameScene: SKScene {
 
         for node in nodes(at: point) {
             guard let tappedCardNode = cardNode(from: node) else { continue }
-            
-            var currentNode: SKNode? = tappedCardNode
-            var ownerHand: CardHandNode?
-            var ownerPlayer: PlayerNode?
-            var guardSteps = 0
-            
-            while let unwrapped = currentNode, guardSteps < 16 {
-                if ownerHand == nil, let handNode = unwrapped as? CardHandNode {
-                    ownerHand = handNode
-                }
-                
-                if let playerNode = unwrapped as? PlayerNode {
-                    ownerPlayer = playerNode
-                    break
-                }
-                
-                currentNode = unwrapped.parent
-                guardSteps += 1
-            }
-            
-            guard let playerNode = ownerPlayer,
-                  let handNode = ownerHand,
-                  playerNode.hand === handNode else {
+            guard let ownerPlayer: PlayerNode = findAncestor(from: tappedCardNode, as: PlayerNode.self, maxDepth: 16),
+                  let ownerHand: CardHandNode = findAncestor(from: tappedCardNode, as: CardHandNode.self, maxDepth: 16),
+                  ownerPlayer.hand === ownerHand else {
                 continue
             }
-            
-            return (playerNode.playerNumber - 1, tappedCardNode)
+
+            return (ownerPlayer.playerNumber - 1, tappedCardNode)
         }
-        
+
         return nil
     }
 
@@ -742,77 +791,57 @@ class GameScene: SKScene {
 
         return nil
     }
-    
+
     private func cardNode(from node: SKNode) -> CardNode? {
-        var currentNode: SKNode? = node
-        var guardSteps = 0
-        
-        while let unwrapped = currentNode, guardSteps < 12 {
-            if let cardNode = unwrapped as? CardNode {
-                return cardNode
-            }
-            
-            currentNode = unwrapped.parent
-            guardSteps += 1
-        }
-        
-        return nil
+        return findAncestor(from: node, as: CardNode.self, maxDepth: 12)
     }
-    
+
     private func trickTargetPosition(for playerIndex: Int) -> CGPoint {
         let center = trickNode.centerPosition
         guard players.indices.contains(playerIndex) else { return center }
-        
+
         let playerPosition = players[playerIndex].position
         let dx = playerPosition.x - center.x
         let dy = playerPosition.y - center.y
         let length = max(1.0, sqrt(dx * dx + dy * dy))
-        
+
         // Лёгкое смещение к стороне игрока, чтобы карта ложилась в центральный слот "по месту хода".
         let normalizedX = dx / length
         let normalizedY = dy / length
         let horizontalRadius: CGFloat = 118
         let verticalRadius: CGFloat = 70
-        
+
         return CGPoint(
             x: center.x + normalizedX * horizontalRadius,
             y: center.y + normalizedY * verticalRadius
         )
     }
-    
+
     private func playerIndex(at point: CGPoint) -> Int? {
         for node in nodes(at: point) {
-            var currentNode: SKNode? = node
-            var guardSteps = 0
-            
-            while let unwrapped = currentNode, guardSteps < 12 {
-                if let playerNode = unwrapped as? PlayerNode {
-                    return playerNode.playerNumber - 1
-                }
-                
-                currentNode = unwrapped.parent
-                guardSteps += 1
+            if let playerNode: PlayerNode = findAncestor(from: node, as: PlayerNode.self, maxDepth: 12) {
+                return playerNode.playerNumber - 1
             }
         }
-        
+
         return nil
     }
-    
+
     func applyOrderedTricks(_ bids: [Int]) {
         guard bids.count == playerCount else { return }
         let maxBid = max(0, gameState.currentCardsPerPlayer)
-        
+
         for (index, rawBid) in bids.enumerated() {
             let bid = min(max(rawBid, 0), maxBid)
             gameState.setBid(bid, forPlayerAt: index)
             players[index].setBid(bid, animated: true)
         }
-        
+
         gameState.beginPlayingAfterBids()
         updateGameInfoLabel()
         updateTurnUI(animated: true)
     }
-    
+
     private func presentTricksOrder() {
         let playerNames = gameState.players.map { $0.name }
         let currentBids = gameState.players.map { $0.currentBid }

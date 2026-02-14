@@ -16,8 +16,10 @@ This document is the source of truth for repository structure and file placement
 ├── XCODE_INTEGRATION.md
 ├── правила игры/
 │   ├── выбор козыря.txt
+│   ├── выбор первого раздающего.txt
 │   ├── забор карт с кона.txt
 │   ├── общие.txt
+│   ├── особенности игры с джокером.txt
 │   ├── подсчет очков.txt
 │   ├── присуждение премии.txt
 │   ├── раздача карт.txt
@@ -29,6 +31,21 @@ This document is the source of truth for repository structure and file placement
     ├── JockerUITests/             (UI tests)
     └── Jocker.xcodeproj/          (Xcode project)
 ```
+
+## Key File Responsibilities
+
+- `Jocker/Jocker/Game/Scenes/GameScene.swift`: orchestration layer of the gameplay scene (input handling, dealing flow, trick progression, UI sync, interaction with coordinator and modal callbacks).
+- `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
+- `Jocker/Jocker/Game/Services/GameRoundService.swift`: transitions between rounds/blocks and one-time block finalization recording.
+- `Jocker/Jocker/Game/Services/GameTurnService.swift`: automatic card choice and trick winner resolution entrypoint.
+- `Jocker/Jocker/Game/Services/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
+- `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
+- `Jocker/Jocker/Models/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
+- `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
+- `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
+- `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines.
+- `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`: modal bidding-order editor with dealer constraints and inline validation.
+- `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 
 ## App Source Layout
 
