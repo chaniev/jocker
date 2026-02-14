@@ -157,8 +157,23 @@ class TrickNode: SKNode {
             // Есть карты нужной масти - нельзя играть другую масть
             return false
         }
-        
-        // Нет карт нужной масти - можно играть козырь или любую карту
+
+        // Нет карт масти первого хода:
+        // если есть козырь в руке, обязаны сыграть козырь (или джокер, обработан выше).
+        if let trump {
+            let hasTrump = hand.contains { handCard in
+                if let suit = handCard.suit {
+                    return suit == trump
+                }
+                return false
+            }
+
+            if hasTrump {
+                return cardSuit == trump
+            }
+        }
+
+        // Нет ни масти первого хода, ни козыря — можно любую карту.
         return true
     }
 }

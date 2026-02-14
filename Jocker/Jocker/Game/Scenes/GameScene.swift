@@ -573,7 +573,12 @@ class GameScene: SKScene {
 
         guard gameState.phase == .playing else { return false }
         guard playerIndex == gameState.currentPlayer else { return false }
-        
+
+        let selectedCard = cardNode.card
+        guard trickNode.canPlayCard(selectedCard, fromHand: player.hand.cards, trump: currentTrump) else {
+            return false
+        }
+
         guard let card = player.hand.removeCardNode(cardNode, animated: true) else { return false }
         playCardOnTable(card, by: playerIndex)
         return true
@@ -581,13 +586,18 @@ class GameScene: SKScene {
     
     private func playAutomaticCard(for playerIndex: Int) {
         guard players.indices.contains(playerIndex) else { return }
-        guard let card = players[playerIndex].hand.cards.first else {
+        let handCards = players[playerIndex].hand.cards
+        guard !handCards.isEmpty else {
             gameState.playCard(byPlayer: playerIndex)
             updateGameInfoLabel()
             updateTurnUI(animated: true)
             return
         }
-        
+
+        let card = handCards.first(where: { candidate in
+            trickNode.canPlayCard(candidate, fromHand: handCards, trump: currentTrump)
+        }) ?? handCards[0]
+
         _ = players[playerIndex].hand.removeCard(card, animated: true)
         playCardOnTable(card, by: playerIndex)
     }

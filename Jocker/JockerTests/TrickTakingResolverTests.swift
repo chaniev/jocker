@@ -93,7 +93,48 @@ final class TrickTakingResolverTests: XCTestCase {
         XCTAssertEqual(winner, 3)
     }
 
+    func testCanPlayCard_whenTrickIsEmpty_allowsAnyCard() {
+        let trickNode = TrickNode()
+        let hand: [Card] = [.joker, card(.hearts, .queen), card(.spades, .seven)]
+
+        XCTAssertTrue(trickNode.canPlayCard(.joker, fromHand: hand, trump: .hearts))
+        XCTAssertTrue(trickNode.canPlayCard(card(.hearts, .queen), fromHand: hand, trump: .hearts))
+        XCTAssertTrue(trickNode.canPlayCard(card(.spades, .seven), fromHand: hand, trump: .hearts))
+    }
+
+    func testCanPlayCard_whenHasLeadSuit_rejectsOtherSuits() {
+        let trickNode = trickNodeWithLeadCard(card(.hearts, .ace))
+        let hand: [Card] = [card(.hearts, .seven), card(.spades, .king), .joker]
+
+        XCTAssertFalse(trickNode.canPlayCard(card(.spades, .king), fromHand: hand, trump: .clubs))
+        XCTAssertTrue(trickNode.canPlayCard(card(.hearts, .seven), fromHand: hand, trump: .clubs))
+        XCTAssertTrue(trickNode.canPlayCard(.joker, fromHand: hand, trump: .clubs))
+    }
+
+    func testCanPlayCard_whenNoLeadSuitButHasTrump_requiresTrumpOrJoker() {
+        let trickNode = trickNodeWithLeadCard(card(.hearts, .ace))
+        let hand: [Card] = [card(.spades, .seven), card(.clubs, .king), .joker]
+
+        XCTAssertFalse(trickNode.canPlayCard(card(.clubs, .king), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(card(.spades, .seven), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(.joker, fromHand: hand, trump: .spades))
+    }
+
+    func testCanPlayCard_whenNoLeadSuitAndNoTrumpInHand_allowsAnyCard() {
+        let trickNode = trickNodeWithLeadCard(card(.hearts, .ace))
+        let hand: [Card] = [card(.clubs, .king), card(.diamonds, .nine)]
+
+        XCTAssertTrue(trickNode.canPlayCard(card(.clubs, .king), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(card(.diamonds, .nine), fromHand: hand, trump: .spades))
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         .regular(suit: suit, rank: rank)
+    }
+
+    private func trickNodeWithLeadCard(_ leadCard: Card) -> TrickNode {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(leadCard, fromPlayer: 1, animated: false)
+        return trickNode
     }
 }
