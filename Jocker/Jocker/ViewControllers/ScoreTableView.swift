@@ -321,7 +321,9 @@ final class ScoreTableView: UIView {
         for displayIndex in 0..<playerCount {
             let playerIndex = playerDisplayOrder[displayIndex]
             tricksLabels[rowIndex][displayIndex].text = ""
-            pointsLabels[rowIndex][displayIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
+            pointsLabels[rowIndex][displayIndex].text = scores.map {
+                "\(displayedSummaryScore(from: $0[playerIndex]))"
+            } ?? ""
         }
     }
     
@@ -344,8 +346,14 @@ final class ScoreTableView: UIView {
         for displayIndex in 0..<playerCount {
             let playerIndex = playerDisplayOrder[displayIndex]
             tricksLabels[rowIndex][displayIndex].text = ""
-            pointsLabels[rowIndex][displayIndex].text = scores.map { "\($0[playerIndex])" } ?? ""
+            pointsLabels[rowIndex][displayIndex].text = scores.map {
+                "\(displayedSummaryScore(from: $0[playerIndex]))"
+            } ?? ""
         }
+    }
+
+    private func displayedSummaryScore(from rawScore: Int) -> Int {
+        return rawScore / 10
     }
     
     private func cumulativeScores(through blockIndex: Int, completedBlocks: [BlockResult]) -> [Int] {
