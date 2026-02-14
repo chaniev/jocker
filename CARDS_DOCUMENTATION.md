@@ -81,12 +81,32 @@
 
 ### `Jocker/Jocker/Game/Scenes/GameScene.swift`
 
-- Отвечает за:
-  - раздачу;
-  - применение ставок;
-  - розыгрыш карт;
-  - завершение взятки;
-  - обновление `GameState` и `ScoreManager`.
+- Отвечает за UI-связку сцены:
+  - обработку тапов;
+  - размещение нод и обновление индикаторов;
+  - вызовы coordinator для игрового flow.
+
+### `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`
+
+- Координирует игровые сервисы и даёт `GameScene` единый API для:
+  - подготовки/завершения раунда;
+  - автохода;
+  - анимации раздачи и резолва взятки.
+
+### `Jocker/Jocker/Game/Services/GameRoundService.swift`
+
+- Переходы между раундами и блоками.
+- Запись результатов раунда в `ScoreManager`.
+
+### `Jocker/Jocker/Game/Services/GameTurnService.swift`
+
+- Выбор допустимой карты для автохода.
+- Определение победителя взятки.
+
+### `Jocker/Jocker/Game/Services/GameAnimationService.swift`
+
+- SKAction-анимации раздачи.
+- Планирование/отмена отложенного резолва взятки.
 
 ## Связанные файлы
 

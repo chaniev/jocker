@@ -40,6 +40,8 @@ Jocker/Jocker/
 ├── Core/
 │   └── GameColors.swift
 ├── Game/
+│   ├── Coordinator/
+│   │   └── GameSceneCoordinator.swift
 │   ├── Nodes/
 │   │   ├── CardHandNode.swift
 │   │   ├── CardNode.swift
@@ -49,9 +51,13 @@ Jocker/Jocker/
 │   │   ├── TrickNode.swift
 │   │   ├── TrumpIndicator.swift
 │   │   └── TurnIndicatorNode.swift
-│   └── Scenes/
-│       ├── CardDemoScene.swift
-│       └── GameScene.swift
+│   ├── Scenes/
+│   │   ├── CardDemoScene.swift
+│   │   └── GameScene.swift
+│   └── Services/
+│       ├── GameAnimationService.swift
+│       ├── GameRoundService.swift
+│       └── GameTurnService.swift
 ├── Models/
 │   ├── BlockResult.swift
 │   ├── Card.swift
@@ -102,7 +108,9 @@ Jocker/JockerUITests/
 ## Placement Conventions
 
 - Scene classes are placed in `Jocker/Jocker/Game/Scenes/`.
+- Scene coordinators are placed in `Jocker/Jocker/Game/Coordinator/`.
 - SpriteKit node classes are placed in `Jocker/Jocker/Game/Nodes/`.
+- Game flow services are placed in `Jocker/Jocker/Game/Services/`.
 - Domain and state models are placed in `Jocker/Jocker/Models/`.
 - Scoring logic is placed in `Jocker/Jocker/Scoring/`.
 - UIKit controllers and views are placed in `Jocker/Jocker/ViewControllers/`.

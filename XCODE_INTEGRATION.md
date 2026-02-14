@@ -4,6 +4,10 @@
 
 - Файлы карточной подсистемы уже находятся в проекте и в target `Jocker`.
 - Дополнительно добавлять `.swift` через `Add Files...` не требуется.
+- Игровая сцена разделена по ролям:
+  - `GameScene` (UI и взаимодействие),
+  - `GameSceneCoordinator` (оркестрация),
+  - сервисы `GameRoundService`, `GameTurnService`, `GameAnimationService`.
 
 ## Запуск
 

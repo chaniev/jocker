@@ -46,6 +46,10 @@
 		CC0000012F2800010037CA75 /* GameConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000022F2800010037CA75 /* GameConstants.swift */; };
 		CC0000032F2800010037CA75 /* GameColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F2800010037CA75 /* GameColors.swift */; };
 		CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000072F2800010037CA75 /* PokerTableNode.swift */; };
+		C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */; };
+		C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
+		C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
+		C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20042F5000010037CA75 /* GameAnimationService.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
 		F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000012F4100010037CA75 /* TrickTakingResolver.swift */; };
 		F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */; };
@@ -111,6 +115,10 @@
 		CC0000022F2800010037CA75 /* GameConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameConstants.swift; sourceTree = "<group>"; };
 		CC0000042F2800010037CA75 /* GameColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameColors.swift; sourceTree = "<group>"; };
 		CC0000072F2800010037CA75 /* PokerTableNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokerTableNode.swift; sourceTree = "<group>"; };
+		C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneCoordinator.swift; sourceTree = "<group>"; };
+		C0DE20022F5000010037CA75 /* GameRoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundService.swift; sourceTree = "<group>"; };
+		C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
+		C0DE20042F5000010037CA75 /* GameAnimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAnimationService.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
@@ -226,6 +234,8 @@
 			children = (
 				AA1000042F2800020037CA75 /* Scenes */,
 				AA1000052F2800020037CA75 /* Nodes */,
+				C0DE30012F5000010037CA75 /* Coordinator */,
+				C0DE30022F5000010037CA75 /* Services */,
 			);
 			path = Game;
 			sourceTree = "<group>";
@@ -252,6 +262,24 @@
 				7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */,
 			);
 			path = Nodes;
+			sourceTree = "<group>";
+		};
+		C0DE30012F5000010037CA75 /* Coordinator */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */,
+			);
+			path = Coordinator;
+			sourceTree = "<group>";
+		};
+		C0DE30022F5000010037CA75 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE20042F5000010037CA75 /* GameAnimationService.swift */,
+				C0DE20022F5000010037CA75 /* GameRoundService.swift */,
+				C0DE20032F5000010037CA75 /* GameTurnService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		AA1000062F2800020037CA75 /* Scoring */ = {
@@ -444,6 +472,10 @@
 				7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */,
 				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
 				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
+				C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
+				C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,
+				C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
+				C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
 				AA0000022F2800010037CA75 /* RoundResult.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,

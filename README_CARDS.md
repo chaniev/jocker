@@ -14,6 +14,10 @@
   - `Jocker/Jocker/Game/Nodes/TrumpIndicator.swift`
 - Интеграция в игру:
   - `Jocker/Jocker/Game/Scenes/GameScene.swift`
+  - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`
+  - `Jocker/Jocker/Game/Services/GameRoundService.swift`
+  - `Jocker/Jocker/Game/Services/GameTurnService.swift`
+  - `Jocker/Jocker/Game/Services/GameAnimationService.swift`
 
 ## Проверка в приложении
 

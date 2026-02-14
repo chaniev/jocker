@@ -10,11 +10,6 @@ import GameplayKit
 import UIKit
 
 class GameScene: SKScene {
-    private struct RoundRecordKey: Equatable {
-        let block: Int
-        let round: Int
-    }
-    
     var playerCount: Int = 4
     var onScoreButtonTapped: (() -> Void)?
     var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
@@ -36,9 +31,7 @@ class GameScene: SKScene {
     private var gameState: GameState!
     private var firstDealerIndex: Int = 0
     private(set) var scoreManager: ScoreManager?
-    private var hasDealtAtLeastOnce = false
-    private var isResolvingTrick = false
-    private var lastRecordedRoundKey: RoundRecordKey?
+    private let coordinator = GameSceneCoordinator()
     private let shouldRevealAllPlayersCards = true
 
     var scoreTableFirstPlayerIndex: Int {
@@ -79,7 +72,7 @@ class GameScene: SKScene {
     // MARK: - Touch Handling
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !isResolvingTrick else { return }
+        guard !coordinator.isInteractionLocked else { return }
 
         for touch in touches {
             let location = touch.location(in: self)
@@ -409,10 +402,13 @@ class GameScene: SKScene {
     // MARK: - Раздача карт (SKAction-based анимация)
     
     private func dealCards() {
-        removeAction(forKey: "resolveTrick")
-        isResolvingTrick = false
-
-        guard prepareRoundForDealingIfNeeded() else {
+        coordinator.cancelPendingTrickResolution(on: self)
+        
+        guard coordinator.prepareForDealing(
+            gameState: gameState,
+            scoreManager: scoreManager,
+            playerCount: playerCount
+        ) else {
             updateGameInfoLabel()
             updateTurnUI(animated: true)
             return
@@ -443,116 +439,23 @@ class GameScene: SKScene {
             startingPlayerIndex: firstPlayerToDeal
         )
         
-        // Строим цепочку анимаций через SKAction
-        var actions: [SKAction] = []
-        
-        // 1. Раздаём карты каждому игроку с задержкой
-        for offset in 0..<playerCount {
-            let playerIndex = (firstPlayerToDeal + offset) % playerCount
-            let player = players[playerIndex]
-            let cards = dealResult.hands[playerIndex]
-            let delay = SKAction.wait(forDuration: Double(offset) * 0.3)
-            let deal = SKAction.run { [weak player] in
-                player?.hand.addCards(cards, animated: true)
+        coordinator.runDealAnimation(
+            on: self,
+            playerCount: playerCount,
+            firstPlayerToDeal: firstPlayerToDeal,
+            players: players,
+            hands: dealResult.hands,
+            trumpCard: dealResult.trump,
+            trumpIndicator: trumpIndicator,
+            onTrumpResolved: { [weak self] trump in
+                self?.currentTrump = trump
+            },
+            onHighlightTurn: { [weak self] in
+                self?.updateTurnUI(animated: true)
             }
-            actions.append(SKAction.sequence([delay, deal]))
-        }
-        
-        // 2. Сортируем карты через 1 секунду после последней раздачи
-        let sortDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 1.0)
-        let sortAction = SKAction.run { [weak self] in
-            self?.players.forEach { $0.hand.sortCardsStandard(animated: true) }
-        }
-        actions.append(SKAction.sequence([sortDelay, sortAction]))
-        
-        // 3. Показываем козырь
-        let trumpDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 0.5)
-        let trumpAction = SKAction.run { [weak self] in
-            guard let self = self else { return }
-            if let trumpCard = dealResult.trump {
-                self.trumpIndicator.setTrumpCard(trumpCard, animated: true)
-                if case .regular(let suit, _) = trumpCard {
-                    self.currentTrump = suit
-                } else {
-                    self.currentTrump = nil
-                }
-            } else {
-                self.trumpIndicator.setTrumpCard(nil, animated: true)
-                self.currentTrump = nil
-            }
-        }
-        actions.append(SKAction.sequence([trumpDelay, trumpAction]))
-        
-        // 4. Выделяем текущего игрока
-        let highlightDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 2.2)
-        let highlightAction = SKAction.run { [weak self] in
-            self?.updateTurnUI(animated: true)
-        }
-        actions.append(SKAction.sequence([highlightDelay, highlightAction]))
-        
-        // Запускаем все действия параллельно (каждое со своей задержкой)
-        run(SKAction.group(actions), withKey: "dealSequence")
-        
-        hasDealtAtLeastOnce = true
-    }
-    
-    // MARK: - Логика раунда
-    
-    private func recordCurrentRoundIfNeeded() {
-        guard hasDealtAtLeastOnce, let scoreManager = scoreManager else { return }
-        guard gameState.phase == .roundEnd || gameState.phase == .gameEnd else { return }
-
-        let roundKey = RoundRecordKey(
-            block: gameState.currentBlock.rawValue,
-            round: gameState.currentRoundInBlock
         )
-        guard lastRecordedRoundKey != roundKey else { return }
         
-        let cardsInRound = gameState.currentCardsPerPlayer
-        var results: [RoundResult] = []
-        results.reserveCapacity(playerCount)
-        
-        for playerIndex in 0..<playerCount {
-            let player = gameState.players[playerIndex]
-            let result = RoundResult(
-                cardsInRound: cardsInRound,
-                bid: player.currentBid,
-                tricksTaken: player.tricksTaken,
-                isBlind: false
-            )
-            results.append(result)
-        }
-        
-        scoreManager.recordRoundResults(results)
-        
-        if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
-            _ = scoreManager.finalizeBlock(blockNumber: gameState.currentBlock.rawValue)
-        }
-
-        lastRecordedRoundKey = roundKey
-    }
-
-    private func prepareRoundForDealingIfNeeded() -> Bool {
-        guard gameState.phase != .gameEnd else { return false }
-        guard hasDealtAtLeastOnce else { return true }
-
-        recordCurrentRoundIfNeeded()
-
-        let currentRoundKey = RoundRecordKey(
-            block: gameState.currentBlock.rawValue,
-            round: gameState.currentRoundInBlock
-        )
-        let isFinalRoundOfFinalBlock =
-            currentRoundKey.block >= GameConstants.totalBlocks &&
-            gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock
-
-        if isFinalRoundOfFinalBlock, lastRecordedRoundKey == currentRoundKey {
-            gameState.markGameEnded()
-            return false
-        }
-
-        gameState.startNewRound()
-        return true
+        coordinator.markDidDeal()
     }
     
     private func registerTrickWin(for playerIndex: Int) {
@@ -563,17 +466,13 @@ class GameScene: SKScene {
         )
         gameState.completeTrick(winner: playerIndex)
         players[playerIndex].incrementTricks()
-        completeRoundIfNeeded()
+        coordinator.completeRoundIfNeeded(
+            gameState: gameState,
+            scoreManager: scoreManager,
+            playerCount: playerCount
+        )
         updateGameInfoLabel()
         updateTurnUI(animated: true)
-    }
-    
-    private func completeRoundIfNeeded() {
-        let totalTricks = gameState.players.reduce(0) { $0 + $1.tricksTaken }
-        guard totalTricks >= gameState.currentCardsPerPlayer else { return }
-        
-        gameState.completeRound()
-        recordCurrentRoundIfNeeded()
     }
     
     private func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {
@@ -603,17 +502,22 @@ class GameScene: SKScene {
     
     private func playAutomaticCard(for playerIndex: Int) {
         guard players.indices.contains(playerIndex) else { return }
-        let handCards = players[playerIndex].hand.cards
-        guard !handCards.isEmpty else {
+        
+        guard !players[playerIndex].hand.cards.isEmpty else {
             gameState.playCard(byPlayer: playerIndex)
             updateGameInfoLabel()
             updateTurnUI(animated: true)
             return
         }
-
-        let card = handCards.first(where: { candidate in
-            trickNode.canPlayCard(candidate, fromHand: handCards, trump: currentTrump)
-        }) ?? handCards[0]
+        
+        guard let card = coordinator.automaticCard(
+            for: playerIndex,
+            players: players,
+            trickNode: trickNode,
+            trump: currentTrump
+        ) else {
+            return
+        }
 
         _ = players[playerIndex].hand.removeCard(card, animated: true)
         playCardOnTable(card, by: playerIndex)
@@ -640,31 +544,15 @@ class GameScene: SKScene {
 
     @discardableResult
     private func resolveTrickIfNeeded() -> Bool {
-        guard !isResolvingTrick else { return true }
-        guard trickNode.playedCards.count == playerCount else { return false }
-
-        let trickCards = trickNode.playedCards.map { entry in
-            (playerIndex: entry.player - 1, card: entry.card)
-        }
-
-        guard let winnerIndex = TrickTakingResolver.winnerPlayerIndex(
-            playedCards: trickCards,
+        return coordinator.resolveTrickIfNeeded(
+            on: self,
+            trickNode: trickNode,
+            playerCount: playerCount,
             trump: currentTrump
-        ) else {
-            return false
-        }
-
-        isResolvingTrick = true
-
-        let wait = SKAction.wait(forDuration: 0.55)
-        let resolve = SKAction.run { [weak self] in
+        ) { [weak self] winnerIndex in
             guard let self = self else { return }
             self.registerTrickWin(for: winnerIndex)
-            self.isResolvingTrick = false
         }
-
-        run(SKAction.sequence([wait, resolve]), withKey: "resolveTrick")
-        return true
     }
     
     private func selectedHandCard(at point: CGPoint) -> (playerIndex: Int, cardNode: CardNode)? {
