@@ -251,7 +251,8 @@ class PlayerNode: SKNode {
     }
     
     func setHandDimmed(_ isDimmed: Bool, animated: Bool) {
-        let targetAlpha: CGFloat = isDimmed ? 0.45 : 1.0
+        // Не используем прозрачность руки: при перекрытии карты не должны просвечивать.
+        let targetAlpha: CGFloat = 1.0
         hand.removeAction(forKey: "handDim")
         
         if animated {

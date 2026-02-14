@@ -43,17 +43,15 @@ class TrickNode: SKNode {
         addChild(cardNode)
         
         if animated {
-            // Начинаем с невидимой карты в центре
+            // Карта на кону всегда полностью непрозрачна.
             cardNode.position = centerPosition
-            cardNode.alpha = 0
             cardNode.setScale(0.5)
             
-            let fadeIn = SKAction.fadeIn(withDuration: 0.2)
             let scale = SKAction.scale(to: 1.0, duration: 0.3)
             let move = SKAction.move(to: resolvedTargetPosition, duration: 0.3)
             let rotate = SKAction.rotate(byAngle: .pi * 0.1, duration: 0.3)
             
-            let group = SKAction.group([fadeIn, scale, move, rotate])
+            let group = SKAction.group([scale, move, rotate])
             group.timingMode = .easeOut
             cardNode.run(group)
         } else {
