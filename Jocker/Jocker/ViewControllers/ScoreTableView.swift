@@ -353,7 +353,7 @@ final class ScoreTableView: UIView {
     }
 
     private func displayedSummaryScore(from rawScore: Int) -> Int {
-        return rawScore / 10
+        return rawScore / 100
     }
     
     private func cumulativeScores(through blockIndex: Int, completedBlocks: [BlockResult]) -> [Int] {

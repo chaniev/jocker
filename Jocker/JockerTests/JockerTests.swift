@@ -12,13 +12,13 @@ import UIKit
 final class JockerTests: XCTestCase {
     
     @MainActor
-    func testSubtotalRowDisplaysScoresDividedByTen() {
+    func testSubtotalRowDisplaysScoresDividedByHundred() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         manager.recordRoundResults([
-            makeRoundResult(cardsInRound: 2, bid: 2, tricksTaken: 2),   // 200 -> 20
-            makeRoundResult(cardsInRound: 2, bid: 2, tricksTaken: 0),   // -200 -> -20
-            makeRoundResult(cardsInRound: 2, bid: 1, tricksTaken: 1),   // 100 -> 10
-            makeRoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0)    // 50 -> 5
+            makeRoundResult(cardsInRound: 2, bid: 2, tricksTaken: 2),   // 200 -> 2
+            makeRoundResult(cardsInRound: 2, bid: 2, tricksTaken: 0),   // -200 -> -2
+            makeRoundResult(cardsInRound: 2, bid: 1, tricksTaken: 1),   // 100 -> 1
+            makeRoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0)    // 50 -> 0
         ])
         
         let tableView = ScoreTableView(playerCount: 4)
@@ -27,11 +27,11 @@ final class JockerTests: XCTestCase {
         tableView.update(with: manager)
         
         let subtotalRowIndex = 8
-        XCTAssertEqual(displayedPoints(at: subtotalRowIndex, in: tableView), ["20", "-20", "10", "5"])
+        XCTAssertEqual(displayedPoints(at: subtotalRowIndex, in: tableView), ["2", "-2", "1", "0"])
     }
     
     @MainActor
-    func testCumulativeRowDisplaysScoresDividedByTen() {
+    func testCumulativeRowDisplaysScoresDividedByHundred() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         manager.recordRoundResults([
@@ -55,9 +55,9 @@ final class JockerTests: XCTestCase {
         tableView.update(with: manager)
         
         // Блок 2: subtotal = row 13, cumulative = row 14.
-        // Кумулятивные очки: [300, -150, -50, 200] -> [30, -15, -5, 20].
+        // Кумулятивные очки: [300, -150, -50, 200] -> [3, -1, 0, 2].
         let cumulativeRowIndex = 14
-        XCTAssertEqual(displayedPoints(at: cumulativeRowIndex, in: tableView), ["30", "-15", "-5", "20"])
+        XCTAssertEqual(displayedPoints(at: cumulativeRowIndex, in: tableView), ["3", "-1", "0", "2"])
     }
     
     private func makeRoundResult(cardsInRound: Int, bid: Int, tricksTaken: Int) -> RoundResult {
