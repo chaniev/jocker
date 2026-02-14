@@ -44,7 +44,11 @@ class GameState {
         currentBlock = .first
         currentRoundInBlock = 0
         currentDealer = 0
-        currentCardsPerPlayer = 1
+        currentCardsPerPlayer = GameConstants.cardsPerPlayer(
+            for: currentBlock,
+            roundIndex: currentRoundInBlock,
+            playerCount: playerCount
+        ) ?? 1
         
         calculateRoundsInBlock()
         
@@ -56,20 +60,10 @@ class GameState {
     
     /// Рассчитать количество раундов в текущем блоке
     private func calculateRoundsInBlock() {
-        switch currentBlock {
-        case .first:
-            // Блок 1: 8 раздач (1, 2, 3, 4, 5, 6, 7, 8 карт)
-            totalRoundsInBlock = (GameConstants.deckSize / playerCount) - 1  // 8 для 4 игроков
-        case .second:
-            // Блок 2: 4 раздачи по 9 карт
-            totalRoundsInBlock = playerCount  // 4 для 4 игроков
-        case .third:
-            // Блок 3: 8 раздач (8, 7, 6, 5, 4, 3, 2, 1 карта)
-            totalRoundsInBlock = (GameConstants.deckSize / playerCount) - 1  // 8 для 4 игроков
-        case .fourth:
-            // Блок 4: 4 раздачи по 9 карт
-            totalRoundsInBlock = playerCount  // 4 для 4 игроков
-        }
+        totalRoundsInBlock = GameConstants.deals(
+            for: currentBlock,
+            playerCount: playerCount
+        ).count
     }
     
     /// Начать новый раунд
@@ -107,27 +101,14 @@ class GameState {
     
     /// Обновить количество карт на игрока
     ///
-    /// Для 4 игроков последовательность раздач:
-    /// Блок 1 (8 раздач): 1, 2, 3, 4, 5, 6, 7, 8 карт
-    /// Блок 2 (4 раздачи): 9, 9, 9, 9 карт
-    /// Блок 3 (8 раздач): 8, 7, 6, 5, 4, 3, 2, 1 карта
-    /// Блок 4 (4 раздачи): 9, 9, 9, 9 карт
+    /// Данные берутся из `GameConstants.deals(for:playerCount:)`
+    /// и совпадают с отображением таблицы очков.
     private func updateCardsPerPlayer() {
-        switch currentBlock {
-        case .first:
-            // Возрастающее: 1, 2, 3, ..., 8
-            currentCardsPerPlayer = currentRoundInBlock + 1
-        case .second:
-            // Фиксированное: 9 карт для всех раздач
-            currentCardsPerPlayer = 9
-        case .third:
-            // Убывающее: 8, 7, 6, 5, 4, 3, 2, 1
-            let maxCards = (GameConstants.deckSize / playerCount) - 1  // 8 для 4 игроков
-            currentCardsPerPlayer = maxCards - currentRoundInBlock
-        case .fourth:
-            // Фиксированное: 9 карт для всех раздач
-            currentCardsPerPlayer = 9
-        }
+        currentCardsPerPlayer = GameConstants.cardsPerPlayer(
+            for: currentBlock,
+            roundIndex: currentRoundInBlock,
+            playerCount: playerCount
+        ) ?? currentCardsPerPlayer
     }
     
     /// Сделать ставку
@@ -278,15 +259,16 @@ class GameState {
     
     /// Описание текущего блока
     func getCurrentBlockDescription() -> String {
+        let maxCards = GameConstants.maxCardsPerPlayer(for: playerCount)
         switch currentBlock {
         case .first:
             return "Блок 1: возрастающее количество карт"
         case .second:
-            return "Блок 2: \(playerCount) карт"
+            return "Блок 2: \(maxCards) карт"
         case .third:
             return "Блок 3: убывающее количество карт"
         case .fourth:
-            return "Блок 4: \(playerCount) карт"
+            return "Блок 4: \(maxCards) карт"
         }
     }
 }

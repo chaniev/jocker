@@ -451,24 +451,7 @@ final class ScoreTableView: UIView {
     // MARK: - Layout Builder
     
     private static func buildLayout(playerCount: Int) -> Layout {
-        let maxCardsPerPlayer = GameConstants.deckSize / playerCount
-        let blockDeals: [[Int]]
-        
-        if playerCount == 3 {
-            blockDeals = [
-                Array(1...(maxCardsPerPlayer - 1)),
-                Array(repeating: maxCardsPerPlayer, count: playerCount),
-                Array((1...(maxCardsPerPlayer - 1)).reversed()),
-                Array(repeating: maxCardsPerPlayer, count: playerCount)
-            ]
-        } else {
-            blockDeals = [
-                Array(1...(maxCardsPerPlayer - 1)),
-                Array(repeating: maxCardsPerPlayer, count: playerCount),
-                Array((1...(maxCardsPerPlayer - 1)).reversed()),
-                Array(repeating: maxCardsPerPlayer, count: playerCount)
-            ]
-        }
+        let blockDeals = GameConstants.allBlockDeals(playerCount: playerCount)
         
         var rows: [RowKind] = []
         var blockEndRowIndices: [Int] = []

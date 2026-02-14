@@ -59,6 +59,31 @@ final class GameStateTests: XCTestCase {
         }
     }
 
+    func testThreePlayers_usesUnifiedDealPlanInSecondBlock() {
+        let gameState = GameState(playerCount: 3)
+        gameState.startGame()
+
+        XCTAssertEqual(gameState.currentCardsPerPlayer, 1)
+        XCTAssertEqual(gameState.totalRoundsInBlock, 11)
+
+        for expectedCards in 2...11 {
+            gameState.startNewRound()
+            XCTAssertEqual(gameState.currentBlock, .first)
+            XCTAssertEqual(gameState.currentCardsPerPlayer, expectedCards)
+        }
+
+        gameState.startNewRound()
+        XCTAssertEqual(gameState.currentBlock, .second)
+        XCTAssertEqual(gameState.totalRoundsInBlock, 3)
+        XCTAssertEqual(gameState.currentCardsPerPlayer, 12)
+
+        gameState.startNewRound()
+        XCTAssertEqual(gameState.currentCardsPerPlayer, 12)
+
+        gameState.startNewRound()
+        XCTAssertEqual(gameState.currentCardsPerPlayer, 12)
+    }
+
     func testStartNewRound_rotatesDealerEachRound() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()

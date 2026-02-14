@@ -248,15 +248,16 @@ class GameScene: SKScene {
         guard let label = gameInfoLabel else { return }
         
         let blockName: String
+        let maxCards = GameConstants.maxCardsPerPlayer(for: playerCount)
         switch gameState.currentBlock {
         case .first:
-            blockName = "Блок 1 (1-8 карт)"
+            blockName = "Блок 1 (1-\(maxCards - 1) карт)"
         case .second:
-            blockName = "Блок 2 (9 карт)"
+            blockName = "Блок 2 (\(maxCards) карт)"
         case .third:
-            blockName = "Блок 3 (8-1 карт)"
+            blockName = "Блок 3 (\(maxCards - 1)-1 карт)"
         case .fourth:
-            blockName = "Блок 4 (9 карт)"
+            blockName = "Блок 4 (\(maxCards) карт)"
         }
         
         let roundInfo = "Раунд \(gameState.currentRoundInBlock + 1)/\(gameState.totalRoundsInBlock)"
