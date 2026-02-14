@@ -259,16 +259,9 @@ class GameState {
     
     /// Описание текущего блока
     func getCurrentBlockDescription() -> String {
-        let maxCards = GameConstants.maxCardsPerPlayer(for: playerCount)
-        switch currentBlock {
-        case .first:
-            return "Блок 1: возрастающее количество карт"
-        case .second:
-            return "Блок 2: \(maxCards) карт"
-        case .third:
-            return "Блок 3: убывающее количество карт"
-        case .fourth:
-            return "Блок 4: \(maxCards) карт"
-        }
+        return GameBlockFormatter.detailedDescription(
+            for: currentBlock,
+            playerCount: playerCount
+        )
     }
 }

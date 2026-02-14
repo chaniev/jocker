@@ -57,6 +57,7 @@ Jocker/Jocker/
 │   ├── Card.swift
 │   ├── Deck.swift
 │   ├── GameBlock.swift
+│   ├── GameBlockFormatter.swift
 │   ├── GameConstants.swift
 │   ├── GamePhase.swift
 │   ├── GameState.swift

@@ -38,6 +38,7 @@
 		AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */; };
 		AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000032F2A00010037CA75 /* ScoreTableView.swift */; };
 		AA3000022F2B00010037CA75 /* TricksOrderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */; };
+		AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000012F4200010037CA75 /* GameBlockFormatter.swift */; };
 		BB0000022F2800010037CA75 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000012F2800010037CA75 /* GamePhase.swift */; };
 		BB0000042F2800010037CA75 /* GameBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000032F2800010037CA75 /* GameBlock.swift */; };
 		BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000052F2800010037CA75 /* PlayerInfo.swift */; };
@@ -102,6 +103,7 @@
 		AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableViewController.swift; sourceTree = "<group>"; };
 		AA2000032F2A00010037CA75 /* ScoreTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableView.swift; sourceTree = "<group>"; };
 		AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TricksOrderViewController.swift; sourceTree = "<group>"; };
+		AB1000012F4200010037CA75 /* GameBlockFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlockFormatter.swift; sourceTree = "<group>"; };
 		BB0000012F2800010037CA75 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		BB0000032F2800010037CA75 /* GameBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlock.swift; sourceTree = "<group>"; };
 		BB0000052F2800010037CA75 /* PlayerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfo.swift; sourceTree = "<group>"; };
@@ -203,14 +205,15 @@
 		};
 		AA1000022F2800020037CA75 /* Models */ = {
 			isa = PBXGroup;
-			children = (
-				AA0000052F2800010037CA75 /* BlockResult.swift */,
-				7E4AC97D2F269A000037CA75 /* Card.swift */,
-				7E4AC97F2F269A100037CA75 /* Deck.swift */,
-				BB0000032F2800010037CA75 /* GameBlock.swift */,
-				BB0000012F2800010037CA75 /* GamePhase.swift */,
-				CC0000022F2800010037CA75 /* GameConstants.swift */,
-				7E4AC9892F269A600037CA75 /* GameState.swift */,
+				children = (
+					AA0000052F2800010037CA75 /* BlockResult.swift */,
+					7E4AC97D2F269A000037CA75 /* Card.swift */,
+					7E4AC97F2F269A100037CA75 /* Deck.swift */,
+					BB0000032F2800010037CA75 /* GameBlock.swift */,
+					AB1000012F4200010037CA75 /* GameBlockFormatter.swift */,
+					BB0000012F2800010037CA75 /* GamePhase.swift */,
+					CC0000022F2800010037CA75 /* GameConstants.swift */,
+					7E4AC9892F269A600037CA75 /* GameState.swift */,
 				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 				AA0000012F2800010037CA75 /* RoundResult.swift */,
 				F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
@@ -445,11 +448,12 @@
 				AA0000022F2800010037CA75 /* RoundResult.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
 				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,
-				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
-				BB0000022F2800010037CA75 /* GamePhase.swift in Sources */,
-				BB0000042F2800010037CA75 /* GameBlock.swift in Sources */,
-				BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
-				BB0000082F2800010037CA75 /* GameButton.swift in Sources */,
+					AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
+					BB0000022F2800010037CA75 /* GamePhase.swift in Sources */,
+					BB0000042F2800010037CA75 /* GameBlock.swift in Sources */,
+					AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */,
+					BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
+					BB0000082F2800010037CA75 /* GameButton.swift in Sources */,
 				CC0000012F2800010037CA75 /* GameConstants.swift in Sources */,
 				CC0000032F2800010037CA75 /* GameColors.swift in Sources */,
 				CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */,
