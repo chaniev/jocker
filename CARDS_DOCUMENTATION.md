@@ -56,6 +56,12 @@
   - стиль выкладывания джокера;
   - объявление первого джокера.
 
+### `Jocker/Jocker/Models/JokerPlayDecision.swift`
+
+- Решение игрока для UI-выбора режима джокера:
+  - `style` (`faceUp` или `faceDown`);
+  - `leadDeclaration` для первого хода (`wish`, `above`, `takes`).
+
 ## Узлы SpriteKit
 
 ### `Jocker/Jocker/Game/Nodes/CardNode.swift`
@@ -108,6 +114,8 @@
   - обработку тапов;
   - размещение нод и обновление индикаторов;
   - вызовы coordinator для игрового flow.
+- Для джокера запрашивает решение у `GameViewController` через callback и
+  передаёт `JokerPlayDecision` в `TrickNode.playCard(...)`.
 
 ### `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`
 
@@ -125,6 +133,12 @@
 
 - Выбор допустимой карты для автохода.
 - Определение победителя взятки.
+
+### `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`
+
+- Модальное окно выбора розыгрыша джокера:
+  - первый ход: `хочу`, `выше`, `забирает` (+ выбор масти);
+  - второй и последующие ходы: `лицом вверх` или `подпихнуть`.
 
 ### `Jocker/Jocker/Game/Services/GameAnimationService.swift`
 

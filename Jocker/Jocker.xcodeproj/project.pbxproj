@@ -57,6 +57,8 @@
 		F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */; };
 		F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000052F5200010037CA75 /* JokerPlayStyle.swift */; };
 		F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000062F5200010037CA75 /* PlayedTrickCard.swift */; };
+		F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000092F5200010037CA75 /* JokerPlayDecision.swift */; };
+		F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -130,6 +132,8 @@
 		F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerLeadDeclaration.swift; sourceTree = "<group>"; };
 		F20000052F5200010037CA75 /* JokerPlayStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerPlayStyle.swift; sourceTree = "<group>"; };
 		F20000062F5200010037CA75 /* PlayedTrickCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayedTrickCard.swift; sourceTree = "<group>"; };
+		F20000092F5200010037CA75 /* JokerPlayDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerPlayDecision.swift; sourceTree = "<group>"; };
+		F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerModeSelectionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -232,6 +236,7 @@
 					7E4AC9892F269A600037CA75 /* GameState.swift */,
 					F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */,
 					F20000052F5200010037CA75 /* JokerPlayStyle.swift */,
+					F20000092F5200010037CA75 /* JokerPlayDecision.swift */,
 					F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
 				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 				AA0000012F2800010037CA75 /* RoundResult.swift */,
@@ -307,6 +312,7 @@
 			children = (
 				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
 				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
+				F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */,
 				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
 				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
 				AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */,
@@ -475,6 +481,7 @@
 				AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */,
 				AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */,
 				AA3000022F2B00010037CA75 /* TricksOrderViewController.swift in Sources */,
+				F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */,
 				7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
 				7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
 				7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
@@ -485,6 +492,7 @@
 				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
 				F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */,
 				F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */,
+				F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */,
 				F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
 				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 				C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,

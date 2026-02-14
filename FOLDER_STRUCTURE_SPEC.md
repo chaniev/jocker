@@ -69,6 +69,7 @@ Jocker/Jocker/
 │   ├── GameState.swift
 │   ├── JokerLeadDeclaration.swift
 │   ├── JokerPlayStyle.swift
+│   ├── JokerPlayDecision.swift
 │   ├── PlayedTrickCard.swift
 │   ├── PlayerInfo.swift
 │   ├── RoundResult.swift
@@ -81,6 +82,7 @@ Jocker/Jocker/
 │   └── ScoreManager.swift
 ├── ViewControllers/
 │   ├── GameViewController.swift
+│   ├── JokerModeSelectionViewController.swift
 │   ├── PlayerSelectionViewController.swift
 │   ├── ScoreTableView.swift
 │   ├── ScoreTableViewController.swift

@@ -47,6 +47,9 @@ class GameViewController: UIViewController {
                 scene?.applyOrderedTricks(bids)
             }
         }
+        scene.onJokerDecisionRequested = { [weak self] isLeadCard, completion in
+            self?.presentJokerModeSelection(isLeadCard: isLeadCard, completion: completion)
+        }
         self.gameScene = scene
         
         // Показываем сцену
@@ -83,6 +86,24 @@ class GameViewController: UIViewController {
         orderVC.modalPresentationStyle = .overFullScreen
         orderVC.modalTransitionStyle = .crossDissolve
         present(orderVC, animated: true)
+    }
+
+    private func presentJokerModeSelection(
+        isLeadCard: Bool,
+        completion: @escaping (JokerPlayDecision?) -> Void
+    ) {
+        let jokerVC = JokerModeSelectionViewController(
+            isLeadCard: isLeadCard,
+            onSubmit: { decision in
+                completion(decision)
+            },
+            onCancel: {
+                completion(nil)
+            }
+        )
+        jokerVC.modalPresentationStyle = .overFullScreen
+        jokerVC.modalTransitionStyle = .crossDissolve
+        present(jokerVC, animated: true)
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {

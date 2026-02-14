@@ -18,6 +18,7 @@ class GameScene: SKScene {
     var playerNames: [String] = []
     var onScoreButtonTapped: (() -> Void)?
     var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
+    var onJokerDecisionRequested: ((_ isLeadCard: Bool, _ completion: @escaping (JokerPlayDecision?) -> Void) -> Void)?
     private var pokerTable: PokerTableNode?
     private var players: [PlayerNode] = []
     private var dealButton: GameButton?
@@ -49,6 +50,7 @@ class GameScene: SKScene {
     private let coordinator = GameSceneCoordinator()
     private let shouldRevealAllPlayersCards = true
     private var isSelectingFirstDealer = false
+    private var isAwaitingJokerDecision = false
     private var firstDealerAnnouncementNode: SKNode?
 
     var scoreTableFirstPlayerIndex: Int {
@@ -100,7 +102,7 @@ class GameScene: SKScene {
     // MARK: - Touch Handling
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !coordinator.isInteractionLocked, !isSelectingFirstDealer else { return }
+        guard !coordinator.isInteractionLocked, !isSelectingFirstDealer, !isAwaitingJokerDecision else { return }
 
         for touch in touches {
             let location = touch.location(in: self)
@@ -580,9 +582,6 @@ class GameScene: SKScene {
         guard players.indices.contains(playerIndex) else { return false }
         
         let player = players[playerIndex]
-        
-        // По пользовательскому сценарию ручной выбор карты доступен только у локального игрока.
-        guard player.isLocalPlayer else { return false }
 
         if gameState.phase == .bidding {
             gameState.beginPlayingAfterBids()
@@ -594,6 +593,14 @@ class GameScene: SKScene {
         let selectedCard = cardNode.card
         guard trickNode.canPlayCard(selectedCard, fromHand: player.hand.cards, trump: currentTrump) else {
             return false
+        }
+
+        if selectedCard.isJoker {
+            requestJokerDecisionAndPlay(
+                cardNode: cardNode,
+                playerIndex: playerIndex
+            )
+            return true
         }
 
         guard let card = player.hand.removeCardNode(cardNode, animated: true) else { return false }
@@ -621,14 +628,27 @@ class GameScene: SKScene {
         }
 
         _ = players[playerIndex].hand.removeCard(card, animated: true)
-        playCardOnTable(card, by: playerIndex)
+        let decision = automaticJokerDecision(for: card)
+        playCardOnTable(
+            card,
+            by: playerIndex,
+            jokerPlayStyle: decision.style,
+            jokerLeadDeclaration: decision.leadDeclaration
+        )
     }
     
-    private func playCardOnTable(_ card: Card, by playerIndex: Int) {
+    private func playCardOnTable(
+        _ card: Card,
+        by playerIndex: Int,
+        jokerPlayStyle: JokerPlayStyle = .faceUp,
+        jokerLeadDeclaration: JokerLeadDeclaration? = nil
+    ) {
         let targetPosition = trickTargetPosition(for: playerIndex)
         _ = trickNode.playCard(
             card,
             fromPlayer: playerIndex + 1,
+            jokerPlayStyle: jokerPlayStyle,
+            jokerLeadDeclaration: jokerLeadDeclaration,
             to: targetPosition,
             animated: true
         )
@@ -797,5 +817,98 @@ class GameScene: SKScene {
         let playerNames = gameState.players.map { $0.name }
         let currentBids = gameState.players.map { $0.currentBid }
         onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids, gameState.currentDealer)
+    }
+
+    private func requestJokerDecisionAndPlay(cardNode: CardNode, playerIndex: Int) {
+        let isLeadCard = trickNode.playedCards.isEmpty
+        let fallbackDecision = isLeadCard ? JokerPlayDecision.defaultLead : JokerPlayDecision.defaultNonLead
+        isAwaitingJokerDecision = true
+
+        let applyDecision: (JokerPlayDecision?) -> Void = { [weak self, weak cardNode] decision in
+            guard let self = self else { return }
+            self.isAwaitingJokerDecision = false
+
+            guard self.players.indices.contains(playerIndex),
+                  self.gameState.phase == .playing,
+                  self.gameState.currentPlayer == playerIndex else {
+                self.updateGameInfoLabel()
+                self.updateTurnUI(animated: true)
+                return
+            }
+
+            guard let resolvedDecision = decision else {
+                self.updateGameInfoLabel()
+                self.updateTurnUI(animated: true)
+                return
+            }
+
+            guard let cardNode,
+                  let card = self.players[playerIndex].hand.removeCardNode(cardNode, animated: true) else {
+                self.updateGameInfoLabel()
+                self.updateTurnUI(animated: true)
+                return
+            }
+
+            self.playCardOnTable(
+                card,
+                by: playerIndex,
+                jokerPlayStyle: resolvedDecision.style,
+                jokerLeadDeclaration: resolvedDecision.leadDeclaration
+            )
+        }
+
+        if let onJokerDecisionRequested {
+            onJokerDecisionRequested(isLeadCard, applyDecision)
+            return
+        }
+
+        presentJokerDecisionFallback(
+            isLeadCard: isLeadCard,
+            fallbackDecision: fallbackDecision,
+            completion: applyDecision
+        )
+    }
+
+    private func automaticJokerDecision(for card: Card) -> JokerPlayDecision {
+        guard card.isJoker else { return .defaultNonLead }
+        if trickNode.playedCards.isEmpty {
+            return .defaultLead
+        }
+        return .defaultNonLead
+    }
+
+    private func presentJokerDecisionFallback(
+        isLeadCard: Bool,
+        fallbackDecision: JokerPlayDecision,
+        completion: @escaping (JokerPlayDecision?) -> Void
+    ) {
+        guard let presenter = topPresentedViewController() else {
+            completion(fallbackDecision)
+            return
+        }
+
+        let modal = JokerModeSelectionViewController(
+            isLeadCard: isLeadCard,
+            onSubmit: { decision in
+                completion(decision)
+            },
+            onCancel: {
+                completion(nil)
+            }
+        )
+        modal.modalPresentationStyle = .overFullScreen
+        modal.modalTransitionStyle = .crossDissolve
+        presenter.present(modal, animated: true)
+    }
+
+    private func topPresentedViewController() -> UIViewController? {
+        guard let view = self.view else { return nil }
+        var topController = view.window?.rootViewController
+
+        while let presented = topController?.presentedViewController {
+            topController = presented
+        }
+
+        return topController
     }
 }
