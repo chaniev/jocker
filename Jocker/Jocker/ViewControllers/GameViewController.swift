@@ -52,7 +52,8 @@ class GameViewController: UIViewController {
     }
 
     private func presentScoreTable() {
-        guard let scene = gameScene, let scoreManager = scene.scoreManager else { return }
+        guard let scene = gameScene else { return }
+        let scoreManager = scene.scoreManager
         let scoreVC = ScoreTableViewController(
             scoreManager: scoreManager,
             firstColumnPlayerIndex: scene.scoreTableFirstPlayerIndex

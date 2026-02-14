@@ -25,12 +25,24 @@ class GameScene: SKScene {
     
     // Игровые компоненты
     private var deck = Deck()
-    private var trickNode: TrickNode!
-    private var trumpIndicator: TrumpIndicator!
+    private lazy var trickNode: TrickNode = {
+        let node = TrickNode()
+        node.zPosition = 50
+        return node
+    }()
+    private lazy var trumpIndicator: TrumpIndicator = {
+        let indicator = TrumpIndicator()
+        indicator.zPosition = 100
+        return indicator
+    }()
     private var currentTrump: Suit?
-    private var gameState: GameState!
+    private lazy var gameState: GameState = {
+        let state = GameState(playerCount: playerCount)
+        state.startGame()
+        return state
+    }()
     private var firstDealerIndex: Int = 0
-    private(set) var scoreManager: ScoreManager?
+    private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     private let coordinator = GameSceneCoordinator()
     private let shouldRevealAllPlayersCards = true
 
@@ -360,25 +372,22 @@ class GameScene: SKScene {
     // MARK: - Игровые компоненты
     
     private func setupGameComponents() {
-        gameState = GameState(playerCount: playerCount)
-        gameState.startGame()
         firstDealerIndex = gameState.currentDealer
+        _ = scoreManager
         
-        scoreManager = ScoreManager(gameState: gameState)
-        
-        trickNode = TrickNode()
         trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
-        trickNode.zPosition = 50
-        addChild(trickNode)
+        if trickNode.parent == nil {
+            addChild(trickNode)
+        }
         
         let insets = view?.safeAreaInsets ?? .zero
-        trumpIndicator = TrumpIndicator()
         trumpIndicator.position = CGPoint(
             x: self.size.width - insets.right - 116,
             y: insets.bottom + 116
         )
-        trumpIndicator.zPosition = 100
-        addChild(trumpIndicator)
+        if trumpIndicator.parent == nil {
+            addChild(trumpIndicator)
+        }
     }
     
     private func refreshLayout() {
@@ -390,8 +399,8 @@ class GameScene: SKScene {
         dealButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43)
         tricksButton?.position = CGPoint(x: insets.left + 34 + 150, y: insets.bottom + 24 + 43 + 86 + 16)
         
-        trickNode?.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
-        trumpIndicator?.position = CGPoint(
+        trickNode.centerPosition = CGPoint(x: self.size.width / 2, y: self.size.height / 2 + 20)
+        trumpIndicator.position = CGPoint(
             x: self.size.width - insets.right - 116,
             y: insets.bottom + 116
         )

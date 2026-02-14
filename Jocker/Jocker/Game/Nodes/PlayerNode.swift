@@ -16,14 +16,14 @@ class PlayerNode: SKNode {
     let shouldRevealCards: Bool
     let seatDirection: CGVector
     
-    private var avatarNode: SKLabelNode!
-    private var nameLabel: SKLabelNode!
-    private var backgroundCircle: SKShapeNode!
+    private let avatarNode: SKLabelNode
+    private let nameLabel: SKLabelNode
+    private let backgroundCircle: SKShapeNode
     
     // Карты игрока
-    var hand: CardHandNode!
-    private var trickCountLabel: SKLabelNode!
-    private var bidLabel: SKLabelNode!
+    let hand: CardHandNode
+    private let trickCountLabel: SKLabelNode
+    private let bidLabel: SKLabelNode
     
     // Ставка и взятки
     private(set) var bid: Int = 0
@@ -44,6 +44,12 @@ class PlayerNode: SKNode {
         self.isLocalPlayer = isLocalPlayer
         self.shouldRevealCards = shouldRevealCards
         self.seatDirection = seatDirection
+        self.avatarNode = SKLabelNode(text: avatar)
+        self.nameLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        self.backgroundCircle = SKShapeNode(circleOfRadius: 58)
+        self.hand = CardHandNode()
+        self.trickCountLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
+        self.bidLabel = SKLabelNode(fontNamed: "AvenirNext-Medium")
         
         super.init()
         
@@ -63,7 +69,15 @@ class PlayerNode: SKNode {
         let isSideSeat = abs(seatDirection.dx) > abs(seatDirection.dy)
         
         // Фоновый круг для аватара
-        backgroundCircle = SKShapeNode(circleOfRadius: avatarRadius)
+        backgroundCircle.path = CGPath(
+            ellipseIn: CGRect(
+                x: -avatarRadius,
+                y: -avatarRadius,
+                width: avatarRadius * 2,
+                height: avatarRadius * 2
+            ),
+            transform: nil
+        )
         backgroundCircle.fillColor = GameColors.playerBackground
         backgroundCircle.strokeColor = GameColors.gold
         backgroundCircle.lineWidth = 3
@@ -71,7 +85,7 @@ class PlayerNode: SKNode {
         addChild(backgroundCircle)
         
         // Аватар (эмодзи)
-        avatarNode = SKLabelNode(text: avatar)
+        avatarNode.text = avatar
         avatarNode.fontSize = 64
         avatarNode.verticalAlignmentMode = .center
         avatarNode.horizontalAlignmentMode = .center
@@ -79,7 +93,6 @@ class PlayerNode: SKNode {
         addChild(avatarNode)
         
         // Имя игрока
-        nameLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
         nameLabel.text = "Игрок \(playerNumber)"
         nameLabel.fontSize = 34
         nameLabel.fontColor = GameColors.textPrimary
@@ -106,7 +119,6 @@ class PlayerNode: SKNode {
         addChild(shadow)
         
         // Счётчик взяток
-        trickCountLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         trickCountLabel.fontSize = 22
         trickCountLabel.fontColor = GameColors.textSecondary
         trickCountLabel.horizontalAlignmentMode = .center
@@ -117,7 +129,6 @@ class PlayerNode: SKNode {
         addChild(trickCountLabel)
         
         // Индикатор ставки
-        bidLabel = SKLabelNode(fontNamed: "AvenirNext-Medium")
         bidLabel.fontSize = 19
         bidLabel.fontColor = GameColors.gold
         bidLabel.horizontalAlignmentMode = .center
@@ -130,8 +141,6 @@ class PlayerNode: SKNode {
     }
     
     private func setupCardHand(seatDirection: CGVector) {
-        hand = CardHandNode()
-        
         // В режиме раскрытия показываем карты всех игроков.
         hand.isFaceUp = isLocalPlayer || shouldRevealCards
         

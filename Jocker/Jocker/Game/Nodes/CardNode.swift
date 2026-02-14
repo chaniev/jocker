@@ -15,17 +15,38 @@ class CardNode: SKNode {
     let card: Card
     private(set) var isFaceUp: Bool = true
     
-    private var cardBackground: SKShapeNode!
-    private var cardBorder: SKShapeNode!
-    private var suitLabel: SKLabelNode!
-    private var rankLabel: SKLabelNode!
-    private var centerSuitLabel: SKLabelNode!
-    private var backPattern: SKNode!
+    private lazy var cardBackground: SKShapeNode = {
+        let node = SKShapeNode(rect: CardNode.cardRect, cornerRadius: CardNode.cornerRadius)
+        node.fillColor = .white
+        node.strokeColor = .clear
+        node.zPosition = 0
+        return node
+    }()
+    private lazy var cardBorder: SKShapeNode = {
+        let node = SKShapeNode(rect: CardNode.cardRect, cornerRadius: CardNode.cornerRadius)
+        node.fillColor = .clear
+        node.strokeColor = GameColors.cardBorder
+        node.lineWidth = 4.8
+        node.zPosition = 1
+        return node
+    }()
+    private var suitLabel: SKLabelNode?
+    private var rankLabel: SKLabelNode?
+    private var centerSuitLabel: SKLabelNode?
+    private var backPattern: SKNode?
     
     // Размеры карты (уменьшены на 20% от предыдущих)
     static let cardWidth: CGFloat = 192
     static let cardHeight: CGFloat = 288
     static let cornerRadius: CGFloat = 19.2
+    private static var cardRect: CGRect {
+        CGRect(
+            x: -CardNode.cardWidth / 2,
+            y: -CardNode.cardHeight / 2,
+            width: CardNode.cardWidth,
+            height: CardNode.cardHeight
+        )
+    }
     
     // MARK: - Initialization
     
@@ -45,26 +66,8 @@ class CardNode: SKNode {
     // MARK: - Setup
     
     private func setupVisuals() {
-        // Создаём фон карты
-        let rect = CGRect(
-            x: -CardNode.cardWidth / 2,
-            y: -CardNode.cardHeight / 2,
-            width: CardNode.cardWidth,
-            height: CardNode.cardHeight
-        )
-        
-        cardBackground = SKShapeNode(rect: rect, cornerRadius: CardNode.cornerRadius)
-        cardBackground.fillColor = .white
-        cardBackground.strokeColor = .clear
-        cardBackground.zPosition = 0
         addChild(cardBackground)
         
-        // Создаём рамку карты (толщина уменьшена на 20%)
-        cardBorder = SKShapeNode(rect: rect, cornerRadius: CardNode.cornerRadius)
-        cardBorder.fillColor = .clear
-        cardBorder.strokeColor = GameColors.cardBorder
-        cardBorder.lineWidth = 4.8
-        cardBorder.zPosition = 1
         addChild(cardBorder)
         
         // Создаём элементы лицевой стороны
@@ -75,7 +78,7 @@ class CardNode: SKNode {
         }
         
         // Добавляем тень (смещение уменьшено на 20%)
-        let shadow = SKShapeNode(rect: rect, cornerRadius: CardNode.cornerRadius)
+        let shadow = SKShapeNode(rect: CardNode.cardRect, cornerRadius: CardNode.cornerRadius)
         shadow.fillColor = .black
         shadow.strokeColor = .clear
         shadow.alpha = 0.3
@@ -188,8 +191,8 @@ class CardNode: SKNode {
     
     private func setupBackVisuals() {
         // Рубашка карты (размеры уменьшены на 20%)
-        backPattern = SKNode()
-        backPattern.zPosition = 2
+        let pattern = SKNode()
+        pattern.zPosition = 2
         
         // Фон рубашки - синий с узором
         cardBackground.fillColor = GameColors.cardBack
@@ -206,7 +209,7 @@ class CardNode: SKNode {
         innerBorder.lineWidth = 4.8
         innerBorder.fillColor = .clear
         innerBorder.zPosition = 0
-        backPattern.addChild(innerBorder)
+        pattern.addChild(innerBorder)
         
         // Узор из ромбов (размеры уменьшены на 20%)
         let diamondSize: CGFloat = 28.8
@@ -219,11 +222,12 @@ class CardNode: SKNode {
                 diamond.fillColor = SKColor(white: 1.0, alpha: 0.3)
                 diamond.strokeColor = .clear
                 diamond.zPosition = 1
-                backPattern.addChild(diamond)
+                pattern.addChild(diamond)
             }
         }
         
-        addChild(backPattern)
+        addChild(pattern)
+        backPattern = pattern
     }
     
     private func createDiamond(size: CGFloat) -> SKShapeNode {
@@ -326,4 +330,3 @@ class CardNode: SKNode {
         }
     }
 }
-
