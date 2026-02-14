@@ -322,7 +322,7 @@ final class ScoreTableView: UIView {
             let playerIndex = playerDisplayOrder[displayIndex]
             tricksLabels[rowIndex][displayIndex].text = ""
             pointsLabels[rowIndex][displayIndex].text = scores.map {
-                "\(displayedSummaryScore(from: $0[playerIndex]))"
+                displayedSummaryScore(from: $0[playerIndex])
             } ?? ""
         }
     }
@@ -347,13 +347,17 @@ final class ScoreTableView: UIView {
             let playerIndex = playerDisplayOrder[displayIndex]
             tricksLabels[rowIndex][displayIndex].text = ""
             pointsLabels[rowIndex][displayIndex].text = scores.map {
-                "\(displayedSummaryScore(from: $0[playerIndex]))"
+                displayedSummaryScore(from: $0[playerIndex])
             } ?? ""
         }
     }
 
-    private func displayedSummaryScore(from rawScore: Int) -> Int {
-        return rawScore / 100
+    private func displayedSummaryScore(from rawScore: Int) -> String {
+        return String(
+            format: "%.1f",
+            locale: Locale(identifier: "ru_RU"),
+            Double(rawScore) / 100.0
+        )
     }
     
     private func cumulativeScores(through blockIndex: Int, completedBlocks: [BlockResult]) -> [Int] {
