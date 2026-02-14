@@ -72,26 +72,16 @@ class CardHandNode: SKNode {
     /// Удалить карту из руки
     func removeCard(_ card: Card, animated: Bool = true) -> CardNode? {
         guard let index = cards.firstIndex(of: card) else { return nil }
-        
-        cards.remove(at: index)
-        let cardNode = cardNodes.remove(at: index)
-        
-        if animated {
-            let fadeOut = SKAction.fadeOut(withDuration: 0.2)
-            let scale = SKAction.scale(to: 0.5, duration: 0.2)
-            let group = SKAction.group([fadeOut, scale])
-            
-            cardNode.run(group) { [weak cardNode] in
-                cardNode?.removeFromParent()
-            }
-            
-            arrangeCards(animated: true)
-        } else {
-            cardNode.removeFromParent()
-            arrangeCards(animated: false)
-        }
-        
-        return cardNode
+        return removeCard(at: index, animated: animated)
+    }
+    
+    /// Удалить конкретную ноду карты (по identity)
+    @discardableResult
+    func removeCardNode(_ cardNode: CardNode, animated: Bool = true) -> Card? {
+        guard let index = cardNodes.firstIndex(where: { $0 === cardNode }) else { return nil }
+        let removedCard = cards[index]
+        _ = removeCard(at: index, animated: animated)
+        return removedCard
     }
     
     /// Очистить всю руку
@@ -201,5 +191,30 @@ class CardHandNode: SKNode {
     /// Стандартная сортировка (по масти и рангу, джокеры в конец)
     func sortCardsStandard(animated: Bool = true) {
         sortCards(by: { $0 < $1 }, animated: animated)
+    }
+    
+    // MARK: - Private Methods
+    
+    @discardableResult
+    private func removeCard(at index: Int, animated: Bool) -> CardNode {
+        cards.remove(at: index)
+        let cardNode = cardNodes.remove(at: index)
+        
+        if animated {
+            let fadeOut = SKAction.fadeOut(withDuration: 0.2)
+            let scale = SKAction.scale(to: 0.5, duration: 0.2)
+            let group = SKAction.group([fadeOut, scale])
+            
+            cardNode.run(group) { [weak cardNode] in
+                cardNode?.removeFromParent()
+            }
+            
+            arrangeCards(animated: true)
+        } else {
+            cardNode.removeFromParent()
+            arrangeCards(animated: false)
+        }
+        
+        return cardNode
     }
 }

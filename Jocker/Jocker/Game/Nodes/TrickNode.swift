@@ -19,15 +19,25 @@ class TrickNode: SKNode {
     // MARK: - Public Methods
     
     /// Добавить карту в текущую взятку
-    func playCard(_ card: Card, fromPlayer playerNumber: Int, animated: Bool = true) -> CardNode {
+    func playCard(
+        _ card: Card,
+        fromPlayer playerNumber: Int,
+        to targetPosition: CGPoint? = nil,
+        animated: Bool = true
+    ) -> CardNode {
         let cardNode = CardNode(card: card, faceUp: true)
         cardNode.zPosition = CGFloat(playedCards.count)
         
         // Вычисляем позицию для карты
-        let angle = CGFloat(playedCards.count) * (.pi / 2)  // 90 градусов между картами
-        let x = centerPosition.x + cardRadius * cos(angle)
-        let y = centerPosition.y + cardRadius * sin(angle)
-        let targetPosition = CGPoint(x: x, y: y)
+        let resolvedTargetPosition: CGPoint
+        if let targetPosition {
+            resolvedTargetPosition = targetPosition
+        } else {
+            let angle = CGFloat(playedCards.count) * (.pi / 2)  // 90 градусов между картами
+            let x = centerPosition.x + cardRadius * cos(angle)
+            let y = centerPosition.y + cardRadius * sin(angle)
+            resolvedTargetPosition = CGPoint(x: x, y: y)
+        }
         
         playedCards.append((card, playerNumber, cardNode))
         addChild(cardNode)
@@ -40,14 +50,14 @@ class TrickNode: SKNode {
             
             let fadeIn = SKAction.fadeIn(withDuration: 0.2)
             let scale = SKAction.scale(to: 1.0, duration: 0.3)
-            let move = SKAction.move(to: targetPosition, duration: 0.3)
+            let move = SKAction.move(to: resolvedTargetPosition, duration: 0.3)
             let rotate = SKAction.rotate(byAngle: .pi * 0.1, duration: 0.3)
             
             let group = SKAction.group([fadeIn, scale, move, rotate])
             group.timingMode = .easeOut
             cardNode.run(group)
         } else {
-            cardNode.position = targetPosition
+            cardNode.position = resolvedTargetPosition
         }
         
         return cardNode
@@ -155,4 +165,3 @@ class TrickNode: SKNode {
         return true
     }
 }
-

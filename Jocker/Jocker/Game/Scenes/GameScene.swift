@@ -85,13 +85,20 @@ class GameScene: SKScene {
                 return
             }
             
+            if let selectedCard = selectedHandCard(at: location),
+               handleSelectedCardTap(playerIndex: selectedCard.playerIndex, cardNode: selectedCard.cardNode) {
+                return
+            }
+            
             if let playerIndex = playerIndex(at: location) {
                 guard gameState.phase == .playing else { return }
                 
                 if playerIndex == gameState.currentPlayer {
-                    gameState.playCard(byPlayer: playerIndex)
-                    updateGameInfoLabel()
-                    updateTurnUI(animated: true)
+                    if players.indices.contains(playerIndex), players[playerIndex].isLocalPlayer {
+                        return
+                    }
+                    
+                    playAutomaticCard(for: playerIndex)
                     return
                 }
                 
@@ -514,6 +521,10 @@ class GameScene: SKScene {
     
     private func registerTrickWin(for playerIndex: Int) {
         guard playerIndex >= 0, playerIndex < playerCount else { return }
+        trickNode.clearTrick(
+            toPosition: players[playerIndex].position,
+            animated: true
+        )
         gameState.completeTrick(winner: playerIndex)
         players[playerIndex].incrementTricks()
         completeRoundIfNeeded()
@@ -527,6 +538,120 @@ class GameScene: SKScene {
         
         gameState.completeRound()
         recordCurrentRoundIfNeeded()
+    }
+    
+    private func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {
+        guard gameState.phase == .playing else { return false }
+        guard players.indices.contains(playerIndex) else { return false }
+        
+        let player = players[playerIndex]
+        
+        // По пользовательскому сценарию ручной выбор карты доступен только у локального игрока.
+        guard player.isLocalPlayer else { return false }
+        guard playerIndex == gameState.currentPlayer else { return false }
+        
+        guard let card = player.hand.removeCardNode(cardNode, animated: true) else { return false }
+        playCardOnTable(card, by: playerIndex)
+        return true
+    }
+    
+    private func playAutomaticCard(for playerIndex: Int) {
+        guard players.indices.contains(playerIndex) else { return }
+        guard let card = players[playerIndex].hand.cards.first else {
+            gameState.playCard(byPlayer: playerIndex)
+            updateGameInfoLabel()
+            updateTurnUI(animated: true)
+            return
+        }
+        
+        _ = players[playerIndex].hand.removeCard(card, animated: true)
+        playCardOnTable(card, by: playerIndex)
+    }
+    
+    private func playCardOnTable(_ card: Card, by playerIndex: Int) {
+        let targetPosition = trickTargetPosition(for: playerIndex)
+        _ = trickNode.playCard(
+            card,
+            fromPlayer: playerIndex + 1,
+            to: targetPosition,
+            animated: true
+        )
+        
+        gameState.playCard(byPlayer: playerIndex)
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
+    }
+    
+    private func selectedHandCard(at point: CGPoint) -> (playerIndex: Int, cardNode: CardNode)? {
+        for node in nodes(at: point) {
+            guard let tappedCardNode = cardNode(from: node) else { continue }
+            
+            var currentNode: SKNode? = tappedCardNode
+            var ownerHand: CardHandNode?
+            var ownerPlayer: PlayerNode?
+            var guardSteps = 0
+            
+            while let unwrapped = currentNode, guardSteps < 16 {
+                if ownerHand == nil, let handNode = unwrapped as? CardHandNode {
+                    ownerHand = handNode
+                }
+                
+                if let playerNode = unwrapped as? PlayerNode {
+                    ownerPlayer = playerNode
+                    break
+                }
+                
+                currentNode = unwrapped.parent
+                guardSteps += 1
+            }
+            
+            guard let playerNode = ownerPlayer,
+                  let handNode = ownerHand,
+                  playerNode.hand === handNode else {
+                continue
+            }
+            
+            return (playerNode.playerNumber - 1, tappedCardNode)
+        }
+        
+        return nil
+    }
+    
+    private func cardNode(from node: SKNode) -> CardNode? {
+        var currentNode: SKNode? = node
+        var guardSteps = 0
+        
+        while let unwrapped = currentNode, guardSteps < 12 {
+            if let cardNode = unwrapped as? CardNode {
+                return cardNode
+            }
+            
+            currentNode = unwrapped.parent
+            guardSteps += 1
+        }
+        
+        return nil
+    }
+    
+    private func trickTargetPosition(for playerIndex: Int) -> CGPoint {
+        let center = trickNode.centerPosition
+        guard players.indices.contains(playerIndex) else { return center }
+        
+        let playerPosition = players[playerIndex].position
+        let dx = playerPosition.x - center.x
+        let dy = playerPosition.y - center.y
+        let length = max(1.0, sqrt(dx * dx + dy * dy))
+        
+        // Лёгкое смещение к стороне игрока, чтобы карта ложилась в центральный слот "по месту хода".
+        let normalizedX = dx / length
+        let normalizedY = dy / length
+        let horizontalRadius: CGFloat = 118
+        let verticalRadius: CGFloat = 70
+        
+        return CGPoint(
+            x: center.x + normalizedX * horizontalRadius,
+            y: center.y + normalizedY * verticalRadius
+        )
     }
     
     private func playerIndex(at point: CGPoint) -> Int? {
