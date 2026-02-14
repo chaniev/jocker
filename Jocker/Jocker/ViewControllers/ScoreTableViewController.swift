@@ -25,7 +25,7 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = UIColor(red: 0.06, green: 0.09, blue: 0.15, alpha: 1.0)
+        view.backgroundColor = .white
         setupTableView()
         setupSwipeToDismiss()
         tableView.update(with: scoreManager)

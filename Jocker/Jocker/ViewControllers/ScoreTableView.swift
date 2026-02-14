@@ -51,11 +51,11 @@ final class ScoreTableView: UIView {
     /// Флаг для предотвращения повторного создания лейблов
     private var isLabelsBuilt = false
     
-    private let surfaceColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0)
-    private let gridThinColor = UIColor(red: 0.30, green: 0.38, blue: 0.52, alpha: 0.65)
-    private let gridThickColor = UIColor(red: 0.54, green: 0.63, blue: 0.77, alpha: 0.9)
-    private let textPrimaryColor = UIColor(red: 0.95, green: 0.97, blue: 1.00, alpha: 1.0)
-    private let textSecondaryColor = UIColor(red: 0.73, green: 0.80, blue: 0.90, alpha: 1.0)
+    private let surfaceColor = UIColor.white
+    private let gridThinColor = UIColor(red: 0.80, green: 0.83, blue: 0.88, alpha: 1.0)
+    private let gridThickColor = UIColor(red: 0.52, green: 0.58, blue: 0.68, alpha: 1.0)
+    private let textPrimaryColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0)
+    private let textSecondaryColor = UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0)
     private let summaryColor = UIColor(red: 0.93, green: 0.76, blue: 0.33, alpha: 1.0)
     
     init(playerCount: Int) {
@@ -94,7 +94,7 @@ final class ScoreTableView: UIView {
         scrollView.showsHorizontalScrollIndicator = true
         scrollView.alwaysBounceVertical = true
         scrollView.alwaysBounceHorizontal = true
-        scrollView.indicatorStyle = .white
+        scrollView.indicatorStyle = .black
         addSubview(scrollView)
         
         NSLayoutConstraint.activate([
