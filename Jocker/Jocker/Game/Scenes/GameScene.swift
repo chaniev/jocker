@@ -859,6 +859,17 @@ class GameScene: SKScene {
 
         if let onJokerDecisionRequested {
             onJokerDecisionRequested(isLeadCard, applyDecision)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self else { return }
+                guard self.isAwaitingJokerDecision else { return }
+                guard !self.isJokerDecisionModalPresented else { return }
+
+                self.presentJokerDecisionFallback(
+                    isLeadCard: isLeadCard,
+                    fallbackDecision: fallbackDecision,
+                    completion: applyDecision
+                )
+            }
             return
         }
 
@@ -910,5 +921,9 @@ class GameScene: SKScene {
         }
 
         return topController
+    }
+
+    private var isJokerDecisionModalPresented: Bool {
+        return topPresentedViewController() is JokerModeSelectionViewController
     }
 }

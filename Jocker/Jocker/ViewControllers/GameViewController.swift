@@ -48,7 +48,11 @@ class GameViewController: UIViewController {
             }
         }
         scene.onJokerDecisionRequested = { [weak self] isLeadCard, completion in
-            self?.presentJokerModeSelection(isLeadCard: isLeadCard, completion: completion)
+            guard let self = self else {
+                completion(nil)
+                return
+            }
+            self.presentJokerModeSelection(isLeadCard: isLeadCard, completion: completion)
         }
         self.gameScene = scene
         
@@ -92,18 +96,34 @@ class GameViewController: UIViewController {
         isLeadCard: Bool,
         completion: @escaping (JokerPlayDecision?) -> Void
     ) {
-        let jokerVC = JokerModeSelectionViewController(
-            isLeadCard: isLeadCard,
-            onSubmit: { decision in
-                completion(decision)
-            },
-            onCancel: {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
                 completion(nil)
+                return
             }
-        )
-        jokerVC.modalPresentationStyle = .overFullScreen
-        jokerVC.modalTransitionStyle = .crossDissolve
-        present(jokerVC, animated: true)
+
+            let presenter = self.topPresenter()
+            let jokerVC = JokerModeSelectionViewController(
+                isLeadCard: isLeadCard,
+                onSubmit: { decision in
+                    completion(decision)
+                },
+                onCancel: {
+                    completion(nil)
+                }
+            )
+            jokerVC.modalPresentationStyle = .overFullScreen
+            jokerVC.modalTransitionStyle = .crossDissolve
+            presenter.present(jokerVC, animated: true)
+        }
+    }
+
+    private func topPresenter() -> UIViewController {
+        var presenter: UIViewController = self
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+        return presenter
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
