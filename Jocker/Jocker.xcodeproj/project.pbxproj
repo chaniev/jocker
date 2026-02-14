@@ -50,6 +50,7 @@
 		C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
 		C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
 		C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20042F5000010037CA75 /* GameAnimationService.swift */; };
+		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
 		F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000012F4100010037CA75 /* TrickTakingResolver.swift */; };
 		F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */; };
@@ -119,6 +120,7 @@
 		C0DE20022F5000010037CA75 /* GameRoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundService.swift; sourceTree = "<group>"; };
 		C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
 		C0DE20042F5000010037CA75 /* GameAnimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAnimationService.swift; sourceTree = "<group>"; };
+		C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
@@ -306,6 +308,7 @@
 		7E4AC95E2F268D860037CA75 /* JockerTests */ = {
 			isa = PBXGroup;
 			children = (
+				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
 				7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
 				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
@@ -498,6 +501,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
 				7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
 				DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
 				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,
