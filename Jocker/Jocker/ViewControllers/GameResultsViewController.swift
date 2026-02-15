@@ -8,24 +8,33 @@
 import UIKit
 
 final class GameResultsViewController: UIViewController {
+    private struct TableColumn {
+        let title: String
+        let width: CGFloat
+        let alignment: NSTextAlignment
+    }
+
     private enum Appearance {
         static let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.72)
         static let containerColor = UIColor(red: 0.12, green: 0.17, blue: 0.27, alpha: 0.97)
         static let borderColor = GameColors.goldTranslucent
         static let titleColor = GameColors.textPrimary
         static let secondaryTextColor = GameColors.textSecondary
-        static let cardColor = UIColor(red: 0.08, green: 0.12, blue: 0.20, alpha: 0.95)
-        static let cardBorderColor = UIColor(red: 0.28, green: 0.37, blue: 0.54, alpha: 0.82)
-        static let accentColor = GameColors.gold
+        static let headerCellColor = UIColor(red: 0.17, green: 0.24, blue: 0.38, alpha: 0.96)
+        static let rowCellColor = UIColor(red: 0.10, green: 0.15, blue: 0.25, alpha: 0.95)
+        static let rowAlternateCellColor = UIColor(red: 0.08, green: 0.13, blue: 0.22, alpha: 0.95)
+        static let headerTextColor = GameColors.gold
+        static let rowTextColor = GameColors.textPrimary
+        static let gridBorderColor = UIColor(red: 0.30, green: 0.41, blue: 0.60, alpha: 0.82)
         static let buttonColor = GameColors.buttonFill
         static let buttonTextColor = GameColors.buttonText
     }
 
     private enum Layout {
-        static let cardSpacing: CGFloat = 10
         static let containerCornerRadius: CGFloat = 16
-        static let cardCornerRadius: CGFloat = 12
         static let closeButtonHeight: CGFloat = 50
+        static let headerRowHeight: CGFloat = 50
+        static let rowHeight: CGFloat = 44
     }
 
     private let playerSummaries: [GameFinalPlayerSummary]
@@ -71,27 +80,52 @@ final class GameResultsViewController: UIViewController {
         containerView.addSubview(titleLabel)
 
         let subtitleLabel = makeLabel(
-            text: "Места, очки, премии и темные заказы",
+            text: "Строки: игроки, колонки: показатели",
             font: UIFont(name: "AvenirNext-Medium", size: 15),
             color: Appearance.secondaryTextColor
         )
         subtitleLabel.numberOfLines = 2
         containerView.addSubview(subtitleLabel)
 
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.alwaysBounceVertical = true
-        containerView.addSubview(scrollView)
+        let tableScrollView = UIScrollView()
+        tableScrollView.translatesAutoresizingMaskIntoConstraints = false
+        tableScrollView.alwaysBounceVertical = true
+        tableScrollView.alwaysBounceHorizontal = true
+        containerView.addSubview(tableScrollView)
 
-        let stackView = UIStackView()
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        stackView.axis = .vertical
-        stackView.spacing = Layout.cardSpacing
-        stackView.alignment = .fill
-        scrollView.addSubview(stackView)
+        let tableContentView = UIView()
+        tableContentView.translatesAutoresizingMaskIntoConstraints = false
+        tableScrollView.addSubview(tableContentView)
 
-        for summary in playerSummaries {
-            stackView.addArrangedSubview(makePlayerCard(for: summary))
+        let tableStack = UIStackView()
+        tableStack.translatesAutoresizingMaskIntoConstraints = false
+        tableStack.axis = .vertical
+        tableStack.spacing = 0
+        tableStack.alignment = .leading
+        tableContentView.addSubview(tableStack)
+
+        let blockCount = max(playerSummaries.map { $0.blockScores.count }.max() ?? 0, GameConstants.totalBlocks)
+        let columns = tableColumns(blockCount: blockCount)
+        let totalTableWidth = columns.reduce(CGFloat(0)) { $0 + $1.width }
+
+        tableStack.addArrangedSubview(
+            makeTableRow(
+                values: columns.map(\.title),
+                columns: columns,
+                isHeader: true,
+                isAlternate: false
+            )
+        )
+
+        for (index, summary) in playerSummaries.enumerated() {
+            tableStack.addArrangedSubview(
+                makeTableRow(
+                    values: rowValues(for: summary, blockCount: blockCount),
+                    columns: columns,
+                    isHeader: false,
+                    isAlternate: index.isMultiple(of: 2)
+                )
+            )
         }
 
         let closeButton = UIButton(type: .system)
@@ -109,8 +143,8 @@ final class GameResultsViewController: UIViewController {
         NSLayoutConstraint.activate([
             containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            containerView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.90),
-            containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 480),
+            containerView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.92),
+            containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 560),
             containerView.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.90),
             containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 360),
 
@@ -122,17 +156,23 @@ final class GameResultsViewController: UIViewController {
             subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            scrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 14),
-            scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            tableScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 14),
+            tableScrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            tableScrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
 
-            stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+            tableContentView.topAnchor.constraint(equalTo: tableScrollView.contentLayoutGuide.topAnchor),
+            tableContentView.leadingAnchor.constraint(equalTo: tableScrollView.contentLayoutGuide.leadingAnchor),
+            tableContentView.trailingAnchor.constraint(equalTo: tableScrollView.contentLayoutGuide.trailingAnchor),
+            tableContentView.bottomAnchor.constraint(equalTo: tableScrollView.contentLayoutGuide.bottomAnchor),
+            tableContentView.heightAnchor.constraint(greaterThanOrEqualTo: tableScrollView.frameLayoutGuide.heightAnchor),
+            tableContentView.widthAnchor.constraint(equalToConstant: totalTableWidth),
 
-            closeButton.topAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: 14),
+            tableStack.topAnchor.constraint(equalTo: tableContentView.topAnchor),
+            tableStack.leadingAnchor.constraint(equalTo: tableContentView.leadingAnchor),
+            tableStack.trailingAnchor.constraint(equalTo: tableContentView.trailingAnchor),
+            tableStack.bottomAnchor.constraint(equalTo: tableContentView.bottomAnchor),
+
+            closeButton.topAnchor.constraint(equalTo: tableScrollView.bottomAnchor, constant: 14),
             closeButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             closeButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             closeButton.heightAnchor.constraint(equalToConstant: Layout.closeButtonHeight),
@@ -140,87 +180,95 @@ final class GameResultsViewController: UIViewController {
         ])
     }
 
-    private func makePlayerCard(for summary: GameFinalPlayerSummary) -> UIView {
-        let cardView = UIView()
-        cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.backgroundColor = Appearance.cardColor
-        cardView.layer.cornerRadius = Layout.cardCornerRadius
-        cardView.layer.borderWidth = 1
-        cardView.layer.borderColor = Appearance.cardBorderColor.cgColor
+    private func tableColumns(blockCount: Int) -> [TableColumn] {
+        var columns: [TableColumn] = [
+            TableColumn(title: "Игрок", width: 180, alignment: .left),
+            TableColumn(title: "Итого", width: 110, alignment: .center)
+        ]
 
-        let rankLabel = makeLabel(
-            text: "\(summary.place) место - \(summary.playerName)",
-            font: UIFont(name: "AvenirNext-Bold", size: 22),
-            color: Appearance.accentColor
-        )
-        rankLabel.textAlignment = .left
-        cardView.addSubview(rankLabel)
+        for blockIndex in 0..<blockCount {
+            let blockNumber = blockIndex + 1
+            columns.append(TableColumn(title: "Б\(blockNumber) очки", width: 110, alignment: .center))
+            columns.append(TableColumn(title: "Б\(blockNumber) премия", width: 120, alignment: .center))
+        }
 
-        let totalLabel = makeLabel(
-            text: "Итого очков: \(summary.totalScore)",
-            font: UIFont(name: "AvenirNext-DemiBold", size: 17),
-            color: Appearance.titleColor
-        )
-        totalLabel.textAlignment = .left
-        cardView.addSubview(totalLabel)
+        columns.append(TableColumn(title: "Премий всего", width: 120, alignment: .center))
+        columns.append(TableColumn(title: "Темнил Б4", width: 110, alignment: .center))
+        return columns
+    }
 
-        let blockDetailsText = summary.blockScores.enumerated().map { index, score in
-            let premiumTaken = summary.premiumTakenByBlock.indices.contains(index)
-                ? summary.premiumTakenByBlock[index]
+    private func rowValues(for summary: GameFinalPlayerSummary, blockCount: Int) -> [String] {
+        var values: [String] = [
+            summary.playerName,
+            formattedScore(summary.totalScore)
+        ]
+
+        for blockIndex in 0..<blockCount {
+            let blockScore = summary.blockScores.indices.contains(blockIndex)
+                ? summary.blockScores[blockIndex]
+                : 0
+            let premiumTaken = summary.premiumTakenByBlock.indices.contains(blockIndex)
+                ? summary.premiumTakenByBlock[blockIndex]
                 : false
-            let premiumLabel = premiumTaken ? "Да" : "Нет"
-            return "Блок \(index + 1): \(score) очк. | Премия: \(premiumLabel)"
-        }.joined(separator: "\n")
 
-        let blockDetailsLabel = makeLabel(
-            text: blockDetailsText,
-            font: UIFont(name: "AvenirNext-Medium", size: 15),
-            color: Appearance.secondaryTextColor
-        )
-        blockDetailsLabel.numberOfLines = 0
-        blockDetailsLabel.textAlignment = .left
-        cardView.addSubview(blockDetailsLabel)
+            values.append(formattedScore(blockScore))
+            values.append(premiumTaken ? "Да" : "Нет")
+        }
 
-        let premiumCountLabel = makeLabel(
-            text: "Премий всего: \(summary.totalPremiumsTaken)",
-            font: UIFont(name: "AvenirNext-DemiBold", size: 15),
-            color: Appearance.titleColor
-        )
-        premiumCountLabel.textAlignment = .left
-        cardView.addSubview(premiumCountLabel)
+        values.append("\(summary.totalPremiumsTaken)")
+        values.append("\(summary.fourthBlockBlindCount)")
+        return values
+    }
 
-        let blindCountLabel = makeLabel(
-            text: "Темнил в 4 блоке: \(summary.fourthBlockBlindCount)",
-            font: UIFont(name: "AvenirNext-DemiBold", size: 15),
-            color: Appearance.titleColor
-        )
-        blindCountLabel.textAlignment = .left
-        cardView.addSubview(blindCountLabel)
+    private func makeTableRow(
+        values: [String],
+        columns: [TableColumn],
+        isHeader: Bool,
+        isAlternate: Bool
+    ) -> UIView {
+        let rowStack = UIStackView()
+        rowStack.translatesAutoresizingMaskIntoConstraints = false
+        rowStack.axis = .horizontal
+        rowStack.spacing = 0
+        rowStack.distribution = .fill
 
-        NSLayoutConstraint.activate([
-            rankLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 12),
-            rankLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
-            rankLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
+        let cellHeight = isHeader ? Layout.headerRowHeight : Layout.rowHeight
+        let cellBackgroundColor: UIColor
+        if isHeader {
+            cellBackgroundColor = Appearance.headerCellColor
+        } else {
+            cellBackgroundColor = isAlternate ? Appearance.rowCellColor : Appearance.rowAlternateCellColor
+        }
 
-            totalLabel.topAnchor.constraint(equalTo: rankLabel.bottomAnchor, constant: 6),
-            totalLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
-            totalLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
+        let textColor = isHeader ? Appearance.headerTextColor : Appearance.rowTextColor
+        let font = isHeader
+            ? UIFont(name: "AvenirNext-Bold", size: 14)
+            : UIFont(name: "AvenirNext-Medium", size: 14)
 
-            blockDetailsLabel.topAnchor.constraint(equalTo: totalLabel.bottomAnchor, constant: 8),
-            blockDetailsLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
-            blockDetailsLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
+        for (index, column) in columns.enumerated() {
+            let cellLabel = UILabel()
+            cellLabel.translatesAutoresizingMaskIntoConstraints = false
+            cellLabel.text = values.indices.contains(index) ? values[index] : ""
+            cellLabel.textAlignment = column.alignment
+            cellLabel.font = font
+            cellLabel.textColor = textColor
+            cellLabel.numberOfLines = isHeader ? 2 : 1
+            cellLabel.backgroundColor = cellBackgroundColor
+            cellLabel.layer.borderWidth = 0.5
+            cellLabel.layer.borderColor = Appearance.gridBorderColor.cgColor
+            if column.alignment == .left {
+                cellLabel.text = "  \(cellLabel.text ?? "")"
+            }
 
-            premiumCountLabel.topAnchor.constraint(equalTo: blockDetailsLabel.bottomAnchor, constant: 8),
-            premiumCountLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
-            premiumCountLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
+            NSLayoutConstraint.activate([
+                cellLabel.widthAnchor.constraint(equalToConstant: column.width),
+                cellLabel.heightAnchor.constraint(equalToConstant: cellHeight)
+            ])
 
-            blindCountLabel.topAnchor.constraint(equalTo: premiumCountLabel.bottomAnchor, constant: 4),
-            blindCountLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 14),
-            blindCountLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -14),
-            blindCountLabel.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -12)
-        ])
+            rowStack.addArrangedSubview(cellLabel)
+        }
 
-        return cardView
+        return rowStack
     }
 
     private func makeLabel(
@@ -235,6 +283,11 @@ final class GameResultsViewController: UIViewController {
         label.textColor = color
         label.textAlignment = .center
         return label
+    }
+
+    private func formattedScore(_ rawScore: Int) -> String {
+        let scoreValue = Double(rawScore) / 100.0
+        return String(format: "%.1f", locale: Locale(identifier: "ru_RU"), scoreValue)
     }
 
     @objc
