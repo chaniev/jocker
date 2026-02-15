@@ -65,6 +65,7 @@
 		F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000082F5600010037CA75 /* BotTuningTests.swift */; };
 		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
 		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
+		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
 		F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000012F4100010037CA75 /* TrickTakingResolver.swift */; };
 		F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */; };
@@ -158,6 +159,7 @@
 		C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyServiceTests.swift; sourceTree = "<group>"; };
 		C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPlayFlowTests.swift; sourceTree = "<group>"; };
 		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
+		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
@@ -373,6 +375,7 @@
 			isa = PBXGroup;
 			children = (
 				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
+				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
 				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
 					C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
 					C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
@@ -589,6 +592,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
+				D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */,
 					C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
 					C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
 					C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,

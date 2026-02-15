@@ -26,8 +26,16 @@ extension GameScene {
             scoreManager: scoreManager,
             playerCount: playerCount
         )
+        resetTrumpStateIfRoundFinished()
+
         updateGameInfoLabel()
         updateTurnUI(animated: true)
+    }
+
+    func resetTrumpStateIfRoundFinished(animated: Bool = true) {
+        guard gameState.phase == .roundEnd || gameState.phase == .gameEnd else { return }
+        currentTrump = nil
+        trumpIndicator.resetDisplay(animated: animated)
     }
 
     func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {

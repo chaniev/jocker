@@ -147,6 +147,7 @@ Jocker/JockerTests/
 ├── BotTrumpSelectionServiceTests.swift
 ├── BotTurnStrategyServiceTests.swift
 ├── GameFlowIntegrationTests.swift
+├── GameScenePlayingFlowTests.swift
 ├── GameStateTests.swift
 ├── JockerTests.swift
 ├── ScoreCalculatorTests.swift

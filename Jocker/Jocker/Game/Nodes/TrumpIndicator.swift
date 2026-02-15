@@ -135,6 +135,14 @@ class TrumpIndicator: SKNode {
         labelNode.text = "Козырь выбирает игрок"
         labelNode.fontColor = GameColors.textSecondary
     }
+
+    /// Сбрасывает отображение козыря между раундами.
+    func resetDisplay(animated: Bool = true) {
+        clearDisplayedTrump(animated: animated)
+        trumpCard = nil
+        labelNode.text = "Козырь"
+        labelNode.fontColor = GameColors.textPrimary
+    }
     
     /// Скрыть индикатор
     func hide(animated: Bool = true) {
