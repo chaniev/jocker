@@ -62,7 +62,7 @@ class GameScene: SKScene {
     private let coordinator = GameSceneCoordinator()
     private let botBiddingService = BotBiddingService()
     private let botTrumpSelectionService = BotTrumpSelectionService()
-    private let shouldRevealAllPlayersCards = true
+    private let shouldRevealAllPlayersCards = false
     private var isSelectingFirstDealer = false
     private var isAwaitingJokerDecision = false
     private var isAwaitingHumanBidChoice = false
