@@ -19,6 +19,13 @@ class GameScene: SKScene {
         static let actionButtonSize = CGSize(width: 300, height: 86)
         static let actionButtonHorizontalInset: CGFloat = 34
         static let actionButtonBottomInset: CGFloat = 24
+        static let roundBidInfoWidth: CGFloat = 300
+        static let roundBidInfoTopSpacing: CGFloat = 14
+        static let roundBidInfoVerticalPadding: CGFloat = 12
+        static let roundBidInfoTitleHeight: CGFloat = 24
+        static let roundBidInfoRowHeight: CGFloat = 26
+        static let roundBidInfoRowSpacing: CGFloat = 6
+        static let roundBidInfoTitleToRowsSpacing: CGFloat = 10
         static let gameInfoTopInset: CGFloat = 34
         static let trickCenterYOffset: CGFloat = 20
         static let trumpIndicatorInset: CGFloat = 116
@@ -40,6 +47,9 @@ class GameScene: SKScene {
 
     // UI элементы для отображения состояния игры
     var gameInfoLabel: SKLabelNode?
+    var roundBidInfoPanel: SKShapeNode?
+    var roundBidInfoTitleLabel: SKLabelNode?
+    var roundBidInfoRowLabels: [SKLabelNode] = []
     var jokerLeadInfoPanel: SKShapeNode?
     var jokerLeadInfoPlayerLabel: SKLabelNode?
     var jokerLeadInfoModeLabel: SKLabelNode?
@@ -156,6 +166,7 @@ class GameScene: SKScene {
         setupPlayers()
         setupDealButton()
         setupScoreButton()
+        setupRoundBidInfoPanel()
         setupGameInfoLabel()
         setupGameComponents()
         setupTurnIndicator()
@@ -372,6 +383,7 @@ class GameScene: SKScene {
         let turnInfo = "Ход: \(currentPlayerName)"
 
         label.text = "\(blockName)  •  \(roundInfo)  •  \(cardsInfo)  •  \(phaseInfo)  •  \(turnInfo)"
+        updateRoundBidInfo()
     }
 
     private func setupTurnIndicator() {
@@ -430,6 +442,88 @@ class GameScene: SKScene {
 
         self.dealButton = button
         self.addChild(button)
+    }
+
+    private func setupRoundBidInfoPanel() {
+        guard roundBidInfoPanel == nil else { return }
+
+        let panelSize = roundBidInfoSize()
+        let panel = SKShapeNode(rectOf: panelSize, cornerRadius: 16)
+        panel.fillColor = SKColor(red: 0.03, green: 0.07, blue: 0.13, alpha: 0.96)
+        panel.strokeColor = GameColors.gold.withAlphaComponent(0.8)
+        panel.lineWidth = 2
+        panel.zPosition = 102
+        panel.isHidden = true
+        panel.position = roundBidInfoPosition(insets: safeInsets())
+
+        let titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
+        titleLabel.fontSize = 21
+        titleLabel.fontColor = GameColors.gold
+        titleLabel.horizontalAlignmentMode = .center
+        titleLabel.verticalAlignmentMode = .center
+        titleLabel.text = "Заказы на раунд"
+
+        let contentTop = panelSize.height / 2 - LayoutMetrics.roundBidInfoVerticalPadding
+        titleLabel.position = CGPoint(
+            x: 0,
+            y: contentTop - LayoutMetrics.roundBidInfoTitleHeight / 2
+        )
+        panel.addChild(titleLabel)
+
+        let rowsTop = titleLabel.position.y
+            - LayoutMetrics.roundBidInfoTitleHeight / 2
+            - LayoutMetrics.roundBidInfoTitleToRowsSpacing
+            - LayoutMetrics.roundBidInfoRowHeight / 2
+
+        var rowLabels: [SKLabelNode] = []
+        for rowIndex in 0..<max(playerCount, 1) {
+            let rowLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+            rowLabel.fontSize = 20
+            rowLabel.fontColor = GameColors.textPrimary
+            rowLabel.horizontalAlignmentMode = .center
+            rowLabel.verticalAlignmentMode = .center
+            rowLabel.position = CGPoint(
+                x: 0,
+                y: rowsTop - CGFloat(rowIndex) * (LayoutMetrics.roundBidInfoRowHeight + LayoutMetrics.roundBidInfoRowSpacing)
+            )
+            rowLabel.text = ""
+            rowLabel.isHidden = true
+            panel.addChild(rowLabel)
+            rowLabels.append(rowLabel)
+        }
+
+        addChild(panel)
+        roundBidInfoPanel = panel
+        roundBidInfoTitleLabel = titleLabel
+        roundBidInfoRowLabels = rowLabels
+    }
+
+    private func updateRoundBidInfo() {
+        guard let panel = roundBidInfoPanel else { return }
+
+        let shouldShow = gameState.phase == .bidding || gameState.phase == .playing
+        guard shouldShow else {
+            panel.isHidden = true
+            roundBidInfoRowLabels.forEach {
+                $0.text = ""
+                $0.isHidden = true
+            }
+            return
+        }
+
+        for rowIndex in roundBidInfoRowLabels.indices {
+            guard gameState.players.indices.contains(rowIndex) else {
+                roundBidInfoRowLabels[rowIndex].text = ""
+                roundBidInfoRowLabels[rowIndex].isHidden = true
+                continue
+            }
+
+            let player = gameState.players[rowIndex]
+            roundBidInfoRowLabels[rowIndex].text = "\(player.name): \(player.currentBid)"
+            roundBidInfoRowLabels[rowIndex].isHidden = false
+        }
+
+        panel.isHidden = false
     }
 
     // MARK: - Игровые компоненты
@@ -529,12 +623,14 @@ class GameScene: SKScene {
         gameInfoLabel?.position = gameInfoLabelPosition(insets: insets)
         scoreButton?.position = scoreButtonPosition(insets: insets)
         dealButton?.position = dealButtonPosition(insets: insets)
+        roundBidInfoPanel?.position = roundBidInfoPosition(insets: insets)
 
         trickNode.centerPosition = trickCenterPosition()
         trumpIndicator.position = trumpIndicatorPosition(insets: insets)
         jokerLeadInfoPanel?.position = jokerLeadInfoPosition(insets: insets)
         firstDealerAnnouncementNode?.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
 
+        updateRoundBidInfo()
         updateTurnUI(animated: false)
     }
 
@@ -558,6 +654,31 @@ class GameScene: SKScene {
             x: actionButtonX(insets: insets),
             y: size.height - insets.top - LayoutMetrics.actionButtonBottomInset - LayoutMetrics.actionButtonSize.height / 2
         )
+    }
+
+    private func roundBidInfoPosition(insets: UIEdgeInsets) -> CGPoint {
+        let scorePosition = scoreButtonPosition(insets: insets)
+        let panelSize = roundBidInfoSize()
+        let offset = LayoutMetrics.actionButtonSize.height / 2 +
+            LayoutMetrics.roundBidInfoTopSpacing +
+            panelSize.height / 2
+
+        return CGPoint(
+            x: scorePosition.x,
+            y: scorePosition.y - offset
+        )
+    }
+
+    private func roundBidInfoSize() -> CGSize {
+        let rowCount = max(playerCount, 1)
+        let rowsHeight = CGFloat(rowCount) * LayoutMetrics.roundBidInfoRowHeight +
+            CGFloat(max(0, rowCount - 1)) * LayoutMetrics.roundBidInfoRowSpacing
+        let height = LayoutMetrics.roundBidInfoVerticalPadding * 2 +
+            LayoutMetrics.roundBidInfoTitleHeight +
+            LayoutMetrics.roundBidInfoTitleToRowsSpacing +
+            rowsHeight
+
+        return CGSize(width: LayoutMetrics.roundBidInfoWidth, height: height)
     }
 
     private func gameInfoLabelPosition(insets: UIEdgeInsets) -> CGPoint {
