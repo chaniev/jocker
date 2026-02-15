@@ -37,6 +37,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let contentView = UIView()
     private let thinGridLayer = CAShapeLayer()
     private let thickGridLayer = CAShapeLayer()
+    private let premiumLossLayer = CAShapeLayer()
 
     private var leftColumnWidth: CGFloat = 36
     private var trickColumnWidth: CGFloat = 44
@@ -157,8 +158,14 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         thickGridLayer.strokeColor = gridThickColor.cgColor
         thickGridLayer.lineWidth = 2.0
 
+        premiumLossLayer.fillColor = UIColor.clear.cgColor
+        premiumLossLayer.strokeColor = UIColor(red: 0.86, green: 0.23, blue: 0.15, alpha: 0.95).cgColor
+        premiumLossLayer.lineWidth = 2.0
+        premiumLossLayer.lineCap = .round
+
         contentView.layer.addSublayer(thinGridLayer)
         contentView.layer.addSublayer(thickGridLayer)
+        contentView.layer.addSublayer(premiumLossLayer)
     }
 
     private func layoutScrollView() {
@@ -286,7 +293,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     // MARK: - Данные
 
     private func applyScoreDataIfNeeded() {
-        guard let scoreManager = scoreManager else { return }
+        guard let scoreManager = scoreManager else {
+            premiumLossLayer.path = nil
+            return
+        }
 
         let completedBlocks = scoreManager.completedBlocks
         let currentBlockResults = scoreManager.currentBlockRoundResults
@@ -318,6 +328,11 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
                 )
             }
         }
+
+        updatePremiumLossMarks(
+            completedBlocks: completedBlocks,
+            currentBlockResults: currentBlockResults
+        )
     }
 
     private func displayName(for playerIndex: Int) -> String {
@@ -470,6 +485,76 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         }
 
         return scores
+    }
+
+    private func updatePremiumLossMarks(
+        completedBlocks: [BlockResult],
+        currentBlockResults: [[RoundResult]]
+    ) {
+        let path = UIBezierPath()
+        let maxBlockIndex = layout.rowMappings.map(\.blockIndex).max() ?? -1
+        guard maxBlockIndex >= 0 else {
+            premiumLossLayer.path = nil
+            return
+        }
+
+        for blockIndex in 0...maxBlockIndex {
+            let roundResultsByPlayer: [[RoundResult]]?
+            if blockIndex < completedBlocks.count {
+                roundResultsByPlayer = completedBlocks[blockIndex].roundResults
+            } else if blockIndex == completedBlocks.count {
+                roundResultsByPlayer = currentBlockResults
+            } else {
+                roundResultsByPlayer = nil
+            }
+
+            guard let roundResultsByPlayer else { continue }
+            let summaryRows = summaryRowsForBlock(blockIndex)
+            guard !summaryRows.isEmpty else { continue }
+            let sortedRows = summaryRows.sorted()
+            guard
+                let topRowIndex = sortedRows.first,
+                let bottomRowIndex = sortedRows.last
+            else {
+                continue
+            }
+
+            for displayIndex in 0..<playerCount {
+                let playerIndex = playerDisplayOrder[displayIndex]
+                guard playerIndex < roundResultsByPlayer.count else { continue }
+                let playerRoundResults = roundResultsByPlayer[playerIndex]
+                guard hasLostPremium(in: playerRoundResults) else { continue }
+                let baseX = leftColumnWidth + CGFloat(displayIndex) * (trickColumnWidth + pointsColumnWidth)
+
+                let topY = headerHeight + CGFloat(topRowIndex) * rowHeight
+                let height = CGFloat(bottomRowIndex - topRowIndex + 1) * rowHeight
+                let markRect = CGRect(x: baseX, y: topY, width: trickColumnWidth, height: height).insetBy(dx: 3, dy: 3)
+                guard markRect.width > 2, markRect.height > 2 else { continue }
+
+                path.move(to: CGPoint(x: markRect.minX, y: markRect.minY))
+                path.addLine(to: CGPoint(x: markRect.maxX, y: markRect.maxY))
+                path.move(to: CGPoint(x: markRect.minX, y: markRect.maxY))
+                path.addLine(to: CGPoint(x: markRect.maxX, y: markRect.minY))
+            }
+        }
+
+        premiumLossLayer.path = path.cgPath
+    }
+
+    private func hasLostPremium(in roundResults: [RoundResult]) -> Bool {
+        return roundResults.contains(where: { $0.bid != $0.tricksTaken })
+    }
+
+    private func summaryRowsForBlock(_ blockIndex: Int) -> [Int] {
+        return layout.rowMappings.enumerated().compactMap { rowIndex, mapping in
+            guard mapping.blockIndex == blockIndex else { return nil }
+            switch mapping.kind {
+            case .subtotal, .cumulative:
+                return rowIndex
+            case .deal:
+                return nil
+            }
+        }
     }
 
     private func cumulativeScoresIncludingCurrent(
