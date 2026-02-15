@@ -29,9 +29,14 @@ final class GameResultsViewController: UIViewController {
     }
 
     private let playerSummaries: [GameFinalPlayerSummary]
+    private let onClose: (() -> Void)?
 
-    init(playerSummaries: [GameFinalPlayerSummary]) {
+    init(
+        playerSummaries: [GameFinalPlayerSummary],
+        onClose: (() -> Void)? = nil
+    ) {
         self.playerSummaries = playerSummaries
+        self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
         isModalInPresentation = true
     }
@@ -90,7 +95,7 @@ final class GameResultsViewController: UIViewController {
 
         let closeButton = UIButton(type: .system)
         closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.setTitle("Закрыть", for: .normal)
+        closeButton.setTitle("Закрыть и в меню", for: .normal)
         closeButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 20)
         closeButton.setTitleColor(Appearance.buttonTextColor, for: .normal)
         closeButton.backgroundColor = Appearance.buttonColor
@@ -233,6 +238,8 @@ final class GameResultsViewController: UIViewController {
 
     @objc
     private func handleCloseTapped() {
-        dismiss(animated: true)
+        dismiss(animated: true) { [onClose] in
+            onClose?()
+        }
     }
 }

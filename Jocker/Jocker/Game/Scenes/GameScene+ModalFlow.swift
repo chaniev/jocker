@@ -16,7 +16,12 @@ extension GameScene {
         guard !playerSummaries.isEmpty else { return false }
         guard !isGameResultsModalPresented else { return true }
 
-        let modal = GameResultsViewController(playerSummaries: playerSummaries)
+        let modal = GameResultsViewController(
+            playerSummaries: playerSummaries,
+            onClose: { [weak self] in
+                self?.dismissGameViewControllerToStartScreen()
+            }
+        )
         return presentOverlayModal(modal)
     }
 
@@ -226,5 +231,31 @@ extension GameScene {
 
     private var isGameResultsModalPresented: Bool {
         return topPresentedViewController() is GameResultsViewController
+    }
+
+    private func dismissGameViewControllerToStartScreen() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            guard let rootController = self.view?.window?.rootViewController else { return }
+            var topController = rootController
+            while let presented = topController.presentedViewController {
+                topController = presented
+            }
+
+            if let gameViewController = topController as? GameViewController {
+                gameViewController.dismiss(animated: true)
+                return
+            }
+
+            var currentController: UIViewController? = topController
+            while let controller = currentController {
+                if let gameViewController = controller as? GameViewController {
+                    gameViewController.dismiss(animated: true)
+                    return
+                }
+                currentController = controller.presentingViewController
+            }
+        }
     }
 }
