@@ -23,9 +23,9 @@ class GameScene: SKScene {
         static let gameInfoTopInset: CGFloat = 34
         static let trickCenterYOffset: CGFloat = 20
         static let trumpIndicatorInset: CGFloat = 116
-        static let jokerLeadInfoSize = CGSize(width: 220, height: 126)
-        static let jokerLeadInfoRightInset: CGFloat = 126
-        static let jokerLeadInfoTopOffsetFromTrickCenter: CGFloat = 26
+        static let jokerLeadInfoSize = CGSize(width: 264, height: 156)
+        static let jokerLeadInfoRightInset: CGFloat = 120
+        static let jokerLeadInfoTopInset: CGFloat = 22
     }
 
     var playerCount: Int = 4
@@ -609,9 +609,14 @@ class GameScene: SKScene {
     }
 
     private func jokerLeadInfoPosition(insets: UIEdgeInsets) -> CGPoint {
+        let centerY = size.height
+            - insets.top
+            - LayoutMetrics.jokerLeadInfoTopInset
+            - LayoutMetrics.jokerLeadInfoSize.height / 2
+
         return CGPoint(
             x: size.width - insets.right - LayoutMetrics.jokerLeadInfoRightInset,
-            y: trickCenterPosition().y + LayoutMetrics.jokerLeadInfoTopOffsetFromTrickCenter
+            y: centerY
         )
     }
 
@@ -619,36 +624,51 @@ class GameScene: SKScene {
         guard jokerLeadInfoPanel == nil else { return }
 
         let panel = SKShapeNode(rectOf: LayoutMetrics.jokerLeadInfoSize, cornerRadius: 16)
-        panel.fillColor = GameColors.panelBackground
-        panel.strokeColor = GameColors.goldTranslucent
-        panel.lineWidth = 2
+        panel.fillColor = SKColor(red: 0.04, green: 0.08, blue: 0.15, alpha: 0.96)
+        panel.strokeColor = GameColors.gold.withAlphaComponent(0.95)
+        panel.lineWidth = 3
         panel.zPosition = 115
         panel.isHidden = true
 
+        let panelShadow = SKShapeNode(rectOf: LayoutMetrics.jokerLeadInfoSize, cornerRadius: 16)
+        panelShadow.fillColor = .black
+        panelShadow.strokeColor = .clear
+        panelShadow.alpha = 0.36
+        panelShadow.position = CGPoint(x: 0, y: -4)
+        panelShadow.zPosition = -1
+        panel.addChild(panelShadow)
+
         let titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
-        titleLabel.text = "Ход бота с джокера"
-        titleLabel.fontSize = 14
-        titleLabel.fontColor = GameColors.textSecondary
+        titleLabel.text = "Заход бота с джокера"
+        titleLabel.fontSize = 18
+        titleLabel.fontColor = GameColors.textPrimary
         titleLabel.horizontalAlignmentMode = .center
         titleLabel.verticalAlignmentMode = .center
-        titleLabel.position = CGPoint(x: 0, y: 34)
+        titleLabel.position = CGPoint(x: 0, y: 44)
         panel.addChild(titleLabel)
 
         let playerLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        playerLabel.fontSize = 20
+        playerLabel.fontSize = 31
         playerLabel.fontColor = GameColors.textPrimary
         playerLabel.horizontalAlignmentMode = .center
         playerLabel.verticalAlignmentMode = .center
-        playerLabel.position = CGPoint(x: 0, y: 8)
+        playerLabel.position = CGPoint(x: 0, y: 12)
         playerLabel.text = ""
         panel.addChild(playerLabel)
 
+        let separator = SKShapeNode(rectOf: CGSize(width: LayoutMetrics.jokerLeadInfoSize.width - 26, height: 1))
+        separator.fillColor = .clear
+        separator.strokeColor = GameColors.gold.withAlphaComponent(0.52)
+        separator.lineWidth = 1
+        separator.position = CGPoint(x: 0, y: -8)
+        panel.addChild(separator)
+
         let modeLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
-        modeLabel.fontSize = 16
-        modeLabel.fontColor = GameColors.gold
+        modeLabel.fontSize = 22
+        modeLabel.fontColor = GameColors.gold.withAlphaComponent(0.98)
         modeLabel.horizontalAlignmentMode = .center
         modeLabel.verticalAlignmentMode = .center
-        modeLabel.position = CGPoint(x: 0, y: -22)
+        modeLabel.position = CGPoint(x: 0, y: -38)
         modeLabel.text = ""
         panel.addChild(modeLabel)
 
