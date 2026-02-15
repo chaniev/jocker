@@ -34,9 +34,13 @@ This document is the source of truth for repository structure and file placement
 
 ## Key File Responsibilities
 
-- `Jocker/Jocker/Game/Scenes/GameScene.swift`: orchestration layer of the gameplay scene (input handling, dealing flow, trick progression, UI sync, interaction with coordinator and modal callbacks).
+- `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, and top-level touch routing).
+- `Jocker/Jocker/Game/Scenes/GameScene+DealingFlow.swift`: dealing pipeline for each round (deck reset/shuffle, pre-deal blind step, staged dealing, and dealer-left trump choice stage).
+- `Jocker/Jocker/Game/Scenes/GameScene+BiddingFlow.swift`: bidding pipeline (bidding order, human/bot bid progression, dealer forbidden-bid rule, and bidding-to-playing transition).
+- `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`: trick-playing pipeline (tap hit-testing, bot autoplay scheduling, card placement, trick resolution, and trick-win registration).
+- `Jocker/Jocker/Game/Scenes/GameScene+ModalFlow.swift`: unified overlay-modal entrypoints and callbacks for trump selection, bid/blind input, and joker play-mode decision fallback.
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
-- `Jocker/Jocker/Game/Services/GameRoundService.swift`: transitions between rounds/blocks and one-time block finalization recording.
+- `Jocker/Jocker/Game/Services/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
 - `Jocker/Jocker/Game/Services/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration).
 - `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
@@ -48,10 +52,10 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
-- `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines.
+- `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`: modal bidding-order editor with dealer constraints and inline validation.
 - `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
-- `Jocker/Jocker/ViewControllers/BidSelectionViewController.swift`: modal selector of human bid amount with numeric buttons in game palette (up to 3 per row).
+- `Jocker/Jocker/ViewControllers/BidSelectionViewController.swift`: modal selector of human bid amount and pre-deal blind choice, built from shared UI factories (container, labels, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
 
 ## App Source Layout
@@ -77,7 +81,11 @@ Jocker/Jocker/
 │   │   └── TurnIndicatorNode.swift
 │   ├── Scenes/
 │   │   ├── CardDemoScene.swift
-│   │   └── GameScene.swift
+│   │   ├── GameScene.swift
+│   │   ├── GameScene+DealingFlow.swift
+│   │   ├── GameScene+BiddingFlow.swift
+│   │   ├── GameScene+PlayingFlow.swift
+│   │   └── GameScene+ModalFlow.swift
 │   └── Services/
 │       ├── GameAnimationService.swift
 │       ├── BotBiddingService.swift

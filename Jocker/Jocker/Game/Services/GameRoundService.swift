@@ -75,6 +75,7 @@ final class GameRoundService {
     ) {
         guard hasDealtAtLeastOnce, let scoreManager = scoreManager else { return }
         guard gameState.phase == .roundEnd || gameState.phase == .gameEnd else { return }
+        guard gameState.players.count >= playerCount else { return }
 
         let roundKey = RoundRecordKey(
             block: gameState.currentBlock.rawValue,

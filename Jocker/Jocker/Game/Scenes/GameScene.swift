@@ -10,7 +10,7 @@ import GameplayKit
 import UIKit
 
 class GameScene: SKScene {
-    private enum ActionKey {
+    enum ActionKey {
         static let firstDealerSelection = "GameScene.firstDealerSelection"
         static let botTurn = "GameScene.botTurn"
     }
@@ -31,51 +31,51 @@ class GameScene: SKScene {
     var onScoreButtonTapped: (() -> Void)?
     var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
     var onJokerDecisionRequested: ((_ isLeadCard: Bool, _ completion: @escaping (JokerPlayDecision?) -> Void) -> Void)?
-    private var pokerTable: PokerTableNode?
-    private var players: [PlayerNode] = []
-    private var dealButton: GameButton?
-    private var tricksButton: GameButton?
-    private var scoreButton: GameButton?
-    private var turnIndicator: TurnIndicatorNode?
+    var pokerTable: PokerTableNode?
+    var players: [PlayerNode] = []
+    var dealButton: GameButton?
+    var tricksButton: GameButton?
+    var scoreButton: GameButton?
+    var turnIndicator: TurnIndicatorNode?
 
     // UI элементы для отображения состояния игры
-    private var gameInfoLabel: SKLabelNode?
+    var gameInfoLabel: SKLabelNode?
 
     // Игровые компоненты
-    private var deck = Deck()
-    private lazy var trickNode: TrickNode = {
+    var deck = Deck()
+    lazy var trickNode: TrickNode = {
         let node = TrickNode()
         node.zPosition = 50
         return node
     }()
-    private lazy var trumpIndicator: TrumpIndicator = {
+    lazy var trumpIndicator: TrumpIndicator = {
         let indicator = TrumpIndicator()
         indicator.zPosition = 100
         return indicator
     }()
-    private var currentTrump: Suit?
-    private lazy var gameState: GameState = {
+    var currentTrump: Suit?
+    lazy var gameState: GameState = {
         return GameState(playerCount: playerCount)
     }()
-    private var firstDealerIndex: Int = 0
+    var firstDealerIndex: Int = 0
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
-    private let coordinator = GameSceneCoordinator()
-    private let botBiddingService = BotBiddingService()
-    private let botTrumpSelectionService = BotTrumpSelectionService()
-    private let shouldRevealAllPlayersCards = false
-    private var isSelectingFirstDealer = false
-    private var isAwaitingJokerDecision = false
-    private var isAwaitingHumanBidChoice = false
-    private var isAwaitingHumanBlindChoice = false
-    private var isAwaitingHumanTrumpChoice = false
-    private var isRunningBiddingFlow = false
-    private var isRunningPreDealBlindFlow = false
-    private var isRunningTrumpSelectionFlow = false
-    private var pendingBids: [Int] = []
-    private var pendingBlindSelections: [Bool] = []
-    private var firstDealerAnnouncementNode: SKNode?
+    let coordinator = GameSceneCoordinator()
+    let botBiddingService = BotBiddingService()
+    let botTrumpSelectionService = BotTrumpSelectionService()
+    let shouldRevealAllPlayersCards = false
+    var isSelectingFirstDealer = false
+    var isAwaitingJokerDecision = false
+    var isAwaitingHumanBidChoice = false
+    var isAwaitingHumanBlindChoice = false
+    var isAwaitingHumanTrumpChoice = false
+    var isRunningBiddingFlow = false
+    var isRunningPreDealBlindFlow = false
+    var isRunningTrumpSelectionFlow = false
+    var pendingBids: [Int] = []
+    var pendingBlindSelections: [Bool] = []
+    var firstDealerAnnouncementNode: SKNode?
 
-    private var isInteractionBlocked: Bool {
+    var isInteractionBlocked: Bool {
         return coordinator.isInteractionLocked ||
             isSelectingFirstDealer ||
             isAwaitingJokerDecision ||
@@ -149,12 +149,12 @@ class GameScene: SKScene {
         }
     }
 
-    private func isHumanPlayer(_ index: Int) -> Bool {
+    func isHumanPlayer(_ index: Int) -> Bool {
         guard playerControlTypes.indices.contains(index) else { return false }
         return playerControlTypes[index] == .human
     }
 
-    private func isBotPlayer(_ index: Int) -> Bool {
+    func isBotPlayer(_ index: Int) -> Bool {
         return !isHumanPlayer(index)
     }
 
@@ -324,7 +324,7 @@ class GameScene: SKScene {
         self.addChild(infoLabel)
     }
 
-    private func updateGameInfoLabel() {
+    func updateGameInfoLabel() {
         guard let label = gameInfoLabel else { return }
 
         let blockName = GameBlockFormatter.shortTitle(
@@ -350,7 +350,7 @@ class GameScene: SKScene {
         self.turnIndicator = indicator
     }
 
-    private func updateTurnUI(animated: Bool) {
+    func updateTurnUI(animated: Bool) {
         guard !players.isEmpty else {
             turnIndicator?.hide()
             return
@@ -589,7 +589,7 @@ class GameScene: SKScene {
         }
     }
 
-    private func findAncestor<T: SKNode>(
+    func findAncestor<T: SKNode>(
         from node: SKNode,
         as _: T.Type,
         maxDepth: Int
@@ -609,878 +609,4 @@ class GameScene: SKScene {
         return nil
     }
 
-    // MARK: - Раздача карт (SKAction-based анимация)
-
-    private func dealCards() {
-        guard gameState.phase != .notStarted else { return }
-
-        removeAction(forKey: ActionKey.botTurn)
-        isAwaitingHumanBidChoice = false
-        isAwaitingHumanBlindChoice = false
-        isAwaitingHumanTrumpChoice = false
-        isRunningBiddingFlow = false
-        isRunningPreDealBlindFlow = false
-        isRunningTrumpSelectionFlow = false
-        pendingBids.removeAll()
-        pendingBlindSelections.removeAll()
-
-        coordinator.cancelPendingTrickResolution(on: self)
-
-        guard coordinator.prepareForDealing(
-            gameState: gameState,
-            scoreManager: scoreManager,
-            playerCount: playerCount
-        ) else {
-            updateGameInfoLabel()
-            updateTurnUI(animated: true)
-            return
-        }
-
-        updateGameInfoLabel()
-        updateTurnUI(animated: false)
-
-        // Сбрасываем колоду и перемешиваем
-        deck.reset()
-        deck.shuffle()
-
-        // Очищаем руки игроков и взятку
-        for player in players {
-            player.hand.removeAllCards(animated: true)
-            player.resetForNewRound()
-        }
-        trickNode.clearTrick(
-            toPosition: trickNode.centerPosition,
-            animated: false
-        )
-        currentTrump = nil
-
-        pendingBids = Array(repeating: 0, count: playerCount)
-        pendingBlindSelections = Array(repeating: false, count: playerCount)
-
-        if gameState.currentBlock == .fourth {
-            startPreDealBlindFlowIfNeeded { [weak self] in
-                self?.runDealFlowForCurrentRound()
-            }
-            return
-        }
-
-        runDealFlowForCurrentRound()
-    }
-
-    private func runDealFlowForCurrentRound() {
-        let cardsPerPlayer = gameState.currentCardsPerPlayer
-        let firstPlayerToDeal = (gameState.currentDealer + 1) % playerCount
-        let trumpRule = TrumpSelectionRules.rule(
-            for: gameState.currentBlock,
-            cardsPerPlayer: cardsPerPlayer,
-            dealerIndex: gameState.currentDealer,
-            playerCount: playerCount
-        )
-
-        switch trumpRule.strategy {
-        case .automaticTopDeckCard:
-            let dealResult = deck.dealCards(
-                playerCount: playerCount,
-                cardsPerPlayer: cardsPerPlayer,
-                startingPlayerIndex: firstPlayerToDeal
-            )
-
-            coordinator.runDealAnimation(
-                on: self,
-                playerCount: playerCount,
-                firstPlayerToDeal: firstPlayerToDeal,
-                players: players,
-                hands: dealResult.hands,
-                trumpCard: dealResult.trump,
-                trumpIndicator: trumpIndicator,
-                onTrumpResolved: { [weak self] trump in
-                    self?.currentTrump = trump
-                },
-                onHighlightTurn: { [weak self] in
-                    self?.updateTurnUI(animated: true)
-                    self?.startBiddingFlowIfNeeded()
-                }
-            )
-        case .playerOnDealerLeft:
-            runPlayerChosenTrumpDealFlow(
-                firstPlayerToDeal: firstPlayerToDeal,
-                cardsPerPlayer: cardsPerPlayer,
-                chooserPlayerIndex: trumpRule.chooserPlayerIndex,
-                cardsToDealBeforeChoicePerPlayer: trumpRule.cardsToDealBeforeChoicePerPlayer
-            )
-        }
-
-        coordinator.markDidDeal()
-    }
-
-    private func startPreDealBlindFlowIfNeeded(onCompleted: @escaping () -> Void) {
-        guard gameState.phase == .bidding else {
-            onCompleted()
-            return
-        }
-        guard gameState.currentBlock == .fourth else {
-            onCompleted()
-            return
-        }
-
-        isRunningPreDealBlindFlow = true
-        processPreDealBlindStep(order: biddingOrder(), step: 0, onCompleted: onCompleted)
-    }
-
-    private func processPreDealBlindStep(
-        order: [Int],
-        step: Int,
-        onCompleted: @escaping () -> Void
-    ) {
-        guard gameState.phase == .bidding else {
-            isRunningPreDealBlindFlow = false
-            onCompleted()
-            return
-        }
-
-        guard step < order.count else {
-            isRunningPreDealBlindFlow = false
-            onCompleted()
-            return
-        }
-
-        let playerIndex = order[step]
-        let allowedBlindBids = gameState.allowedBids(forPlayer: playerIndex, bids: pendingBids)
-        let canChooseBlind = gameState.canChooseBlindBid(
-            forPlayer: playerIndex,
-            blindSelections: pendingBlindSelections
-        )
-
-        let applySelection: (_ isBlind: Bool, _ bid: Int?) -> Void = { [weak self] isBlind, bid in
-            guard let self else { return }
-            guard self.gameState.phase == .bidding else { return }
-
-            if isBlind && canChooseBlind {
-                let fallbackBlindBid = allowedBlindBids.first ?? 0
-                let resolvedBlindBid: Int
-                if let bid, allowedBlindBids.contains(bid) {
-                    resolvedBlindBid = bid
-                } else {
-                    resolvedBlindBid = fallbackBlindBid
-                }
-                self.pendingBlindSelections[playerIndex] = true
-                self.pendingBids[playerIndex] = resolvedBlindBid
-                self.players[playerIndex].setBid(resolvedBlindBid, isBlind: true, animated: true)
-            } else {
-                self.pendingBlindSelections[playerIndex] = false
-                self.pendingBids[playerIndex] = 0
-            }
-
-            self.updateGameInfoLabel()
-            self.updateTurnUI(animated: true)
-
-            self.run(
-                .sequence([
-                    .wait(forDuration: 0.2),
-                    .run { [weak self] in
-                        self?.processPreDealBlindStep(
-                            order: order,
-                            step: step + 1,
-                            onCompleted: onCompleted
-                        )
-                    }
-                ])
-            )
-        }
-
-        if !canChooseBlind {
-            applySelection(false, nil)
-            return
-        }
-
-        if isHumanPlayer(playerIndex) {
-            requestHumanPreDealBlindChoice(
-                forPlayer: playerIndex,
-                allowedBlindBids: allowedBlindBids,
-                canChooseBlind: canChooseBlind,
-                completion: applySelection
-            )
-            return
-        }
-
-        let blindBid = botBiddingService.makePreDealBlindBid(
-            playerIndex: playerIndex,
-            dealerIndex: gameState.currentDealer,
-            cardsInRound: gameState.currentCardsPerPlayer,
-            allowedBlindBids: allowedBlindBids,
-            canChooseBlind: canChooseBlind,
-            totalScores: scoreManager.totalScoresIncludingCurrentBlock
-        )
-        applySelection(blindBid != nil, blindBid)
-    }
-
-    private func runPlayerChosenTrumpDealFlow(
-        firstPlayerToDeal: Int,
-        cardsPerPlayer: Int,
-        chooserPlayerIndex: Int,
-        cardsToDealBeforeChoicePerPlayer: Int
-    ) {
-        let cardsBeforeChoice = min(cardsPerPlayer, max(0, cardsToDealBeforeChoicePerPlayer))
-        let initialDeal = deck.dealCards(
-            playerCount: playerCount,
-            cardsPerPlayer: cardsBeforeChoice,
-            startingPlayerIndex: firstPlayerToDeal
-        )
-
-        let remainingCardsPerPlayer = max(0, cardsPerPlayer - cardsBeforeChoice)
-        let remainingDeal = deck.dealCards(
-            playerCount: playerCount,
-            cardsPerPlayer: remainingCardsPerPlayer,
-            startingPlayerIndex: firstPlayerToDeal
-        )
-
-        isRunningTrumpSelectionFlow = true
-        trumpIndicator.setAwaitingTrumpSelection(animated: true)
-
-        coordinator.runDealStageAnimation(
-            on: self,
-            playerCount: playerCount,
-            firstPlayerToDeal: firstPlayerToDeal,
-            players: players,
-            hands: initialDeal.hands
-        ) { [weak self] in
-            guard let self else { return }
-            let chooserHand = initialDeal.hands.indices.contains(chooserPlayerIndex)
-                ? initialDeal.hands[chooserPlayerIndex]
-                : []
-
-            self.updateTurnUI(animated: true)
-            self.requestTrumpChoice(
-                forPlayer: chooserPlayerIndex,
-                handCards: chooserHand
-            ) { [weak self] selectedTrump in
-                guard let self else { return }
-                self.currentTrump = selectedTrump
-                let animateTrumpReveal = !self.isBotPlayer(chooserPlayerIndex)
-                self.trumpIndicator.setTrumpSuit(selectedTrump, animated: animateTrumpReveal)
-
-                if remainingCardsPerPlayer == 0 {
-                    self.isRunningTrumpSelectionFlow = false
-                    self.updateGameInfoLabel()
-                    self.updateTurnUI(animated: true)
-                    self.startBiddingFlowIfNeeded()
-                    return
-                }
-
-                self.coordinator.runDealStageAnimation(
-                    on: self,
-                    playerCount: self.playerCount,
-                    firstPlayerToDeal: firstPlayerToDeal,
-                    players: self.players,
-                    hands: remainingDeal.hands
-                ) { [weak self] in
-                    guard let self else { return }
-                    self.isRunningTrumpSelectionFlow = false
-                    self.updateGameInfoLabel()
-                    self.updateTurnUI(animated: true)
-                    self.startBiddingFlowIfNeeded()
-                }
-            }
-        }
-    }
-
-    private func requestTrumpChoice(
-        forPlayer playerIndex: Int,
-        handCards: [Card],
-        completion: @escaping (Suit?) -> Void
-    ) {
-        let fallbackTrump = botTrumpSelectionService.selectTrump(from: handCards)
-
-        if isBotPlayer(playerIndex) {
-            completion(fallbackTrump)
-            return
-        }
-
-        let playerName = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].name
-            : "Игрок \(playerIndex + 1)"
-
-        guard let presenter = topPresentedViewController() else {
-            completion(fallbackTrump)
-            return
-        }
-
-        isAwaitingHumanTrumpChoice = true
-        let modal = TrumpSelectionViewController(
-            playerName: playerName,
-            handCards: handCards
-        ) { [weak self] selectedSuit in
-            self?.isAwaitingHumanTrumpChoice = false
-            completion(selectedSuit)
-        }
-        modal.modalPresentationStyle = .overFullScreen
-        modal.modalTransitionStyle = .crossDissolve
-        presenter.present(modal, animated: true)
-    }
-
-    private func registerTrickWin(for playerIndex: Int) {
-        guard playerIndex >= 0, playerIndex < playerCount else { return }
-        trickNode.clearTrick(
-            toPosition: players[playerIndex].position,
-            animated: true
-        ) { [weak self] in
-            self?.runBotTurnIfNeeded()
-        }
-        gameState.completeTrick(winner: playerIndex)
-        players[playerIndex].incrementTricks()
-        coordinator.completeRoundIfNeeded(
-            gameState: gameState,
-            scoreManager: scoreManager,
-            playerCount: playerCount
-        )
-        updateGameInfoLabel()
-        updateTurnUI(animated: true)
-    }
-
-    private func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {
-        guard players.indices.contains(playerIndex) else { return false }
-        guard isHumanPlayer(playerIndex) else { return false }
-
-        let player = players[playerIndex]
-
-        guard gameState.phase == .playing else { return false }
-        guard playerIndex == gameState.currentPlayer else { return false }
-
-        let selectedCard = cardNode.card
-        guard trickNode.canPlayCard(selectedCard, fromHand: player.hand.cards, trump: currentTrump) else {
-            return false
-        }
-
-        if selectedCard.isJoker {
-            requestJokerDecisionAndPlay(
-                cardNode: cardNode,
-                playerIndex: playerIndex
-            )
-            return true
-        }
-
-        guard let card = player.hand.removeCardNode(cardNode, animated: true) else { return false }
-        playCardOnTable(card, by: playerIndex)
-        return true
-    }
-
-    private func playAutomaticCard(for playerIndex: Int) {
-        guard players.indices.contains(playerIndex) else { return }
-        guard isBotPlayer(playerIndex) else { return }
-
-        guard !players[playerIndex].hand.cards.isEmpty else {
-            assertionFailure("Bot turn requested with empty hand at player index \(playerIndex)")
-            updateGameInfoLabel()
-            updateTurnUI(animated: true)
-            return
-        }
-
-        let bid = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].currentBid
-            : nil
-        let tricksTaken = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].tricksTaken
-            : nil
-
-        guard let turnDecision = coordinator.automaticTurnDecision(
-            for: playerIndex,
-            players: players,
-            trickNode: trickNode,
-            trump: currentTrump,
-            bid: bid,
-            tricksTaken: tricksTaken,
-            cardsInRound: gameState.currentCardsPerPlayer
-        ) else {
-            return
-        }
-
-        let card = turnDecision.card
-        _ = players[playerIndex].hand.removeCard(card, animated: true)
-        playCardOnTable(
-            card,
-            by: playerIndex,
-            jokerPlayStyle: turnDecision.jokerDecision.style,
-            jokerLeadDeclaration: turnDecision.jokerDecision.leadDeclaration
-        )
-    }
-
-    private func playCardOnTable(
-        _ card: Card,
-        by playerIndex: Int,
-        jokerPlayStyle: JokerPlayStyle = .faceUp,
-        jokerLeadDeclaration: JokerLeadDeclaration? = nil
-    ) {
-        let targetPosition = trickTargetPosition(for: playerIndex)
-        _ = trickNode.playCard(
-            card,
-            fromPlayer: playerIndex + 1,
-            jokerPlayStyle: jokerPlayStyle,
-            jokerLeadDeclaration: jokerLeadDeclaration,
-            to: targetPosition,
-            animated: true
-        )
-
-        gameState.playCard(byPlayer: playerIndex)
-
-        if resolveTrickIfNeeded() {
-            return
-        }
-
-        updateGameInfoLabel()
-        updateTurnUI(animated: true)
-        runBotTurnIfNeeded()
-    }
-
-    @discardableResult
-    private func resolveTrickIfNeeded() -> Bool {
-        return coordinator.resolveTrickIfNeeded(
-            on: self,
-            trickNode: trickNode,
-            playerCount: playerCount,
-            trump: currentTrump
-        ) { [weak self] winnerIndex in
-            guard let self = self else { return }
-            self.registerTrickWin(for: winnerIndex)
-        }
-    }
-
-    private func selectedHandCard(at point: CGPoint) -> (playerIndex: Int, cardNode: CardNode)? {
-        if let localPlayerIndex = players.firstIndex(where: { $0.isLocalPlayer }),
-           players.indices.contains(localPlayerIndex),
-           let localCardNode = selectedCard(in: players[localPlayerIndex].hand, at: point) {
-            return (localPlayerIndex, localCardNode)
-        }
-
-        for node in nodes(at: point) {
-            guard let tappedCardNode = cardNode(from: node) else { continue }
-            guard let ownerPlayer: PlayerNode = findAncestor(from: tappedCardNode, as: PlayerNode.self, maxDepth: 16),
-                  let ownerHand: CardHandNode = findAncestor(from: tappedCardNode, as: CardHandNode.self, maxDepth: 16),
-                  ownerPlayer.hand === ownerHand else {
-                continue
-            }
-
-            return (ownerPlayer.playerNumber - 1, tappedCardNode)
-        }
-
-        return nil
-    }
-
-    private func selectedCard(in hand: CardHandNode, at point: CGPoint) -> CardNode? {
-        let tapPadding: CGFloat = 12
-        let cardBounds = CGRect(
-            x: -CardNode.cardWidth / 2 - tapPadding,
-            y: -CardNode.cardHeight / 2 - tapPadding,
-            width: CardNode.cardWidth + tapPadding * 2,
-            height: CardNode.cardHeight + tapPadding * 2
-        )
-
-        let cardsSortedByTop = hand.cardNodes.sorted { lhs, rhs in
-            if lhs.zPosition == rhs.zPosition {
-                return lhs.position.x > rhs.position.x
-            }
-            return lhs.zPosition > rhs.zPosition
-        }
-
-        for cardNode in cardsSortedByTop {
-            let pointInCard = convert(point, to: cardNode)
-            if cardBounds.contains(pointInCard) {
-                return cardNode
-            }
-        }
-
-        return nil
-    }
-
-    private func cardNode(from node: SKNode) -> CardNode? {
-        return findAncestor(from: node, as: CardNode.self, maxDepth: 12)
-    }
-
-    private func trickTargetPosition(for playerIndex: Int) -> CGPoint {
-        let center = trickNode.centerPosition
-        guard players.indices.contains(playerIndex) else { return center }
-
-        let playerPosition = players[playerIndex].position
-        let dx = playerPosition.x - center.x
-        let dy = playerPosition.y - center.y
-        let length = max(1.0, sqrt(dx * dx + dy * dy))
-
-        // Лёгкое смещение к стороне игрока, чтобы карта ложилась в центральный слот "по месту хода".
-        let normalizedX = dx / length
-        let normalizedY = dy / length
-        let horizontalRadius: CGFloat = 118
-        let verticalRadius: CGFloat = 70
-
-        return CGPoint(
-            x: center.x + normalizedX * horizontalRadius,
-            y: center.y + normalizedY * verticalRadius
-        )
-    }
-
-    func applyOrderedTricks(_ bids: [Int]) {
-        guard bids.count == playerCount else { return }
-        guard gameState.phase == .bidding else { return }
-        pendingBids = bids
-        if pendingBlindSelections.count != playerCount {
-            pendingBlindSelections = Array(repeating: false, count: playerCount)
-        }
-        isRunningBiddingFlow = false
-        applyBidsToGameStateAndStartPlaying(bids, blindSelections: pendingBlindSelections)
-    }
-
-    private func presentTricksOrder() {
-        let playerNames = gameState.players.map { $0.name }
-        let currentBids = gameState.players.map { $0.currentBid }
-        onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids, gameState.currentDealer)
-    }
-
-    private func startBiddingFlowIfNeeded() {
-        guard gameState.phase == .bidding else { return }
-        guard !isRunningBiddingFlow else { return }
-
-        isRunningBiddingFlow = true
-        if gameState.currentBlock != .fourth {
-            pendingBids = Array(repeating: 0, count: playerCount)
-            pendingBlindSelections = Array(repeating: false, count: playerCount)
-        } else {
-            if pendingBids.count != playerCount {
-                pendingBids = Array(repeating: 0, count: playerCount)
-            }
-            if pendingBlindSelections.count != playerCount {
-                pendingBlindSelections = Array(repeating: false, count: playerCount)
-            }
-        }
-
-        let order = biddingOrder().filter { playerIndex in
-            gameState.currentBlock != .fourth || !pendingBlindSelections[playerIndex]
-        }
-        processBiddingStep(order: order, step: 0)
-    }
-
-    private func processBiddingStep(order: [Int], step: Int) {
-        guard gameState.phase == .bidding else {
-            isRunningBiddingFlow = false
-            pendingBids.removeAll()
-            pendingBlindSelections.removeAll()
-            return
-        }
-
-        guard step < order.count else {
-            let bids = pendingBids
-            let blindSelections = pendingBlindSelections
-            pendingBids.removeAll()
-            pendingBlindSelections.removeAll()
-            isRunningBiddingFlow = false
-            applyBidsToGameStateAndStartPlaying(bids, blindSelections: blindSelections)
-            return
-        }
-
-        let playerIndex = order[step]
-        let allowedBids = gameState.allowedBids(forPlayer: playerIndex, bids: pendingBids)
-        let fallbackBid = allowedBids.first ?? 0
-        let forbidden = forbiddenDealerBidIfNeeded(
-            for: playerIndex,
-            bids: pendingBids
-        )
-
-        if isHumanPlayer(playerIndex) {
-            requestHumanBid(
-                forPlayer: playerIndex,
-                handCards: players[playerIndex].hand.cards,
-                allowedBids: allowedBids,
-                forbiddenBid: forbidden
-            ) { [weak self] selectedBid in
-                guard let self = self else { return }
-                guard self.gameState.phase == .bidding else { return }
-
-                let resolvedBid = allowedBids.contains(selectedBid) ? selectedBid : fallbackBid
-                self.pendingBids[playerIndex] = resolvedBid
-                self.players[playerIndex].setBid(resolvedBid, isBlind: false, animated: true)
-                self.updateGameInfoLabel()
-                self.updateTurnUI(animated: true)
-                self.processBiddingStep(order: order, step: step + 1)
-            }
-            return
-        }
-
-        let candidateBid = botBiddingService.makeBid(
-            hand: players[playerIndex].hand.cards,
-            cardsInRound: gameState.currentCardsPerPlayer,
-            trump: currentTrump,
-            forbiddenBid: forbidden
-        )
-        let bid = allowedBids.contains(candidateBid) ? candidateBid : fallbackBid
-        pendingBids[playerIndex] = bid
-        players[playerIndex].setBid(bid, isBlind: false, animated: true)
-        updateGameInfoLabel()
-        updateTurnUI(animated: true)
-
-        run(
-            .sequence([
-                .wait(forDuration: 0.25),
-                .run { [weak self] in
-                    self?.processBiddingStep(order: order, step: step + 1)
-                }
-            ])
-        )
-    }
-
-    private func requestHumanBid(
-        forPlayer playerIndex: Int,
-        handCards: [Card],
-        allowedBids: [Int],
-        forbiddenBid: Int?,
-        completion: @escaping (Int) -> Void
-    ) {
-        let normalizedAllowedBids = Array(Set(allowedBids)).sorted()
-        guard !normalizedAllowedBids.isEmpty else {
-            completion(0)
-            return
-        }
-
-        let playerName = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].name
-            : "Игрок \(playerIndex + 1)"
-
-        guard let presenter = topPresentedViewController() else {
-            completion(normalizedAllowedBids[0])
-            return
-        }
-
-        isAwaitingHumanBidChoice = true
-
-        let modal = BidSelectionViewController(
-            playerName: playerName,
-            handCards: handCards,
-            allowedBids: normalizedAllowedBids,
-            maxBid: gameState.currentCardsPerPlayer,
-            forbiddenBid: forbiddenBid
-        ) { [weak self] selectedBid in
-            self?.isAwaitingHumanBidChoice = false
-            completion(selectedBid)
-        }
-        modal.modalPresentationStyle = .overFullScreen
-        modal.modalTransitionStyle = .crossDissolve
-        presenter.present(modal, animated: true)
-    }
-
-    private func requestHumanPreDealBlindChoice(
-        forPlayer playerIndex: Int,
-        allowedBlindBids: [Int],
-        canChooseBlind: Bool,
-        completion: @escaping (_ isBlind: Bool, _ bid: Int?) -> Void
-    ) {
-        let normalizedAllowedBlindBids = Array(Set(allowedBlindBids)).sorted()
-
-        let playerName = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].name
-            : "Игрок \(playerIndex + 1)"
-
-        guard let presenter = topPresentedViewController() else {
-            completion(false, nil)
-            return
-        }
-
-        isAwaitingHumanBlindChoice = true
-
-        let modal = BidSelectionViewController(
-            playerName: playerName,
-            allowedBlindBids: normalizedAllowedBlindBids,
-            canChooseBlind: canChooseBlind
-        ) { [weak self] isBlind, bid in
-            self?.isAwaitingHumanBlindChoice = false
-            completion(isBlind, bid)
-        }
-        modal.modalPresentationStyle = .overFullScreen
-        modal.modalTransitionStyle = .crossDissolve
-        presenter.present(modal, animated: true)
-    }
-
-    private func applyBidsToGameStateAndStartPlaying(_ bids: [Int], blindSelections: [Bool]) {
-        guard bids.count == playerCount else { return }
-        guard gameState.phase == .bidding else { return }
-
-        let maxBid = max(0, gameState.currentCardsPerPlayer)
-        var safetyCounter = 0
-
-        while gameState.phase == .bidding && safetyCounter < playerCount {
-            let playerIndex = gameState.currentPlayer
-            var bid = min(max(bids[playerIndex], 0), maxBid)
-            let allowedBids = gameState.allowedBids(forPlayer: playerIndex, bids: bids)
-            if !allowedBids.contains(bid) {
-                bid = allowedBids.first ?? 0
-            }
-
-            let isBlindBid = blindSelections.indices.contains(playerIndex)
-                ? blindSelections[playerIndex]
-                : false
-            players[playerIndex].setBid(bid, isBlind: isBlindBid, animated: true)
-            _ = gameState.placeBid(
-                bid,
-                forPlayer: playerIndex,
-                isBlind: isBlindBid,
-                lockBeforeDeal: isBlindBid
-            )
-            safetyCounter += 1
-        }
-
-        updateGameInfoLabel()
-        updateTurnUI(animated: true)
-        runBotTurnIfNeeded()
-    }
-
-    private func forbiddenDealerBidIfNeeded(for playerIndex: Int, bids: [Int]) -> Int? {
-        guard playerIndex == gameState.currentDealer else { return nil }
-        guard playerCount > 1 else { return nil }
-
-        let totalWithoutDealer = bids.enumerated().reduce(0) { partial, pair in
-            let (index, bid) = pair
-            return partial + ((index == gameState.currentDealer) ? 0 : bid)
-        }
-
-        let forbidden = gameState.currentCardsPerPlayer - totalWithoutDealer
-        guard forbidden >= 0 && forbidden <= gameState.currentCardsPerPlayer else { return nil }
-        return forbidden
-    }
-
-    private func biddingOrder() -> [Int] {
-        guard playerCount > 0 else { return [] }
-        let start = (gameState.currentDealer + 1) % playerCount
-        return (0..<playerCount).map { offset in
-            (start + offset) % playerCount
-        }
-    }
-
-    private func runBotTurnIfNeeded() {
-        DispatchQueue.main.async { [weak self] in
-            self?.scheduleBotTurnIfNeeded()
-        }
-    }
-
-    private func scheduleBotTurnIfNeeded() {
-        guard gameState.phase == .playing else { return }
-        guard !isInteractionBlocked else { return }
-        guard players.indices.contains(gameState.currentPlayer) else { return }
-        guard isBotPlayer(gameState.currentPlayer) else { return }
-        guard action(forKey: ActionKey.botTurn) == nil else { return }
-
-        run(
-            .sequence([
-                .wait(forDuration: 0.35),
-                .run { [weak self] in
-                    guard let self = self else { return }
-                    guard self.gameState.phase == .playing else { return }
-
-                    if self.isInteractionBlocked {
-                        self.runBotTurnIfNeeded()
-                        return
-                    }
-
-                    let playerIndex = self.gameState.currentPlayer
-                    guard self.isBotPlayer(playerIndex) else { return }
-                    self.playAutomaticCard(for: playerIndex)
-                }
-            ]),
-            withKey: ActionKey.botTurn
-        )
-    }
-
-    private func requestJokerDecisionAndPlay(cardNode: CardNode, playerIndex: Int) {
-        let isLeadCard = trickNode.playedCards.isEmpty
-        let fallbackDecision = isLeadCard ? JokerPlayDecision.defaultLead : JokerPlayDecision.defaultNonLead
-        isAwaitingJokerDecision = true
-
-        let applyDecision: (JokerPlayDecision?) -> Void = { [weak self, weak cardNode] decision in
-            guard let self = self else { return }
-            self.isAwaitingJokerDecision = false
-
-            guard self.players.indices.contains(playerIndex),
-                  self.gameState.phase == .playing,
-                  self.gameState.currentPlayer == playerIndex else {
-                self.updateGameInfoLabel()
-                self.updateTurnUI(animated: true)
-                return
-            }
-
-            guard let resolvedDecision = decision else {
-                self.updateGameInfoLabel()
-                self.updateTurnUI(animated: true)
-                return
-            }
-
-            guard let cardNode,
-                  let card = self.players[playerIndex].hand.removeCardNode(cardNode, animated: true) else {
-                self.updateGameInfoLabel()
-                self.updateTurnUI(animated: true)
-                return
-            }
-
-            self.playCardOnTable(
-                card,
-                by: playerIndex,
-                jokerPlayStyle: resolvedDecision.style,
-                jokerLeadDeclaration: resolvedDecision.leadDeclaration
-            )
-        }
-
-        if let onJokerDecisionRequested {
-            onJokerDecisionRequested(isLeadCard, applyDecision)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self else { return }
-                guard self.isAwaitingJokerDecision else { return }
-                guard !self.isJokerDecisionModalPresented else { return }
-
-                self.presentJokerDecisionFallback(
-                    isLeadCard: isLeadCard,
-                    fallbackDecision: fallbackDecision,
-                    completion: applyDecision
-                )
-            }
-            return
-        }
-
-        presentJokerDecisionFallback(
-            isLeadCard: isLeadCard,
-            fallbackDecision: fallbackDecision,
-            completion: applyDecision
-        )
-    }
-
-    private func presentJokerDecisionFallback(
-        isLeadCard: Bool,
-        fallbackDecision: JokerPlayDecision,
-        completion: @escaping (JokerPlayDecision?) -> Void
-    ) {
-        guard let presenter = topPresentedViewController() else {
-            completion(fallbackDecision)
-            return
-        }
-
-        let modal = JokerModeSelectionViewController(
-            isLeadCard: isLeadCard,
-            onSubmit: { decision in
-                completion(decision)
-            },
-            onCancel: {
-                completion(nil)
-            }
-        )
-        modal.modalPresentationStyle = .overFullScreen
-        modal.modalTransitionStyle = .crossDissolve
-        presenter.present(modal, animated: true)
-    }
-
-    private func topPresentedViewController() -> UIViewController? {
-        guard let view = self.view else { return nil }
-        var topController = view.window?.rootViewController
-
-        while let presented = topController?.presentedViewController {
-            topController = presented
-        }
-
-        return topController
-    }
-
-    private var isJokerDecisionModalPresented: Bool {
-        return topPresentedViewController() is JokerModeSelectionViewController
-    }
 }

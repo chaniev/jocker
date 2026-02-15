@@ -467,9 +467,11 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         for displayIndex in 0..<playerCount {
             let playerIndex = playerDisplayOrder[displayIndex]
             tricksLabels[rowIndex][displayIndex].text = ""
-            pointsLabels[rowIndex][displayIndex].text = scores.map {
-                displayedSummaryScore(from: $0[playerIndex])
-            } ?? ""
+            if let score = summaryScore(for: playerIndex, in: scores) {
+                pointsLabels[rowIndex][displayIndex].text = displayedSummaryScore(from: score)
+            } else {
+                pointsLabels[rowIndex][displayIndex].text = ""
+            }
         }
     }
 
@@ -480,7 +482,9 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         for index in 0...min(blockIndex, completedBlocks.count - 1) {
             let block = completedBlocks[index]
             for playerIndex in 0..<playerCount {
-                scores[playerIndex] += block.finalScores[playerIndex]
+                if block.finalScores.indices.contains(playerIndex) {
+                    scores[playerIndex] += block.finalScores[playerIndex]
+                }
             }
         }
 
@@ -563,9 +567,17 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     ) -> [Int] {
         var scores = cumulativeScores(through: completedBlocks.count - 1, completedBlocks: completedBlocks)
         for playerIndex in 0..<playerCount {
-            scores[playerIndex] += currentBlockScores[playerIndex]
+            if currentBlockScores.indices.contains(playerIndex) {
+                scores[playerIndex] += currentBlockScores[playerIndex]
+            }
         }
         return scores
+    }
+
+    private func summaryScore(for playerIndex: Int, in scores: [Int]?) -> Int? {
+        guard let scores else { return nil }
+        guard scores.indices.contains(playerIndex) else { return nil }
+        return scores[playerIndex]
     }
 
     // MARK: - Grid

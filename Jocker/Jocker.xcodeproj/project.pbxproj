@@ -11,6 +11,10 @@
 		7E4AC9482F268D820037CA75 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC9472F268D820037CA75 /* GameScene.sks */; };
 		7E4AC94A2F268D820037CA75 /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC9492F268D820037CA75 /* Actions.sks */; };
 		7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC94B2F268D820037CA75 /* GameScene.swift */; };
+		D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */; };
+		D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */; };
+		D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */; };
+		D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */; };
 		7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC94D2F268D820037CA75 /* GameViewController.swift */; };
 		7E4AC9512F268D820037CA75 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC94F2F268D820037CA75 /* Main.storyboard */; };
 		7E4AC9532F268D850037CA75 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC9522F268D850037CA75 /* Assets.xcassets */; };
@@ -95,6 +99,10 @@
 		7E4AC9472F268D820037CA75 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
 		7E4AC9492F268D820037CA75 /* Actions.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Actions.sks; sourceTree = "<group>"; };
 		7E4AC94B2F268D820037CA75 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
+		D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+DealingFlow.swift"; sourceTree = "<group>"; };
+		D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+BiddingFlow.swift"; sourceTree = "<group>"; };
+		D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+PlayingFlow.swift"; sourceTree = "<group>"; };
+		D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+ModalFlow.swift"; sourceTree = "<group>"; };
 		7E4AC94D2F268D820037CA75 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		7E4AC9502F268D820037CA75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7E4AC9522F268D850037CA75 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -284,6 +292,10 @@
 			isa = PBXGroup;
 			children = (
 				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
+				D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */,
+				D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */,
+				D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */,
+				D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */,
 				7E4AC98B2F269A700037CA75 /* CardDemoScene.swift */,
 			);
 			path = Scenes;
@@ -509,6 +521,10 @@
 			buildActionMask = 2147483647;
 				files = (
 					7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
+					D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */,
+					D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */,
+					D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */,
+					D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */,
 					7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
 					7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */,
 				AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */,
