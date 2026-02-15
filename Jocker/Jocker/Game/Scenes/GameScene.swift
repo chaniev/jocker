@@ -58,10 +58,20 @@ class GameScene: SKScene {
         return GameState(playerCount: playerCount)
     }()
     var firstDealerIndex: Int = 0
+    var botDifficulty: BotDifficulty = .hard
+    lazy var botTuning: BotTuning = {
+        return BotTuning(difficulty: botDifficulty)
+    }()
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
-    let coordinator = GameSceneCoordinator()
-    let botBiddingService = BotBiddingService()
-    let botTrumpSelectionService = BotTrumpSelectionService()
+    lazy var coordinator: GameSceneCoordinator = {
+        return GameSceneCoordinator(tuning: botTuning)
+    }()
+    lazy var botBiddingService: BotBiddingService = {
+        return BotBiddingService(tuning: botTuning)
+    }()
+    lazy var botTrumpSelectionService: BotTrumpSelectionService = {
+        return BotTrumpSelectionService(tuning: botTuning)
+    }()
     let shouldRevealAllPlayersCards = false
     var isSelectingFirstDealer = false
     var isAwaitingJokerDecision = false

@@ -62,6 +62,7 @@
 			C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */; };
 			C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */; };
 			C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */; };
+		F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000082F5600010037CA75 /* BotTuningTests.swift */; };
 		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
 		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
@@ -73,6 +74,8 @@
 		F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000092F5200010037CA75 /* JokerPlayDecision.swift */; };
 		F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */; };
 		F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000C2F5300010037CA75 /* PlayerControlType.swift */; };
+		F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000032F5600010037CA75 /* BotDifficulty.swift */; };
+		F40000022F5600010037CA75 /* BotTuning.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000042F5600010037CA75 /* BotTuning.swift */; };
 		F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30000022F5300010037CA75 /* BidSelectionViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -154,6 +157,7 @@
 			C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingServiceTests.swift; sourceTree = "<group>"; };
 		C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyServiceTests.swift; sourceTree = "<group>"; };
 		C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPlayFlowTests.swift; sourceTree = "<group>"; };
+		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
@@ -163,6 +167,8 @@
 		F20000092F5200010037CA75 /* JokerPlayDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerPlayDecision.swift; sourceTree = "<group>"; };
 		F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerModeSelectionViewController.swift; sourceTree = "<group>"; };
 		F200000C2F5300010037CA75 /* PlayerControlType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerControlType.swift; sourceTree = "<group>"; };
+		F40000032F5600010037CA75 /* BotDifficulty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotDifficulty.swift; sourceTree = "<group>"; };
+		F40000042F5600010037CA75 /* BotTuning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuning.swift; sourceTree = "<group>"; };
 		F30000022F5300010037CA75 /* BidSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidSelectionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -269,6 +275,8 @@
 					F20000092F5200010037CA75 /* JokerPlayDecision.swift */,
 						F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
 						F200000C2F5300010037CA75 /* PlayerControlType.swift */,
+						F40000032F5600010037CA75 /* BotDifficulty.swift */,
+						F40000042F5600010037CA75 /* BotTuning.swift */,
 						C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */,
 					BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 					AA0000012F2800010037CA75 /* RoundResult.swift */,
@@ -369,6 +377,7 @@
 					C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
 					C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
 					C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
+					F40000082F5600010037CA75 /* BotTuningTests.swift */,
 					7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
 					DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 					AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
@@ -546,6 +555,8 @@
 						F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */,
 						F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
 						F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */,
+						F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */,
+						F40000022F5600010037CA75 /* BotTuning.swift in Sources */,
 						C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */,
 						7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 						C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
@@ -582,6 +593,7 @@
 					C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
 					C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,
 					C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */,
+					F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */,
 					7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
 					DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
 					AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,

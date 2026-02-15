@@ -14,6 +14,7 @@ class GameViewController: UIViewController {
     var playerCount: Int = 4
     var playerNames: [String] = []
     var playerControlTypes: [PlayerControlType] = []
+    var botDifficulty: BotDifficulty = .hard
     private var gameScene: GameScene?
 
     override func viewDidLoad() {
@@ -35,6 +36,7 @@ class GameViewController: UIViewController {
         scene.playerCount = playerCount
         scene.playerNames = playerNames
         scene.playerControlTypes = playerControlTypes
+        scene.botDifficulty = botDifficulty
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
         }

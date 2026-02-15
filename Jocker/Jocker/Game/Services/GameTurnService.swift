@@ -15,6 +15,10 @@ final class GameTurnService {
         self.strategyService = strategyService
     }
 
+    convenience init(tuning: BotTuning) {
+        self.init(strategyService: BotTurnStrategyService(tuning: tuning))
+    }
+
     func automaticTurnDecision(
         from handCards: [Card],
         trickNode: TrickNode,

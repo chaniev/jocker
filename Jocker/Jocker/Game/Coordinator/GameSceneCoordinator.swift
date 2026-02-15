@@ -25,6 +25,10 @@ final class GameSceneCoordinator {
         self.animationService = animationService
     }
 
+    convenience init(tuning: BotTuning) {
+        self.init(turnService: GameTurnService(tuning: tuning))
+    }
+
     var isInteractionLocked: Bool {
         return isResolvingTrick
     }
@@ -131,7 +135,7 @@ final class GameSceneCoordinator {
         trickNode: TrickNode,
         playerCount: Int,
         trump: Suit?,
-        resolutionDelay: TimeInterval = 0.55,
+        resolutionDelay: TimeInterval = BotTuning(difficulty: .hard).timing.trickResolutionDelay,
         onResolved: @escaping (Int) -> Void
     ) -> Bool {
         guard !isResolvingTrick else { return true }

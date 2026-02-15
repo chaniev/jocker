@@ -9,6 +9,8 @@ import Foundation
 
 /// Сервис выбора карты и режима розыгрыша джокера для хода бота.
 final class BotTurnStrategyService {
+    private let tuning: BotTuning
+
     private struct CandidateMove {
         let card: Card
         let decision: JokerPlayDecision
@@ -19,6 +21,10 @@ final class BotTurnStrategyService {
         let utility: Double
         let immediateWinProbability: Double
         let threat: Double
+    }
+
+    init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
+        self.tuning = tuning
     }
 
     func makeTurnDecision(
@@ -211,7 +217,7 @@ final class BotTurnStrategyService {
         than current: CandidateEvaluation,
         shouldChaseTrick: Bool
     ) -> Bool {
-        let tolerance = 0.000_1
+        let tolerance = tuning.turnStrategy.utilityTieTolerance
 
         if candidate.utility > current.utility + tolerance {
             return true
@@ -266,36 +272,37 @@ final class BotTurnStrategyService {
         hasWinningNonJoker: Bool,
         hasLosingNonJoker: Bool
     ) -> Double {
+        let strategy = tuning.turnStrategy
         var utility = projectedScore
         let isLeadJoker = move.card.isJoker && trickNode.playedCards.isEmpty
 
         if shouldChaseTrick {
-            utility += immediateWinProbability * 50.0
-            utility -= threat * 0.14
+            utility += immediateWinProbability * strategy.chaseWinProbabilityWeight
+            utility -= threat * strategy.chaseThreatPenaltyWeight
 
             if move.card.isJoker && hasWinningNonJoker {
-                utility -= 55.0
+                utility -= strategy.chaseSpendJokerPenalty
             }
 
             if isLeadJoker {
                 if case .some(.wish) = move.decision.leadDeclaration {
-                    utility += 8.0
+                    utility += strategy.chaseLeadWishBonus
                 }
             }
         } else {
-            utility += (1.0 - immediateWinProbability) * 50.0
-            utility += threat * 0.18
+            utility += (1.0 - immediateWinProbability) * strategy.dumpAvoidWinWeight
+            utility += threat * strategy.dumpThreatRewardWeight
 
             if move.card.isJoker && hasLosingNonJoker {
-                utility -= 70.0
+                utility -= strategy.dumpSpendJokerPenalty
             }
             if move.card.isJoker && move.decision.style == .faceUp && !trickNode.playedCards.isEmpty {
-                utility -= 35.0
+                utility -= strategy.dumpFaceUpNonLeadJokerPenalty
             }
 
             if isLeadJoker, case .some(.takes(let suit)) = move.decision.leadDeclaration {
                 if let trump, suit != trump {
-                    utility += 6.0
+                    utility += strategy.dumpLeadTakesNonTrumpBonus
                 }
             }
         }
@@ -359,15 +366,24 @@ final class BotTurnStrategyService {
         let estimatedDraws = max(1, opponentsRemaining * max(1, handSizeBeforeMove))
         let holdFromDistribution = pow(max(0.0, 1.0 - beaterRatio), Double(estimatedDraws))
 
+        let strategy = tuning.turnStrategy
         let powerConfidence = min(
             1.0,
             max(
                 0.0,
-                Double(cardPower(move.card, decision: move.decision, trickNode: trickNode, trump: trump)) / 1000.0
+                Double(cardPower(move.card, decision: move.decision, trickNode: trickNode, trump: trump)) /
+                    max(1.0, strategy.powerNormalizationValue)
             )
         )
 
-        return min(1.0, max(0.0, holdFromDistribution * 0.82 + powerConfidence * 0.18))
+        return min(
+            1.0,
+            max(
+                0.0,
+                holdFromDistribution * strategy.holdFromDistributionWeight +
+                    powerConfidence * strategy.powerConfidenceWeight
+            )
+        )
     }
 
     private func projectedFinalTricks(
@@ -384,6 +400,7 @@ final class BotTurnStrategyService {
 
     private func estimateFutureTricks(in handCards: [Card], trump: Suit?) -> Double {
         guard !handCards.isEmpty else { return 0.0 }
+        let strategy = tuning.turnStrategy
 
         let regularCards = handCards.compactMap { card -> (suit: Suit, rank: Rank)? in
             guard case .regular(let suit, let rank) = card else { return nil }
@@ -394,7 +411,7 @@ final class BotTurnStrategyService {
         var totalPower = 0.0
         for card in handCards {
             if card.isJoker {
-                totalPower += 1.25
+                totalPower += strategy.futureJokerPower
                 continue
             }
 
@@ -402,23 +419,23 @@ final class BotTurnStrategyService {
 
             let rankSpan = Double(Rank.ace.rawValue - Rank.six.rawValue)
             let normalizedRank = Double(rank.rawValue - Rank.six.rawValue) / max(1.0, rankSpan)
-            var cardPower = 0.15 + normalizedRank * 0.75
+            var cardPower = strategy.futureRegularBasePower + normalizedRank * strategy.futureRegularRankWeight
 
             if let trump, suit == trump {
-                cardPower += 0.35 + normalizedRank * 0.30
+                cardPower += strategy.futureTrumpBaseBonus + normalizedRank * strategy.futureTrumpRankWeight
             } else if rank.rawValue >= Rank.queen.rawValue {
-                cardPower += 0.12
+                cardPower += strategy.futureHighRankBonus
             }
 
             let suitLength = suitCounts[suit] ?? 0
             if suitLength >= 3 {
-                cardPower += 0.05 * Double(suitLength - 2)
+                cardPower += strategy.futureLongSuitBonusPerCard * Double(suitLength - 2)
             }
 
             totalPower += cardPower
         }
 
-        let expected = totalPower * 0.62
+        let expected = totalPower * strategy.futureTricksScale
         return min(Double(handCards.count), max(0.0, expected))
     }
 
@@ -497,32 +514,35 @@ final class BotTurnStrategyService {
         trump: Suit?,
         trickNode: TrickNode
     ) -> Double {
+        let strategy = tuning.turnStrategy
         if card.isJoker {
             if decision.style == .faceDown {
-                return trickNode.playedCards.isEmpty ? 24.0 : 2.0
+                return trickNode.playedCards.isEmpty
+                    ? strategy.threatFaceDownLeadJoker
+                    : strategy.threatFaceDownNonLeadJoker
             }
 
             if trickNode.playedCards.isEmpty {
                 switch decision.leadDeclaration {
                 case .takes:
-                    return 36.0
+                    return strategy.threatLeadTakesJoker
                 case .above:
-                    return 88.0
+                    return strategy.threatLeadAboveJoker
                 case .wish, .none:
-                    return 100.0
+                    return strategy.threatLeadWishJoker
                 }
             }
 
-            return 100.0
+            return strategy.threatNonLeadFaceUpJoker
         }
 
         guard case .regular(let suit, let rank) = card else { return 0.0 }
         var threat = Double(rank.rawValue)
         if let trump, suit == trump {
-            threat += 9.0
+            threat += strategy.threatTrumpBonus
         }
         if rank.rawValue >= Rank.queen.rawValue {
-            threat += 3.0
+            threat += strategy.threatHighRankBonus
         }
         return threat
     }
@@ -554,33 +574,34 @@ final class BotTurnStrategyService {
         trickNode: TrickNode,
         trump: Suit?
     ) -> Int {
+        let strategy = tuning.turnStrategy
         if card.isJoker {
             if decision.style == .faceDown {
-                return 1
+                return strategy.powerFaceDownJoker
             }
 
             if trickNode.playedCards.isEmpty {
                 switch decision.leadDeclaration {
                 case .takes:
-                    return 30
+                    return strategy.powerLeadTakesJoker
                 case .above:
-                    return 980
+                    return strategy.powerLeadAboveJoker
                 case .wish, .none:
-                    return 1000
+                    return strategy.powerLeadWishJoker
                 }
             }
 
-            return 1000
+            return strategy.powerNonLeadFaceUpJoker
         }
 
         guard case .regular(let suit, let rank) = card else { return 0 }
         var value = rank.rawValue
 
         if let trump, suit == trump {
-            value += 100
+            value += strategy.powerTrumpBonus
         }
         if let leadSuit = effectiveLeadSuit(in: trickNode), suit == leadSuit {
-            value += 40
+            value += strategy.powerLeadSuitBonus
         }
 
         return value

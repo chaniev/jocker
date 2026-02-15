@@ -9,8 +9,15 @@ import Foundation
 
 /// Сервис выбора козыря ботом по открытым картам этапа выбора.
 final class BotTrumpSelectionService {
+    private let tuning: BotTuning
+
+    init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
+        self.tuning = tuning
+    }
+
     func selectTrump(from hand: [Card]) -> Suit? {
         guard !hand.isEmpty else { return nil }
+        let trumpTuning = tuning.trumpSelection
 
         var suitPower: [Suit: Double] = [:]
         var regularCardsCount = 0
@@ -20,7 +27,7 @@ final class BotTrumpSelectionService {
             regularCardsCount += 1
 
             let normalizedRank = Double(rank.rawValue - Rank.six.rawValue) / 8.0
-            let cardPower = 0.45 + normalizedRank
+            let cardPower = trumpTuning.cardBasePower + normalizedRank
             suitPower[suit, default: 0.0] += cardPower
         }
 
@@ -38,8 +45,7 @@ final class BotTrumpSelectionService {
         guard let best = sortedCandidates.first else { return nil }
 
         // Слабая/разрозненная рука: бот предпочитает играть без козыря.
-        let minimumPowerToDeclareTrump = 1.55
-        guard best.power >= minimumPowerToDeclareTrump else { return nil }
+        guard best.power >= trumpTuning.minimumPowerToDeclareTrump else { return nil }
 
         return best.suit
     }

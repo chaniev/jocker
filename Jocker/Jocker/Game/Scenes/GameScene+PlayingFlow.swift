@@ -129,7 +129,8 @@ extension GameScene {
             on: self,
             trickNode: trickNode,
             playerCount: playerCount,
-            trump: currentTrump
+            trump: currentTrump,
+            resolutionDelay: botTuning.timing.trickResolutionDelay
         ) { [weak self] winnerIndex in
             guard let self = self else { return }
             self.registerTrickWin(for: winnerIndex)
@@ -223,7 +224,7 @@ extension GameScene {
 
         run(
             .sequence([
-                .wait(forDuration: 0.35),
+                .wait(forDuration: botTuning.timing.playingBotTurnDelay),
                 .run { [weak self] in
                     guard let self = self else { return }
                     guard self.gameState.phase == .playing else { return }

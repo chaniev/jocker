@@ -50,6 +50,8 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
 - `Jocker/Jocker/Models/TrumpSelectionRules.swift`: round-level rules for trump selection mode (automatic vs player-chosen), chooser seat, and staged-deal size.
 - `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
+- `Jocker/Jocker/Models/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
+- `Jocker/Jocker/Models/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
 - `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
@@ -95,6 +97,8 @@ Jocker/Jocker/
 │       └── GameTurnService.swift
 ├── Models/
 │   ├── BlockResult.swift
+│   ├── BotDifficulty.swift
+│   ├── BotTuning.swift
 │   ├── Card.swift
 │   ├── Deck.swift
 │   ├── GameBlock.swift
@@ -139,6 +143,7 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── AutoPlayFlowTests.swift
 ├── BotBiddingServiceTests.swift
+├── BotTuningTests.swift
 ├── BotTrumpSelectionServiceTests.swift
 ├── BotTurnStrategyServiceTests.swift
 ├── GameFlowIntegrationTests.swift

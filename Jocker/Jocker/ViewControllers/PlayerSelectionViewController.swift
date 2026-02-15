@@ -10,6 +10,7 @@ import UIKit
 class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
     
     private var selectedPlayerCount: Int = 4
+    private var selectedBotDifficulty: BotDifficulty = .hard
     private var isStartingGame = false
     
     private let threePlayersButton: UIButton = {
@@ -188,6 +189,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         gameVC.playerControlTypes = (0..<selectedPlayerCount).map { index in
             index == 0 ? .human : .bot
         }
+        gameVC.botDifficulty = selectedBotDifficulty
         gameVC.modalPresentationStyle = .fullScreen
         gameVC.modalTransitionStyle = .crossDissolve
         

@@ -110,7 +110,7 @@ extension GameScene {
 
         run(
             .sequence([
-                .wait(forDuration: 0.25),
+                .wait(forDuration: botTuning.timing.biddingStepDelay),
                 .run { [weak self] in
                     self?.processBiddingStep(order: order, step: step + 1)
                 }

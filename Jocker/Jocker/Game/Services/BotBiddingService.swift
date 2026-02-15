@@ -9,6 +9,12 @@ import Foundation
 
 /// Сервис авто-заказа взяток для бота.
 final class BotBiddingService {
+    private let tuning: BotTuning
+
+    init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
+        self.tuning = tuning
+    }
+
     func makeBid(
         hand: [Card],
         cardsInRound: Int,
@@ -62,6 +68,7 @@ final class BotBiddingService {
         totalScores: [Int]
     ) -> Int? {
         guard canChooseBlind else { return nil }
+        let bidding = tuning.bidding
 
         let allowed = Array(Set(allowedBlindBids)).sorted()
         guard !allowed.isEmpty else { return nil }
@@ -79,11 +86,11 @@ final class BotBiddingService {
         let aheadOfOpponent = max(0, playerScore - bestOpponentScore)
 
         let shouldRiskBlind: Bool
-        if behindByLeader >= 250 {
+        if behindByLeader >= bidding.blindDesperateBehindThreshold {
             shouldRiskBlind = true
-        } else if behindByLeader >= 130 && playerIndex != dealerIndex {
+        } else if behindByLeader >= bidding.blindCatchUpBehindThreshold && playerIndex != dealerIndex {
             shouldRiskBlind = true
-        } else if aheadOfOpponent >= 180 {
+        } else if aheadOfOpponent >= bidding.blindSafeLeadThreshold {
             shouldRiskBlind = false
         } else {
             shouldRiskBlind = false
@@ -92,7 +99,9 @@ final class BotBiddingService {
         guard shouldRiskBlind else { return nil }
 
         let cards = max(0, cardsInRound)
-        let targetShare = behindByLeader >= 250 ? 0.65 : 0.45
+        let targetShare = behindByLeader >= bidding.blindDesperateBehindThreshold
+            ? bidding.blindDesperateTargetShare
+            : bidding.blindCatchUpTargetShare
         let targetBid = Int((Double(cards) * targetShare).rounded())
         return nearestAllowedBid(to: targetBid, allowed: allowed)
     }
@@ -104,24 +113,25 @@ final class BotBiddingService {
     ) -> Int {
         guard cardsInRound > 0 else { return 0 }
         guard !hand.isEmpty else { return 0 }
+        let bidding = tuning.bidding
 
         var power = 0.0
 
         for card in hand {
             if card.isJoker {
-                power += 1.1
+                power += bidding.expectedJokerPower
                 continue
             }
 
             guard case .regular(let suit, let rank) = card else { continue }
 
             let normalizedRank = Double(rank.rawValue - 5) / 9.0
-            var value = normalizedRank * 0.72
+            var value = normalizedRank * bidding.expectedRankWeight
 
             if let trump, suit == trump {
-                value += 0.55 + normalizedRank * 0.45
+                value += bidding.expectedTrumpBaseBonus + normalizedRank * bidding.expectedTrumpRankWeight
             } else if rank.rawValue >= Rank.queen.rawValue {
-                value += 0.18
+                value += bidding.expectedHighRankBonus
             }
 
             power += value
