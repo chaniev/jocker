@@ -77,10 +77,13 @@ extension GameScene {
         )
 
         if isHumanPlayer(playerIndex) {
+            let displayedBidsByPlayer = displayedBidsForBiddingModal(order: order, step: step)
             requestHumanBid(
                 forPlayer: playerIndex,
                 handCards: players[playerIndex].hand.cards,
                 allowedBids: allowedBids,
+                displayedBidsByPlayer: displayedBidsByPlayer,
+                biddingOrder: biddingOrder(),
                 forbiddenBid: forbidden
             ) { [weak self] selectedBid in
                 guard let self = self else { return }
@@ -150,6 +153,24 @@ extension GameScene {
         updateGameInfoLabel()
         updateTurnUI(animated: true)
         runBotTurnIfNeeded()
+    }
+
+    private func displayedBidsForBiddingModal(order: [Int], step: Int) -> [Int?] {
+        guard playerCount > 0 else { return [] }
+        var displayedBids = Array(repeating: Optional<Int>.none, count: playerCount)
+        let revealedPlayers = Set(order.prefix(step))
+
+        for playerIndex in 0..<playerCount {
+            let isBlindBid = pendingBlindSelections.indices.contains(playerIndex)
+                ? pendingBlindSelections[playerIndex]
+                : false
+            let isRevealedInCurrentFlow = revealedPlayers.contains(playerIndex)
+            guard isBlindBid || isRevealedInCurrentFlow else { continue }
+            guard pendingBids.indices.contains(playerIndex) else { continue }
+            displayedBids[playerIndex] = pendingBids[playerIndex]
+        }
+
+        return displayedBids
     }
 
     private func forbiddenDealerBidIfNeeded(for playerIndex: Int, bids: [Int]) -> Int? {

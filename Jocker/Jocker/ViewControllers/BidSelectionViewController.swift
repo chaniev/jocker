@@ -14,6 +14,8 @@ final class BidSelectionViewController: UIViewController {
         static let buttonHeight: CGFloat = 44
         static let minButtonsAreaHeight: CGFloat = 58
         static let minContainerHeight: CGFloat = 300
+        static let bidSummaryPanelWidth: CGFloat = 200
+        static let bidSummaryRowHeight: CGFloat = 26
     }
 
     private enum Appearance {
@@ -28,12 +30,20 @@ final class BidSelectionViewController: UIViewController {
         static let disabledBidBackground = UIColor(red: 0.19, green: 0.26, blue: 0.39, alpha: 1.0)
         static let disabledBidBorder = GameColors.buttonStroke.withAlphaComponent(0.35)
         static let blindBidBackground = UIColor(red: 0.24, green: 0.36, blue: 0.56, alpha: 1.0)
+        static let bidSummaryPanelBackground = UIColor(red: 0.11, green: 0.17, blue: 0.27, alpha: 0.78)
+        static let bidSummaryPanelBorder = GameColors.buttonStroke.withAlphaComponent(0.6)
+        static let bidSummaryValueColor = UIColor(red: 0.92, green: 0.95, blue: 1.0, alpha: 0.95)
+        static let bidSummaryPendingColor = GameColors.textSecondary
     }
 
     private let playerName: String
     private let handCards: [Card]
     private let allowedBids: [Int]
     private let displayedBids: [Int]
+    private let playerNames: [String]
+    private let displayedBidsByPlayer: [Int?]
+    private let biddingOrder: [Int]
+    private let currentPlayerIndex: Int?
     private let forbiddenBid: Int?
     private let isPreDealBlindChoice: Bool
     private let canChooseBlind: Bool
@@ -45,6 +55,10 @@ final class BidSelectionViewController: UIViewController {
         handCards: [Card],
         allowedBids: [Int],
         maxBid: Int,
+        playerNames: [String],
+        displayedBidsByPlayer: [Int?],
+        biddingOrder: [Int],
+        currentPlayerIndex: Int?,
         forbiddenBid: Int?,
         onSelect: @escaping (Int) -> Void
     ) {
@@ -53,6 +67,10 @@ final class BidSelectionViewController: UIViewController {
         self.allowedBids = Array(Set(allowedBids)).sorted()
         let normalizedMaxBid = max(0, maxBid)
         self.displayedBids = Array(0...normalizedMaxBid)
+        self.playerNames = playerNames
+        self.displayedBidsByPlayer = displayedBidsByPlayer
+        self.biddingOrder = biddingOrder
+        self.currentPlayerIndex = currentPlayerIndex
         self.forbiddenBid = forbiddenBid
         self.isPreDealBlindChoice = false
         self.canChooseBlind = false
@@ -72,6 +90,10 @@ final class BidSelectionViewController: UIViewController {
         self.handCards = []
         self.allowedBids = Array(Set(allowedBlindBids)).sorted()
         self.displayedBids = self.allowedBids
+        self.playerNames = []
+        self.displayedBidsByPlayer = []
+        self.biddingOrder = []
+        self.currentPlayerIndex = nil
         self.forbiddenBid = nil
         self.isPreDealBlindChoice = true
         self.canChooseBlind = canChooseBlind
@@ -129,8 +151,16 @@ final class BidSelectionViewController: UIViewController {
 
         let scrollView = makeScrollView(isHidden: false)
         let gridStack = makeGridStack()
-        containerView.addSubview(scrollView)
+        let bidSelectionColumn = UIView()
+        bidSelectionColumn.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(bidSelectionColumn)
+        bidSelectionColumn.addSubview(scrollView)
         scrollView.addSubview(gridStack)
+
+        let bidSummaryPanel = makeBidSummaryPanel()
+        if let bidSummaryPanel {
+            containerView.addSubview(bidSummaryPanel)
+        }
 
         let allowedSet = Set(allowedBids)
         appendBidRows(
@@ -163,11 +193,32 @@ final class BidSelectionViewController: UIViewController {
             hintLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 10),
             hintLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             hintLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+        ])
 
-            scrollView.topAnchor.constraint(equalTo: hintLabel.bottomAnchor, constant: 14),
-            scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -18),
+        let contentTop = bidSelectionColumn.topAnchor.constraint(equalTo: hintLabel.bottomAnchor, constant: 14)
+        let contentBottom = bidSelectionColumn.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -18)
+        let contentTrailing = bidSelectionColumn.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20)
+        constraints.append(contentsOf: [contentTop, contentBottom, contentTrailing])
+
+        if let bidSummaryPanel {
+            constraints.append(contentsOf: [
+                bidSummaryPanel.topAnchor.constraint(equalTo: bidSelectionColumn.topAnchor),
+                bidSummaryPanel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+                bidSummaryPanel.bottomAnchor.constraint(equalTo: bidSelectionColumn.bottomAnchor),
+                bidSummaryPanel.widthAnchor.constraint(equalToConstant: LayoutMetrics.bidSummaryPanelWidth),
+                bidSelectionColumn.leadingAnchor.constraint(equalTo: bidSummaryPanel.trailingAnchor, constant: 14)
+            ])
+        } else {
+            constraints.append(
+                bidSelectionColumn.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20)
+            )
+        }
+
+        constraints.append(contentsOf: [
+            scrollView.topAnchor.constraint(equalTo: bidSelectionColumn.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: bidSelectionColumn.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: bidSelectionColumn.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bidSelectionColumn.bottomAnchor),
             scrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: LayoutMetrics.minButtonsAreaHeight),
         ])
         constraints.append(contentsOf: gridConstraints(for: gridStack, in: scrollView))
@@ -322,6 +373,113 @@ final class BidSelectionViewController: UIViewController {
         button.layer.borderColor = Appearance.accentBorderColor.cgColor
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
+    }
+
+    private func makeBidSummaryPanel() -> UIView? {
+        let summaryRows = bidSummaryRows()
+        guard !summaryRows.isEmpty else { return nil }
+
+        let panel = UIView()
+        panel.translatesAutoresizingMaskIntoConstraints = false
+        panel.backgroundColor = Appearance.bidSummaryPanelBackground
+        panel.layer.cornerRadius = 12
+        panel.layer.borderWidth = 1
+        panel.layer.borderColor = Appearance.bidSummaryPanelBorder.cgColor
+
+        let titleLabel = makeLabel(
+            text: "Заказы игроков",
+            font: UIFont(name: "AvenirNext-DemiBold", size: 14),
+            textColor: Appearance.titleColor
+        )
+        panel.addSubview(titleLabel)
+
+        let rowsStack = UIStackView()
+        rowsStack.translatesAutoresizingMaskIntoConstraints = false
+        rowsStack.axis = .vertical
+        rowsStack.spacing = 6
+        panel.addSubview(rowsStack)
+
+        for row in summaryRows {
+            let rowView = makeBidSummaryRow(
+                playerName: row.name,
+                bid: row.bid,
+                isCurrentPlayer: row.isCurrentPlayer
+            )
+            rowsStack.addArrangedSubview(rowView)
+        }
+
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: panel.topAnchor, constant: 12),
+            titleLabel.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -12),
+
+            rowsStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+            rowsStack.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
+            rowsStack.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -10),
+            rowsStack.bottomAnchor.constraint(lessThanOrEqualTo: panel.bottomAnchor, constant: -10),
+        ])
+
+        return panel
+    }
+
+    private func makeBidSummaryRow(playerName: String, bid: Int?, isCurrentPlayer: Bool) -> UIView {
+        let row = UIView()
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.heightAnchor.constraint(equalToConstant: LayoutMetrics.bidSummaryRowHeight).isActive = true
+
+        let playerLabel = makeLabel(
+            text: isCurrentPlayer ? "\(playerName) (вы)" : playerName,
+            font: UIFont(name: isCurrentPlayer ? "AvenirNext-DemiBold" : "AvenirNext-Medium", size: 13),
+            textColor: isCurrentPlayer ? GameColors.gold : Appearance.subtitleColor
+        )
+        playerLabel.textAlignment = .left
+
+        let valueLabel = makeLabel(
+            text: bid.map(String.init) ?? "—",
+            font: UIFont.monospacedDigitSystemFont(ofSize: 15, weight: .semibold),
+            textColor: bid == nil ? Appearance.bidSummaryPendingColor : Appearance.bidSummaryValueColor
+        )
+        valueLabel.textAlignment = .right
+
+        row.addSubview(playerLabel)
+        row.addSubview(valueLabel)
+
+        NSLayoutConstraint.activate([
+            playerLabel.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            playerLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+
+            valueLabel.leadingAnchor.constraint(greaterThanOrEqualTo: playerLabel.trailingAnchor, constant: 8),
+            valueLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            valueLabel.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+        ])
+
+        return row
+    }
+
+    private func bidSummaryRows() -> [(name: String, bid: Int?, isCurrentPlayer: Bool)] {
+        guard !playerNames.isEmpty else { return [] }
+
+        let order = normalizedBiddingOrder()
+        return order.map { playerIndex in
+            let playerName = playerNames[playerIndex]
+            let bid = displayedBidsByPlayer.indices.contains(playerIndex)
+                ? displayedBidsByPlayer[playerIndex]
+                : nil
+            let isCurrent = playerIndex == currentPlayerIndex
+            return (playerName, bid, isCurrent)
+        }
+    }
+
+    private func normalizedBiddingOrder() -> [Int] {
+        guard !playerNames.isEmpty else { return [] }
+        let fallbackOrder = Array(playerNames.indices)
+
+        var seen = Set<Int>()
+        let uniqueOrder = biddingOrder.filter { seen.insert($0).inserted }
+        guard uniqueOrder.count == playerNames.count else { return fallbackOrder }
+        guard uniqueOrder.allSatisfy({ playerNames.indices.contains($0) }) else { return fallbackOrder }
+
+        return uniqueOrder
     }
 
     private func makeScrollView(isHidden: Bool) -> UIScrollView {

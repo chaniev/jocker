@@ -45,6 +45,8 @@ extension GameScene {
         forPlayer playerIndex: Int,
         handCards: [Card],
         allowedBids: [Int],
+        displayedBidsByPlayer: [Int?],
+        biddingOrder: [Int],
         forbiddenBid: Int?,
         completion: @escaping (Int) -> Void
     ) {
@@ -65,6 +67,10 @@ extension GameScene {
             handCards: handCards,
             allowedBids: normalizedAllowedBids,
             maxBid: gameState.currentCardsPerPlayer,
+            playerNames: gameState.players.map { $0.name },
+            displayedBidsByPlayer: displayedBidsByPlayer,
+            biddingOrder: biddingOrder,
+            currentPlayerIndex: playerIndex,
             forbiddenBid: forbiddenBid
         ) { [weak self] selectedBid in
             self?.isAwaitingHumanBidChoice = false
