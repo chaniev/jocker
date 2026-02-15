@@ -10,7 +10,56 @@ import UIKit
 @testable import Jocker
 
 final class JockerTests: XCTestCase {
-    
+    func testBotDifficultyRawValuesAndCaseOrder() {
+        XCTAssertEqual(BotDifficulty.easy.rawValue, "easy")
+        XCTAssertEqual(BotDifficulty.normal.rawValue, "normal")
+        XCTAssertEqual(BotDifficulty.hard.rawValue, "hard")
+        XCTAssertEqual(BotDifficulty.allCases, [.easy, .normal, .hard])
+    }
+
+    func testBotDifficultyInitializationFromRawValue() {
+        XCTAssertEqual(BotDifficulty(rawValue: "easy"), .easy)
+        XCTAssertEqual(BotDifficulty(rawValue: "normal"), .normal)
+        XCTAssertEqual(BotDifficulty(rawValue: "hard"), .hard)
+        XCTAssertNil(BotDifficulty(rawValue: "legendary"))
+    }
+
+    func testBlockResultStoresProvidedValues() {
+        let roundsPlayer0 = [
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: true),
+        ]
+        let roundsPlayer1 = [
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 2, tricksTaken: 1, isBlind: false),
+        ]
+
+        let result = BlockResult(
+            roundResults: [roundsPlayer0, roundsPlayer1],
+            baseScores: [150, -50],
+            premiumPlayerIndices: [0],
+            premiumBonuses: [100, 0],
+            premiumPenalties: [0, 100],
+            zeroPremiumPlayerIndices: [1],
+            zeroPremiumBonuses: [0, 500],
+            finalScores: [250, 350]
+        )
+
+        XCTAssertEqual(result.roundResults.count, 2)
+        XCTAssertEqual(result.roundResults[0].count, 2)
+        XCTAssertEqual(result.roundResults[0][0].bid, 1)
+        XCTAssertTrue(result.roundResults[0][1].isBlind)
+        XCTAssertEqual(result.roundResults[1][1].tricksTaken, 1)
+
+        XCTAssertEqual(result.baseScores, [150, -50])
+        XCTAssertEqual(result.premiumPlayerIndices, [0])
+        XCTAssertEqual(result.premiumBonuses, [100, 0])
+        XCTAssertEqual(result.premiumPenalties, [0, 100])
+        XCTAssertEqual(result.zeroPremiumPlayerIndices, [1])
+        XCTAssertEqual(result.zeroPremiumBonuses, [0, 500])
+        XCTAssertEqual(result.finalScores, [250, 350])
+    }
+
     @MainActor
     func testSubtotalRowDisplaysScoresDividedByHundredWithOneFractionDigit() {
         let manager = ScoreManager(playerCountProvider: { 4 })
