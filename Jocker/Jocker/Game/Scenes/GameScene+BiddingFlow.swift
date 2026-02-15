@@ -10,23 +10,6 @@ import SpriteKit
 extension GameScene {
     // MARK: - Bidding Flow
 
-    func applyOrderedTricks(_ bids: [Int]) {
-        guard bids.count == playerCount else { return }
-        guard gameState.phase == .bidding else { return }
-        pendingBids = bids
-        if pendingBlindSelections.count != playerCount {
-            pendingBlindSelections = Array(repeating: false, count: playerCount)
-        }
-        isRunningBiddingFlow = false
-        applyBidsToGameStateAndStartPlaying(bids, blindSelections: pendingBlindSelections)
-    }
-
-    func presentTricksOrder() {
-        let playerNames = gameState.players.map { $0.name }
-        let currentBids = gameState.players.map { $0.currentBid }
-        onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids, gameState.currentDealer)
-    }
-
     func startBiddingFlowIfNeeded() {
         guard gameState.phase == .bidding else { return }
         guard !isRunningBiddingFlow else { return }

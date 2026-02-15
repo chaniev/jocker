@@ -41,7 +41,6 @@
 		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
 		AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */; };
 		AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000032F2A00010037CA75 /* ScoreTableView.swift */; };
-		AA3000022F2B00010037CA75 /* TricksOrderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */; };
 		AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000012F4200010037CA75 /* GameBlockFormatter.swift */; };
 		BB0000022F2800010037CA75 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000012F2800010037CA75 /* GamePhase.swift */; };
 		BB0000042F2800010037CA75 /* GameBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000032F2800010037CA75 /* GameBlock.swift */; };
@@ -135,7 +134,6 @@
 		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
 		AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableViewController.swift; sourceTree = "<group>"; };
 		AA2000032F2A00010037CA75 /* ScoreTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableView.swift; sourceTree = "<group>"; };
-		AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TricksOrderViewController.swift; sourceTree = "<group>"; };
 		AB1000012F4200010037CA75 /* GameBlockFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlockFormatter.swift; sourceTree = "<group>"; };
 		BB0000012F2800010037CA75 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		BB0000032F2800010037CA75 /* GameBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlock.swift; sourceTree = "<group>"; };
@@ -366,7 +364,6 @@
 					C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */,
 					AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
 					AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
-					AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -541,7 +538,6 @@
 					7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */,
 				AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */,
 				AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */,
-				AA3000022F2B00010037CA75 /* TricksOrderViewController.swift in Sources */,
 					F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */,
 					F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */,
 					C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */,

@@ -55,7 +55,6 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
 - `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
-- `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`: modal bidding-order editor with dealer constraints and inline validation.
 - `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/BidSelectionViewController.swift`: modal selector of human bid amount and pre-deal blind choice, built from shared UI factories (container, labels, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
@@ -128,8 +127,7 @@ Jocker/Jocker/
 │   ├── PlayerSelectionViewController.swift
 │   ├── ScoreTableView.swift
 │   ├── ScoreTableViewController.swift
-│   ├── TrumpSelectionViewController.swift
-│   └── TricksOrderViewController.swift
+│   └── TrumpSelectionViewController.swift
 ├── Assets.xcassets/
 └── Base.lproj/
     ├── LaunchScreen.storyboard

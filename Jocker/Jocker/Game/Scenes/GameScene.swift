@@ -19,7 +19,6 @@ class GameScene: SKScene {
         static let actionButtonSize = CGSize(width: 300, height: 86)
         static let actionButtonHorizontalInset: CGFloat = 34
         static let actionButtonBottomInset: CGFloat = 24
-        static let actionButtonSpacing: CGFloat = 16
         static let gameInfoTopInset: CGFloat = 34
         static let trickCenterYOffset: CGFloat = 20
         static let trumpIndicatorInset: CGFloat = 116
@@ -32,12 +31,10 @@ class GameScene: SKScene {
     var playerNames: [String] = []
     var playerControlTypes: [PlayerControlType] = []
     var onScoreButtonTapped: (() -> Void)?
-    var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
     var onJokerDecisionRequested: ((_ isLeadCard: Bool, _ completion: @escaping (JokerPlayDecision?) -> Void) -> Void)?
     var pokerTable: PokerTableNode?
     var players: [PlayerNode] = []
     var dealButton: GameButton?
-    var tricksButton: GameButton?
     var scoreButton: GameButton?
     var turnIndicator: TurnIndicatorNode?
 
@@ -158,7 +155,6 @@ class GameScene: SKScene {
         setupPokerTable()
         setupPlayers()
         setupDealButton()
-        setupTricksButton()
         setupScoreButton()
         setupGameInfoLabel()
         setupGameComponents()
@@ -223,11 +219,6 @@ class GameScene: SKScene {
 
             if let button = dealButton, button.containsTouchPoint(location) {
                 button.animateTap()
-                return
-            }
-
-            if let button = tricksButton, button.containsTouchPoint(location) {
-                // В MVP-режиме ставки остальных игроков назначаются автоматически.
                 return
             }
 
@@ -429,18 +420,6 @@ class GameScene: SKScene {
         self.addChild(button)
     }
 
-    private func setupTricksButton() {
-        let button = makeActionButton(
-            title: "Взятки",
-            position: tricksButtonPosition(insets: safeInsets())
-        ) { [weak self] in
-            self?.presentTricksOrder()
-        }
-
-        self.tricksButton = button
-        self.addChild(button)
-    }
-
     private func setupDealButton() {
         let button = makeActionButton(
             title: "Раздать карты",
@@ -550,7 +529,6 @@ class GameScene: SKScene {
         gameInfoLabel?.position = gameInfoLabelPosition(insets: insets)
         scoreButton?.position = scoreButtonPosition(insets: insets)
         dealButton?.position = dealButtonPosition(insets: insets)
-        tricksButton?.position = tricksButtonPosition(insets: insets)
 
         trickNode.centerPosition = trickCenterPosition()
         trumpIndicator.position = trumpIndicatorPosition(insets: insets)
@@ -572,14 +550,6 @@ class GameScene: SKScene {
         return CGPoint(
             x: actionButtonX(insets: insets),
             y: insets.bottom + LayoutMetrics.actionButtonBottomInset + LayoutMetrics.actionButtonSize.height / 2
-        )
-    }
-
-    private func tricksButtonPosition(insets: UIEdgeInsets) -> CGPoint {
-        let dealPosition = dealButtonPosition(insets: insets)
-        return CGPoint(
-            x: dealPosition.x,
-            y: dealPosition.y + LayoutMetrics.actionButtonSize.height + LayoutMetrics.actionButtonSpacing
         )
     }
 
