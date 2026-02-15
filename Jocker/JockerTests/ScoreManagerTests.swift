@@ -64,6 +64,43 @@ final class ScoreManagerTests: XCTestCase {
             XCTAssertEqual(manager.currentBlockRoundResults[i].count, 0)
         }
     }
+
+    func testInProgressRoundResults_matchByBlockAndRound() {
+        let manager = ScoreManager(playerCountProvider: { 4 })
+        let inProgress = [
+            RoundResult(cardsInRound: 5, bid: 2, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 5, bid: 1, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 5, bid: 1, tricksTaken: 0, isBlind: true),
+            RoundResult(cardsInRound: 5, bid: 0, tricksTaken: 0, isBlind: false)
+        ]
+
+        manager.setInProgressRoundResults(inProgress, blockIndex: 1, roundIndex: 3)
+
+        let player2 = manager.inProgressRoundResult(forBlockIndex: 1, roundIndex: 3, playerIndex: 2)
+        XCTAssertEqual(player2?.bid, 1)
+        XCTAssertEqual(player2?.tricksTaken, 0)
+        XCTAssertEqual(player2?.isBlind, true)
+    }
+
+    func testInProgressRoundResults_clearAndMismatchReturnNil() {
+        let manager = ScoreManager(playerCountProvider: { 4 })
+        let inProgress = [
+            RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false)
+        ]
+
+        manager.setInProgressRoundResults(inProgress, blockIndex: 0, roundIndex: 1)
+
+        XCTAssertNil(manager.inProgressRoundResult(forBlockIndex: 0, roundIndex: 0, playerIndex: 0))
+        XCTAssertNil(manager.inProgressRoundResult(forBlockIndex: 1, roundIndex: 1, playerIndex: 0))
+
+        manager.clearInProgressRoundResults()
+
+        XCTAssertNil(manager.inProgressRoundResult(forBlockIndex: 0, roundIndex: 1, playerIndex: 0))
+        XCTAssertNil(manager.inProgressRoundResults)
+    }
     
     // MARK: - Базовые очки текущего блока
     

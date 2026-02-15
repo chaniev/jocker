@@ -373,10 +373,11 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         currentBlockResults: [[RoundResult]]
     ) {
         let results: [[RoundResult]]?
+        let isCurrentBlock = blockIndex == completedBlocks.count
 
         if blockIndex < completedBlocks.count {
             results = completedBlocks[blockIndex].roundResults
-        } else if blockIndex == completedBlocks.count {
+        } else if isCurrentBlock {
             results = currentBlockResults
         } else {
             results = nil
@@ -387,24 +388,59 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             let tricksLabel = tricksLabels[rowIndex][displayIndex]
             let pointsLabel = pointsLabels[rowIndex][displayIndex]
 
-            guard
+            if
                 let results = results,
                 playerIndex < results.count,
                 roundIndex < results[playerIndex].count
-            else {
-                tricksLabel.text = ""
-                pointsLabel.text = ""
+            {
+                let roundResult = results[playerIndex][roundIndex]
+                applyRoundResult(
+                    roundResult,
+                    to: tricksLabel,
+                    pointsLabel: pointsLabel,
+                    displayedTricksTaken: nil,
+                    pointsText: "\(roundResult.score)"
+                )
                 continue
             }
 
-            let roundResult = results[playerIndex][roundIndex]
-            if roundResult.isBlind {
-                tricksLabel.text = "\(circledBidText(roundResult.bid))/\(roundResult.tricksTaken)"
-            } else {
-                tricksLabel.text = "\(roundResult.bid)/\(roundResult.tricksTaken)"
+            if
+                isCurrentBlock,
+                let inProgressResult = scoreManager?.inProgressRoundResult(
+                    forBlockIndex: blockIndex,
+                    roundIndex: roundIndex,
+                    playerIndex: playerIndex
+                )
+            {
+                applyRoundResult(
+                    inProgressResult,
+                    to: tricksLabel,
+                    pointsLabel: pointsLabel,
+                    displayedTricksTaken: 0,
+                    pointsText: "0"
+                )
+                continue
             }
-            pointsLabel.text = "\(roundResult.score)"
+
+            tricksLabel.text = ""
+            pointsLabel.text = ""
         }
+    }
+
+    private func applyRoundResult(
+        _ roundResult: RoundResult,
+        to tricksLabel: UILabel,
+        pointsLabel: UILabel,
+        displayedTricksTaken: Int?,
+        pointsText: String
+    ) {
+        let tricksTaken = displayedTricksTaken ?? roundResult.tricksTaken
+        if roundResult.isBlind {
+            tricksLabel.text = "\(circledBidText(roundResult.bid))/\(tricksTaken)"
+        } else {
+            tricksLabel.text = "\(roundResult.bid)/\(tricksTaken)"
+        }
+        pointsLabel.text = pointsText
     }
 
     private func circledBidText(_ bid: Int) -> String {

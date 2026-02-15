@@ -119,6 +119,30 @@ class GameScene: SKScene {
         return gameState.players.map { $0.name }
     }
 
+    /// Обновляет снимок текущего раунда для таблицы очков.
+    func syncInProgressRoundResultsForScoreTable() {
+        guard gameState.phase == .playing else { return }
+        guard gameState.players.count >= playerCount else { return }
+
+        let cardsInRound = gameState.currentCardsPerPlayer
+        let results = (0..<playerCount).map { index in
+            let player = gameState.players[index]
+            return RoundResult(
+                cardsInRound: cardsInRound,
+                bid: player.currentBid,
+                tricksTaken: player.tricksTaken,
+                isBlind: player.isBlindBid
+            )
+        }
+
+        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+        scoreManager.setInProgressRoundResults(
+            results,
+            blockIndex: blockIndex,
+            roundIndex: gameState.currentRoundInBlock
+        )
+    }
+
     override func didMove(to view: SKView) {
         self.backgroundColor = GameColors.sceneBackground
 

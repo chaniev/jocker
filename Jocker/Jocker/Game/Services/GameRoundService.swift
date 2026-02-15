@@ -99,6 +99,7 @@ final class GameRoundService {
         }
 
         scoreManager.recordRoundResults(results)
+        scoreManager.clearInProgressRoundResults()
 
         if gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock {
             _ = scoreManager.finalizeBlock(blockNumber: gameState.currentBlock.rawValue)

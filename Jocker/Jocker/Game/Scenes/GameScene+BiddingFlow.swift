@@ -146,6 +146,7 @@ extension GameScene {
             safetyCounter += 1
         }
 
+        syncInProgressRoundResultsForScoreTable()
         updateGameInfoLabel()
         updateTurnUI(animated: true)
         runBotTurnIfNeeded()

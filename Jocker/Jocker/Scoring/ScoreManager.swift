@@ -33,6 +33,11 @@ class ScoreManager {
     /// Результаты раундов в текущем блоке: [playerIndex][roundIndex]
     private(set) var currentBlockRoundResults: [[RoundResult]]
 
+    /// Снимок текущего (незавершённого) раунда для отображения в таблице
+    private(set) var inProgressRoundResults: [RoundResult]?
+    private(set) var inProgressRoundBlockIndex: Int?
+    private(set) var inProgressRoundIndex: Int?
+
     /// Завершённые блоки с итогами
     private(set) var completedBlocks: [BlockResult]
 
@@ -48,6 +53,9 @@ class ScoreManager {
         let initialCount = max(1, playerCountProvider())
         self.storedPlayerCount = initialCount
         self.currentBlockRoundResults = Array(repeating: [], count: initialCount)
+        self.inProgressRoundResults = nil
+        self.inProgressRoundBlockIndex = nil
+        self.inProgressRoundIndex = nil
         self.completedBlocks = []
     }
 
@@ -72,6 +80,36 @@ class ScoreManager {
         for (index, result) in results.enumerated() {
             currentBlockRoundResults[index].append(result)
         }
+    }
+
+    /// Сохранить снимок текущего раунда (ещё не завершённого).
+    func setInProgressRoundResults(_ results: [RoundResult], blockIndex: Int, roundIndex: Int) {
+        guard results.count == playerCount else { return }
+        guard blockIndex >= 0, roundIndex >= 0 else { return }
+
+        inProgressRoundResults = results
+        inProgressRoundBlockIndex = blockIndex
+        inProgressRoundIndex = roundIndex
+    }
+
+    /// Очистить снимок текущего раунда.
+    func clearInProgressRoundResults() {
+        inProgressRoundResults = nil
+        inProgressRoundBlockIndex = nil
+        inProgressRoundIndex = nil
+    }
+
+    /// Получить снимок результата игрока для текущего незавершённого раунда.
+    func inProgressRoundResult(
+        forBlockIndex blockIndex: Int,
+        roundIndex: Int,
+        playerIndex: Int
+    ) -> RoundResult? {
+        guard inProgressRoundBlockIndex == blockIndex else { return nil }
+        guard inProgressRoundIndex == roundIndex else { return nil }
+        guard let inProgressRoundResults else { return nil }
+        guard inProgressRoundResults.indices.contains(playerIndex) else { return nil }
+        return inProgressRoundResults[playerIndex]
     }
 
     // MARK: - Завершение блока
@@ -132,6 +170,7 @@ class ScoreManager {
 
         // Сохраняем итоги и сбрасываем текущий блок
         completedBlocks.append(blockResult)
+        clearInProgressRoundResults()
         resetCurrentBlock()
 
         return blockResult
@@ -191,6 +230,7 @@ class ScoreManager {
     /// Полный сброс менеджера для новой игры
     func reset() {
         currentBlockRoundResults = Array(repeating: [], count: playerCount)
+        clearInProgressRoundResults()
         completedBlocks = []
     }
 
@@ -336,6 +376,7 @@ class ScoreManager {
         guard updatedCount > 0, updatedCount != storedPlayerCount else { return }
         storedPlayerCount = updatedCount
         currentBlockRoundResults = Array(repeating: [], count: updatedCount)
+        clearInProgressRoundResults()
         completedBlocks = []
     }
 }

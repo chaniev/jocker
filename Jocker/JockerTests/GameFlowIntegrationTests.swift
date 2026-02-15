@@ -122,6 +122,21 @@ final class GameFlowIntegrationTests: XCTestCase {
             gameState.completeTrick(winner: 0)
         }
 
+        let inProgressSnapshot = (0..<playerCount).map { index in
+            let player = gameState.players[index]
+            return RoundResult(
+                cardsInRound: cardsInRound,
+                bid: player.currentBid,
+                tricksTaken: player.tricksTaken,
+                isBlind: player.isBlindBid
+            )
+        }
+        scoreManager.setInProgressRoundResults(
+            inProgressSnapshot,
+            blockIndex: gameState.currentBlock.rawValue - 1,
+            roundIndex: gameState.currentRoundInBlock
+        )
+
         roundService.completeRoundIfNeeded(
             gameState: gameState,
             scoreManager: scoreManager,
@@ -135,6 +150,7 @@ final class GameFlowIntegrationTests: XCTestCase {
             scoreManager.currentBlockRoundResults[0][0].score,
             cardsInRound * 200
         )
+        XCTAssertNil(scoreManager.inProgressRoundResults)
     }
 
     // MARK: - Helpers
