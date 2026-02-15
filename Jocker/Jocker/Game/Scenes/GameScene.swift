@@ -843,7 +843,8 @@ class GameScene: SKScene {
             ) { [weak self] selectedTrump in
                 guard let self else { return }
                 self.currentTrump = selectedTrump
-                self.trumpIndicator.setTrumpSuit(selectedTrump, animated: true)
+                let animateTrumpReveal = !self.isBotPlayer(chooserPlayerIndex)
+                self.trumpIndicator.setTrumpSuit(selectedTrump, animated: animateTrumpReveal)
 
                 if remainingCardsPerPlayer == 0 {
                     self.isRunningTrumpSelectionFlow = false
@@ -878,14 +879,7 @@ class GameScene: SKScene {
         let fallbackTrump = botTrumpSelectionService.selectTrump(from: handCards)
 
         if isBotPlayer(playerIndex) {
-            run(
-                .sequence([
-                    .wait(forDuration: 0.25),
-                    .run {
-                        completion(fallbackTrump)
-                    }
-                ])
-            )
+            completion(fallbackTrump)
             return
         }
 
