@@ -325,8 +325,25 @@ final class ScoreTableView: UIView {
             }
 
             let roundResult = results[playerIndex][roundIndex]
-            tricksLabel.text = "\(roundResult.bid)/\(roundResult.tricksTaken)"
+            if roundResult.isBlind {
+                tricksLabel.text = "\(circledBidText(roundResult.bid))/\(roundResult.tricksTaken)"
+            } else {
+                tricksLabel.text = "\(roundResult.bid)/\(roundResult.tricksTaken)"
+            }
             pointsLabel.text = "\(roundResult.score)"
+        }
+    }
+
+    private func circledBidText(_ bid: Int) -> String {
+        switch bid {
+        case 0: return "⓪"
+        case 1...20:
+            if let scalar = UnicodeScalar(0x2460 + bid - 1) {
+                return String(scalar)
+            }
+            return "\(bid)"
+        default:
+            return "\(bid)"
         }
     }
 

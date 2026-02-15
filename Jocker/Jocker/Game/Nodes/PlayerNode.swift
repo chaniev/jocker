@@ -28,6 +28,7 @@ class PlayerNode: SKNode {
     // Ставка и взятки
     private(set) var bid: Int = 0
     private(set) var tricksTaken: Int = 0
+    private(set) var isBlindBid: Bool = false
     
     init(
         playerNumber: Int,
@@ -177,8 +178,9 @@ class PlayerNode: SKNode {
     // MARK: - Public Methods
     
     /// Установить ставку игрока
-    func setBid(_ bid: Int, animated: Bool = true) {
+    func setBid(_ bid: Int, isBlind: Bool = false, animated: Bool = true) {
         self.bid = bid
+        self.isBlindBid = isBlind
         updateBidDisplay(animated: animated)
     }
     
@@ -192,13 +194,16 @@ class PlayerNode: SKNode {
     func resetForNewRound() {
         bid = 0
         tricksTaken = 0
-        updateBidDisplay(animated: false)
+        isBlindBid = false
+        bidLabel.text = ""
+        bidLabel.isHidden = true
         updateTrickDisplay()
     }
     
     /// Обновить отображение ставки
     private func updateBidDisplay(animated: Bool) {
-        bidLabel.text = "Ставка \(bid)"
+        let suffix = isBlindBid ? " (тёмн.)" : ""
+        bidLabel.text = "Ставка \(bid)\(suffix)"
         bidLabel.isHidden = false
         
         if animated {

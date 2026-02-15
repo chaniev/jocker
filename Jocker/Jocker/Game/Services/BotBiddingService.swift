@@ -50,6 +50,53 @@ final class BotBiddingService {
         return bestBid
     }
 
+    /// Решение бота о ставке «в тёмную» до раздачи.
+    ///
+    /// - Returns: значение blind-ставки или `nil`, если бот выбирает открытую ставку.
+    func makePreDealBlindBid(
+        playerIndex: Int,
+        dealerIndex: Int,
+        cardsInRound: Int,
+        allowedBlindBids: [Int],
+        canChooseBlind: Bool,
+        totalScores: [Int]
+    ) -> Int? {
+        guard canChooseBlind else { return nil }
+
+        let allowed = Array(Set(allowedBlindBids)).sorted()
+        guard !allowed.isEmpty else { return nil }
+
+        let clampedPlayerIndex = min(max(playerIndex, 0), max(0, totalScores.count - 1))
+        let playerScore = totalScores.indices.contains(clampedPlayerIndex) ? totalScores[clampedPlayerIndex] : 0
+        let leaderScore = totalScores.max() ?? playerScore
+
+        let scoresWithoutPlayer = totalScores.enumerated()
+            .filter { $0.offset != clampedPlayerIndex }
+            .map(\.element)
+        let bestOpponentScore = scoresWithoutPlayer.max() ?? playerScore
+
+        let behindByLeader = max(0, leaderScore - playerScore)
+        let aheadOfOpponent = max(0, playerScore - bestOpponentScore)
+
+        let shouldRiskBlind: Bool
+        if behindByLeader >= 250 {
+            shouldRiskBlind = true
+        } else if behindByLeader >= 130 && playerIndex != dealerIndex {
+            shouldRiskBlind = true
+        } else if aheadOfOpponent >= 180 {
+            shouldRiskBlind = false
+        } else {
+            shouldRiskBlind = false
+        }
+
+        guard shouldRiskBlind else { return nil }
+
+        let cards = max(0, cardsInRound)
+        let targetShare = behindByLeader >= 250 ? 0.65 : 0.45
+        let targetBid = Int((Double(cards) * targetShare).rounded())
+        return nearestAllowedBid(to: targetBid, allowed: allowed)
+    }
+
     private func estimateExpectedTricks(
         in hand: [Card],
         cardsInRound: Int,
@@ -82,5 +129,21 @@ final class BotBiddingService {
 
         let rounded = Int(power.rounded())
         return max(0, min(cardsInRound, rounded))
+    }
+
+    private func nearestAllowedBid(to target: Int, allowed: [Int]) -> Int {
+        guard let first = allowed.first else { return 0 }
+        var best = first
+        var bestDistance = abs(first - target)
+
+        for bid in allowed.dropFirst() {
+            let distance = abs(bid - target)
+            if distance < bestDistance || (distance == bestDistance && bid < best) {
+                best = bid
+                bestDistance = distance
+            }
+        }
+
+        return best
     }
 }

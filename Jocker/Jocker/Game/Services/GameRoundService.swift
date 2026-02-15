@@ -92,7 +92,7 @@ final class GameRoundService {
                 cardsInRound: cardsInRound,
                 bid: player.currentBid,
                 tricksTaken: player.tricksTaken,
-                isBlind: false
+                isBlind: player.isBlindBid
             )
             results.append(result)
         }

@@ -143,6 +143,36 @@ final class GameStateTests: XCTestCase {
 
         XCTAssertEqual(allowed, [0, 1])
     }
+
+    func testCanChooseBlindBid_isAvailableOnlyInFourthBlock() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+
+        let selections = [false, false, false, false]
+        XCTAssertFalse(gameState.canChooseBlindBid(forPlayer: 1, blindSelections: selections))
+
+        moveToFourthBlock(gameState)
+        XCTAssertTrue(gameState.canChooseBlindBid(forPlayer: 1, blindSelections: selections))
+    }
+
+    func testCanChooseBlindBid_dealerRequiresAllOtherPlayersToChooseBlind() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+        moveToFourthBlock(gameState)
+
+        let dealerIndex = gameState.currentDealer
+        var allOpen = Array(repeating: false, count: 4)
+        let allBlindExceptDealer = (0..<4).map { index in
+            index == dealerIndex ? false : true
+        }
+
+        XCTAssertFalse(gameState.canChooseBlindBid(forPlayer: dealerIndex, blindSelections: allOpen))
+
+        allOpen[(dealerIndex + 1) % 4] = true
+        XCTAssertFalse(gameState.canChooseBlindBid(forPlayer: dealerIndex, blindSelections: allOpen))
+
+        XCTAssertTrue(gameState.canChooseBlindBid(forPlayer: dealerIndex, blindSelections: allBlindExceptDealer))
+    }
     
     func testSetPlayerNames_appliesProvidedNamesAndFallbacksForEmptyValues() {
         let gameState = GameState(playerCount: 4)
@@ -285,5 +315,11 @@ final class GameStateTests: XCTestCase {
             0,
             "После сброса верхней карты в центр первый туз должен прийти игроку с индексом 0."
         )
+    }
+
+    private func moveToFourthBlock(_ gameState: GameState) {
+        while gameState.currentBlock != .fourth {
+            gameState.startNewRound()
+        }
     }
 }

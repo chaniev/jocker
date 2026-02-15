@@ -61,4 +61,37 @@ final class BotBiddingServiceTests: XCTestCase {
 
         XCTAssertGreaterThan(strongBid, weakBid)
     }
+
+    func testMakePreDealBlindBid_returnsNilForLeaderWithBigAdvantage() {
+        let service = BotBiddingService()
+
+        let blindBid = service.makePreDealBlindBid(
+            playerIndex: 0,
+            dealerIndex: 1,
+            cardsInRound: 9,
+            allowedBlindBids: Array(0...9),
+            canChooseBlind: true,
+            totalScores: [1200, 900, 850, 700]
+        )
+
+        XCTAssertNil(blindBid)
+    }
+
+    func testMakePreDealBlindBid_returnsAllowedBidWhenPlayerFarBehind() {
+        let service = BotBiddingService()
+
+        let blindBid = service.makePreDealBlindBid(
+            playerIndex: 3,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: [2, 3, 4, 5, 6],
+            canChooseBlind: true,
+            totalScores: [1200, 1100, 980, 700]
+        )
+
+        XCTAssertNotNil(blindBid)
+        if let blindBid {
+            XCTAssertTrue([2, 3, 4, 5, 6].contains(blindBid))
+        }
+    }
 }

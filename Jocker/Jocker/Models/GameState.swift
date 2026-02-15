@@ -128,11 +128,18 @@ class GameState {
     }
     
     /// Сделать ставку
-    func placeBid(_ bid: Int, forPlayer playerIndex: Int) -> Bool {
+    func placeBid(
+        _ bid: Int,
+        forPlayer playerIndex: Int,
+        isBlind: Bool = false,
+        lockBeforeDeal: Bool = false
+    ) -> Bool {
         guard phase == .bidding else { return false }
         guard playerIndex >= 0 && playerIndex < players.count else { return false }
         
         players[playerIndex].currentBid = bid
+        players[playerIndex].isBlindBid = isBlind
+        players[playerIndex].isBidLockedBeforeDeal = lockBeforeDeal
         
         // Переход к следующему игроку
         currentPlayer = normalizedPlayerIndex(currentPlayer + 1)
@@ -154,6 +161,27 @@ class GameState {
 
         let currentBids = players.map { $0.currentBid }
         return allowedBids(forPlayer: currentDealer, bids: currentBids).contains(bid)
+    }
+
+    /// Доступна ли ставка «в тёмную» для игрока в текущем раунде.
+    ///
+    /// В 4-м блоке все игроки могут выбрать blind, кроме дилера:
+    /// дилеру blind доступен только если все остальные игроки уже выбрали blind.
+    func canChooseBlindBid(forPlayer playerIndex: Int, blindSelections: [Bool]) -> Bool {
+        guard currentBlock == .fourth else { return false }
+        guard playerIndex >= 0 && playerIndex < playerCount else { return false }
+
+        if playerIndex != currentDealer {
+            return true
+        }
+
+        for index in 0..<playerCount where index != currentDealer {
+            guard blindSelections.indices.contains(index), blindSelections[index] else {
+                return false
+            }
+        }
+
+        return true
     }
 
     /// Допустимые ставки для игрока в текущем раунде.
@@ -215,7 +243,7 @@ class GameState {
                 cardsInRound: currentCardsPerPlayer,
                 bid: players[index].currentBid,
                 tricksTaken: players[index].tricksTaken,
-                isBlind: false
+                isBlind: players[index].isBlindBid
             )
             players[index].score += roundScore
         }
@@ -255,9 +283,16 @@ class GameState {
     // MARK: - Мутация игроков (для внешних вызовов)
     
     /// Установить ставку игрока (из UI)
-    func setBid(_ bid: Int, forPlayerAt index: Int) {
+    func setBid(
+        _ bid: Int,
+        forPlayerAt index: Int,
+        isBlind: Bool = false,
+        lockBeforeDeal: Bool = false
+    ) {
         guard index >= 0, index < players.count else { return }
         players[index].currentBid = bid
+        players[index].isBlindBid = isBlind
+        players[index].isBidLockedBeforeDeal = lockBeforeDeal
     }
     
     /// Перейти в фазу розыгрыша после того, как ставки выставлены извне (UI).

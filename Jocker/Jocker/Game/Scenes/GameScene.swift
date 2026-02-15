@@ -66,10 +66,13 @@ class GameScene: SKScene {
     private var isSelectingFirstDealer = false
     private var isAwaitingJokerDecision = false
     private var isAwaitingHumanBidChoice = false
+    private var isAwaitingHumanBlindChoice = false
     private var isAwaitingHumanTrumpChoice = false
     private var isRunningBiddingFlow = false
+    private var isRunningPreDealBlindFlow = false
     private var isRunningTrumpSelectionFlow = false
     private var pendingBids: [Int] = []
+    private var pendingBlindSelections: [Bool] = []
     private var firstDealerAnnouncementNode: SKNode?
 
     private var isInteractionBlocked: Bool {
@@ -77,8 +80,10 @@ class GameScene: SKScene {
             isSelectingFirstDealer ||
             isAwaitingJokerDecision ||
             isAwaitingHumanBidChoice ||
+            isAwaitingHumanBlindChoice ||
             isAwaitingHumanTrumpChoice ||
             isRunningTrumpSelectionFlow ||
+            isRunningPreDealBlindFlow ||
             isRunningBiddingFlow
     }
 
@@ -598,10 +603,13 @@ class GameScene: SKScene {
 
         removeAction(forKey: ActionKey.botTurn)
         isAwaitingHumanBidChoice = false
+        isAwaitingHumanBlindChoice = false
         isAwaitingHumanTrumpChoice = false
         isRunningBiddingFlow = false
+        isRunningPreDealBlindFlow = false
         isRunningTrumpSelectionFlow = false
         pendingBids.removeAll()
+        pendingBlindSelections.removeAll()
 
         coordinator.cancelPendingTrickResolution(on: self)
 
@@ -633,6 +641,20 @@ class GameScene: SKScene {
         )
         currentTrump = nil
 
+        pendingBids = Array(repeating: 0, count: playerCount)
+        pendingBlindSelections = Array(repeating: false, count: playerCount)
+
+        if gameState.currentBlock == .fourth {
+            startPreDealBlindFlowIfNeeded { [weak self] in
+                self?.runDealFlowForCurrentRound()
+            }
+            return
+        }
+
+        runDealFlowForCurrentRound()
+    }
+
+    private func runDealFlowForCurrentRound() {
         let cardsPerPlayer = gameState.currentCardsPerPlayer
         let firstPlayerToDeal = (gameState.currentDealer + 1) % playerCount
         let trumpRule = TrumpSelectionRules.rule(
@@ -676,6 +698,107 @@ class GameScene: SKScene {
         }
 
         coordinator.markDidDeal()
+    }
+
+    private func startPreDealBlindFlowIfNeeded(onCompleted: @escaping () -> Void) {
+        guard gameState.phase == .bidding else {
+            onCompleted()
+            return
+        }
+        guard gameState.currentBlock == .fourth else {
+            onCompleted()
+            return
+        }
+
+        isRunningPreDealBlindFlow = true
+        processPreDealBlindStep(order: biddingOrder(), step: 0, onCompleted: onCompleted)
+    }
+
+    private func processPreDealBlindStep(
+        order: [Int],
+        step: Int,
+        onCompleted: @escaping () -> Void
+    ) {
+        guard gameState.phase == .bidding else {
+            isRunningPreDealBlindFlow = false
+            onCompleted()
+            return
+        }
+
+        guard step < order.count else {
+            isRunningPreDealBlindFlow = false
+            onCompleted()
+            return
+        }
+
+        let playerIndex = order[step]
+        let allowedBlindBids = gameState.allowedBids(forPlayer: playerIndex, bids: pendingBids)
+        let canChooseBlind = gameState.canChooseBlindBid(
+            forPlayer: playerIndex,
+            blindSelections: pendingBlindSelections
+        )
+
+        let applySelection: (_ isBlind: Bool, _ bid: Int?) -> Void = { [weak self] isBlind, bid in
+            guard let self else { return }
+            guard self.gameState.phase == .bidding else { return }
+
+            if isBlind && canChooseBlind {
+                let fallbackBlindBid = allowedBlindBids.first ?? 0
+                let resolvedBlindBid: Int
+                if let bid, allowedBlindBids.contains(bid) {
+                    resolvedBlindBid = bid
+                } else {
+                    resolvedBlindBid = fallbackBlindBid
+                }
+                self.pendingBlindSelections[playerIndex] = true
+                self.pendingBids[playerIndex] = resolvedBlindBid
+                self.players[playerIndex].setBid(resolvedBlindBid, isBlind: true, animated: true)
+            } else {
+                self.pendingBlindSelections[playerIndex] = false
+                self.pendingBids[playerIndex] = 0
+            }
+
+            self.updateGameInfoLabel()
+            self.updateTurnUI(animated: true)
+
+            self.run(
+                .sequence([
+                    .wait(forDuration: 0.2),
+                    .run { [weak self] in
+                        self?.processPreDealBlindStep(
+                            order: order,
+                            step: step + 1,
+                            onCompleted: onCompleted
+                        )
+                    }
+                ])
+            )
+        }
+
+        if !canChooseBlind {
+            applySelection(false, nil)
+            return
+        }
+
+        if isHumanPlayer(playerIndex) {
+            requestHumanPreDealBlindChoice(
+                forPlayer: playerIndex,
+                allowedBlindBids: allowedBlindBids,
+                canChooseBlind: canChooseBlind,
+                completion: applySelection
+            )
+            return
+        }
+
+        let blindBid = botBiddingService.makePreDealBlindBid(
+            playerIndex: playerIndex,
+            dealerIndex: gameState.currentDealer,
+            cardsInRound: gameState.currentCardsPerPlayer,
+            allowedBlindBids: allowedBlindBids,
+            canChooseBlind: canChooseBlind,
+            totalScores: scoreManager.totalScoresIncludingCurrentBlock
+        )
+        applySelection(blindBid != nil, blindBid)
     }
 
     private func runPlayerChosenTrumpDealFlow(
@@ -990,8 +1113,11 @@ class GameScene: SKScene {
         guard bids.count == playerCount else { return }
         guard gameState.phase == .bidding else { return }
         pendingBids = bids
+        if pendingBlindSelections.count != playerCount {
+            pendingBlindSelections = Array(repeating: false, count: playerCount)
+        }
         isRunningBiddingFlow = false
-        applyBidsToGameStateAndStartPlaying(bids)
+        applyBidsToGameStateAndStartPlaying(bids, blindSelections: pendingBlindSelections)
     }
 
     private func presentTricksOrder() {
@@ -1005,22 +1131,39 @@ class GameScene: SKScene {
         guard !isRunningBiddingFlow else { return }
 
         isRunningBiddingFlow = true
-        pendingBids = Array(repeating: 0, count: playerCount)
-        processBiddingStep(order: biddingOrder(), step: 0)
+        if gameState.currentBlock != .fourth {
+            pendingBids = Array(repeating: 0, count: playerCount)
+            pendingBlindSelections = Array(repeating: false, count: playerCount)
+        } else {
+            if pendingBids.count != playerCount {
+                pendingBids = Array(repeating: 0, count: playerCount)
+            }
+            if pendingBlindSelections.count != playerCount {
+                pendingBlindSelections = Array(repeating: false, count: playerCount)
+            }
+        }
+
+        let order = biddingOrder().filter { playerIndex in
+            gameState.currentBlock != .fourth || !pendingBlindSelections[playerIndex]
+        }
+        processBiddingStep(order: order, step: 0)
     }
 
     private func processBiddingStep(order: [Int], step: Int) {
         guard gameState.phase == .bidding else {
             isRunningBiddingFlow = false
             pendingBids.removeAll()
+            pendingBlindSelections.removeAll()
             return
         }
 
         guard step < order.count else {
             let bids = pendingBids
+            let blindSelections = pendingBlindSelections
             pendingBids.removeAll()
+            pendingBlindSelections.removeAll()
             isRunningBiddingFlow = false
-            applyBidsToGameStateAndStartPlaying(bids)
+            applyBidsToGameStateAndStartPlaying(bids, blindSelections: blindSelections)
             return
         }
 
@@ -1043,7 +1186,7 @@ class GameScene: SKScene {
 
                 let resolvedBid = allowedBids.contains(selectedBid) ? selectedBid : fallbackBid
                 self.pendingBids[playerIndex] = resolvedBid
-                self.players[playerIndex].setBid(resolvedBid, animated: true)
+                self.players[playerIndex].setBid(resolvedBid, isBlind: false, animated: true)
                 self.updateGameInfoLabel()
                 self.updateTurnUI(animated: true)
                 self.processBiddingStep(order: order, step: step + 1)
@@ -1059,7 +1202,7 @@ class GameScene: SKScene {
         )
         let bid = allowedBids.contains(candidateBid) ? candidateBid : fallbackBid
         pendingBids[playerIndex] = bid
-        players[playerIndex].setBid(bid, animated: true)
+        players[playerIndex].setBid(bid, isBlind: false, animated: true)
         updateGameInfoLabel()
         updateTurnUI(animated: true)
 
@@ -1109,7 +1252,39 @@ class GameScene: SKScene {
         presenter.present(modal, animated: true)
     }
 
-    private func applyBidsToGameStateAndStartPlaying(_ bids: [Int]) {
+    private func requestHumanPreDealBlindChoice(
+        forPlayer playerIndex: Int,
+        allowedBlindBids: [Int],
+        canChooseBlind: Bool,
+        completion: @escaping (_ isBlind: Bool, _ bid: Int?) -> Void
+    ) {
+        let normalizedAllowedBlindBids = Array(Set(allowedBlindBids)).sorted()
+
+        let playerName = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].name
+            : "Игрок \(playerIndex + 1)"
+
+        guard let presenter = topPresentedViewController() else {
+            completion(false, nil)
+            return
+        }
+
+        isAwaitingHumanBlindChoice = true
+
+        let modal = BidSelectionViewController(
+            playerName: playerName,
+            allowedBlindBids: normalizedAllowedBlindBids,
+            canChooseBlind: canChooseBlind
+        ) { [weak self] isBlind, bid in
+            self?.isAwaitingHumanBlindChoice = false
+            completion(isBlind, bid)
+        }
+        modal.modalPresentationStyle = .overFullScreen
+        modal.modalTransitionStyle = .crossDissolve
+        presenter.present(modal, animated: true)
+    }
+
+    private func applyBidsToGameStateAndStartPlaying(_ bids: [Int], blindSelections: [Bool]) {
         guard bids.count == playerCount else { return }
         guard gameState.phase == .bidding else { return }
 
@@ -1124,8 +1299,16 @@ class GameScene: SKScene {
                 bid = allowedBids.first ?? 0
             }
 
-            players[playerIndex].setBid(bid, animated: true)
-            _ = gameState.placeBid(bid, forPlayer: playerIndex)
+            let isBlindBid = blindSelections.indices.contains(playerIndex)
+                ? blindSelections[playerIndex]
+                : false
+            players[playerIndex].setBid(bid, isBlind: isBlindBid, animated: true)
+            _ = gameState.placeBid(
+                bid,
+                forPlayer: playerIndex,
+                isBlind: isBlindBid,
+                lockBeforeDeal: isBlindBid
+            )
             safetyCounter += 1
         }
 

@@ -99,6 +99,44 @@ final class GameFlowIntegrationTests: XCTestCase {
         }
     }
 
+    func testCompleteRound_recordsBlindRoundResultWithDoubledScore() {
+        let playerCount = 4
+        let gameState = GameState(playerCount: playerCount)
+        gameState.startGame()
+        while gameState.currentBlock != .fourth {
+            gameState.startNewRound()
+        }
+
+        let scoreManager = ScoreManager(gameState: gameState)
+        let roundService = GameRoundService()
+        roundService.markDidDeal()
+
+        let cardsInRound = gameState.currentCardsPerPlayer
+        gameState.setBid(cardsInRound, forPlayerAt: 0, isBlind: true, lockBeforeDeal: true)
+        for playerIndex in 1..<playerCount {
+            gameState.setBid(0, forPlayerAt: playerIndex)
+        }
+
+        gameState.beginPlayingAfterBids()
+        for _ in 0..<cardsInRound {
+            gameState.completeTrick(winner: 0)
+        }
+
+        roundService.completeRoundIfNeeded(
+            gameState: gameState,
+            scoreManager: scoreManager,
+            playerCount: playerCount
+        )
+
+        XCTAssertEqual(gameState.phase, .roundEnd)
+        XCTAssertEqual(scoreManager.currentBlockRoundResults[0].count, 1)
+        XCTAssertEqual(scoreManager.currentBlockRoundResults[0][0].isBlind, true)
+        XCTAssertEqual(
+            scoreManager.currentBlockRoundResults[0][0].score,
+            cardsInRound * 200
+        )
+    }
+
     // MARK: - Helpers
 
     private func makeContext(playerCount: Int) -> (GameState, ScoreManager, GameRoundService) {

@@ -19,7 +19,10 @@ final class BidSelectionViewController: UIViewController {
     private let playerName: String
     private let handCards: [Card]
     private let allowedBids: [Int]
-    private let onSelect: (Int) -> Void
+    private let isPreDealBlindChoice: Bool
+    private let canChooseBlind: Bool
+    private let onSelectBid: ((Int) -> Void)?
+    private let onSelectBlindChoice: ((Bool, Int?) -> Void)?
 
     init(
         playerName: String,
@@ -30,7 +33,27 @@ final class BidSelectionViewController: UIViewController {
         self.playerName = playerName
         self.handCards = handCards
         self.allowedBids = Array(Set(allowedBids)).sorted()
-        self.onSelect = onSelect
+        self.isPreDealBlindChoice = false
+        self.canChooseBlind = false
+        self.onSelectBid = onSelect
+        self.onSelectBlindChoice = nil
+        super.init(nibName: nil, bundle: nil)
+        isModalInPresentation = true
+    }
+
+    init(
+        playerName: String,
+        allowedBlindBids: [Int],
+        canChooseBlind: Bool,
+        onBlindChoice: @escaping (_ isBlind: Bool, _ bid: Int?) -> Void
+    ) {
+        self.playerName = playerName
+        self.handCards = []
+        self.allowedBids = Array(Set(allowedBlindBids)).sorted()
+        self.isPreDealBlindChoice = true
+        self.canChooseBlind = canChooseBlind
+        self.onSelectBid = nil
+        self.onSelectBlindChoice = onBlindChoice
         super.init(nibName: nil, bundle: nil)
         isModalInPresentation = true
     }
@@ -41,10 +64,15 @@ final class BidSelectionViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupView()
+
+        if isPreDealBlindChoice {
+            setupPreDealBlindChoiceView()
+        } else {
+            setupPostDealBidView()
+        }
     }
 
-    private func setupView() {
+    private func setupPostDealBidView() {
         let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.62)
         let surfaceColor = UIColor(red: 0.15, green: 0.21, blue: 0.32, alpha: 0.98)
         let borderColor = GameColors.goldTranslucent
@@ -189,16 +217,189 @@ final class BidSelectionViewController: UIViewController {
         ])
     }
 
+    private func setupPreDealBlindChoiceView() {
+        let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.62)
+        let surfaceColor = UIColor(red: 0.15, green: 0.21, blue: 0.32, alpha: 0.98)
+        let borderColor = GameColors.goldTranslucent
+        let titleColor = GameColors.textPrimary
+        let subtitleColor = GameColors.textSecondary
+        let accentColor = GameColors.buttonFill
+        let accentBorderColor = GameColors.buttonStroke
+        let accentTextColor = GameColors.buttonText
+
+        view.backgroundColor = overlayColor
+
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.backgroundColor = surfaceColor
+        containerView.layer.cornerRadius = 16
+        containerView.layer.borderWidth = 1
+        containerView.layer.borderColor = borderColor.cgColor
+        containerView.clipsToBounds = true
+        view.addSubview(containerView)
+
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "Заказ до раздачи"
+        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 24)
+        titleLabel.textAlignment = .center
+        titleLabel.textColor = titleColor
+        containerView.addSubview(titleLabel)
+
+        let subtitleLabel = UILabel()
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subtitleLabel.text = canChooseBlind
+            ? "\(playerName), выберите режим ставки"
+            : "\(playerName), можно ставить только после раздачи"
+        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.textColor = subtitleColor
+        subtitleLabel.numberOfLines = 2
+        containerView.addSubview(subtitleLabel)
+
+        let openButton = UIButton(type: .system)
+        openButton.translatesAutoresizingMaskIntoConstraints = false
+        openButton.setTitle("Ставить после раздачи", for: .normal)
+        openButton.titleLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 18)
+        openButton.setTitleColor(accentTextColor, for: .normal)
+        openButton.backgroundColor = accentColor
+        openButton.layer.cornerRadius = 12
+        openButton.layer.borderWidth = 1
+        openButton.layer.borderColor = accentBorderColor.cgColor
+        openButton.addTarget(self, action: #selector(handleOpenChoiceTapped), for: .touchUpInside)
+        containerView.addSubview(openButton)
+
+        let blindTitle = UILabel()
+        blindTitle.translatesAutoresizingMaskIntoConstraints = false
+        blindTitle.text = "Заказать в темную"
+        blindTitle.font = UIFont(name: "AvenirNext-DemiBold", size: 16)
+        blindTitle.textAlignment = .center
+        blindTitle.textColor = GameColors.gold
+        blindTitle.isHidden = !canChooseBlind
+        containerView.addSubview(blindTitle)
+
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.alwaysBounceVertical = true
+        scrollView.showsVerticalScrollIndicator = true
+        scrollView.isHidden = !canChooseBlind
+        containerView.addSubview(scrollView)
+
+        let gridStack = UIStackView()
+        gridStack.translatesAutoresizingMaskIntoConstraints = false
+        gridStack.axis = .vertical
+        gridStack.spacing = 10
+        gridStack.distribution = .fill
+        scrollView.addSubview(gridStack)
+
+        if canChooseBlind {
+            for rowBids in allowedBids.chunked(into: LayoutMetrics.maxButtonsPerRow) {
+                let rowStack = UIStackView()
+                rowStack.translatesAutoresizingMaskIntoConstraints = false
+                rowStack.axis = .horizontal
+                rowStack.spacing = 10
+                rowStack.distribution = .fillEqually
+                rowStack.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight).isActive = true
+
+                for bid in rowBids {
+                    let button = UIButton(type: .system)
+                    button.setTitle("\(bid)", for: .normal)
+                    button.titleLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 20, weight: .bold)
+                    button.setTitleColor(accentTextColor, for: .normal)
+                    button.backgroundColor = UIColor(red: 0.24, green: 0.36, blue: 0.56, alpha: 1.0)
+                    button.layer.cornerRadius = 12
+                    button.layer.borderWidth = 1
+                    button.layer.borderColor = accentBorderColor.cgColor
+                    button.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight).isActive = true
+                    button.tag = bid
+                    button.addTarget(self, action: #selector(handleBlindBidTapped(_:)), for: .touchUpInside)
+                    rowStack.addArrangedSubview(button)
+                }
+
+                let placeholdersCount = max(0, LayoutMetrics.maxButtonsPerRow - rowBids.count)
+                if placeholdersCount > 0 {
+                    for _ in 0..<placeholdersCount {
+                        let placeholder = UIView()
+                        placeholder.backgroundColor = .clear
+                        rowStack.addArrangedSubview(placeholder)
+                    }
+                }
+
+                gridStack.addArrangedSubview(rowStack)
+            }
+
+            if allowedBids.isEmpty {
+                let fallbackLabel = UILabel()
+                fallbackLabel.text = "Нет доступных blind-ставок"
+                fallbackLabel.textAlignment = .center
+                fallbackLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 16)
+                fallbackLabel.textColor = subtitleColor
+                fallbackLabel.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight).isActive = true
+                gridStack.addArrangedSubview(fallbackLabel)
+            }
+        }
+
+        NSLayoutConstraint.activate([
+            containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            containerView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.82),
+            containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 320),
+            containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: LayoutMetrics.minContainerHeight),
+            containerView.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.86),
+
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+
+            openButton.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 14),
+            openButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            openButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            openButton.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight),
+
+            blindTitle.topAnchor.constraint(equalTo: openButton.bottomAnchor, constant: 14),
+            blindTitle.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            blindTitle.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+
+            scrollView.topAnchor.constraint(equalTo: blindTitle.bottomAnchor, constant: 10),
+            scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -18),
+            scrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: LayoutMetrics.minButtonsAreaHeight),
+
+            gridStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            gridStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            gridStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            gridStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            gridStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+        ])
+    }
+
     @objc private func handleBidButtonTapped(_ sender: UIButton) {
         let selectedBid = sender.tag
         guard allowedBids.contains(selectedBid) else { return }
-        onSelect(selectedBid)
+        onSelectBid?(selectedBid)
+        dismiss(animated: true)
+    }
+
+    @objc private func handleOpenChoiceTapped() {
+        onSelectBlindChoice?(false, nil)
+        dismiss(animated: true)
+    }
+
+    @objc private func handleBlindBidTapped(_ sender: UIButton) {
+        let selectedBid = sender.tag
+        guard allowedBids.contains(selectedBid) else { return }
+        onSelectBlindChoice?(true, selectedBid)
         dismiss(animated: true)
     }
 
     private func handCardsDisplayText() -> String {
         guard !handCards.isEmpty else {
-            return "Карт на руках нет"
+            return "\(playerName), карт на руках нет"
         }
 
         let cardTitles = handCards.map { card in
