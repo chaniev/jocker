@@ -220,6 +220,21 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(result.hands[3], [.regular(suit: .diamonds, rank: .nine)])
     }
 
+    func testDeckShuffle_preservesCardsAndUsuallyChangesOrder() {
+        var deck = Deck()
+        let originalOrder = deck.cards
+
+        deck.shuffle()
+
+        XCTAssertEqual(deck.cards.count, originalOrder.count)
+        XCTAssertEqual(Set(deck.cards), Set(originalOrder))
+        XCTAssertNotEqual(
+            deck.cards,
+            originalOrder,
+            "После shuffle порядок карт должен отличаться от исходного."
+        )
+    }
+
     func testDeckDealCards_fourPlayersNineCardsEach_dealsAllCardsWithoutTrump() {
         var deck = Deck()
 
@@ -315,6 +330,18 @@ final class GameStateTests: XCTestCase {
             0,
             "После сброса верхней карты в центр первый туз должен прийти игроку с индексом 0."
         )
+    }
+
+    func testPrepareFirstDealerSelection_providesVisualSequenceAndWinningAce() {
+        var deck = Deck()
+
+        let selection = deck.prepareFirstDealerSelection(playerCount: 4, startingPlayerIndex: 1)
+
+        XCTAssertEqual(selection.tableCard, .regular(suit: .diamonds, rank: .six))
+        XCTAssertFalse(selection.dealtCards.isEmpty)
+        XCTAssertEqual(selection.dealerIndex, 0)
+        XCTAssertEqual(selection.dealtCards.last?.playerIndex, selection.dealerIndex)
+        XCTAssertEqual(selection.dealtCards.last?.card.rank, .ace)
     }
 
     private func moveToFourthBlock(_ gameState: GameState) {

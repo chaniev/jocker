@@ -11,6 +11,19 @@ import UIKit
 extension GameScene {
     // MARK: - Modal Flow
 
+    func presentFirstPlayerAnnouncementModal(firstPlayerName: String) {
+        guard !firstPlayerName.isEmpty else { return }
+        guard let presenter = topPresentedViewController() else { return }
+
+        let alert = UIAlertController(
+            title: nil,
+            message: "Первый по списку: \(firstPlayerName)",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        presenter.present(alert, animated: true)
+    }
+
     @discardableResult
     func presentGameResultsModal(playerSummaries: [GameFinalPlayerSummary]) -> Bool {
         guard !playerSummaries.isEmpty else { return false }

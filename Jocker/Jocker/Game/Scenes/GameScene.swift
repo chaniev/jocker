@@ -98,6 +98,8 @@ class GameScene: SKScene {
     var pendingBids: [Int] = []
     var pendingBlindSelections: [Bool] = []
     var firstDealerAnnouncementNode: SKNode?
+    var firstDealerAnnouncementLabel: SKLabelNode?
+    var firstDealerSelectionCardsNode: SKNode?
     var hasPresentedGameResultsModal = false
     var hasSavedGameStatistics = false
 
@@ -555,47 +557,192 @@ class GameScene: SKScene {
         isSelectingFirstDealer = true
         showFirstDealerAnnouncement()
 
-        run(
-            .sequence([
-                .wait(forDuration: 3.0),
-                .run { [weak self] in
-                    self?.finishFirstDealerSelectionFlow()
-                }
-            ]),
-            withKey: ActionKey.firstDealerSelection
-        )
-    }
-
-    private func finishFirstDealerSelectionFlow() {
-        let selectedDealerIndex = determineFirstDealerIndex()
-        firstDealerIndex = selectedDealerIndex
-        gameState.startGame(initialDealerIndex: selectedDealerIndex)
-        hasPresentedGameResultsModal = false
-
-        firstDealerAnnouncementNode?.removeFromParent()
-        firstDealerAnnouncementNode = nil
-        isSelectingFirstDealer = false
-
-        updateGameInfoLabel()
-        updateTurnUI(animated: true)
-    }
-
-    private func determineFirstDealerIndex() -> Int {
-        guard playerCount > 0 else { return 0 }
+        guard playerCount > 0 else {
+            finishFirstDealerSelectionFlow(selectedDealerIndex: 0)
+            return
+        }
 
         deck.reset()
         deck.shuffle()
 
         // Начинаем выбор с игрока слева относительно первого места (индекс 0).
         let firstPlayerOnLeft = playerCount > 1 ? 1 : 0
-        return deck.selectFirstDealer(
+        let selection = deck.prepareFirstDealerSelection(
             playerCount: playerCount,
             startingPlayerIndex: firstPlayerOnLeft
         )
+
+        runFirstDealerSelectionAnimation(
+            tableCard: selection.tableCard,
+            dealtCards: selection.dealtCards,
+            selectedDealerIndex: selection.dealerIndex
+        )
+    }
+
+    private func runFirstDealerSelectionAnimation(
+        tableCard: Card?,
+        dealtCards: [(playerIndex: Int, card: Card)],
+        selectedDealerIndex: Int
+    ) {
+        removeAction(forKey: ActionKey.firstDealerSelection)
+        firstDealerSelectionCardsNode?.removeFromParent()
+
+        let container = SKNode()
+        container.zPosition = 310
+        addChild(container)
+        firstDealerSelectionCardsNode = container
+
+        let deckNode = makeFirstDealerDeckNode()
+        deckNode.position = firstDealerSelectionDeckPosition()
+        container.addChild(deckNode)
+
+        var latestCardByPlayer: [Int: CardNode] = [:]
+        var actions: [SKAction] = []
+
+        updateFirstDealerAnnouncement(text: "На раздающего")
+
+        if tableCard != nil {
+            actions.append(.wait(forDuration: 0.35))
+            actions.append(.run { [weak self, weak container] in
+                guard let self, let container else { return }
+
+                let tableCardNode = CardNode(card: .joker, faceUp: false)
+                tableCardNode.position = self.firstDealerSelectionDeckPosition()
+                tableCardNode.setScale(0.42)
+                tableCardNode.zPosition = 5
+                container.addChild(tableCardNode)
+
+                let move = SKAction.move(to: self.firstDealerSelectionTableCardPosition(), duration: 0.25)
+                let scale = SKAction.scale(to: 0.52, duration: 0.25)
+                tableCardNode.run(.group([move, scale]))
+            })
+            actions.append(.wait(forDuration: 0.2))
+        }
+
+        for deal in dealtCards {
+            actions.append(.run { [weak self, weak container] in
+                guard let self, let container else { return }
+                guard self.players.indices.contains(deal.playerIndex) else { return }
+
+                let targetPosition = self.firstDealerSelectionCardPosition(for: deal.playerIndex)
+                let dealtCardNode = CardNode(card: deal.card, faceUp: true)
+                dealtCardNode.position = self.firstDealerSelectionDeckPosition()
+                dealtCardNode.setScale(0.42)
+                dealtCardNode.zPosition = 20
+                container.addChild(dealtCardNode)
+
+                let move = SKAction.move(to: targetPosition, duration: 0.28)
+                let scale = SKAction.scale(to: 0.55, duration: 0.28)
+                dealtCardNode.run(.group([move, scale]))
+
+                if let previousCardNode = latestCardByPlayer[deal.playerIndex] {
+                    let fadeOut = SKAction.fadeOut(withDuration: 0.12)
+                    previousCardNode.run(.sequence([fadeOut, .removeFromParent()]))
+                }
+                latestCardByPlayer[deal.playerIndex] = dealtCardNode
+
+                guard deal.card.rank == .ace else { return }
+
+                let winnerName = self.playerDisplayName(at: deal.playerIndex)
+                self.updateFirstDealerAnnouncement(text: "Раздаёт \(winnerName)")
+
+                let pulse = SKAction.sequence([
+                    .scale(to: 0.62, duration: 0.12),
+                    .scale(to: 0.55, duration: 0.12)
+                ])
+                let glowIn = SKAction.fadeAlpha(to: 1.0, duration: 0.08)
+                dealtCardNode.alpha = 0.95
+                dealtCardNode.run(.group([pulse, glowIn]))
+            })
+            actions.append(.wait(forDuration: deal.card.rank == .ace ? 0.85 : 0.28))
+        }
+
+        if dealtCards.isEmpty {
+            actions.append(.wait(forDuration: 0.4))
+        }
+
+        actions.append(.run { [weak self] in
+            self?.finishFirstDealerSelectionFlow(selectedDealerIndex: selectedDealerIndex)
+        })
+
+        run(.sequence(actions), withKey: ActionKey.firstDealerSelection)
+    }
+
+    private func finishFirstDealerSelectionFlow(selectedDealerIndex: Int) {
+        removeAction(forKey: ActionKey.firstDealerSelection)
+
+        firstDealerIndex = selectedDealerIndex
+        gameState.startGame(initialDealerIndex: selectedDealerIndex)
+        hasPresentedGameResultsModal = false
+
+        firstDealerAnnouncementNode?.removeFromParent()
+        firstDealerAnnouncementNode = nil
+        firstDealerAnnouncementLabel = nil
+        firstDealerSelectionCardsNode?.removeFromParent()
+        firstDealerSelectionCardsNode = nil
+        isSelectingFirstDealer = false
+
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
+
+        if let firstPlayerName = firstPlayerOnLeftName(fromDealer: selectedDealerIndex) {
+            presentFirstPlayerAnnouncementModal(firstPlayerName: firstPlayerName)
+        }
+    }
+
+    private func firstDealerSelectionDeckPosition() -> CGPoint {
+        return CGPoint(x: size.width / 2, y: size.height / 2 + 164)
+    }
+
+    private func firstDealerSelectionTableCardPosition() -> CGPoint {
+        return CGPoint(x: size.width / 2, y: size.height / 2 + 28)
+    }
+
+    private func firstDealerSelectionCardPosition(for playerIndex: Int) -> CGPoint {
+        guard players.indices.contains(playerIndex) else {
+            return CGPoint(x: size.width / 2, y: size.height / 2)
+        }
+
+        let player = players[playerIndex]
+        return player.convert(player.hand.position, to: self)
+    }
+
+    private func playerDisplayName(at index: Int) -> String {
+        guard gameState.players.indices.contains(index) else {
+            return "Игрок \(index + 1)"
+        }
+        return gameState.players[index].name
+    }
+
+    private func firstPlayerOnLeftName(fromDealer dealerIndex: Int) -> String? {
+        guard playerCount > 0 else { return nil }
+        let firstPlayerIndex = (dealerIndex + 1) % playerCount
+        return playerDisplayName(at: firstPlayerIndex)
+    }
+
+    private func makeFirstDealerDeckNode() -> SKNode {
+        let node = SKNode()
+
+        let bottomCard = CardNode(card: .joker, faceUp: false)
+        bottomCard.position = CGPoint(x: -7, y: 7)
+        bottomCard.setScale(0.53)
+        bottomCard.alpha = 0.7
+        node.addChild(bottomCard)
+
+        let topCard = CardNode(card: .joker, faceUp: false)
+        topCard.setScale(0.53)
+        node.addChild(topCard)
+
+        return node
+    }
+
+    private func updateFirstDealerAnnouncement(text: String) {
+        firstDealerAnnouncementLabel?.text = text
     }
 
     private func showFirstDealerAnnouncement() {
         firstDealerAnnouncementNode?.removeFromParent()
+        firstDealerAnnouncementLabel = nil
 
         let container = SKNode()
         container.position = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -618,6 +765,7 @@ class GameScene: SKScene {
 
         addChild(container)
         firstDealerAnnouncementNode = container
+        firstDealerAnnouncementLabel = label
     }
 
     private func refreshLayout() {
