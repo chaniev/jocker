@@ -204,6 +204,77 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(deck.count, 0)
     }
 
+    func testDeckStagedDeal_fourPlayersFullRound_distributesThreeThenRemainingCards() {
+        var deck = Deck()
+
+        let firstStage = deck.dealCards(
+            playerCount: 4,
+            cardsPerPlayer: 3,
+            startingPlayerIndex: 1
+        )
+        let secondStage = deck.dealCards(
+            playerCount: 4,
+            cardsPerPlayer: 6,
+            startingPlayerIndex: 1
+        )
+
+        XCTAssertTrue(firstStage.hands.allSatisfy { $0.count == 3 })
+        XCTAssertTrue(secondStage.hands.allSatisfy { $0.count == 6 })
+
+        let combinedHands = zip(firstStage.hands, secondStage.hands).map { first, second in
+            first + second
+        }
+        XCTAssertTrue(combinedHands.allSatisfy { $0.count == 9 })
+        XCTAssertEqual(deck.count, 0)
+        XCTAssertNil(secondStage.trump)
+    }
+
+    func testTrumpSelectionRules_usesAutomaticTopCardInFirstAndThirdBlocks() {
+        let firstBlockRule = TrumpSelectionRules.rule(
+            for: .first,
+            cardsPerPlayer: 8,
+            dealerIndex: 0,
+            playerCount: 4
+        )
+        let thirdBlockRule = TrumpSelectionRules.rule(
+            for: .third,
+            cardsPerPlayer: 5,
+            dealerIndex: 2,
+            playerCount: 4
+        )
+
+        XCTAssertEqual(firstBlockRule.strategy, .automaticTopDeckCard)
+        XCTAssertEqual(firstBlockRule.cardsToDealBeforeChoicePerPlayer, 8)
+        XCTAssertEqual(firstBlockRule.chooserPlayerIndex, 1)
+
+        XCTAssertEqual(thirdBlockRule.strategy, .automaticTopDeckCard)
+        XCTAssertEqual(thirdBlockRule.cardsToDealBeforeChoicePerPlayer, 5)
+        XCTAssertEqual(thirdBlockRule.chooserPlayerIndex, 3)
+    }
+
+    func testTrumpSelectionRules_usesPlayerOnDealerLeftInSecondAndFourthBlocks() {
+        let secondBlockRule = TrumpSelectionRules.rule(
+            for: .second,
+            cardsPerPlayer: 9,
+            dealerIndex: 3,
+            playerCount: 4
+        )
+        let fourthBlockRule = TrumpSelectionRules.rule(
+            for: .fourth,
+            cardsPerPlayer: 12,
+            dealerIndex: 2,
+            playerCount: 3
+        )
+
+        XCTAssertEqual(secondBlockRule.strategy, .playerOnDealerLeft)
+        XCTAssertEqual(secondBlockRule.chooserPlayerIndex, 0)
+        XCTAssertEqual(secondBlockRule.cardsToDealBeforeChoicePerPlayer, 3)
+
+        XCTAssertEqual(fourthBlockRule.strategy, .playerOnDealerLeft)
+        XCTAssertEqual(fourthBlockRule.chooserPlayerIndex, 0)
+        XCTAssertEqual(fourthBlockRule.cardsToDealBeforeChoicePerPlayer, 4)
+    }
+
     func testDeckSelectFirstDealer_startsFromProvidedSeatAndFindsFirstAce() {
         var deck = Deck()
 

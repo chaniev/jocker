@@ -16,17 +16,21 @@ final class AutoPlayFlowTests: XCTestCase {
 
         var deck = Deck()
         deck.shuffle()
+        let trumpSelectionService = BotTrumpSelectionService()
 
-        let deal = deck.dealCards(
+        let deal = dealRound(
+            block: .second,
             playerCount: playerCount,
             cardsPerPlayer: cardsPerPlayer,
-            startingPlayerIndex: (dealerIndex + 1) % playerCount
+            dealerIndex: dealerIndex,
+            deck: &deck,
+            trumpSelectionService: trumpSelectionService
         )
 
-        XCTAssertEqual(deal.hands.count, playerCount)
-        XCTAssertTrue(deal.hands.allSatisfy { $0.count == cardsPerPlayer })
+        XCTAssertEqual(deal.countByPlayer.count, playerCount)
+        XCTAssertTrue(deal.countByPlayer.allSatisfy { $0 == cardsPerPlayer })
 
-        let trump = deal.trump?.suit
+        let trump = deal.trump
         let biddingService = BotBiddingService()
         let turnService = GameTurnService()
         let trickNode = TrickNode()
@@ -127,8 +131,12 @@ final class AutoPlayFlowTests: XCTestCase {
     private func runStressSimulation(playerCount: Int, cycles: Int) {
         let turnService = GameTurnService()
         let biddingService = BotBiddingService()
-        let maxCardsPerPlayer = GameConstants.maxCardsPerPlayer(for: playerCount)
-        let roundsTemplate = GameConstants.allBlockDeals(playerCount: playerCount).flatMap { $0 }
+        let trumpSelectionService = BotTrumpSelectionService()
+        let roundsTemplate: [(block: GameBlock, cardsPerPlayer: Int)] = GameBlock.allCases.flatMap { block in
+            GameConstants.deals(for: block, playerCount: playerCount).map { cards in
+                (block: block, cardsPerPlayer: cards)
+            }
+        }
 
         XCTAssertFalse(roundsTemplate.isEmpty)
         XCTAssertGreaterThan(cycles, 0)
@@ -137,41 +145,33 @@ final class AutoPlayFlowTests: XCTestCase {
         var globalRound = 0
 
         for cycle in 0..<cycles {
-            for cardsPerPlayer in roundsTemplate {
+            for round in roundsTemplate {
                 globalRound += 1
+                let cardsPerPlayer = round.cardsPerPlayer
 
                 var deck = Deck()
                 deck.shuffle()
 
-                let deal = deck.dealCards(
+                let deal = dealRound(
+                    block: round.block,
                     playerCount: playerCount,
                     cardsPerPlayer: cardsPerPlayer,
-                    startingPlayerIndex: (dealerIndex + 1) % playerCount
+                    dealerIndex: dealerIndex,
+                    deck: &deck,
+                    trumpSelectionService: trumpSelectionService
                 )
 
                 XCTAssertEqual(
-                    deal.hands.count,
+                    deal.countByPlayer.count,
                     playerCount,
                     "Round \(globalRound), cycle \(cycle): некорректное количество рук."
                 )
                 XCTAssertTrue(
-                    deal.hands.allSatisfy { $0.count == cardsPerPlayer },
+                    deal.countByPlayer.allSatisfy { $0 == cardsPerPlayer },
                     "Round \(globalRound), cycle \(cycle): карты розданы неравномерно."
                 )
 
-                if cardsPerPlayer == maxCardsPerPlayer {
-                    XCTAssertNil(
-                        deal.trump,
-                        "Round \(globalRound), cycle \(cycle): в полной раздаче козырной карты быть не должно."
-                    )
-                } else {
-                    XCTAssertNotNil(
-                        deal.trump,
-                        "Round \(globalRound), cycle \(cycle): в неполной раздаче ожидается козырная карта."
-                    )
-                }
-
-                let trump = deal.trump?.suit
+                let trump = deal.trump
                 var hands = deal.hands
                 let bids = makeBids(
                     for: hands,
@@ -269,6 +269,27 @@ final class AutoPlayFlowTests: XCTestCase {
         }
     }
 
+    func testSecondBlockTrumpSelection_usesOnlyFirstThirdOfCards() {
+        let playerCount = 4
+        let cardsPerPlayer = 9
+        let dealerIndex = 0
+        var deck = Deck()
+        let trumpSelectionService = BotTrumpSelectionService()
+
+        let deal = dealRound(
+            block: .second,
+            playerCount: playerCount,
+            cardsPerPlayer: cardsPerPlayer,
+            dealerIndex: dealerIndex,
+            deck: &deck,
+            trumpSelectionService: trumpSelectionService
+        )
+
+        XCTAssertEqual(deal.trump, .diamonds)
+        XCTAssertTrue(deal.countByPlayer.allSatisfy { $0 == cardsPerPlayer })
+        XCTAssertEqual(deck.count, 0)
+    }
+
     private func makeBids(
         for hands: [[Card]],
         playerCount: Int,
@@ -302,5 +323,71 @@ final class AutoPlayFlowTests: XCTestCase {
         }
 
         return bids
+    }
+
+    private func dealRound(
+        block: GameBlock,
+        playerCount: Int,
+        cardsPerPlayer: Int,
+        dealerIndex: Int,
+        deck: inout Deck,
+        trumpSelectionService: BotTrumpSelectionService
+    ) -> (hands: [[Card]], trump: Suit?, countByPlayer: [Int]) {
+        let firstPlayerToDeal = (dealerIndex + 1) % playerCount
+        let trumpRule = TrumpSelectionRules.rule(
+            for: block,
+            cardsPerPlayer: cardsPerPlayer,
+            dealerIndex: dealerIndex,
+            playerCount: playerCount
+        )
+
+        switch trumpRule.strategy {
+        case .automaticTopDeckCard:
+            let deal = deck.dealCards(
+                playerCount: playerCount,
+                cardsPerPlayer: cardsPerPlayer,
+                startingPlayerIndex: firstPlayerToDeal
+            )
+            let trumpSuit: Suit?
+            if case .regular(let suit, _) = deal.trump {
+                trumpSuit = suit
+            } else {
+                trumpSuit = nil
+            }
+            return (
+                hands: deal.hands,
+                trump: trumpSuit,
+                countByPlayer: deal.hands.map(\.count)
+            )
+
+        case .playerOnDealerLeft:
+            let cardsBeforeChoice = min(cardsPerPlayer, trumpRule.cardsToDealBeforeChoicePerPlayer)
+            let firstStage = deck.dealCards(
+                playerCount: playerCount,
+                cardsPerPlayer: cardsBeforeChoice,
+                startingPlayerIndex: firstPlayerToDeal
+            )
+
+            let remainingCardsPerPlayer = max(0, cardsPerPlayer - cardsBeforeChoice)
+            let secondStage = deck.dealCards(
+                playerCount: playerCount,
+                cardsPerPlayer: remainingCardsPerPlayer,
+                startingPlayerIndex: firstPlayerToDeal
+            )
+
+            let combinedHands = zip(firstStage.hands, secondStage.hands).map { first, second in
+                first + second
+            }
+            let chooserHand = firstStage.hands.indices.contains(trumpRule.chooserPlayerIndex)
+                ? firstStage.hands[trumpRule.chooserPlayerIndex]
+                : []
+            let trumpSuit = trumpSelectionService.selectTrump(from: chooserHand)
+
+            return (
+                hands: combinedHands,
+                trump: trumpSuit,
+                countByPlayer: combinedHands.map(\.count)
+            )
+        }
     }
 }

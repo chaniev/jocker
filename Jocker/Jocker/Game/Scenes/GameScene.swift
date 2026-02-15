@@ -61,11 +61,14 @@ class GameScene: SKScene {
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     private let coordinator = GameSceneCoordinator()
     private let botBiddingService = BotBiddingService()
+    private let botTrumpSelectionService = BotTrumpSelectionService()
     private let shouldRevealAllPlayersCards = true
     private var isSelectingFirstDealer = false
     private var isAwaitingJokerDecision = false
     private var isAwaitingHumanBidChoice = false
+    private var isAwaitingHumanTrumpChoice = false
     private var isRunningBiddingFlow = false
+    private var isRunningTrumpSelectionFlow = false
     private var pendingBids: [Int] = []
     private var firstDealerAnnouncementNode: SKNode?
 
@@ -74,6 +77,8 @@ class GameScene: SKScene {
             isSelectingFirstDealer ||
             isAwaitingJokerDecision ||
             isAwaitingHumanBidChoice ||
+            isAwaitingHumanTrumpChoice ||
+            isRunningTrumpSelectionFlow ||
             isRunningBiddingFlow
     }
 
@@ -593,7 +598,9 @@ class GameScene: SKScene {
 
         removeAction(forKey: ActionKey.botTurn)
         isAwaitingHumanBidChoice = false
+        isAwaitingHumanTrumpChoice = false
         isRunningBiddingFlow = false
+        isRunningTrumpSelectionFlow = false
         pendingBids.removeAll()
 
         coordinator.cancelPendingTrickResolution(on: self)
@@ -624,33 +631,161 @@ class GameScene: SKScene {
             toPosition: trickNode.centerPosition,
             animated: false
         )
+        currentTrump = nil
 
         let cardsPerPlayer = gameState.currentCardsPerPlayer
         let firstPlayerToDeal = (gameState.currentDealer + 1) % playerCount
-        let dealResult = deck.dealCards(
-            playerCount: playerCount,
+        let trumpRule = TrumpSelectionRules.rule(
+            for: gameState.currentBlock,
             cardsPerPlayer: cardsPerPlayer,
+            dealerIndex: gameState.currentDealer,
+            playerCount: playerCount
+        )
+
+        switch trumpRule.strategy {
+        case .automaticTopDeckCard:
+            let dealResult = deck.dealCards(
+                playerCount: playerCount,
+                cardsPerPlayer: cardsPerPlayer,
+                startingPlayerIndex: firstPlayerToDeal
+            )
+
+            coordinator.runDealAnimation(
+                on: self,
+                playerCount: playerCount,
+                firstPlayerToDeal: firstPlayerToDeal,
+                players: players,
+                hands: dealResult.hands,
+                trumpCard: dealResult.trump,
+                trumpIndicator: trumpIndicator,
+                onTrumpResolved: { [weak self] trump in
+                    self?.currentTrump = trump
+                },
+                onHighlightTurn: { [weak self] in
+                    self?.updateTurnUI(animated: true)
+                    self?.startBiddingFlowIfNeeded()
+                }
+            )
+        case .playerOnDealerLeft:
+            runPlayerChosenTrumpDealFlow(
+                firstPlayerToDeal: firstPlayerToDeal,
+                cardsPerPlayer: cardsPerPlayer,
+                chooserPlayerIndex: trumpRule.chooserPlayerIndex,
+                cardsToDealBeforeChoicePerPlayer: trumpRule.cardsToDealBeforeChoicePerPlayer
+            )
+        }
+
+        coordinator.markDidDeal()
+    }
+
+    private func runPlayerChosenTrumpDealFlow(
+        firstPlayerToDeal: Int,
+        cardsPerPlayer: Int,
+        chooserPlayerIndex: Int,
+        cardsToDealBeforeChoicePerPlayer: Int
+    ) {
+        let cardsBeforeChoice = min(cardsPerPlayer, max(0, cardsToDealBeforeChoicePerPlayer))
+        let initialDeal = deck.dealCards(
+            playerCount: playerCount,
+            cardsPerPlayer: cardsBeforeChoice,
             startingPlayerIndex: firstPlayerToDeal
         )
 
-        coordinator.runDealAnimation(
+        let remainingCardsPerPlayer = max(0, cardsPerPlayer - cardsBeforeChoice)
+        let remainingDeal = deck.dealCards(
+            playerCount: playerCount,
+            cardsPerPlayer: remainingCardsPerPlayer,
+            startingPlayerIndex: firstPlayerToDeal
+        )
+
+        isRunningTrumpSelectionFlow = true
+        trumpIndicator.setAwaitingTrumpSelection(animated: true)
+
+        coordinator.runDealStageAnimation(
             on: self,
             playerCount: playerCount,
             firstPlayerToDeal: firstPlayerToDeal,
             players: players,
-            hands: dealResult.hands,
-            trumpCard: dealResult.trump,
-            trumpIndicator: trumpIndicator,
-            onTrumpResolved: { [weak self] trump in
-                self?.currentTrump = trump
-            },
-            onHighlightTurn: { [weak self] in
-                self?.updateTurnUI(animated: true)
-                self?.startBiddingFlowIfNeeded()
-            }
-        )
+            hands: initialDeal.hands
+        ) { [weak self] in
+            guard let self else { return }
+            let chooserHand = initialDeal.hands.indices.contains(chooserPlayerIndex)
+                ? initialDeal.hands[chooserPlayerIndex]
+                : []
 
-        coordinator.markDidDeal()
+            self.updateTurnUI(animated: true)
+            self.requestTrumpChoice(
+                forPlayer: chooserPlayerIndex,
+                handCards: chooserHand
+            ) { [weak self] selectedTrump in
+                guard let self else { return }
+                self.currentTrump = selectedTrump
+                self.trumpIndicator.setTrumpSuit(selectedTrump, animated: true)
+
+                if remainingCardsPerPlayer == 0 {
+                    self.isRunningTrumpSelectionFlow = false
+                    self.updateGameInfoLabel()
+                    self.updateTurnUI(animated: true)
+                    self.startBiddingFlowIfNeeded()
+                    return
+                }
+
+                self.coordinator.runDealStageAnimation(
+                    on: self,
+                    playerCount: self.playerCount,
+                    firstPlayerToDeal: firstPlayerToDeal,
+                    players: self.players,
+                    hands: remainingDeal.hands
+                ) { [weak self] in
+                    guard let self else { return }
+                    self.isRunningTrumpSelectionFlow = false
+                    self.updateGameInfoLabel()
+                    self.updateTurnUI(animated: true)
+                    self.startBiddingFlowIfNeeded()
+                }
+            }
+        }
+    }
+
+    private func requestTrumpChoice(
+        forPlayer playerIndex: Int,
+        handCards: [Card],
+        completion: @escaping (Suit?) -> Void
+    ) {
+        let fallbackTrump = botTrumpSelectionService.selectTrump(from: handCards)
+
+        if isBotPlayer(playerIndex) {
+            run(
+                .sequence([
+                    .wait(forDuration: 0.25),
+                    .run {
+                        completion(fallbackTrump)
+                    }
+                ])
+            )
+            return
+        }
+
+        let playerName = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].name
+            : "Игрок \(playerIndex + 1)"
+
+        guard let presenter = topPresentedViewController() else {
+            completion(fallbackTrump)
+            return
+        }
+
+        isAwaitingHumanTrumpChoice = true
+        let modal = TrumpSelectionViewController(
+            playerName: playerName,
+            handCards: handCards
+        ) { [weak self] selectedSuit in
+            self?.isAwaitingHumanTrumpChoice = false
+            completion(selectedSuit)
+        }
+        modal.modalPresentationStyle = .overFullScreen
+        modal.modalTransitionStyle = .crossDissolve
+        presenter.present(modal, animated: true)
     }
 
     private func registerTrickWin(for playerIndex: Int) {

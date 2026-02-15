@@ -61,7 +61,7 @@ final class GameAnimationService {
                     onTrumpResolved(nil)
                 }
             } else {
-                trumpIndicator.setTrumpCard(nil, animated: true)
+                trumpIndicator.setTrumpSuit(nil, animated: true)
                 onTrumpResolved(nil)
             }
         }
@@ -71,6 +71,42 @@ final class GameAnimationService {
         let highlightDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 2.2)
         let highlightAction = SKAction.run(onHighlightTurn)
         actions.append(SKAction.sequence([highlightDelay, highlightAction]))
+
+        cancelDealSequence(on: scene)
+        scene.run(SKAction.group(actions), withKey: ActionKey.dealSequence)
+    }
+
+    func runDealStage(
+        on scene: SKNode,
+        playerCount: Int,
+        firstPlayerToDeal: Int,
+        players: [PlayerNode],
+        hands: [[Card]],
+        onCompleted: @escaping () -> Void
+    ) {
+        var actions: [SKAction] = []
+
+        for offset in 0..<playerCount {
+            let playerIndex = (firstPlayerToDeal + offset) % playerCount
+            let player = players[playerIndex]
+            let cards = hands.indices.contains(playerIndex) ? hands[playerIndex] : []
+            let delay = SKAction.wait(forDuration: Double(offset) * 0.3)
+            let deal = SKAction.run { [weak player] in
+                guard !cards.isEmpty else { return }
+                player?.hand.addCards(cards, animated: true)
+            }
+            actions.append(SKAction.sequence([delay, deal]))
+        }
+
+        let sortDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 1.0)
+        let sortAction = SKAction.run {
+            players.forEach { $0.hand.sortCardsStandard(animated: true) }
+        }
+        actions.append(SKAction.sequence([sortDelay, sortAction]))
+
+        let completionDelay = SKAction.wait(forDuration: Double(playerCount) * 0.3 + 1.4)
+        let completionAction = SKAction.run(onCompleted)
+        actions.append(SKAction.sequence([completionDelay, completionAction]))
 
         cancelDealSequence(on: scene)
         scene.run(SKAction.group(actions), withKey: ActionKey.dealSequence)

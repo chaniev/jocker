@@ -40,9 +40,11 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration).
 - `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
+- `Jocker/Jocker/Game/Services/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
 - `Jocker/Jocker/Game/Services/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
 - `Jocker/Jocker/Models/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
+- `Jocker/Jocker/Models/TrumpSelectionRules.swift`: round-level rules for trump selection mode (automatic vs player-chosen), chooser seat, and staged-deal size.
 - `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
@@ -50,6 +52,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`: modal bidding-order editor with dealer constraints and inline validation.
 - `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/BidSelectionViewController.swift`: modal selector of human bid amount with numeric buttons in game palette (up to 3 per row).
+- `Jocker/Jocker/ViewControllers/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
 
 ## App Source Layout
 
@@ -78,6 +81,7 @@ Jocker/Jocker/
 │   └── Services/
 │       ├── GameAnimationService.swift
 │       ├── BotBiddingService.swift
+│       ├── BotTrumpSelectionService.swift
 │       ├── BotTurnStrategyService.swift
 │       ├── GameRoundService.swift
 │       └── GameTurnService.swift
@@ -97,6 +101,7 @@ Jocker/Jocker/
 │   ├── PlayerControlType.swift
 │   ├── PlayerInfo.swift
 │   ├── RoundResult.swift
+│   ├── TrumpSelectionRules.swift
 │   └── TrickTakingResolver.swift
 ├── Resources/
 │   ├── Actions.sks
@@ -111,6 +116,7 @@ Jocker/Jocker/
 │   ├── PlayerSelectionViewController.swift
 │   ├── ScoreTableView.swift
 │   ├── ScoreTableViewController.swift
+│   ├── TrumpSelectionViewController.swift
 │   └── TricksOrderViewController.swift
 ├── Assets.xcassets/
 └── Base.lproj/
@@ -125,6 +131,7 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── AutoPlayFlowTests.swift
 ├── BotBiddingServiceTests.swift
+├── BotTrumpSelectionServiceTests.swift
 ├── BotTurnStrategyServiceTests.swift
 ├── GameFlowIntegrationTests.swift
 ├── GameStateTests.swift

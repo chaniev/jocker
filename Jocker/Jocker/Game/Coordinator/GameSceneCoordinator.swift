@@ -74,6 +74,24 @@ final class GameSceneCoordinator {
         )
     }
 
+    func runDealStageAnimation(
+        on scene: SKNode,
+        playerCount: Int,
+        firstPlayerToDeal: Int,
+        players: [PlayerNode],
+        hands: [[Card]],
+        onCompleted: @escaping () -> Void
+    ) {
+        animationService.runDealStage(
+            on: scene,
+            playerCount: playerCount,
+            firstPlayerToDeal: firstPlayerToDeal,
+            players: players,
+            hands: hands,
+            onCompleted: onCompleted
+        )
+    }
+
     func completeRoundIfNeeded(
         gameState: GameState,
         scoreManager: ScoreManager?,

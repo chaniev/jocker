@@ -12,6 +12,7 @@ class TrumpIndicator: SKNode {
     
     private var trumpCard: Card?
     private var cardNode: CardNode?
+    private var suitSymbolNode: SKLabelNode?
     private let labelNode: SKLabelNode
     private let backgroundNode: SKShapeNode
     
@@ -55,23 +56,12 @@ class TrumpIndicator: SKNode {
     
     /// Установить козырную карту
     func setTrumpCard(_ card: Card?, animated: Bool = true) {
-        // Удаляем старую карту
-        if let oldCardNode = cardNode {
-            if animated {
-                let fadeOut = SKAction.fadeOut(withDuration: 0.2)
-                let scale = SKAction.scale(to: 0.5, duration: 0.2)
-                let remove = SKAction.removeFromParent()
-                oldCardNode.run(SKAction.sequence([SKAction.group([fadeOut, scale]), remove]))
-            } else {
-                oldCardNode.removeFromParent()
-            }
-        }
+        clearDisplayedTrump(animated: animated)
         
         self.trumpCard = card
         
         guard let card = card else {
-            // Нет козыря
-            labelNode.text = "Козырь выбирает игрок"
+            labelNode.text = "Без козыря"
             labelNode.fontColor = GameColors.textSecondary
             return
         }
@@ -101,6 +91,50 @@ class TrumpIndicator: SKNode {
         labelNode.text = "Козырь"
         labelNode.fontColor = GameColors.textPrimary
     }
+
+    /// Установить козырь только по масти (карта не раскрывается).
+    func setTrumpSuit(_ suit: Suit?, animated: Bool = true) {
+        clearDisplayedTrump(animated: animated)
+        trumpCard = nil
+
+        guard let suit else {
+            labelNode.text = "Без козыря"
+            labelNode.fontColor = GameColors.textSecondary
+            return
+        }
+
+        let symbolNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        symbolNode.text = suit.rawValue
+        symbolNode.fontSize = 84
+        symbolNode.fontColor = suit.color == .red ? GameColors.cardRed : GameColors.textPrimary
+        symbolNode.horizontalAlignmentMode = .center
+        symbolNode.verticalAlignmentMode = .center
+        symbolNode.position = CGPoint(x: 0, y: -28)
+        symbolNode.zPosition = 2
+
+        if animated {
+            symbolNode.alpha = 0
+            symbolNode.setScale(0.4)
+            addChild(symbolNode)
+            let fadeIn = SKAction.fadeIn(withDuration: 0.25)
+            let scale = SKAction.scale(to: 1.0, duration: 0.25)
+            symbolNode.run(SKAction.group([fadeIn, scale]))
+        } else {
+            addChild(symbolNode)
+        }
+
+        suitSymbolNode = symbolNode
+        labelNode.text = "Козырь: \(suit.name)"
+        labelNode.fontColor = GameColors.textPrimary
+    }
+
+    /// Переводит индикатор в состояние ожидания выбора козыря игроком.
+    func setAwaitingTrumpSelection(animated: Bool = true) {
+        clearDisplayedTrump(animated: animated)
+        trumpCard = nil
+        labelNode.text = "Козырь выбирает игрок"
+        labelNode.fontColor = GameColors.textSecondary
+    }
     
     /// Скрыть индикатор
     func hide(animated: Bool = true) {
@@ -119,6 +153,32 @@ class TrumpIndicator: SKNode {
             run(fadeIn)
         } else {
             alpha = 1
+        }
+    }
+
+    private func clearDisplayedTrump(animated: Bool) {
+        if let oldCardNode = cardNode {
+            if animated {
+                let fadeOut = SKAction.fadeOut(withDuration: 0.2)
+                let scale = SKAction.scale(to: 0.5, duration: 0.2)
+                let remove = SKAction.removeFromParent()
+                oldCardNode.run(SKAction.sequence([SKAction.group([fadeOut, scale]), remove]))
+            } else {
+                oldCardNode.removeFromParent()
+            }
+            cardNode = nil
+        }
+
+        if let oldSuitNode = suitSymbolNode {
+            if animated {
+                let fadeOut = SKAction.fadeOut(withDuration: 0.15)
+                let scale = SKAction.scale(to: 0.6, duration: 0.15)
+                let remove = SKAction.removeFromParent()
+                oldSuitNode.run(SKAction.sequence([SKAction.group([fadeOut, scale]), remove]))
+            } else {
+                oldSuitNode.removeFromParent()
+            }
+            suitSymbolNode = nil
         }
     }
 }
