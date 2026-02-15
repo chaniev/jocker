@@ -367,8 +367,8 @@ struct BotTuning {
 
                     chaseWinProbabilityWeight: 55.0,
                     chaseThreatPenaltyWeight: 0.18,
-                    chaseSpendJokerPenalty: 70.0,
-                    chaseLeadWishBonus: 10.0,
+                    chaseSpendJokerPenalty: 90.0,
+                    chaseLeadWishBonus: 14.0,
 
                     dumpAvoidWinWeight: 55.0,
                     dumpThreatRewardWeight: 0.24,
@@ -407,21 +407,21 @@ struct BotTuning {
                     powerNormalizationValue: 1000.0
                 ),
                 bidding: Bidding(
-                    expectedJokerPower: 1.25,
-                    expectedRankWeight: 0.82,
-                    expectedTrumpBaseBonus: 0.65,
-                    expectedTrumpRankWeight: 0.55,
-                    expectedHighRankBonus: 0.24,
+                    expectedJokerPower: 1.10,
+                    expectedRankWeight: 0.70,
+                    expectedTrumpBaseBonus: 0.55,
+                    expectedTrumpRankWeight: 0.45,
+                    expectedHighRankBonus: 0.18,
 
-                    blindDesperateBehindThreshold: 210,
-                    blindCatchUpBehindThreshold: 100,
-                    blindSafeLeadThreshold: 240,
+                    blindDesperateBehindThreshold: 250,
+                    blindCatchUpBehindThreshold: 140,
+                    blindSafeLeadThreshold: 300,
                     blindDesperateTargetShare: 0.72,
                     blindCatchUpTargetShare: 0.52
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.52,
-                    minimumPowerToDeclareTrump: 1.30
+                    minimumPowerToDeclareTrump: 1.20
                 ),
                 timing: Timing(
                     playingBotTurnDelay: 0.22,
