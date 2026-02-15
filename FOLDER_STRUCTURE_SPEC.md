@@ -49,6 +49,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines.
 - `Jocker/Jocker/ViewControllers/TricksOrderViewController.swift`: modal bidding-order editor with dealer constraints and inline validation.
 - `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
+- `Jocker/Jocker/ViewControllers/BidSelectionViewController.swift`: modal selector of human bid amount with numeric buttons in game palette (up to 3 per row).
 
 ## App Source Layout
 
@@ -104,6 +105,7 @@ Jocker/Jocker/
 │   ├── ScoreCalculator.swift
 │   └── ScoreManager.swift
 ├── ViewControllers/
+│   ├── BidSelectionViewController.swift
 │   ├── GameViewController.swift
 │   ├── JokerModeSelectionViewController.swift
 │   ├── PlayerSelectionViewController.swift

@@ -151,17 +151,40 @@ class GameState {
     /// Проверка валидности ставки для последнего игрока (дилера)
     func isValidBidForDealer(_ bid: Int) -> Bool {
         guard currentPlayer == currentDealer else { return true }
-        
-        // Считаем сумму всех ставок
-        var totalBids = bid
-        for i in 0..<playerCount {
-            if i != currentDealer {
-                totalBids += players[i].currentBid
-            }
+
+        let currentBids = players.map { $0.currentBid }
+        return allowedBids(forPlayer: currentDealer, bids: currentBids).contains(bid)
+    }
+
+    /// Допустимые ставки для игрока в текущем раунде.
+    ///
+    /// Для недилера возвращается полный диапазон `0...currentCardsPerPlayer`.
+    /// Для дилера исключается единственная ставка, при которой суммарный заказ
+    /// всех игроков будет равен количеству розданных карт.
+    func allowedBids(forPlayer playerIndex: Int, bids: [Int]) -> [Int] {
+        guard playerCount > 0 else { return [] }
+        guard playerIndex >= 0 && playerIndex < playerCount else { return [] }
+
+        let maxBid = max(0, currentCardsPerPlayer)
+        var allowed = Array(0...maxBid)
+
+        guard playerCount > 1, playerIndex == currentDealer else {
+            return allowed
         }
-        
-        // Дилер не может называть ставку, при которой сумма равна количеству карт
-        return totalBids != currentCardsPerPlayer
+
+        let totalWithoutDealer = (0..<playerCount).reduce(0) { partial, index in
+            guard index != currentDealer else { return partial }
+            let rawBid = bids.indices.contains(index) ? bids[index] : 0
+            let clampedBid = min(max(rawBid, 0), maxBid)
+            return partial + clampedBid
+        }
+
+        let forbiddenBid = currentCardsPerPlayer - totalWithoutDealer
+        if let forbiddenIndex = allowed.firstIndex(of: forbiddenBid) {
+            allowed.remove(at: forbiddenIndex)
+        }
+
+        return allowed
     }
     
     /// Разыграть карту

@@ -111,6 +111,38 @@ final class GameStateTests: XCTestCase {
         gameState.startNewRound()
         XCTAssertEqual(gameState.currentDealer, 0)
     }
+
+    func testAllowedBids_dealerWithOneCardAndOneBidAlreadyPlaced_excludesZero() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+
+        // Игрок 2 заказал 1 взятку; дилер (Игрок 1) не может заказать 0,
+        // иначе сумма ставок станет равной количеству карт (1).
+        let bids = [0, 1, 0, 0]
+        let allowed = gameState.allowedBids(forPlayer: 0, bids: bids)
+
+        XCTAssertEqual(allowed, [1])
+    }
+
+    func testAllowedBids_dealerWithOneCardAndNoPositiveBids_excludesOne() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+
+        let bids = [0, 0, 0, 0]
+        let allowed = gameState.allowedBids(forPlayer: 0, bids: bids)
+
+        XCTAssertEqual(allowed, [0])
+    }
+
+    func testAllowedBids_nonDealerKeepsFullRange() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+
+        let bids = [0, 1, 0, 0]
+        let allowed = gameState.allowedBids(forPlayer: 2, bids: bids)
+
+        XCTAssertEqual(allowed, [0, 1])
+    }
     
     func testSetPlayerNames_appliesProvidedNamesAndFallbacksForEmptyValues() {
         let gameState = GameState(playerCount: 4)

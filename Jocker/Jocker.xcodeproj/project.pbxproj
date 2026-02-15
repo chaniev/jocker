@@ -65,6 +65,7 @@
 		F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000092F5200010037CA75 /* JokerPlayDecision.swift */; };
 		F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */; };
 		F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000C2F5300010037CA75 /* PlayerControlType.swift */; };
+		F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30000022F5300010037CA75 /* BidSelectionViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -146,6 +147,7 @@
 		F20000092F5200010037CA75 /* JokerPlayDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerPlayDecision.swift; sourceTree = "<group>"; };
 		F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerModeSelectionViewController.swift; sourceTree = "<group>"; };
 		F200000C2F5300010037CA75 /* PlayerControlType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerControlType.swift; sourceTree = "<group>"; };
+		F30000022F5300010037CA75 /* BidSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidSelectionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -328,6 +330,7 @@
 				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
 				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
 				F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */,
+				F30000022F5300010037CA75 /* BidSelectionViewController.swift */,
 				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
 				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
 				AA3000012F2B00010037CA75 /* TricksOrderViewController.swift */,
@@ -500,6 +503,7 @@
 				AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */,
 				AA3000022F2B00010037CA75 /* TricksOrderViewController.swift in Sources */,
 				F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */,
+				F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */,
 				7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
 				7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
 				7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,

@@ -890,6 +890,8 @@ class GameScene: SKScene {
         }
 
         let playerIndex = order[step]
+        let allowedBids = gameState.allowedBids(forPlayer: playerIndex, bids: pendingBids)
+        let fallbackBid = allowedBids.first ?? 0
         let forbidden = forbiddenDealerBidIfNeeded(
             for: playerIndex,
             bids: pendingBids
@@ -898,17 +900,13 @@ class GameScene: SKScene {
         if isHumanPlayer(playerIndex) {
             requestHumanBid(
                 forPlayer: playerIndex,
-                maxBid: max(0, gameState.currentCardsPerPlayer),
-                forbiddenBid: forbidden
+                handCards: players[playerIndex].hand.cards,
+                allowedBids: allowedBids
             ) { [weak self] selectedBid in
                 guard let self = self else { return }
                 guard self.gameState.phase == .bidding else { return }
 
-                let fallbackBid = self.firstAllowedBid(
-                    maxBid: max(0, self.gameState.currentCardsPerPlayer),
-                    forbiddenBid: forbidden
-                )
-                let resolvedBid = selectedBid ?? fallbackBid
+                let resolvedBid = allowedBids.contains(selectedBid) ? selectedBid : fallbackBid
                 self.pendingBids[playerIndex] = resolvedBid
                 self.players[playerIndex].setBid(resolvedBid, animated: true)
                 self.updateGameInfoLabel()
@@ -918,12 +916,13 @@ class GameScene: SKScene {
             return
         }
 
-        let bid = botBiddingService.makeBid(
+        let candidateBid = botBiddingService.makeBid(
             hand: players[playerIndex].hand.cards,
             cardsInRound: gameState.currentCardsPerPlayer,
             trump: currentTrump,
             forbiddenBid: forbidden
         )
+        let bid = allowedBids.contains(candidateBid) ? candidateBid : fallbackBid
         pendingBids[playerIndex] = bid
         players[playerIndex].setBid(bid, animated: true)
         updateGameInfoLabel()
@@ -941,51 +940,38 @@ class GameScene: SKScene {
 
     private func requestHumanBid(
         forPlayer playerIndex: Int,
-        maxBid: Int,
-        forbiddenBid: Int?,
-        completion: @escaping (Int?) -> Void
+        handCards: [Card],
+        allowedBids: [Int],
+        completion: @escaping (Int) -> Void
     ) {
-        guard let presenter = topPresentedViewController() else {
-            completion(nil)
+        let normalizedAllowedBids = Array(Set(allowedBids)).sorted()
+        guard !normalizedAllowedBids.isEmpty else {
+            completion(0)
             return
         }
-
-        isAwaitingHumanBidChoice = true
 
         let playerName = gameState.players.indices.contains(playerIndex)
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        let message: String
-        if let forbiddenBid {
-            message = "Выберите ставку для \(playerName).\nНедоступно: \(forbiddenBid)."
-        } else {
-            message = "Выберите ставку для \(playerName)."
+        guard let presenter = topPresentedViewController() else {
+            completion(normalizedAllowedBids[0])
+            return
         }
 
-        let alert = UIAlertController(
-            title: "Ваш заказ взяток",
-            message: message,
-            preferredStyle: .alert
-        )
+        isAwaitingHumanBidChoice = true
 
-        for bid in 0...maxBid where bid != forbiddenBid {
-            alert.addAction(
-                UIAlertAction(title: "\(bid)", style: .default) { [weak self] _ in
-                    self?.isAwaitingHumanBidChoice = false
-                    completion(bid)
-                }
-            )
+        let modal = BidSelectionViewController(
+            playerName: playerName,
+            handCards: handCards,
+            allowedBids: normalizedAllowedBids
+        ) { [weak self] selectedBid in
+            self?.isAwaitingHumanBidChoice = false
+            completion(selectedBid)
         }
-
-        alert.addAction(
-            UIAlertAction(title: "Авто", style: .cancel) { [weak self] _ in
-                self?.isAwaitingHumanBidChoice = false
-                completion(nil)
-            }
-        )
-
-        presenter.present(alert, animated: true)
+        modal.modalPresentationStyle = .overFullScreen
+        modal.modalTransitionStyle = .crossDissolve
+        presenter.present(modal, animated: true)
     }
 
     private func applyBidsToGameStateAndStartPlaying(_ bids: [Int]) {
@@ -998,13 +984,9 @@ class GameScene: SKScene {
         while gameState.phase == .bidding && safetyCounter < playerCount {
             let playerIndex = gameState.currentPlayer
             var bid = min(max(bids[playerIndex], 0), maxBid)
-
-            if playerIndex == gameState.currentDealer, !gameState.isValidBidForDealer(bid) {
-                let forbidden = forbiddenDealerBidIfNeeded(
-                    for: playerIndex,
-                    bids: bids
-                )
-                bid = firstAllowedBid(maxBid: maxBid, forbiddenBid: forbidden)
+            let allowedBids = gameState.allowedBids(forPlayer: playerIndex, bids: bids)
+            if !allowedBids.contains(bid) {
+                bid = allowedBids.first ?? 0
             }
 
             players[playerIndex].setBid(bid, animated: true)
@@ -1029,13 +1011,6 @@ class GameScene: SKScene {
         let forbidden = gameState.currentCardsPerPlayer - totalWithoutDealer
         guard forbidden >= 0 && forbidden <= gameState.currentCardsPerPlayer else { return nil }
         return forbidden
-    }
-
-    private func firstAllowedBid(maxBid: Int, forbiddenBid: Int?) -> Int {
-        for bid in 0...maxBid where bid != forbiddenBid {
-            return bid
-        }
-        return 0
     }
 
     private func biddingOrder() -> [Int] {
