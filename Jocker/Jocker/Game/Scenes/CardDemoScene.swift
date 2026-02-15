@@ -38,7 +38,7 @@ class CardDemoScene: SKScene {
             let suitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
             suitLabel.text = suitName
             suitLabel.fontSize = 20
-            suitLabel.fontColor = suit.color == .red ? GameColors.cardRed : SKColor(white: 0.9, alpha: 1.0)
+            suitLabel.fontColor = suitTitleColor(for: suit)
             suitLabel.horizontalAlignmentMode = .left
             suitLabel.position = CGPoint(x: 30, y: yPosition)
             addChild(suitLabel)
@@ -172,6 +172,17 @@ class CardDemoScene: SKScene {
         let pulse = SKAction.sequence([fadeOut, fadeIn])
         instruction.run(SKAction.repeatForever(pulse))
     }
+
+    private func suitTitleColor(for suit: Suit) -> SKColor {
+        switch suit {
+        case .diamonds, .hearts:
+            return GameColors.cardRed
+        case .spades:
+            return GameColors.textPrimary
+        case .clubs:
+            return GameColors.statusGreen
+        }
+    }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         // Возврат к главной сцене
@@ -179,4 +190,3 @@ class CardDemoScene: SKScene {
         print("Возврат к игре...")
     }
 }
-

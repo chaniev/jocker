@@ -57,7 +57,11 @@ enum GameColors {
     
     /// Красный цвет масти (бубны, черви)
     static let cardRed = SKColor(red: 0.8, green: 0.1, blue: 0.1, alpha: 1.0)
-    /// Чёрный цвет масти (пики, крести)
+    /// Почти чёрный цвет пик
+    static let cardSpade = SKColor(white: 0.12, alpha: 1.0)
+    /// Тёмно-зелёный цвет крестей
+    static let cardClub = SKColor(red: 0.06, green: 0.34, blue: 0.20, alpha: 1.0)
+    /// Универсальный тёмный цвет (legacy/общий)
     static let cardBlack = SKColor(white: 0.1, alpha: 1.0)
     /// Фон рубашки карты
     static let cardBack = SKColor(red: 0.16, green: 0.31, blue: 0.63, alpha: 1.0)

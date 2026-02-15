@@ -9,10 +9,11 @@ import Foundation
 
 /// Масть карты
 enum Suit: String, CaseIterable, Comparable {
-    case diamonds = "♦️"  // Бубны
-    case hearts = "♥️"    // Черви
-    case spades = "♠️"    // Пики
-    case clubs = "♣️"     // Крести
+    // Используем text presentation symbols (FE0E), чтобы избежать emoji-рендера.
+    case diamonds = "♦︎"  // Бубны
+    case hearts = "♥︎"    // Черви
+    case spades = "♠︎"    // Пики
+    case clubs = "♣︎"     // Крести
     
     /// Порядок мастей для сортировки: бубны < черви < пики < крести
     private static let sortOrder: [Suit] = [.diamonds, .hearts, .spades, .clubs]

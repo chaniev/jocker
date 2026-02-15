@@ -106,7 +106,7 @@ class TrumpIndicator: SKNode {
         let symbolNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
         symbolNode.text = suit.rawValue
         symbolNode.fontSize = 84
-        symbolNode.fontColor = suit.color == .red ? GameColors.cardRed : GameColors.textPrimary
+        symbolNode.fontColor = trumpSuitColor(for: suit)
         symbolNode.horizontalAlignmentMode = .center
         symbolNode.verticalAlignmentMode = .center
         symbolNode.position = CGPoint(x: 0, y: -28)
@@ -187,6 +187,17 @@ class TrumpIndicator: SKNode {
                 oldSuitNode.removeFromParent()
             }
             suitSymbolNode = nil
+        }
+    }
+
+    private func trumpSuitColor(for suit: Suit) -> SKColor {
+        switch suit {
+        case .diamonds, .hearts:
+            return GameColors.cardRed
+        case .spades:
+            return GameColors.textPrimary
+        case .clubs:
+            return GameColors.statusGreen
         }
     }
 }

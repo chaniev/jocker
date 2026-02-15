@@ -98,7 +98,7 @@ class CardNode: SKNode {
     private func setupRegularCardVisuals() {
         guard case .regular(let suit, let rank) = card else { return }
         
-        let color: SKColor = suit.color == .red ? GameColors.cardRed : GameColors.cardBlack
+        let color = cardColor(for: suit)
         
         // Верхний левый угол - ранг (уменьшено на 20%)
         let topRankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
@@ -116,8 +116,10 @@ class CardNode: SKNode {
         rankLabel = topRankLabel
         
         // Верхний левый угол - масть (уменьшено на 20%)
-        let topSuitLabel = SKLabelNode(text: suit.rawValue)
+        let topSuitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        topSuitLabel.text = suit.rawValue
         topSuitLabel.fontSize = 38.4
+        topSuitLabel.fontColor = color
         topSuitLabel.horizontalAlignmentMode = .left
         topSuitLabel.verticalAlignmentMode = .top
         topSuitLabel.position = CGPoint(
@@ -129,8 +131,10 @@ class CardNode: SKNode {
         suitLabel = topSuitLabel
         
         // Центральная масть (большая) - уменьшено на 20%
-        let middleSuitLabel = SKLabelNode(text: suit.rawValue)
+        let middleSuitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        middleSuitLabel.text = suit.rawValue
         middleSuitLabel.fontSize = 115.2
+        middleSuitLabel.fontColor = color
         middleSuitLabel.horizontalAlignmentMode = .center
         middleSuitLabel.verticalAlignmentMode = .center
         middleSuitLabel.position = CGPoint(x: 0, y: 0)
@@ -154,8 +158,10 @@ class CardNode: SKNode {
         addChild(bottomRankLabel)
         
         // Нижний правый угол - масть (перевёрнутая) - уменьшено на 20%
-        let bottomSuitLabel = SKLabelNode(text: suit.rawValue)
+        let bottomSuitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
+        bottomSuitLabel.text = suit.rawValue
         bottomSuitLabel.fontSize = 38.4
+        bottomSuitLabel.fontColor = color
         bottomSuitLabel.horizontalAlignmentMode = .right
         bottomSuitLabel.verticalAlignmentMode = .bottom
         bottomSuitLabel.position = CGPoint(
@@ -231,6 +237,17 @@ class CardNode: SKNode {
         
         addChild(pattern)
         backPattern = pattern
+    }
+
+    private func cardColor(for suit: Suit) -> SKColor {
+        switch suit {
+        case .diamonds, .hearts:
+            return GameColors.cardRed
+        case .spades:
+            return GameColors.cardSpade
+        case .clubs:
+            return GameColors.cardClub
+        }
     }
     
     private func createDiamond(size: CGFloat) -> SKShapeNode {
