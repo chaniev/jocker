@@ -51,6 +51,7 @@ extension GameScene {
             toPosition: trickNode.centerPosition,
             animated: false
         )
+        clearJokerLeadInfo()
         currentTrump = nil
 
         pendingBids = Array(repeating: 0, count: playerCount)

@@ -23,6 +23,9 @@ class GameScene: SKScene {
         static let gameInfoTopInset: CGFloat = 34
         static let trickCenterYOffset: CGFloat = 20
         static let trumpIndicatorInset: CGFloat = 116
+        static let jokerLeadInfoSize = CGSize(width: 220, height: 126)
+        static let jokerLeadInfoRightInset: CGFloat = 126
+        static let jokerLeadInfoTopOffsetFromTrickCenter: CGFloat = 26
     }
 
     var playerCount: Int = 4
@@ -40,6 +43,9 @@ class GameScene: SKScene {
 
     // UI элементы для отображения состояния игры
     var gameInfoLabel: SKLabelNode?
+    var jokerLeadInfoPanel: SKShapeNode?
+    var jokerLeadInfoPlayerLabel: SKLabelNode?
+    var jokerLeadInfoModeLabel: SKLabelNode?
 
     // Игровые компоненты
     var deck = Deck()
@@ -462,6 +468,10 @@ class GameScene: SKScene {
         if trumpIndicator.parent == nil {
             addChild(trumpIndicator)
         }
+
+        setupJokerLeadInfoPanel()
+        jokerLeadInfoPanel?.position = jokerLeadInfoPosition(insets: safeInsets())
+        clearJokerLeadInfo()
     }
 
     private func beginFirstDealerSelectionFlow() {
@@ -544,6 +554,7 @@ class GameScene: SKScene {
 
         trickNode.centerPosition = trickCenterPosition()
         trumpIndicator.position = trumpIndicatorPosition(insets: insets)
+        jokerLeadInfoPanel?.position = jokerLeadInfoPosition(insets: insets)
         firstDealerAnnouncementNode?.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
 
         updateTurnUI(animated: false)
@@ -595,6 +606,91 @@ class GameScene: SKScene {
             x: size.width - insets.right - LayoutMetrics.trumpIndicatorInset,
             y: insets.bottom + LayoutMetrics.trumpIndicatorInset
         )
+    }
+
+    private func jokerLeadInfoPosition(insets: UIEdgeInsets) -> CGPoint {
+        return CGPoint(
+            x: size.width - insets.right - LayoutMetrics.jokerLeadInfoRightInset,
+            y: trickCenterPosition().y + LayoutMetrics.jokerLeadInfoTopOffsetFromTrickCenter
+        )
+    }
+
+    private func setupJokerLeadInfoPanel() {
+        guard jokerLeadInfoPanel == nil else { return }
+
+        let panel = SKShapeNode(rectOf: LayoutMetrics.jokerLeadInfoSize, cornerRadius: 16)
+        panel.fillColor = GameColors.panelBackground
+        panel.strokeColor = GameColors.goldTranslucent
+        panel.lineWidth = 2
+        panel.zPosition = 115
+        panel.isHidden = true
+
+        let titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
+        titleLabel.text = "Ход бота с джокера"
+        titleLabel.fontSize = 14
+        titleLabel.fontColor = GameColors.textSecondary
+        titleLabel.horizontalAlignmentMode = .center
+        titleLabel.verticalAlignmentMode = .center
+        titleLabel.position = CGPoint(x: 0, y: 34)
+        panel.addChild(titleLabel)
+
+        let playerLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        playerLabel.fontSize = 20
+        playerLabel.fontColor = GameColors.textPrimary
+        playerLabel.horizontalAlignmentMode = .center
+        playerLabel.verticalAlignmentMode = .center
+        playerLabel.position = CGPoint(x: 0, y: 8)
+        playerLabel.text = ""
+        panel.addChild(playerLabel)
+
+        let modeLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
+        modeLabel.fontSize = 16
+        modeLabel.fontColor = GameColors.gold
+        modeLabel.horizontalAlignmentMode = .center
+        modeLabel.verticalAlignmentMode = .center
+        modeLabel.position = CGPoint(x: 0, y: -22)
+        modeLabel.text = ""
+        panel.addChild(modeLabel)
+
+        addChild(panel)
+        jokerLeadInfoPanel = panel
+        jokerLeadInfoPlayerLabel = playerLabel
+        jokerLeadInfoModeLabel = modeLabel
+    }
+
+    func showBotJokerLeadInfo(for playerIndex: Int, declaration: JokerLeadDeclaration?) {
+        guard isBotPlayer(playerIndex) else {
+            clearJokerLeadInfo()
+            return
+        }
+
+        guard let panel = jokerLeadInfoPanel else { return }
+
+        let defaultName = "Игрок \(playerIndex + 1)"
+        let playerName = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].name
+            : defaultName
+
+        jokerLeadInfoPlayerLabel?.text = playerName
+        jokerLeadInfoModeLabel?.text = jokerLeadInfoText(for: declaration)
+        panel.isHidden = false
+    }
+
+    func clearJokerLeadInfo() {
+        jokerLeadInfoPanel?.isHidden = true
+        jokerLeadInfoPlayerLabel?.text = ""
+        jokerLeadInfoModeLabel?.text = ""
+    }
+
+    private func jokerLeadInfoText(for declaration: JokerLeadDeclaration?) -> String {
+        switch declaration {
+        case .wish, .none:
+            return "Просто хочет взятку"
+        case .above(let suit):
+            return "Выше: \(suit.name) \(suit.rawValue)"
+        case .takes(let suit):
+            return "Забирает: \(suit.name) \(suit.rawValue)"
+        }
     }
 
     private func makeActionButton(

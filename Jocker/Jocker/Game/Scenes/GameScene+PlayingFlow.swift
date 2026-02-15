@@ -12,6 +12,7 @@ extension GameScene {
 
     private func registerTrickWin(for playerIndex: Int) {
         guard playerIndex >= 0, playerIndex < playerCount else { return }
+        clearJokerLeadInfo()
         trickNode.clearTrick(
             toPosition: players[playerIndex].position,
             animated: true
@@ -102,6 +103,17 @@ extension GameScene {
         jokerPlayStyle: JokerPlayStyle = .faceUp,
         jokerLeadDeclaration: JokerLeadDeclaration? = nil
     ) {
+        let isLeadCard = trickNode.playedCards.isEmpty
+        if isLeadCard {
+            clearJokerLeadInfo()
+            if card.isJoker {
+                showBotJokerLeadInfo(
+                    for: playerIndex,
+                    declaration: jokerLeadDeclaration
+                )
+            }
+        }
+
         let targetPosition = trickTargetPosition(for: playerIndex)
         _ = trickNode.playCard(
             card,
