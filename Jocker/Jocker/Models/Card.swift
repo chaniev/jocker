@@ -71,10 +71,10 @@ enum Rank: Int, CaseIterable, Comparable {
         case .eight: return "8"
         case .nine: return "9"
         case .ten: return "10"
-        case .jack: return "В"  // Валет
-        case .queen: return "Д"  // Дама
-        case .king: return "К"   // Король
-        case .ace: return "Т"    // Туз
+        case .jack: return "J"
+        case .queen: return "Q"
+        case .king: return "K"
+        case .ace: return "A"
         }
     }
     
