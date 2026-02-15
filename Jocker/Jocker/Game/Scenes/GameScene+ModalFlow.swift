@@ -11,6 +11,15 @@ import UIKit
 extension GameScene {
     // MARK: - Modal Flow
 
+    @discardableResult
+    func presentGameResultsModal(playerSummaries: [GameFinalPlayerSummary]) -> Bool {
+        guard !playerSummaries.isEmpty else { return false }
+        guard !isGameResultsModalPresented else { return true }
+
+        let modal = GameResultsViewController(playerSummaries: playerSummaries)
+        return presentOverlayModal(modal)
+    }
+
     func requestTrumpChoice(
         forPlayer playerIndex: Int,
         handCards: [Card],
@@ -213,5 +222,9 @@ extension GameScene {
 
     private var isJokerDecisionModalPresented: Bool {
         return topPresentedViewController() is JokerModeSelectionViewController
+    }
+
+    private var isGameResultsModalPresented: Bool {
+        return topPresentedViewController() is GameResultsViewController
     }
 }

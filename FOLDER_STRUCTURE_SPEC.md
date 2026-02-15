@@ -49,6 +49,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
 - `Jocker/Jocker/Models/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
 - `Jocker/Jocker/Models/TrumpSelectionRules.swift`: round-level rules for trump selection mode (automatic vs player-chosen), chooser seat, and staged-deal size.
+- `Jocker/Jocker/Models/GameFinalPlayerSummary.swift`: computes final standings payload per player (place, total score, block-by-block scores, premiums per block, total premiums, and fourth-block blind count).
 - `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Models/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
@@ -58,6 +59,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/BidSelectionViewController.swift`: modal selector of human bid amount and pre-deal blind choice, built from shared UI factories (container, labels, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
+- `Jocker/Jocker/ViewControllers/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
 
 ## App Source Layout
 
@@ -103,6 +105,7 @@ Jocker/Jocker/
 │   ├── GameBlock.swift
 │   ├── GameBlockFormatter.swift
 │   ├── GameConstants.swift
+│   ├── GameFinalPlayerSummary.swift
 │   ├── GamePhase.swift
 │   ├── GameState.swift
 │   ├── JokerLeadDeclaration.swift
@@ -123,6 +126,7 @@ Jocker/Jocker/
 ├── ViewControllers/
 │   ├── BidSelectionViewController.swift
 │   ├── GameViewController.swift
+│   ├── GameResultsViewController.swift
 │   ├── JokerModeSelectionViewController.swift
 │   ├── PlayerSelectionViewController.swift
 │   ├── ScoreTableView.swift
@@ -145,6 +149,7 @@ Jocker/JockerTests/
 ├── BotTrumpSelectionServiceTests.swift
 ├── BotTurnStrategyServiceTests.swift
 ├── GameFlowIntegrationTests.swift
+├── GameFinalPlayerSummaryTests.swift
 ├── GameScenePlayingFlowTests.swift
 ├── GameStateTests.swift
 ├── JockerTests.swift

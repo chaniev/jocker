@@ -97,6 +97,7 @@ class GameScene: SKScene {
     var pendingBids: [Int] = []
     var pendingBlindSelections: [Bool] = []
     var firstDealerAnnouncementNode: SKNode?
+    var hasPresentedGameResultsModal = false
 
     var isInteractionBlocked: Bool {
         return coordinator.isInteractionLocked ||
@@ -567,6 +568,7 @@ class GameScene: SKScene {
         let selectedDealerIndex = determineFirstDealerIndex()
         firstDealerIndex = selectedDealerIndex
         gameState.startGame(initialDealerIndex: selectedDealerIndex)
+        hasPresentedGameResultsModal = false
 
         firstDealerAnnouncementNode?.removeFromParent()
         firstDealerAnnouncementNode = nil
@@ -813,6 +815,43 @@ class GameScene: SKScene {
         button.position = position
         button.onTap = onTap
         return button
+    }
+
+    func buildFinalGamePlayerSummaries() -> [GameFinalPlayerSummary] {
+        return GameFinalPlayerSummary.build(
+            playerNames: gameState.players.map(\.name),
+            playerCount: playerCount,
+            completedBlocks: scoreManager.completedBlocks
+        )
+    }
+
+    @discardableResult
+    func tryPresentGameResultsIfNeeded() -> Bool {
+        guard !hasPresentedGameResultsModal else { return false }
+        guard scoreManager.completedBlocks.count >= GameConstants.totalBlocks else { return false }
+
+        let isFinalRoundCompleted =
+            gameState.currentBlock == .fourth &&
+            gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock
+        let shouldPresent =
+            gameState.phase == .gameEnd ||
+            (gameState.phase == .roundEnd && isFinalRoundCompleted)
+        guard shouldPresent else { return false }
+
+        let playerSummaries = buildFinalGamePlayerSummaries()
+        guard !playerSummaries.isEmpty else { return false }
+
+        hasPresentedGameResultsModal = true
+        gameState.markGameEnded()
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
+
+        if !presentGameResultsModal(playerSummaries: playerSummaries) {
+            hasPresentedGameResultsModal = false
+            return false
+        }
+
+        return true
     }
 
     private func phaseTitle(for phase: GamePhase) -> String {
