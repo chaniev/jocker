@@ -12,6 +12,7 @@ import UIKit
 class GameScene: SKScene {
     private enum ActionKey {
         static let firstDealerSelection = "GameScene.firstDealerSelection"
+        static let botTurn = "GameScene.botTurn"
     }
 
     private enum LayoutMetrics {
@@ -26,6 +27,7 @@ class GameScene: SKScene {
 
     var playerCount: Int = 4
     var playerNames: [String] = []
+    var playerControlTypes: [PlayerControlType] = []
     var onScoreButtonTapped: (() -> Void)?
     var onTricksButtonTapped: ((_ playerNames: [String], _ maxTricks: Int, _ currentBids: [Int], _ dealerIndex: Int) -> Void)?
     var onJokerDecisionRequested: ((_ isLeadCard: Bool, _ completion: @escaping (JokerPlayDecision?) -> Void) -> Void)?
@@ -58,13 +60,21 @@ class GameScene: SKScene {
     private var firstDealerIndex: Int = 0
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     private let coordinator = GameSceneCoordinator()
+    private let botBiddingService = BotBiddingService()
     private let shouldRevealAllPlayersCards = true
     private var isSelectingFirstDealer = false
     private var isAwaitingJokerDecision = false
+    private var isAwaitingHumanBidChoice = false
+    private var isRunningBiddingFlow = false
+    private var pendingBids: [Int] = []
     private var firstDealerAnnouncementNode: SKNode?
 
     private var isInteractionBlocked: Bool {
-        return coordinator.isInteractionLocked || isSelectingFirstDealer || isAwaitingJokerDecision
+        return coordinator.isInteractionLocked ||
+            isSelectingFirstDealer ||
+            isAwaitingJokerDecision ||
+            isAwaitingHumanBidChoice ||
+            isRunningBiddingFlow
     }
 
     var scoreTableFirstPlayerIndex: Int {
@@ -80,6 +90,7 @@ class GameScene: SKScene {
         self.backgroundColor = GameColors.sceneBackground
 
         applyConfiguredPlayerNames()
+        applyConfiguredPlayerControlTypes()
 
         setupPokerTable()
         setupPlayers()
@@ -101,6 +112,27 @@ class GameScene: SKScene {
 
     private func applyConfiguredPlayerNames() {
         gameState.setPlayerNames(playerNames)
+    }
+
+    private func applyConfiguredPlayerControlTypes() {
+        if playerControlTypes.count != playerCount {
+            playerControlTypes = (0..<playerCount).map { index in
+                index == 0 ? .human : .bot
+            }
+        }
+
+        if !playerControlTypes.contains(.human), !playerControlTypes.isEmpty {
+            playerControlTypes[0] = .human
+        }
+    }
+
+    private func isHumanPlayer(_ index: Int) -> Bool {
+        guard playerControlTypes.indices.contains(index) else { return false }
+        return playerControlTypes[index] == .human
+    }
+
+    private func isBotPlayer(_ index: Int) -> Bool {
+        return !isHumanPlayer(index)
     }
 
     // MARK: - Покерный стол
@@ -132,27 +164,12 @@ class GameScene: SKScene {
             }
 
             if let button = tricksButton, button.containsTouchPoint(location) {
-                button.animateTap()
+                // В MVP-режиме ставки остальных игроков назначаются автоматически.
                 return
             }
 
             if let selectedCard = selectedHandCard(at: location),
                handleSelectedCardTap(playerIndex: selectedCard.playerIndex, cardNode: selectedCard.cardNode) {
-                return
-            }
-
-            if let playerIndex = playerIndex(at: location) {
-                guard gameState.phase == .playing else { return }
-
-                if playerIndex == gameState.currentPlayer {
-                    if players.indices.contains(playerIndex), players[playerIndex].isLocalPlayer {
-                        return
-                    }
-
-                    playAutomaticCard(for: playerIndex)
-                    return
-                }
-
                 return
             }
         }
@@ -205,7 +222,7 @@ class GameScene: SKScene {
                 avatar: avatars[index % avatars.count],
                 position: position,
                 seatDirection: direction,
-                isLocalPlayer: index == 0,
+                isLocalPlayer: isHumanPlayer(index),
                 shouldRevealCards: shouldRevealAllPlayersCards,
                 totalPlayers: playerCount
             )
@@ -574,6 +591,11 @@ class GameScene: SKScene {
     private func dealCards() {
         guard gameState.phase != .notStarted else { return }
 
+        removeAction(forKey: ActionKey.botTurn)
+        isAwaitingHumanBidChoice = false
+        isRunningBiddingFlow = false
+        pendingBids.removeAll()
+
         coordinator.cancelPendingTrickResolution(on: self)
 
         guard coordinator.prepareForDealing(
@@ -624,6 +646,7 @@ class GameScene: SKScene {
             },
             onHighlightTurn: { [weak self] in
                 self?.updateTurnUI(animated: true)
+                self?.startBiddingFlowIfNeeded()
             }
         )
 
@@ -635,7 +658,9 @@ class GameScene: SKScene {
         trickNode.clearTrick(
             toPosition: players[playerIndex].position,
             animated: true
-        )
+        ) { [weak self] in
+            self?.runBotTurnIfNeeded()
+        }
         gameState.completeTrick(winner: playerIndex)
         players[playerIndex].incrementTricks()
         coordinator.completeRoundIfNeeded(
@@ -649,12 +674,9 @@ class GameScene: SKScene {
 
     private func handleSelectedCardTap(playerIndex: Int, cardNode: CardNode) -> Bool {
         guard players.indices.contains(playerIndex) else { return false }
+        guard isHumanPlayer(playerIndex) else { return false }
 
         let player = players[playerIndex]
-
-        if gameState.phase == .bidding {
-            gameState.beginPlayingAfterBids()
-        }
 
         guard gameState.phase == .playing else { return false }
         guard playerIndex == gameState.currentPlayer else { return false }
@@ -679,19 +701,29 @@ class GameScene: SKScene {
 
     private func playAutomaticCard(for playerIndex: Int) {
         guard players.indices.contains(playerIndex) else { return }
+        guard isBotPlayer(playerIndex) else { return }
 
         guard !players[playerIndex].hand.cards.isEmpty else {
-            gameState.playCard(byPlayer: playerIndex)
+            assertionFailure("Bot turn requested with empty hand at player index \(playerIndex)")
             updateGameInfoLabel()
             updateTurnUI(animated: true)
             return
         }
 
+        let bid = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].currentBid
+            : nil
+        let tricksTaken = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].tricksTaken
+            : nil
+
         guard let card = coordinator.automaticCard(
             for: playerIndex,
             players: players,
             trickNode: trickNode,
-            trump: currentTrump
+            trump: currentTrump,
+            bid: bid,
+            tricksTaken: tricksTaken
         ) else {
             return
         }
@@ -730,6 +762,7 @@ class GameScene: SKScene {
 
         updateGameInfoLabel()
         updateTurnUI(animated: true)
+        runBotTurnIfNeeded()
     }
 
     @discardableResult
@@ -817,35 +850,233 @@ class GameScene: SKScene {
         )
     }
 
-    private func playerIndex(at point: CGPoint) -> Int? {
-        for node in nodes(at: point) {
-            if let playerNode: PlayerNode = findAncestor(from: node, as: PlayerNode.self, maxDepth: 12) {
-                return playerNode.playerNumber - 1
-            }
-        }
-
-        return nil
-    }
-
     func applyOrderedTricks(_ bids: [Int]) {
         guard bids.count == playerCount else { return }
-        let maxBid = max(0, gameState.currentCardsPerPlayer)
-
-        for (index, rawBid) in bids.enumerated() {
-            let bid = min(max(rawBid, 0), maxBid)
-            gameState.setBid(bid, forPlayerAt: index)
-            players[index].setBid(bid, animated: true)
-        }
-
-        gameState.beginPlayingAfterBids()
-        updateGameInfoLabel()
-        updateTurnUI(animated: true)
+        guard gameState.phase == .bidding else { return }
+        pendingBids = bids
+        isRunningBiddingFlow = false
+        applyBidsToGameStateAndStartPlaying(bids)
     }
 
     private func presentTricksOrder() {
         let playerNames = gameState.players.map { $0.name }
         let currentBids = gameState.players.map { $0.currentBid }
         onTricksButtonTapped?(playerNames, gameState.currentCardsPerPlayer, currentBids, gameState.currentDealer)
+    }
+
+    private func startBiddingFlowIfNeeded() {
+        guard gameState.phase == .bidding else { return }
+        guard !isRunningBiddingFlow else { return }
+
+        isRunningBiddingFlow = true
+        pendingBids = Array(repeating: 0, count: playerCount)
+        processBiddingStep(order: biddingOrder(), step: 0)
+    }
+
+    private func processBiddingStep(order: [Int], step: Int) {
+        guard gameState.phase == .bidding else {
+            isRunningBiddingFlow = false
+            pendingBids.removeAll()
+            return
+        }
+
+        guard step < order.count else {
+            let bids = pendingBids
+            pendingBids.removeAll()
+            isRunningBiddingFlow = false
+            applyBidsToGameStateAndStartPlaying(bids)
+            return
+        }
+
+        let playerIndex = order[step]
+        let forbidden = forbiddenDealerBidIfNeeded(
+            for: playerIndex,
+            bids: pendingBids
+        )
+
+        if isHumanPlayer(playerIndex) {
+            requestHumanBid(
+                forPlayer: playerIndex,
+                maxBid: max(0, gameState.currentCardsPerPlayer),
+                forbiddenBid: forbidden
+            ) { [weak self] selectedBid in
+                guard let self = self else { return }
+                guard self.gameState.phase == .bidding else { return }
+
+                let fallbackBid = self.firstAllowedBid(
+                    maxBid: max(0, self.gameState.currentCardsPerPlayer),
+                    forbiddenBid: forbidden
+                )
+                let resolvedBid = selectedBid ?? fallbackBid
+                self.pendingBids[playerIndex] = resolvedBid
+                self.players[playerIndex].setBid(resolvedBid, animated: true)
+                self.updateGameInfoLabel()
+                self.updateTurnUI(animated: true)
+                self.processBiddingStep(order: order, step: step + 1)
+            }
+            return
+        }
+
+        let bid = botBiddingService.makeBid(
+            hand: players[playerIndex].hand.cards,
+            cardsInRound: gameState.currentCardsPerPlayer,
+            trump: currentTrump,
+            forbiddenBid: forbidden
+        )
+        pendingBids[playerIndex] = bid
+        players[playerIndex].setBid(bid, animated: true)
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
+
+        run(
+            .sequence([
+                .wait(forDuration: 0.25),
+                .run { [weak self] in
+                    self?.processBiddingStep(order: order, step: step + 1)
+                }
+            ])
+        )
+    }
+
+    private func requestHumanBid(
+        forPlayer playerIndex: Int,
+        maxBid: Int,
+        forbiddenBid: Int?,
+        completion: @escaping (Int?) -> Void
+    ) {
+        guard let presenter = topPresentedViewController() else {
+            completion(nil)
+            return
+        }
+
+        isAwaitingHumanBidChoice = true
+
+        let playerName = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].name
+            : "Игрок \(playerIndex + 1)"
+
+        let message: String
+        if let forbiddenBid {
+            message = "Выберите ставку для \(playerName).\nНедоступно: \(forbiddenBid)."
+        } else {
+            message = "Выберите ставку для \(playerName)."
+        }
+
+        let alert = UIAlertController(
+            title: "Ваш заказ взяток",
+            message: message,
+            preferredStyle: .alert
+        )
+
+        for bid in 0...maxBid where bid != forbiddenBid {
+            alert.addAction(
+                UIAlertAction(title: "\(bid)", style: .default) { [weak self] _ in
+                    self?.isAwaitingHumanBidChoice = false
+                    completion(bid)
+                }
+            )
+        }
+
+        alert.addAction(
+            UIAlertAction(title: "Авто", style: .cancel) { [weak self] _ in
+                self?.isAwaitingHumanBidChoice = false
+                completion(nil)
+            }
+        )
+
+        presenter.present(alert, animated: true)
+    }
+
+    private func applyBidsToGameStateAndStartPlaying(_ bids: [Int]) {
+        guard bids.count == playerCount else { return }
+        guard gameState.phase == .bidding else { return }
+
+        let maxBid = max(0, gameState.currentCardsPerPlayer)
+        var safetyCounter = 0
+
+        while gameState.phase == .bidding && safetyCounter < playerCount {
+            let playerIndex = gameState.currentPlayer
+            var bid = min(max(bids[playerIndex], 0), maxBid)
+
+            if playerIndex == gameState.currentDealer, !gameState.isValidBidForDealer(bid) {
+                let forbidden = forbiddenDealerBidIfNeeded(
+                    for: playerIndex,
+                    bids: bids
+                )
+                bid = firstAllowedBid(maxBid: maxBid, forbiddenBid: forbidden)
+            }
+
+            players[playerIndex].setBid(bid, animated: true)
+            _ = gameState.placeBid(bid, forPlayer: playerIndex)
+            safetyCounter += 1
+        }
+
+        updateGameInfoLabel()
+        updateTurnUI(animated: true)
+        runBotTurnIfNeeded()
+    }
+
+    private func forbiddenDealerBidIfNeeded(for playerIndex: Int, bids: [Int]) -> Int? {
+        guard playerIndex == gameState.currentDealer else { return nil }
+        guard playerCount > 1 else { return nil }
+
+        let totalWithoutDealer = bids.enumerated().reduce(0) { partial, pair in
+            let (index, bid) = pair
+            return partial + ((index == gameState.currentDealer) ? 0 : bid)
+        }
+
+        let forbidden = gameState.currentCardsPerPlayer - totalWithoutDealer
+        guard forbidden >= 0 && forbidden <= gameState.currentCardsPerPlayer else { return nil }
+        return forbidden
+    }
+
+    private func firstAllowedBid(maxBid: Int, forbiddenBid: Int?) -> Int {
+        for bid in 0...maxBid where bid != forbiddenBid {
+            return bid
+        }
+        return 0
+    }
+
+    private func biddingOrder() -> [Int] {
+        guard playerCount > 0 else { return [] }
+        let start = (gameState.currentDealer + 1) % playerCount
+        return (0..<playerCount).map { offset in
+            (start + offset) % playerCount
+        }
+    }
+
+    private func runBotTurnIfNeeded() {
+        DispatchQueue.main.async { [weak self] in
+            self?.scheduleBotTurnIfNeeded()
+        }
+    }
+
+    private func scheduleBotTurnIfNeeded() {
+        guard gameState.phase == .playing else { return }
+        guard !isInteractionBlocked else { return }
+        guard players.indices.contains(gameState.currentPlayer) else { return }
+        guard isBotPlayer(gameState.currentPlayer) else { return }
+        guard action(forKey: ActionKey.botTurn) == nil else { return }
+
+        run(
+            .sequence([
+                .wait(forDuration: 0.35),
+                .run { [weak self] in
+                    guard let self = self else { return }
+                    guard self.gameState.phase == .playing else { return }
+
+                    if self.isInteractionBlocked {
+                        self.runBotTurnIfNeeded()
+                        return
+                    }
+
+                    let playerIndex = self.gameState.currentPlayer
+                    guard self.isBotPlayer(playerIndex) else { return }
+                    self.playAutomaticCard(for: playerIndex)
+                }
+            ]),
+            withKey: ActionKey.botTurn
+        )
     }
 
     private func requestJokerDecisionAndPlay(cardNode: CardNode, playerIndex: Int) {

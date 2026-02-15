@@ -141,7 +141,7 @@ final class GameStateTests: XCTestCase {
 
         let result = deck.dealCards(playerCount: 4, cardsPerPlayer: 1, startingPlayerIndex: 1)
 
-        XCTAssertEqual(result.hands[1], [.joker], "Первая карта должна уйти стартовому игроку")
+        XCTAssertEqual(result.hands[1], [.regular(suit: .diamonds, rank: .six)], "Первая карта должна уйти стартовому игроку")
         XCTAssertEqual(result.hands[2], [.regular(suit: .diamonds, rank: .seven)])
         XCTAssertEqual(result.hands[3], [.regular(suit: .diamonds, rank: .eight)])
         XCTAssertEqual(result.hands[0], [.regular(suit: .diamonds, rank: .nine)])
@@ -152,10 +152,24 @@ final class GameStateTests: XCTestCase {
 
         let result = deck.dealCards(playerCount: 4, cardsPerPlayer: 1)
 
-        XCTAssertEqual(result.hands[0], [.joker])
+        XCTAssertEqual(result.hands[0], [.regular(suit: .diamonds, rank: .six)])
         XCTAssertEqual(result.hands[1], [.regular(suit: .diamonds, rank: .seven)])
         XCTAssertEqual(result.hands[2], [.regular(suit: .diamonds, rank: .eight)])
         XCTAssertEqual(result.hands[3], [.regular(suit: .diamonds, rank: .nine)])
+    }
+
+    func testDeckDealCards_fourPlayersNineCardsEach_dealsAllCardsWithoutTrump() {
+        var deck = Deck()
+
+        let result = deck.dealCards(playerCount: 4, cardsPerPlayer: 9)
+
+        XCTAssertEqual(result.hands.count, 4)
+        XCTAssertEqual(result.hands[0].count, 9)
+        XCTAssertEqual(result.hands[1].count, 9)
+        XCTAssertEqual(result.hands[2].count, 9)
+        XCTAssertEqual(result.hands[3].count, 9)
+        XCTAssertNil(result.trump, "При полной раздаче козырная карта не должна оставаться в колоде.")
+        XCTAssertEqual(deck.count, 0)
     }
 
     func testDeckSelectFirstDealer_startsFromProvidedSeatAndFindsFirstAce() {

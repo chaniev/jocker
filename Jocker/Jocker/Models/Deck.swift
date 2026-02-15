@@ -16,19 +16,14 @@ struct Deck {
         createStandardDeck()
     }
     
-    /// Создание стандартной колоды из 36 карт с 2 джокерами
-    /// 6♦️ и 6♣️ заменяются на джокеров
+    /// Создание стандартной колоды из 36 карт с 2 джокерами.
+    /// По правилам 6♠ и 6♣ заменяются на джокеров.
     private mutating func createStandardDeck() {
         cards.removeAll()
         
         // Добавляем бубны от 6 до туза
         for rank in Rank.allCases {
-            if rank == .six {
-                // 6♦️ заменяем на джокера
-                cards.append(.joker)
-            } else {
-                cards.append(.regular(suit: .diamonds, rank: rank))
-            }
+            cards.append(.regular(suit: .diamonds, rank: rank))
         }
         
         // Добавляем черви от 6 до туза
@@ -36,13 +31,14 @@ struct Deck {
             cards.append(.regular(suit: .hearts, rank: rank))
         }
         
-        // Добавляем пики от 7 до туза (нет шестёрки)
+        // Добавляем пики от 7 до туза; 6♠ заменяем первым джокером.
+        cards.append(.joker)
         for rank in Rank.allCases where rank != .six {
             cards.append(.regular(suit: .spades, rank: rank))
         }
         
-        // Добавляем крести от 7 до туза (6♣️ заменяем на джокера)
-        cards.append(.joker)  // Второй джокер
+        // Добавляем крести от 7 до туза; 6♣ заменяем вторым джокером.
+        cards.append(.joker)
         for rank in Rank.allCases where rank != .six {
             cards.append(.regular(suit: .clubs, rank: rank))
         }

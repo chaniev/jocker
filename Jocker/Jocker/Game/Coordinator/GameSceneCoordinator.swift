@@ -90,13 +90,17 @@ final class GameSceneCoordinator {
         for playerIndex: Int,
         players: [PlayerNode],
         trickNode: TrickNode,
-        trump: Suit?
+        trump: Suit?,
+        bid: Int?,
+        tricksTaken: Int?
     ) -> Card? {
         guard players.indices.contains(playerIndex) else { return nil }
         return turnService.automaticCard(
             from: players[playerIndex].hand.cards,
             trickNode: trickNode,
-            trump: trump
+            trump: trump,
+            bid: bid,
+            tricksTaken: tricksTaken
         )
     }
 
@@ -124,8 +128,8 @@ final class GameSceneCoordinator {
             on: scene,
             delay: resolutionDelay
         ) { [weak self] in
-            onResolved(winnerIndex)
             self?.isResolvingTrick = false
+            onResolved(winnerIndex)
         }
 
         return true

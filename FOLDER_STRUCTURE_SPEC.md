@@ -38,9 +38,11 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Services/GameRoundService.swift`: transitions between rounds/blocks and one-time block finalization recording.
 - `Jocker/Jocker/Game/Services/GameTurnService.swift`: automatic card choice and trick winner resolution entrypoint.
+- `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
 - `Jocker/Jocker/Models/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
+- `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
 - `Jocker/Jocker/ViewControllers/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines.
@@ -73,6 +75,7 @@ Jocker/Jocker/
 │   │   └── GameScene.swift
 │   └── Services/
 │       ├── GameAnimationService.swift
+│       ├── BotBiddingService.swift
 │       ├── GameRoundService.swift
 │       └── GameTurnService.swift
 ├── Models/
@@ -88,6 +91,7 @@ Jocker/Jocker/
 │   ├── JokerPlayStyle.swift
 │   ├── JokerPlayDecision.swift
 │   ├── PlayedTrickCard.swift
+│   ├── PlayerControlType.swift
 │   ├── PlayerInfo.swift
 │   ├── RoundResult.swift
 │   └── TrickTakingResolver.swift
@@ -115,6 +119,7 @@ Jocker/Jocker/
 ```
 Jocker/JockerTests/
 ├── AGENTS.md
+├── BotBiddingServiceTests.swift
 ├── GameFlowIntegrationTests.swift
 ├── GameStateTests.swift
 ├── JockerTests.swift

@@ -276,6 +276,9 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         let gameVC = GameViewController()
         gameVC.playerCount = selectedPlayerCount
         gameVC.playerNames = names
+        gameVC.playerControlTypes = (0..<selectedPlayerCount).map { index in
+            index == 0 ? .human : .bot
+        }
         gameVC.modalPresentationStyle = .fullScreen
         gameVC.modalTransitionStyle = .crossDissolve
         
