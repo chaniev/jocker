@@ -193,4 +193,3 @@ Jocker/JockerUITests/
 ## Type/File Rule
 
 - For new entities, keep one top-level type per file and match file name to type name.
-- Current legacy exception: `Jocker/Jocker/Models/Card.swift` intentionally contains related card types (`Suit`, `CardColor`, `Rank`, `Card`).
