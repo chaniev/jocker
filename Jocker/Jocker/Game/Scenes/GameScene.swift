@@ -85,6 +85,7 @@ class GameScene: SKScene {
     lazy var botTrumpSelectionService: BotTrumpSelectionService = {
         return BotTrumpSelectionService(tuning: botTuning)
     }()
+    let gameStatisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore()
     let shouldRevealAllPlayersCards = false
     var isSelectingFirstDealer = false
     var isAwaitingJokerDecision = false
@@ -98,6 +99,7 @@ class GameScene: SKScene {
     var pendingBlindSelections: [Bool] = []
     var firstDealerAnnouncementNode: SKNode?
     var hasPresentedGameResultsModal = false
+    var hasSavedGameStatistics = false
 
     var isInteractionBlocked: Bool {
         return coordinator.isInteractionLocked ||

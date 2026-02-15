@@ -56,6 +56,20 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+
+    private let statisticsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Статистика", for: .normal)
+        button.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 22)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(red: 0.20, green: 0.31, blue: 0.50, alpha: 0.95)
+        button.layer.cornerRadius = 14
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 0.95).cgColor
+        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
     
     private let playerOneNameField: UITextField = {
         let textField = UITextField()
@@ -92,6 +106,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
     
     private func setupUI() {
         view.addSubview(contentContainerView)
+        view.addSubview(statisticsButton)
         contentContainerView.addSubview(countButtonsStack)
         contentContainerView.addSubview(playerOneNameField)
         
@@ -100,6 +115,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         
         threePlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
         fourPlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
+        statisticsButton.addTarget(self, action: #selector(showStatisticsTapped), for: .touchUpInside)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleBackgroundTap))
         tapGesture.cancelsTouchesInView = false
@@ -122,7 +138,11 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
             playerOneNameField.centerXAnchor.constraint(equalTo: contentContainerView.centerXAnchor),
             playerOneNameField.leadingAnchor.constraint(equalTo: contentContainerView.leadingAnchor),
             playerOneNameField.trailingAnchor.constraint(equalTo: contentContainerView.trailingAnchor),
-            playerOneNameField.bottomAnchor.constraint(equalTo: contentContainerView.bottomAnchor)
+            playerOneNameField.bottomAnchor.constraint(equalTo: contentContainerView.bottomAnchor),
+
+            statisticsButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            statisticsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            statisticsButton.heightAnchor.constraint(equalToConstant: 54)
         ])
     }
     
@@ -178,6 +198,17 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
     
     @objc private func handleBackgroundTap() {
         view.endEditing(true)
+    }
+
+    @objc private func showStatisticsTapped() {
+        guard !isStartingGame else { return }
+
+        view.endEditing(true)
+
+        let statisticsViewController = GameStatisticsViewController()
+        statisticsViewController.modalPresentationStyle = .fullScreen
+        statisticsViewController.modalTransitionStyle = .crossDissolve
+        present(statisticsViewController, animated: true)
     }
     
     private func startGame() {

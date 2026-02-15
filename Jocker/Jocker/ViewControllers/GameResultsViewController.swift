@@ -30,6 +30,7 @@ final class GameResultsViewController: UIViewController {
 
     private let playerSummaries: [GameFinalPlayerSummary]
     private let onClose: (() -> Void)?
+    private var isClosing = false
 
     init(
         playerSummaries: [GameFinalPlayerSummary],
@@ -238,6 +239,9 @@ final class GameResultsViewController: UIViewController {
 
     @objc
     private func handleCloseTapped() {
+        guard !isClosing else { return }
+        isClosing = true
+
         dismiss(animated: true) { [onClose] in
             onClose?()
         }

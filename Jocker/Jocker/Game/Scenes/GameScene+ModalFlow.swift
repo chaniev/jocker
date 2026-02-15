@@ -19,7 +19,9 @@ extension GameScene {
         let modal = GameResultsViewController(
             playerSummaries: playerSummaries,
             onClose: { [weak self] in
-                self?.dismissGameViewControllerToStartScreen()
+                guard let self else { return }
+                self.persistGameStatisticsIfNeeded(playerSummaries: playerSummaries)
+                self.dismissGameViewControllerToStartScreen()
             }
         )
         return presentOverlayModal(modal)
@@ -257,5 +259,18 @@ extension GameScene {
                 currentController = controller.presentingViewController
             }
         }
+    }
+
+    private func persistGameStatisticsIfNeeded(playerSummaries: [GameFinalPlayerSummary]) {
+        guard !hasSavedGameStatistics else { return }
+        guard !playerSummaries.isEmpty else { return }
+        guard !scoreManager.completedBlocks.isEmpty else { return }
+
+        hasSavedGameStatistics = true
+        gameStatisticsStore.recordCompletedGame(
+            playerCount: playerCount,
+            playerSummaries: playerSummaries,
+            completedBlocks: scoreManager.completedBlocks
+        )
     }
 }
