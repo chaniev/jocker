@@ -92,6 +92,19 @@ class GameScene: SKScene {
         return (firstDealerIndex + 1) % playerCount
     }
 
+    var scoreTableCurrentBlockIndex: Int {
+        return min(max(gameState.currentBlock.rawValue - 1, 0), max(0, GameConstants.totalBlocks - 1))
+    }
+
+    var scoreTableCurrentRoundIndex: Int {
+        let dealsInCurrentBlock = GameConstants.deals(
+            for: gameState.currentBlock,
+            playerCount: playerCount
+        )
+        guard !dealsInCurrentBlock.isEmpty else { return 0 }
+        return min(max(gameState.currentRoundInBlock, 0), dealsInCurrentBlock.count - 1)
+    }
+
     var currentPlayerNames: [String] {
         return gameState.players.map { $0.name }
     }

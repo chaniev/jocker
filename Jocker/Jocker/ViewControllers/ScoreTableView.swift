@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class ScoreTableView: UIView {
+final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     private enum RowKind: Equatable {
         case deal(cards: Int)
@@ -96,6 +96,7 @@ final class ScoreTableView: UIView {
         updateColumnWidths()
         layoutScrollView()
         repositionLabels()
+        updatePinnedHeaderPosition()
         updateGridLayers()
         applyScoreDataIfNeeded()
     }
@@ -103,6 +104,25 @@ final class ScoreTableView: UIView {
     func update(with scoreManager: ScoreManager) {
         self.scoreManager = scoreManager
         applyScoreDataIfNeeded()
+    }
+
+    func scrollToDeal(blockIndex: Int, roundIndex: Int, animated: Bool) {
+        layoutIfNeeded()
+
+        guard let targetRowIndex = targetDealRowIndex(blockIndex: blockIndex, roundIndex: roundIndex) else {
+            return
+        }
+
+        let rowTop = headerHeight + CGFloat(targetRowIndex) * rowHeight
+        let visibleHeight = max(scrollView.bounds.height, 1)
+        let maxOffsetY = max(0, scrollView.contentSize.height - visibleHeight)
+        let centeredOffsetY = rowTop - (visibleHeight - rowHeight) / 2
+        let targetOffsetY = min(max(0, centeredOffsetY), maxOffsetY)
+
+        scrollView.setContentOffset(
+            CGPoint(x: scrollView.contentOffset.x, y: targetOffsetY),
+            animated: animated
+        )
     }
 
     // MARK: - Setup
@@ -116,6 +136,7 @@ final class ScoreTableView: UIView {
         scrollView.alwaysBounceVertical = true
         scrollView.alwaysBounceHorizontal = true
         scrollView.indicatorStyle = .black
+        scrollView.delegate = self
         addSubview(scrollView)
 
         NSLayoutConstraint.activate([
@@ -166,6 +187,7 @@ final class ScoreTableView: UIView {
             headerLabel.font = headerFont
             headerLabel.textAlignment = .center
             headerLabel.textColor = textPrimaryColor
+            headerLabel.backgroundColor = surfaceColor
             headerLabel.adjustsFontSizeToFitWidth = true
             headerLabel.minimumScaleFactor = 0.65
             headerLabel.lineBreakMode = .byTruncatingTail
@@ -246,6 +268,21 @@ final class ScoreTableView: UIView {
         }
     }
 
+    private func updatePinnedHeaderPosition() {
+        let pinnedY = scrollView.contentOffset.y
+
+        for headerLabel in headerLabels {
+            var frame = headerLabel.frame
+            frame.origin.y = pinnedY
+            headerLabel.frame = frame
+            contentView.bringSubviewToFront(headerLabel)
+        }
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        updatePinnedHeaderPosition()
+    }
+
     // MARK: - Данные
 
     private func applyScoreDataIfNeeded() {
@@ -290,6 +327,27 @@ final class ScoreTableView: UIView {
 
         let trimmedName = playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmedName.isEmpty ? "Игрок \(playerIndex + 1)" : trimmedName
+    }
+
+    private func targetDealRowIndex(blockIndex: Int, roundIndex: Int) -> Int? {
+        let dealRows = layout.rowMappings.enumerated().compactMap { (rowIndex, mapping) -> (rowIndex: Int, roundIndex: Int)? in
+            guard mapping.blockIndex == blockIndex else { return nil }
+
+            if case .deal = mapping.kind {
+                return (rowIndex, mapping.roundIndex ?? 0)
+            }
+
+            return nil
+        }
+
+        guard !dealRows.isEmpty else { return nil }
+
+        let safeRound = min(max(roundIndex, 0), dealRows.count - 1)
+        if let exactMatch = dealRows.first(where: { $0.roundIndex == safeRound }) {
+            return exactMatch.rowIndex
+        }
+
+        return dealRows[safeRound].rowIndex
     }
 
     private func applyDealRow(

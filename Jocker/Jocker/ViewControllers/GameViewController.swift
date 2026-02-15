@@ -57,7 +57,9 @@ class GameViewController: UIViewController {
         let scoreVC = ScoreTableViewController(
             scoreManager: scoreManager,
             firstColumnPlayerIndex: scene.scoreTableFirstPlayerIndex,
-            playerNames: scene.currentPlayerNames
+            playerNames: scene.currentPlayerNames,
+            currentBlockIndex: scene.scoreTableCurrentBlockIndex,
+            currentRoundIndex: scene.scoreTableCurrentRoundIndex
         )
         scoreVC.modalPresentationStyle = .fullScreen
         scoreVC.modalTransitionStyle = .crossDissolve

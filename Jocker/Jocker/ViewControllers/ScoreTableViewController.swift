@@ -11,13 +11,20 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
     
     private let tableView: ScoreTableView
     private let scoreManager: ScoreManager
+    private let currentBlockIndex: Int
+    private let currentRoundIndex: Int
+    private var didApplyInitialDealScroll = false
     
     init(
         scoreManager: ScoreManager,
         firstColumnPlayerIndex: Int = 0,
-        playerNames: [String] = []
+        playerNames: [String] = [],
+        currentBlockIndex: Int = 0,
+        currentRoundIndex: Int = 0
     ) {
         self.scoreManager = scoreManager
+        self.currentBlockIndex = currentBlockIndex
+        self.currentRoundIndex = currentRoundIndex
         self.tableView = ScoreTableView(
             playerCount: scoreManager.playerCount,
             displayStartPlayerIndex: firstColumnPlayerIndex,
@@ -43,6 +50,11 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         super.viewWillAppear(animated)
         tableView.update(with: scoreManager)
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        applyInitialDealScrollIfNeeded()
+    }
     
     private func setupTableView() {
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -61,6 +73,18 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         swipe.direction = .right
         swipe.delegate = self
         view.addGestureRecognizer(swipe)
+    }
+
+    private func applyInitialDealScrollIfNeeded() {
+        guard !didApplyInitialDealScroll else { return }
+        guard tableView.bounds.height > 0 else { return }
+
+        tableView.scrollToDeal(
+            blockIndex: currentBlockIndex,
+            roundIndex: currentRoundIndex,
+            animated: false
+        )
+        didApplyInitialDealScroll = true
     }
     
     @objc private func handleSwipeBack() {
