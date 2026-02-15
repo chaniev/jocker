@@ -51,6 +51,9 @@
 		C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
 		C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20042F5000010037CA75 /* GameAnimationService.swift */; };
 		C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20052F5300010037CA75 /* BotBiddingService.swift */; };
+		C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */; };
+		C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */; };
+		C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */; };
 		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
 		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
@@ -129,8 +132,11 @@
 		C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
 		C0DE20042F5000010037CA75 /* GameAnimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAnimationService.swift; sourceTree = "<group>"; };
 		C0DE20052F5300010037CA75 /* BotBiddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingService.swift; sourceTree = "<group>"; };
+		C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyService.swift; sourceTree = "<group>"; };
 		C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
 		C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingServiceTests.swift; sourceTree = "<group>"; };
+		C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyServiceTests.swift; sourceTree = "<group>"; };
+		C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPlayFlowTests.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
@@ -300,6 +306,7 @@
 			children = (
 				C0DE20042F5000010037CA75 /* GameAnimationService.swift */,
 				C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
+				C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
 				C0DE20022F5000010037CA75 /* GameRoundService.swift */,
 				C0DE20032F5000010037CA75 /* GameTurnService.swift */,
 			);
@@ -333,6 +340,8 @@
 			children = (
 				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
 				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
+				C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
+				C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
 				7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
 				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
@@ -508,6 +517,7 @@
 					C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
 					C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,
 					C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
+					C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
 					C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
 				C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
@@ -534,6 +544,8 @@
 			files = (
 				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
 				C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
+				C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
+				C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,
 				7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
 				DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
 				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,

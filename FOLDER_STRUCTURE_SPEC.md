@@ -37,7 +37,8 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Scenes/GameScene.swift`: orchestration layer of the gameplay scene (input handling, dealing flow, trick progression, UI sync, interaction with coordinator and modal callbacks).
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Services/GameRoundService.swift`: transitions between rounds/blocks and one-time block finalization recording.
-- `Jocker/Jocker/Game/Services/GameTurnService.swift`: automatic card choice and trick winner resolution entrypoint.
+- `Jocker/Jocker/Game/Services/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
+- `Jocker/Jocker/Game/Services/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration).
 - `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
@@ -76,6 +77,7 @@ Jocker/Jocker/
 │   └── Services/
 │       ├── GameAnimationService.swift
 │       ├── BotBiddingService.swift
+│       ├── BotTurnStrategyService.swift
 │       ├── GameRoundService.swift
 │       └── GameTurnService.swift
 ├── Models/
@@ -119,7 +121,9 @@ Jocker/Jocker/
 ```
 Jocker/JockerTests/
 ├── AGENTS.md
+├── AutoPlayFlowTests.swift
 ├── BotBiddingServiceTests.swift
+├── BotTurnStrategyServiceTests.swift
 ├── GameFlowIntegrationTests.swift
 ├── GameStateTests.swift
 ├── JockerTests.swift

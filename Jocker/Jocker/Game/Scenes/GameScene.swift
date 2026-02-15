@@ -717,24 +717,25 @@ class GameScene: SKScene {
             ? gameState.players[playerIndex].tricksTaken
             : nil
 
-        guard let card = coordinator.automaticCard(
+        guard let turnDecision = coordinator.automaticTurnDecision(
             for: playerIndex,
             players: players,
             trickNode: trickNode,
             trump: currentTrump,
             bid: bid,
-            tricksTaken: tricksTaken
+            tricksTaken: tricksTaken,
+            cardsInRound: gameState.currentCardsPerPlayer
         ) else {
             return
         }
 
+        let card = turnDecision.card
         _ = players[playerIndex].hand.removeCard(card, animated: true)
-        let decision = automaticJokerDecision(for: card)
         playCardOnTable(
             card,
             by: playerIndex,
-            jokerPlayStyle: decision.style,
-            jokerLeadDeclaration: decision.leadDeclaration
+            jokerPlayStyle: turnDecision.jokerDecision.style,
+            jokerLeadDeclaration: turnDecision.jokerDecision.leadDeclaration
         )
     }
 
@@ -1138,14 +1139,6 @@ class GameScene: SKScene {
             fallbackDecision: fallbackDecision,
             completion: applyDecision
         )
-    }
-
-    private func automaticJokerDecision(for card: Card) -> JokerPlayDecision {
-        guard card.isJoker else { return .defaultNonLead }
-        if trickNode.playedCards.isEmpty {
-            return .defaultLead
-        }
-        return .defaultNonLead
     }
 
     private func presentJokerDecisionFallback(

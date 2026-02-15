@@ -86,21 +86,24 @@ final class GameSceneCoordinator {
         )
     }
 
-    func automaticCard(
+    func automaticTurnDecision(
         for playerIndex: Int,
         players: [PlayerNode],
         trickNode: TrickNode,
         trump: Suit?,
         bid: Int?,
-        tricksTaken: Int?
-    ) -> Card? {
+        tricksTaken: Int?,
+        cardsInRound: Int
+    ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         guard players.indices.contains(playerIndex) else { return nil }
-        return turnService.automaticCard(
+        return turnService.automaticTurnDecision(
             from: players[playerIndex].hand.cards,
             trickNode: trickNode,
             trump: trump,
             bid: bid,
-            tricksTaken: tricksTaken
+            tricksTaken: tricksTaken,
+            cardsInRound: cardsInRound,
+            playerCount: players.count
         )
     }
 
