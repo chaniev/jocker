@@ -10,8 +10,8 @@ import SpriteKit
 
 final class BidSelectionViewController: UIViewController {
     private enum LayoutMetrics {
-        static let maxButtonsPerRow = 3
-        static let buttonHeight: CGFloat = 49
+        static let maxButtonsPerRow = 5
+        static let buttonHeight: CGFloat = 44
         static let minButtonsAreaHeight: CGFloat = 58
         static let minContainerHeight: CGFloat = 300
     }
@@ -19,6 +19,8 @@ final class BidSelectionViewController: UIViewController {
     private let playerName: String
     private let handCards: [Card]
     private let allowedBids: [Int]
+    private let displayedBids: [Int]
+    private let forbiddenBid: Int?
     private let isPreDealBlindChoice: Bool
     private let canChooseBlind: Bool
     private let onSelectBid: ((Int) -> Void)?
@@ -28,11 +30,16 @@ final class BidSelectionViewController: UIViewController {
         playerName: String,
         handCards: [Card],
         allowedBids: [Int],
+        maxBid: Int,
+        forbiddenBid: Int?,
         onSelect: @escaping (Int) -> Void
     ) {
         self.playerName = playerName
         self.handCards = handCards
         self.allowedBids = Array(Set(allowedBids)).sorted()
+        let normalizedMaxBid = max(0, maxBid)
+        self.displayedBids = Array(0...normalizedMaxBid)
+        self.forbiddenBid = forbiddenBid
         self.isPreDealBlindChoice = false
         self.canChooseBlind = false
         self.onSelectBid = onSelect
@@ -50,6 +57,8 @@ final class BidSelectionViewController: UIViewController {
         self.playerName = playerName
         self.handCards = []
         self.allowedBids = Array(Set(allowedBlindBids)).sorted()
+        self.displayedBids = self.allowedBids
+        self.forbiddenBid = nil
         self.isPreDealBlindChoice = true
         self.canChooseBlind = canChooseBlind
         self.onSelectBid = nil
@@ -116,8 +125,13 @@ final class BidSelectionViewController: UIViewController {
         hintLabel.textAlignment = .center
         hintLabel.textColor = GameColors.gold
         hintLabel.numberOfLines = 2
-        hintLabel.text = nil
-        hintLabel.isHidden = true
+        if let forbiddenBid, displayedBids.contains(forbiddenBid) {
+            hintLabel.text = "Дилеру нельзя выбрать \(forbiddenBid)"
+            hintLabel.isHidden = false
+        } else {
+            hintLabel.text = nil
+            hintLabel.isHidden = true
+        }
         containerView.addSubview(hintLabel)
 
         let scrollView = UIScrollView()
@@ -133,7 +147,7 @@ final class BidSelectionViewController: UIViewController {
         gridStack.distribution = .fill
         scrollView.addSubview(gridStack)
 
-        let availableBids = allowedBids
+        let availableBids = displayedBids
         for rowBids in availableBids.chunked(into: LayoutMetrics.maxButtonsPerRow) {
             let rowStack = UIStackView()
             rowStack.translatesAutoresizingMaskIntoConstraints = false
@@ -146,11 +160,19 @@ final class BidSelectionViewController: UIViewController {
                 let button = UIButton(type: .system)
                 button.setTitle("\(bid)", for: .normal)
                 button.titleLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 20, weight: .bold)
-                button.setTitleColor(accentTextColor, for: .normal)
-                button.backgroundColor = accentColor
+                let isBidAllowed = allowedBids.contains(bid)
+                button.isEnabled = isBidAllowed
+                if isBidAllowed {
+                    button.setTitleColor(accentTextColor, for: .normal)
+                    button.backgroundColor = accentColor
+                    button.layer.borderColor = accentBorderColor.cgColor
+                } else {
+                    button.setTitleColor(accentTextColor.withAlphaComponent(0.45), for: .normal)
+                    button.backgroundColor = UIColor(red: 0.19, green: 0.26, blue: 0.39, alpha: 1.0)
+                    button.layer.borderColor = accentBorderColor.withAlphaComponent(0.35).cgColor
+                }
                 button.layer.cornerRadius = 12
                 button.layer.borderWidth = 1
-                button.layer.borderColor = accentBorderColor.cgColor
                 button.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight).isActive = true
                 button.tag = bid
                 button.addTarget(self, action: #selector(handleBidButtonTapped(_:)), for: .touchUpInside)

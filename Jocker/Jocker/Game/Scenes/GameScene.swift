@@ -1186,7 +1186,8 @@ class GameScene: SKScene {
             requestHumanBid(
                 forPlayer: playerIndex,
                 handCards: players[playerIndex].hand.cards,
-                allowedBids: allowedBids
+                allowedBids: allowedBids,
+                forbiddenBid: forbidden
             ) { [weak self] selectedBid in
                 guard let self = self else { return }
                 guard self.gameState.phase == .bidding else { return }
@@ -1227,6 +1228,7 @@ class GameScene: SKScene {
         forPlayer playerIndex: Int,
         handCards: [Card],
         allowedBids: [Int],
+        forbiddenBid: Int?,
         completion: @escaping (Int) -> Void
     ) {
         let normalizedAllowedBids = Array(Set(allowedBids)).sorted()
@@ -1249,7 +1251,9 @@ class GameScene: SKScene {
         let modal = BidSelectionViewController(
             playerName: playerName,
             handCards: handCards,
-            allowedBids: normalizedAllowedBids
+            allowedBids: normalizedAllowedBids,
+            maxBid: gameState.currentCardsPerPlayer,
+            forbiddenBid: forbiddenBid
         ) { [weak self] selectedBid in
             self?.isAwaitingHumanBidChoice = false
             completion(selectedBid)
