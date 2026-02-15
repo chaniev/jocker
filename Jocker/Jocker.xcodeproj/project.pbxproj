@@ -23,9 +23,12 @@
 		7E4AC96A2F268D860037CA75 /* JockerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9692F268D860037CA75 /* JockerUITests.swift */; };
 		7E4AC96C2F268D860037CA75 /* JockerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */; };
 		7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */; };
-		7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97B2F268F000037CA75 /* PlayerNode.swift */; };
-		7E4AC97C2F269A000037CA75 /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97D2F269A000037CA75 /* Card.swift */; };
-		7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97F2F269A100037CA75 /* Deck.swift */; };
+			7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97B2F268F000037CA75 /* PlayerNode.swift */; };
+			7E4AC97C2F269A000037CA75 /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97D2F269A000037CA75 /* Card.swift */; };
+			D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
+			D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
+			D3A000032F7600010037CA75 /* Rank.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000132F7600010037CA75 /* Rank.swift */; };
+			7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97F2F269A100037CA75 /* Deck.swift */; };
 		7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9812F269A200037CA75 /* CardNode.swift */; };
 		7E4AC9822F269A300037CA75 /* CardHandNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9832F269A300037CA75 /* CardHandNode.swift */; };
 		7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */; };
@@ -126,10 +129,13 @@
 		7E4AC9652F268D860037CA75 /* JockerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JockerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E4AC9692F268D860037CA75 /* JockerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITests.swift; sourceTree = "<group>"; };
 		7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewController.swift; sourceTree = "<group>"; };
-		7E4AC97B2F268F000037CA75 /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
-		7E4AC97D2F269A000037CA75 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
-		7E4AC97F2F269A100037CA75 /* Deck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deck.swift; sourceTree = "<group>"; };
+			7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewController.swift; sourceTree = "<group>"; };
+			7E4AC97B2F268F000037CA75 /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
+			7E4AC97D2F269A000037CA75 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
+			D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
+			D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
+			D3A000132F7600010037CA75 /* Rank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rank.swift; sourceTree = "<group>"; };
+			7E4AC97F2F269A100037CA75 /* Deck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deck.swift; sourceTree = "<group>"; };
 		7E4AC9812F269A200037CA75 /* CardNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardNode.swift; sourceTree = "<group>"; };
 		7E4AC9832F269A300037CA75 /* CardHandNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHandNode.swift; sourceTree = "<group>"; };
 		7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpIndicator.swift; sourceTree = "<group>"; };
@@ -284,9 +290,12 @@
 		AA1000022F2800020037CA75 /* Models */ = {
 			isa = PBXGroup;
 				children = (
-					AA0000052F2800010037CA75 /* BlockResult.swift */,
-					7E4AC97D2F269A000037CA75 /* Card.swift */,
-					7E4AC97F2F269A100037CA75 /* Deck.swift */,
+						AA0000052F2800010037CA75 /* BlockResult.swift */,
+						7E4AC97D2F269A000037CA75 /* Card.swift */,
+						D3A000112F7600010037CA75 /* Suit.swift */,
+						D3A000122F7600010037CA75 /* CardColor.swift */,
+						D3A000132F7600010037CA75 /* Rank.swift */,
+						7E4AC97F2F269A100037CA75 /* Deck.swift */,
 					BB0000032F2800010037CA75 /* GameBlock.swift */,
 					AB1000012F4200010037CA75 /* GameBlockFormatter.swift */,
 					BB0000012F2800010037CA75 /* GamePhase.swift */,
@@ -576,10 +585,13 @@
 				AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */,
 					F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */,
 					F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */,
-					C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */,
-					7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
-					7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
-					7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
+						C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */,
+						7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
+						7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
+						D3A000012F7600010037CA75 /* Suit.swift in Sources */,
+						D3A000022F7600010037CA75 /* CardColor.swift in Sources */,
+						D3A000032F7600010037CA75 /* Rank.swift in Sources */,
+						7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
 				7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */,
 				7E4AC9822F269A300037CA75 /* CardHandNode.swift in Sources */,
 				7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */,

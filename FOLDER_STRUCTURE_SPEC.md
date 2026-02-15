@@ -20,6 +20,7 @@ This document is the source of truth for repository structure and file placement
 │   ├── забор карт с кона.txt
 │   ├── общие.txt
 │   ├── особенности игры с джокером.txt
+│   ├── особенности игры в поледнем блоке.txt
 │   ├── подсчет очков.txt
 │   ├── присуждение премии.txt
 │   ├── раздача карт.txt
@@ -109,6 +110,7 @@ Jocker/Jocker/
 │   ├── BlockResult.swift
 │   ├── BotDifficulty.swift
 │   ├── BotTuning.swift
+│   ├── CardColor.swift
 │   ├── Card.swift
 │   ├── Deck.swift
 │   ├── GameBlock.swift
@@ -126,7 +128,9 @@ Jocker/Jocker/
 │   ├── PlayedTrickCard.swift
 │   ├── PlayerControlType.swift
 │   ├── PlayerInfo.swift
+│   ├── Rank.swift
 │   ├── RoundResult.swift
+│   ├── Suit.swift
 │   ├── TrumpSelectionRules.swift
 │   └── TrickTakingResolver.swift
 ├── Resources/

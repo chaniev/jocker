@@ -185,8 +185,6 @@ class CardDemoScene: SKScene {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Возврат к главной сцене
-        // В реальном приложении здесь будет переход к GameScene
-        print("Возврат к игре...")
+        // Резерв под переход к основной сцене в демо-режиме.
     }
 }

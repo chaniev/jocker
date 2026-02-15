@@ -215,8 +215,8 @@ final class GameStatisticsStoreTests: XCTestCase {
         zeroPremiumPlayerIndices: [Int] = [],
         blindBidMap: [[Bool]] = []
     ) -> BlockResult {
-        let roundResults = (0..<playerCount).map { playerIndex in
-            guard blindBidMap.indices.contains(playerIndex) else { return [] }
+        let roundResults: [[RoundResult]] = (0..<playerCount).map { playerIndex in
+            guard blindBidMap.indices.contains(playerIndex) else { return [RoundResult]() }
             return blindBidMap[playerIndex].map { isBlind in
                 RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: isBlind)
             }

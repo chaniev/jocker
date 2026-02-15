@@ -5,9 +5,9 @@
 - Файлы карточной подсистемы уже находятся в проекте и в target `Jocker`.
 - Дополнительно добавлять `.swift` через `Add Files...` не требуется.
 - Игровая сцена разделена по ролям:
-  - `GameScene` (UI и взаимодействие),
+  - `GameScene` + flow-extensions (`+DealingFlow`, `+BiddingFlow`, `+PlayingFlow`, `+ModalFlow`),
   - `GameSceneCoordinator` (оркестрация),
-  - сервисы `GameRoundService`, `GameTurnService`, `GameAnimationService`.
+  - сервисы `GameRoundService`, `GameTurnService`, `GameAnimationService`, `BotBiddingService`, `BotTrumpSelectionService`.
 
 ## Запуск
 
@@ -23,9 +23,9 @@
 1. Экран выбора игроков (3/4).
 2. Экран игры:
    - кнопка `Раздать карты`;
-   - кнопка `Взятки` (заказ ставок);
+   - автоматический запуск модалок ставок/козыря по правилам текущего блока;
    - розыгрыш карты локальным игроком;
-   - автоходы остальных игроков по тапу;
+   - автоходы ботов без дополнительного тапа;
    - кнопка `Очки`.
 3. Таблица очков:
    - отображение раундов;
@@ -48,3 +48,6 @@
   - повторная сборка.
 - Если схема не видит изменения:
   - закрыть и заново открыть `Jocker.xcodeproj`.
+- Если `xcodebuild` сообщает, что выбран только Command Line Tools:
+  - переключить developer directory на установленный Xcode
+  - пример: `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`

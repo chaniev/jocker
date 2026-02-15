@@ -26,14 +26,28 @@ class CardNode: SKNode {
         let node = SKShapeNode(rect: CardNode.cardRect, cornerRadius: CardNode.cornerRadius)
         node.fillColor = .clear
         node.strokeColor = GameColors.cardBorder
-        node.lineWidth = 4.8
+        node.lineWidth = Style.baseBorderLineWidth
         node.zPosition = 1
         return node
+    }()
+    private lazy var shadowNode: SKShapeNode = {
+        let shadow = SKShapeNode(rect: CardNode.cardRect, cornerRadius: CardNode.cornerRadius)
+        shadow.fillColor = .black
+        shadow.strokeColor = .clear
+        shadow.alpha = 0.3
+        shadow.position = CGPoint(x: 4.8, y: -4.8)
+        shadow.zPosition = -1
+        return shadow
     }()
     private var suitLabel: SKLabelNode?
     private var rankLabel: SKLabelNode?
     private var centerSuitLabel: SKLabelNode?
     private var backPattern: SKNode?
+
+    private enum Style {
+        static let baseBorderLineWidth: CGFloat = 4.8
+        static let highlightedBorderLineWidth: CGFloat = 6.0
+    }
     
     // Размеры карты (уменьшены на 20% от предыдущих)
     static let cardWidth: CGFloat = 192
@@ -66,25 +80,16 @@ class CardNode: SKNode {
     // MARK: - Setup
     
     private func setupVisuals() {
+        addChild(shadowNode)
         addChild(cardBackground)
-        
         addChild(cardBorder)
-        
+
         // Создаём элементы лицевой стороны
         if isFaceUp {
             setupFaceUpVisuals()
         } else {
             setupBackVisuals()
         }
-        
-        // Добавляем тень (смещение уменьшено на 20%)
-        let shadow = SKShapeNode(rect: CardNode.cardRect, cornerRadius: CardNode.cornerRadius)
-        shadow.fillColor = .black
-        shadow.strokeColor = .clear
-        shadow.alpha = 0.3
-        shadow.position = CGPoint(x: 4.8, y: -4.8)
-        shadow.zPosition = -1
-        addChild(shadow)
     }
     
     private func setupFaceUpVisuals() {
@@ -295,7 +300,7 @@ class CardNode: SKNode {
         
         // Очищаем все дочерние элементы кроме фона и рамки
         children.forEach { child in
-            if child !== cardBackground && child !== cardBorder {
+            if child !== cardBackground && child !== cardBorder && child !== shadowNode {
                 child.removeFromParent()
             }
         }
@@ -313,7 +318,7 @@ class CardNode: SKNode {
     func highlight(_ enabled: Bool, color: SKColor = .yellow) {
         if enabled {
             cardBorder.strokeColor = color
-            cardBorder.lineWidth = 3
+            cardBorder.lineWidth = Style.highlightedBorderLineWidth
             
             let pulse = SKAction.sequence([
                 SKAction.fadeAlpha(to: 0.7, duration: 0.5),
@@ -323,7 +328,7 @@ class CardNode: SKNode {
         } else {
             cardBorder.removeAction(forKey: "highlight")
             cardBorder.strokeColor = GameColors.cardBorder
-            cardBorder.lineWidth = 2
+            cardBorder.lineWidth = Style.baseBorderLineWidth
             cardBorder.alpha = 1.0
         }
     }

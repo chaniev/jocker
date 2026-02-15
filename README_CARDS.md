@@ -14,10 +14,16 @@
   - `Jocker/Jocker/Game/Nodes/TrumpIndicator.swift`
 - Интеграция в игру:
   - `Jocker/Jocker/Game/Scenes/GameScene.swift`
+  - `Jocker/Jocker/Game/Scenes/GameScene+DealingFlow.swift`
+  - `Jocker/Jocker/Game/Scenes/GameScene+BiddingFlow.swift`
+  - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`
+  - `Jocker/Jocker/Game/Scenes/GameScene+ModalFlow.swift`
   - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`
   - `Jocker/Jocker/Game/Services/GameRoundService.swift`
   - `Jocker/Jocker/Game/Services/GameTurnService.swift`
   - `Jocker/Jocker/Game/Services/GameAnimationService.swift`
+  - `Jocker/Jocker/Game/Services/BotBiddingService.swift`
+  - `Jocker/Jocker/Game/Services/BotTrumpSelectionService.swift`
 
 ## Проверка в приложении
 
@@ -25,8 +31,9 @@
 2. Запустить схему `Jocker`.
 3. На экране игры:
    - нажать `Раздать карты`;
-   - открыть `Взятки` и задать ставки;
+   - пройти модальные шаги выбора (ставки/выбор козыря/режим джокера в нужных блоках);
    - разыграть карты;
+   - проверить, что бот-ходы выполняются автоматически;
    - проверить `Очки`.
 
 ## Документация
