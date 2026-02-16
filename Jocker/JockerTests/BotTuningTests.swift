@@ -139,4 +139,35 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.bestFitness, result.baselineFitness)
         XCTAssertGreaterThanOrEqual(result.improvement, 0.0)
     }
+
+    func testSelfPlayEvolution_runsTenRounds_reportsFitness() {
+        let base = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 4,
+            roundsPerGame: 10,
+            playerCount: 4,
+            cardsPerRoundRange: 3...8,
+            eliteCount: 2,
+            mutationChance: 0.30,
+            mutationMagnitude: 0.16,
+            selectionPoolRatio: 0.5
+        )
+
+        let result = BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: config,
+            seed: 10_000
+        )
+
+        print(
+            "SELF_PLAY_10_ROUNDS baseline=\(result.baselineFitness) " +
+            "best=\(result.bestFitness) " +
+            "improvement=\(result.improvement)"
+        )
+
+        XCTAssertEqual(result.generationBestFitness.count, config.generations)
+        XCTAssertTrue(result.bestFitness.isFinite)
+    }
 }
