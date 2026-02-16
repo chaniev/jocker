@@ -174,6 +174,14 @@
 - Выбор допустимой карты для автохода.
 - Определение победителя взятки.
 
+### `Jocker/Jocker/Game/Services/BotTurnStrategyService.swift`
+
+- Эвристический выбор карты и режима розыгрыша джокера.
+- Поддержка оффлайн-обучения через `BotTuning.evolveViaSelfPlay(...)`:
+  - детерминированный self-play симулятор раундов;
+  - эволюция коэффициентов (мутация + кроссовер);
+  - возврат лучшего набора параметров и истории fitness по поколениям.
+
 ### `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`
 
 - Модальное окно выбора розыгрыша джокера:

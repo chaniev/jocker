@@ -64,4 +64,79 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(custom.trumpSelection.minimumPowerToDeclareTrump, base.trumpSelection.minimumPowerToDeclareTrump, accuracy: 0.000_1)
         XCTAssertEqual(custom.timing.playingBotTurnDelay, base.timing.playingBotTurnDelay, accuracy: 0.000_1)
     }
+
+    func testSelfPlayEvolution_withSameSeed_isDeterministic() {
+        let base = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 4,
+            roundsPerGame: 2,
+            playerCount: 4,
+            cardsPerRoundRange: 3...6,
+            eliteCount: 2,
+            mutationChance: 0.32,
+            mutationMagnitude: 0.15,
+            selectionPoolRatio: 0.5
+        )
+
+        let firstRun = BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: config,
+            seed: 123_456
+        )
+        let secondRun = BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: config,
+            seed: 123_456
+        )
+
+        XCTAssertEqual(firstRun.baselineFitness, secondRun.baselineFitness, accuracy: 0.000_001)
+        XCTAssertEqual(firstRun.bestFitness, secondRun.bestFitness, accuracy: 0.000_001)
+        XCTAssertEqual(firstRun.generationBestFitness.count, secondRun.generationBestFitness.count)
+        for index in 0..<firstRun.generationBestFitness.count {
+            XCTAssertEqual(
+                firstRun.generationBestFitness[index],
+                secondRun.generationBestFitness[index],
+                accuracy: 0.000_001
+            )
+        }
+
+        XCTAssertEqual(
+            firstRun.bestTuning.turnStrategy.chaseWinProbabilityWeight,
+            secondRun.bestTuning.turnStrategy.chaseWinProbabilityWeight,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            firstRun.bestTuning.bidding.expectedJokerPower,
+            secondRun.bestTuning.bidding.expectedJokerPower,
+            accuracy: 0.000_001
+        )
+    }
+
+    func testSelfPlayEvolution_keepsBestNotWorseThanBaseline() {
+        let base = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            populationSize: 6,
+            generations: 3,
+            gamesPerCandidate: 6,
+            roundsPerGame: 3,
+            playerCount: 4,
+            cardsPerRoundRange: 2...7,
+            eliteCount: 2,
+            mutationChance: 0.35,
+            mutationMagnitude: 0.18,
+            selectionPoolRatio: 0.6
+        )
+
+        let result = BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: config,
+            seed: 424_242
+        )
+
+        XCTAssertEqual(result.generationBestFitness.count, config.generations)
+        XCTAssertGreaterThanOrEqual(result.bestFitness, result.baselineFitness)
+        XCTAssertGreaterThanOrEqual(result.improvement, 0.0)
+    }
 }
