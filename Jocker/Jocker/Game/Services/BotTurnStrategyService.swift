@@ -52,6 +52,17 @@ final class BotTurnStrategyService {
             trump: trump
         )
         let shouldChaseTrick = currentTricks < targetBid
+        let tricksNeededToMatchBid = max(0, targetBid - currentTricks)
+        let tricksRemainingIncludingCurrent = max(1, handCards.count)
+        let chasePressure = shouldChaseTrick
+            ? min(
+                1.0,
+                max(
+                    0.0,
+                    Double(tricksNeededToMatchBid) / Double(tricksRemainingIncludingCurrent)
+                )
+            )
+            : 0.0
         let opponentsRemaining = remainingOpponentsCount(
             playerCount: playerCount,
             cardsAlreadyOnTable: trickNode.playedCards.count
@@ -123,7 +134,10 @@ final class BotTurnStrategyService {
                     trump: trump,
                     shouldChaseTrick: shouldChaseTrick,
                     hasWinningNonJoker: hasWinningNonJoker,
-                    hasLosingNonJoker: hasLosingNonJoker
+                    hasLosingNonJoker: hasLosingNonJoker,
+                    tricksNeededToMatchBid: tricksNeededToMatchBid,
+                    tricksRemainingIncludingCurrent: tricksRemainingIncludingCurrent,
+                    chasePressure: chasePressure
                 )
 
                 let evaluation = CandidateEvaluation(
@@ -270,23 +284,31 @@ final class BotTurnStrategyService {
         trump: Suit?,
         shouldChaseTrick: Bool,
         hasWinningNonJoker: Bool,
-        hasLosingNonJoker: Bool
+        hasLosingNonJoker: Bool,
+        tricksNeededToMatchBid: Int,
+        tricksRemainingIncludingCurrent: Int,
+        chasePressure: Double
     ) -> Double {
         let strategy = tuning.turnStrategy
         var utility = projectedScore
         let isLeadJoker = move.card.isJoker && trickNode.playedCards.isEmpty
 
         if shouldChaseTrick {
-            utility += immediateWinProbability * strategy.chaseWinProbabilityWeight
-            utility -= threat * strategy.chaseThreatPenaltyWeight
+            let conservatism = max(0.0, 1.0 - chasePressure)
+            utility += immediateWinProbability * strategy.chaseWinProbabilityWeight * (1.0 + chasePressure)
+            utility -= threat * strategy.chaseThreatPenaltyWeight * conservatism
 
             if move.card.isJoker && hasWinningNonJoker {
-                utility -= strategy.chaseSpendJokerPenalty
+                utility -= strategy.chaseSpendJokerPenalty * conservatism
+            }
+
+            if tricksNeededToMatchBid >= tricksRemainingIncludingCurrent {
+                utility -= (1.0 - immediateWinProbability) * strategy.chaseSpendJokerPenalty
             }
 
             if isLeadJoker {
                 if case .some(.wish) = move.decision.leadDeclaration {
-                    utility += strategy.chaseLeadWishBonus
+                    utility += strategy.chaseLeadWishBonus * (0.5 + chasePressure * 0.5)
                 }
             }
         } else {

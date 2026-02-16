@@ -101,6 +101,28 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(decision?.card, card(.hearts, .king))
     }
 
+    func testMakeTurnDecision_whenMustWinAllRemaining_prefersReliableJokerWin() {
+        let service = BotTurnStrategyService()
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .ten), fromPlayer: 1, animated: false)
+
+        let decision = service.makeTurnDecision(
+            handCards: [
+                .joker,
+                card(.hearts, .six)
+            ],
+            trickNode: trickNode,
+            trump: .hearts,
+            bid: 2,
+            tricksTaken: 0,
+            cardsInRound: 2,
+            playerCount: 4
+        )
+
+        XCTAssertEqual(decision?.card, .joker)
+        XCTAssertEqual(decision?.jokerDecision.style, .faceUp)
+    }
+
     func testMakeTurnDecision_whenLeadJokerAndDumping_usesTakesDeclarationNotTrump() {
         let service = BotTurnStrategyService()
         let trickNode = TrickNode()
