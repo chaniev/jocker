@@ -101,6 +101,7 @@ class GameScene: SKScene {
     var firstDealerSelectionCardsNode: SKNode?
     var hasPresentedGameResultsModal = false
     var hasSavedGameStatistics = false
+    var hasDealtAtLeastOnce = false
 
     var isInteractionBlocked: Bool {
         return coordinator.isInteractionLocked ||
@@ -134,6 +135,17 @@ class GameScene: SKScene {
 
     var currentPlayerNames: [String] {
         return gameState.players.map { $0.name }
+    }
+
+    var canDealCards: Bool {
+        guard gameState.phase != .notStarted else { return false }
+        guard gameState.phase != .gameEnd else { return false }
+
+        if hasDealtAtLeastOnce {
+            return gameState.phase == .roundEnd
+        }
+
+        return gameState.phase == .bidding
     }
 
     /// Обновляет снимок текущего раунда для таблицы очков.
@@ -387,6 +399,7 @@ class GameScene: SKScene {
         let turnInfo = "Ход: \(currentPlayerName)"
 
         label.text = "\(blockName)  •  \(roundInfo)  •  \(cardsInfo)  •  \(phaseInfo)  •  \(turnInfo)"
+        updateDealButtonState()
         updateRoundBidInfo()
     }
 
@@ -446,6 +459,11 @@ class GameScene: SKScene {
 
         self.dealButton = button
         self.addChild(button)
+        updateDealButtonState()
+    }
+
+    func updateDealButtonState() {
+        dealButton?.isEnabled = canDealCards
     }
 
     private func setupRoundBidInfoPanel() {
@@ -673,6 +691,7 @@ class GameScene: SKScene {
         firstDealerIndex = selectedDealerIndex
         gameState.startGame(initialDealerIndex: selectedDealerIndex)
         hasPresentedGameResultsModal = false
+        hasDealtAtLeastOnce = false
 
         firstDealerAnnouncementNode?.removeFromParent()
         firstDealerAnnouncementNode = nil
@@ -781,6 +800,7 @@ class GameScene: SKScene {
         jokerLeadInfoPanel?.position = jokerLeadInfoPosition(insets: insets)
         firstDealerAnnouncementNode?.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
 
+        updateDealButtonState()
         updateRoundBidInfo()
         updateTurnUI(animated: false)
     }

@@ -11,7 +11,10 @@ extension GameScene {
     // MARK: - Dealing Flow
 
     func dealCards() {
-        guard gameState.phase != .notStarted else { return }
+        guard canDealCards else {
+            updateDealButtonState()
+            return
+        }
 
         removeAction(forKey: ActionKey.botTurn)
         isAwaitingHumanBidChoice = false
@@ -32,10 +35,13 @@ extension GameScene {
         ) else {
             updateGameInfoLabel()
             updateTurnUI(animated: true)
+            updateDealButtonState()
             _ = tryPresentGameResultsIfNeeded()
             return
         }
 
+        hasDealtAtLeastOnce = true
+        updateDealButtonState()
         updateGameInfoLabel()
         updateTurnUI(animated: false)
 

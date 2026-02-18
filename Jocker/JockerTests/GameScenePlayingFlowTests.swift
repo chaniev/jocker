@@ -10,6 +10,29 @@ import SpriteKit
 @testable import Jocker
 
 final class GameScenePlayingFlowTests: XCTestCase {
+    func testCanDealCards_whenRoundInProgress_returnsFalse() {
+        let scene = makeSceneInPlayingPhase(playerCount: 4)
+        scene.hasDealtAtLeastOnce = true
+
+        XCTAssertFalse(scene.canDealCards)
+    }
+
+    func testCanDealCards_whenRoundEnded_returnsTrue() {
+        let scene = makeSceneInPlayingPhase(playerCount: 4)
+        scene.hasDealtAtLeastOnce = true
+        scene.gameState.completeRound()
+
+        XCTAssertTrue(scene.canDealCards)
+    }
+
+    func testCanDealCards_beforeFirstDealInBidding_returnsTrue() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame()
+
+        XCTAssertTrue(scene.canDealCards)
+    }
+
     func testResetTrumpStateIfRoundFinished_whenRoundEnded_clearsCurrentTrumpAndIndicator() {
         let scene = makeSceneInPlayingPhase(playerCount: 4)
         scene.currentTrump = .hearts

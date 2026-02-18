@@ -11,10 +11,6 @@
 		7E4AC9482F268D820037CA75 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC9472F268D820037CA75 /* GameScene.sks */; };
 		7E4AC94A2F268D820037CA75 /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC9492F268D820037CA75 /* Actions.sks */; };
 		7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC94B2F268D820037CA75 /* GameScene.swift */; };
-		D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */; };
-		D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */; };
-		D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */; };
-		D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */; };
 		7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC94D2F268D820037CA75 /* GameViewController.swift */; };
 		7E4AC9512F268D820037CA75 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC94F2F268D820037CA75 /* Main.storyboard */; };
 		7E4AC9532F268D850037CA75 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E4AC9522F268D850037CA75 /* Assets.xcassets */; };
@@ -23,12 +19,9 @@
 		7E4AC96A2F268D860037CA75 /* JockerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9692F268D860037CA75 /* JockerUITests.swift */; };
 		7E4AC96C2F268D860037CA75 /* JockerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */; };
 		7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */; };
-			7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97B2F268F000037CA75 /* PlayerNode.swift */; };
-			7E4AC97C2F269A000037CA75 /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97D2F269A000037CA75 /* Card.swift */; };
-			D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
-			D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
-			D3A000032F7600010037CA75 /* Rank.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000132F7600010037CA75 /* Rank.swift */; };
-			7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97F2F269A100037CA75 /* Deck.swift */; };
+		7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97B2F268F000037CA75 /* PlayerNode.swift */; };
+		7E4AC97C2F269A000037CA75 /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97D2F269A000037CA75 /* Card.swift */; };
+		7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC97F2F269A100037CA75 /* Deck.swift */; };
 		7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9812F269A200037CA75 /* CardNode.swift */; };
 		7E4AC9822F269A300037CA75 /* CardHandNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9832F269A300037CA75 /* CardHandNode.swift */; };
 		7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */; };
@@ -41,36 +34,9 @@
 		AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000072F2800010037CA75 /* ScoreManager.swift */; };
 		AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */; };
 		AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */; };
-		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
 		AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */; };
 		AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000032F2A00010037CA75 /* ScoreTableView.swift */; };
 		AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000012F4200010037CA75 /* GameBlockFormatter.swift */; };
-		BB0000022F2800010037CA75 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000012F2800010037CA75 /* GamePhase.swift */; };
-		BB0000042F2800010037CA75 /* GameBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000032F2800010037CA75 /* GameBlock.swift */; };
-		BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000052F2800010037CA75 /* PlayerInfo.swift */; };
-		BB0000082F2800010037CA75 /* GameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000072F2800010037CA75 /* GameButton.swift */; };
-		CC0000012F2800010037CA75 /* GameConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000022F2800010037CA75 /* GameConstants.swift */; };
-		CC0000032F2800010037CA75 /* GameColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F2800010037CA75 /* GameColors.swift */; };
-		CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000072F2800010037CA75 /* PokerTableNode.swift */; };
-		C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */; };
-		C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
-		C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
-			C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20042F5000010037CA75 /* GameAnimationService.swift */; };
-			C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20052F5300010037CA75 /* BotBiddingService.swift */; };
-			C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */; };
-			C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */; };
-			C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */; };
-			C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */; };
-			C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */; };
-			C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */; };
-			C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */; };
-		F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000082F5600010037CA75 /* BotTuningTests.swift */; };
-		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
-		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
-		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
-		E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */; };
-		E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000042F7400010037CA75 /* GameResultsViewController.swift */; };
-		E10000052F7400010037CA75 /* GameFinalPlayerSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */; };
 		B10000112F7500010037CA75 /* GameStatisticsScope.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000212F7500010037CA75 /* GameStatisticsScope.swift */; };
 		B10000122F7500010037CA75 /* GameStatisticsPlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000222F7500010037CA75 /* GameStatisticsPlayerRecord.swift */; };
 		B10000132F7500010037CA75 /* GameStatisticsSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000232F7500010037CA75 /* GameStatisticsSnapshot.swift */; };
@@ -79,6 +45,39 @@
 		B10000162F7500010037CA75 /* GameStatisticsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000262F7500010037CA75 /* GameStatisticsViewController.swift */; };
 		B10000172F7500010037CA75 /* GameStatisticsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000272F7500010037CA75 /* GameStatisticsStoreTests.swift */; };
 		B10000182F7500010037CA75 /* GameStatisticsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000282F7500010037CA75 /* GameStatisticsTableView.swift */; };
+		BB0000022F2800010037CA75 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000012F2800010037CA75 /* GamePhase.swift */; };
+		BB0000042F2800010037CA75 /* GameBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000032F2800010037CA75 /* GameBlock.swift */; };
+		BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000052F2800010037CA75 /* PlayerInfo.swift */; };
+		BB0000082F2800010037CA75 /* GameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000072F2800010037CA75 /* GameButton.swift */; };
+		C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */; };
+		C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
+		C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
+		C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20042F5000010037CA75 /* GameAnimationService.swift */; };
+		C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20052F5300010037CA75 /* BotBiddingService.swift */; };
+		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
+		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
+		C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */; };
+		C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */; };
+		C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */; };
+		C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */; };
+		C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */; };
+		C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */; };
+		C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */; };
+		CC0000012F2800010037CA75 /* GameConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000022F2800010037CA75 /* GameConstants.swift */; };
+		CC0000032F2800010037CA75 /* GameColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000042F2800010037CA75 /* GameColors.swift */; };
+		CC0000062F2800010037CA75 /* PokerTableNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000072F2800010037CA75 /* PokerTableNode.swift */; };
+		D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */; };
+		D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */; };
+		D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */; };
+		D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */; };
+		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
+		D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
+		D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
+		D3A000032F7600010037CA75 /* Rank.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000132F7600010037CA75 /* Rank.swift */; };
+		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
+		E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */; };
+		E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000042F7400010037CA75 /* GameResultsViewController.swift */; };
+		E10000052F7400010037CA75 /* GameFinalPlayerSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */; };
 		EEA1B0032F3F10010037CA75 /* TurnIndicatorNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */; };
 		F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000012F4100010037CA75 /* TrickTakingResolver.swift */; };
 		F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */; };
@@ -88,9 +87,10 @@
 		F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000092F5200010037CA75 /* JokerPlayDecision.swift */; };
 		F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */; };
 		F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200000C2F5300010037CA75 /* PlayerControlType.swift */; };
+		F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30000022F5300010037CA75 /* BidSelectionViewController.swift */; };
 		F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000032F5600010037CA75 /* BotDifficulty.swift */; };
 		F40000022F5600010037CA75 /* BotTuning.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000042F5600010037CA75 /* BotTuning.swift */; };
-		F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30000022F5300010037CA75 /* BidSelectionViewController.swift */; };
+		F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000082F5600010037CA75 /* BotTuningTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -116,10 +116,6 @@
 		7E4AC9472F268D820037CA75 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
 		7E4AC9492F268D820037CA75 /* Actions.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Actions.sks; sourceTree = "<group>"; };
 		7E4AC94B2F268D820037CA75 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
-		D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+DealingFlow.swift"; sourceTree = "<group>"; };
-		D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+BiddingFlow.swift"; sourceTree = "<group>"; };
-		D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+PlayingFlow.swift"; sourceTree = "<group>"; };
-		D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+ModalFlow.swift"; sourceTree = "<group>"; };
 		7E4AC94D2F268D820037CA75 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		7E4AC9502F268D820037CA75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7E4AC9522F268D850037CA75 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -129,13 +125,10 @@
 		7E4AC9652F268D860037CA75 /* JockerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JockerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E4AC9692F268D860037CA75 /* JockerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITests.swift; sourceTree = "<group>"; };
 		7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JockerUITestsLaunchTests.swift; sourceTree = "<group>"; };
-			7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewController.swift; sourceTree = "<group>"; };
-			7E4AC97B2F268F000037CA75 /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
-			7E4AC97D2F269A000037CA75 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
-			D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
-			D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
-			D3A000132F7600010037CA75 /* Rank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rank.swift; sourceTree = "<group>"; };
-			7E4AC97F2F269A100037CA75 /* Deck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deck.swift; sourceTree = "<group>"; };
+		7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewController.swift; sourceTree = "<group>"; };
+		7E4AC97B2F268F000037CA75 /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
+		7E4AC97D2F269A000037CA75 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
+		7E4AC97F2F269A100037CA75 /* Deck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deck.swift; sourceTree = "<group>"; };
 		7E4AC9812F269A200037CA75 /* CardNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardNode.swift; sourceTree = "<group>"; };
 		7E4AC9832F269A300037CA75 /* CardHandNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHandNode.swift; sourceTree = "<group>"; };
 		7E4AC9852F269A400037CA75 /* TrumpIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpIndicator.swift; sourceTree = "<group>"; };
@@ -148,36 +141,9 @@
 		AA0000072F2800010037CA75 /* ScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManager.swift; sourceTree = "<group>"; };
 		AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculatorTests.swift; sourceTree = "<group>"; };
 		AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManagerTests.swift; sourceTree = "<group>"; };
-		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
 		AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableViewController.swift; sourceTree = "<group>"; };
 		AA2000032F2A00010037CA75 /* ScoreTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableView.swift; sourceTree = "<group>"; };
 		AB1000012F4200010037CA75 /* GameBlockFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlockFormatter.swift; sourceTree = "<group>"; };
-		BB0000012F2800010037CA75 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
-		BB0000032F2800010037CA75 /* GameBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlock.swift; sourceTree = "<group>"; };
-		BB0000052F2800010037CA75 /* PlayerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfo.swift; sourceTree = "<group>"; };
-		BB0000072F2800010037CA75 /* GameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameButton.swift; sourceTree = "<group>"; };
-		CC0000022F2800010037CA75 /* GameConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameConstants.swift; sourceTree = "<group>"; };
-		CC0000042F2800010037CA75 /* GameColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameColors.swift; sourceTree = "<group>"; };
-		CC0000072F2800010037CA75 /* PokerTableNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokerTableNode.swift; sourceTree = "<group>"; };
-		C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneCoordinator.swift; sourceTree = "<group>"; };
-		C0DE20022F5000010037CA75 /* GameRoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundService.swift; sourceTree = "<group>"; };
-			C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
-			C0DE20042F5000010037CA75 /* GameAnimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAnimationService.swift; sourceTree = "<group>"; };
-			C0DE20052F5300010037CA75 /* BotBiddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingService.swift; sourceTree = "<group>"; };
-			C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTrumpSelectionService.swift; sourceTree = "<group>"; };
-			C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpSelectionRules.swift; sourceTree = "<group>"; };
-			C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpSelectionViewController.swift; sourceTree = "<group>"; };
-			C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTrumpSelectionServiceTests.swift; sourceTree = "<group>"; };
-			C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyService.swift; sourceTree = "<group>"; };
-			C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
-			C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingServiceTests.swift; sourceTree = "<group>"; };
-		C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyServiceTests.swift; sourceTree = "<group>"; };
-		C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPlayFlowTests.swift; sourceTree = "<group>"; };
-		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
-		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
-		E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummary.swift; sourceTree = "<group>"; };
-		E10000042F7400010037CA75 /* GameResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsViewController.swift; sourceTree = "<group>"; };
-		E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummaryTests.swift; sourceTree = "<group>"; };
 		B10000212F7500010037CA75 /* GameStatisticsScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsScope.swift; sourceTree = "<group>"; };
 		B10000222F7500010037CA75 /* GameStatisticsPlayerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsPlayerRecord.swift; sourceTree = "<group>"; };
 		B10000232F7500010037CA75 /* GameStatisticsSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsSnapshot.swift; sourceTree = "<group>"; };
@@ -186,6 +152,39 @@
 		B10000262F7500010037CA75 /* GameStatisticsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsViewController.swift; sourceTree = "<group>"; };
 		B10000272F7500010037CA75 /* GameStatisticsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsStoreTests.swift; sourceTree = "<group>"; };
 		B10000282F7500010037CA75 /* GameStatisticsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsTableView.swift; sourceTree = "<group>"; };
+		BB0000012F2800010037CA75 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
+		BB0000032F2800010037CA75 /* GameBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlock.swift; sourceTree = "<group>"; };
+		BB0000052F2800010037CA75 /* PlayerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfo.swift; sourceTree = "<group>"; };
+		BB0000072F2800010037CA75 /* GameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameButton.swift; sourceTree = "<group>"; };
+		C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneCoordinator.swift; sourceTree = "<group>"; };
+		C0DE20022F5000010037CA75 /* GameRoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundService.swift; sourceTree = "<group>"; };
+		C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
+		C0DE20042F5000010037CA75 /* GameAnimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAnimationService.swift; sourceTree = "<group>"; };
+		C0DE20052F5300010037CA75 /* BotBiddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingService.swift; sourceTree = "<group>"; };
+		C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
+		C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingServiceTests.swift; sourceTree = "<group>"; };
+		C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyService.swift; sourceTree = "<group>"; };
+		C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyServiceTests.swift; sourceTree = "<group>"; };
+		C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoPlayFlowTests.swift; sourceTree = "<group>"; };
+		C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTrumpSelectionService.swift; sourceTree = "<group>"; };
+		C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpSelectionRules.swift; sourceTree = "<group>"; };
+		C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrumpSelectionViewController.swift; sourceTree = "<group>"; };
+		C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTrumpSelectionServiceTests.swift; sourceTree = "<group>"; };
+		CC0000022F2800010037CA75 /* GameConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameConstants.swift; sourceTree = "<group>"; };
+		CC0000042F2800010037CA75 /* GameColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameColors.swift; sourceTree = "<group>"; };
+		CC0000072F2800010037CA75 /* PokerTableNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokerTableNode.swift; sourceTree = "<group>"; };
+		D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+DealingFlow.swift"; sourceTree = "<group>"; };
+		D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+BiddingFlow.swift"; sourceTree = "<group>"; };
+		D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+PlayingFlow.swift"; sourceTree = "<group>"; };
+		D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+ModalFlow.swift"; sourceTree = "<group>"; };
+		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
+		D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
+		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
+		D3A000132F7600010037CA75 /* Rank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rank.swift; sourceTree = "<group>"; };
+		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
+		E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummary.swift; sourceTree = "<group>"; };
+		E10000042F7400010037CA75 /* GameResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsViewController.swift; sourceTree = "<group>"; };
+		E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummaryTests.swift; sourceTree = "<group>"; };
 		EEA1B0022F3F10010037CA75 /* TurnIndicatorNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnIndicatorNode.swift; sourceTree = "<group>"; };
 		F10000012F4100010037CA75 /* TrickTakingResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolver.swift; sourceTree = "<group>"; };
 		F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrickTakingResolverTests.swift; sourceTree = "<group>"; };
@@ -195,9 +194,10 @@
 		F20000092F5200010037CA75 /* JokerPlayDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerPlayDecision.swift; sourceTree = "<group>"; };
 		F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerModeSelectionViewController.swift; sourceTree = "<group>"; };
 		F200000C2F5300010037CA75 /* PlayerControlType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerControlType.swift; sourceTree = "<group>"; };
+		F30000022F5300010037CA75 /* BidSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidSelectionViewController.swift; sourceTree = "<group>"; };
 		F40000032F5600010037CA75 /* BotDifficulty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotDifficulty.swift; sourceTree = "<group>"; };
 		F40000042F5600010037CA75 /* BotTuning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuning.swift; sourceTree = "<group>"; };
-		F30000022F5300010037CA75 /* BidSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidSelectionViewController.swift; sourceTree = "<group>"; };
+		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -262,13 +262,34 @@
 			path = Jocker;
 			sourceTree = "<group>";
 		};
-		AA1000082F2800030037CA75 /* Resources */ = {
+		7E4AC95E2F268D860037CA75 /* JockerTests */ = {
 			isa = PBXGroup;
 			children = (
-				7E4AC9492F268D820037CA75 /* Actions.sks */,
-				7E4AC9472F268D820037CA75 /* GameScene.sks */,
+				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
+				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
+				E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */,
+				B10000272F7500010037CA75 /* GameStatisticsStoreTests.swift */,
+				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
+				C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
+				C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
+				C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
+				F40000082F5600010037CA75 /* BotTuningTests.swift */,
+				7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
+				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
+				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
+				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
+				F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */,
 			);
-			path = Resources;
+			path = JockerTests;
+			sourceTree = "<group>";
+		};
+		7E4AC9682F268D860037CA75 /* JockerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC9692F268D860037CA75 /* JockerUITests.swift */,
+				7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */,
+			);
+			path = JockerUITests;
 			sourceTree = "<group>";
 		};
 		AA1000012F2800020037CA75 /* App */ = {
@@ -279,43 +300,35 @@
 			path = App;
 			sourceTree = "<group>";
 		};
-		CC0000052F2800010037CA75 /* Core */ = {
-			isa = PBXGroup;
-			children = (
-				CC0000042F2800010037CA75 /* GameColors.swift */,
-			);
-			path = Core;
-			sourceTree = "<group>";
-		};
 		AA1000022F2800020037CA75 /* Models */ = {
 			isa = PBXGroup;
-				children = (
-						AA0000052F2800010037CA75 /* BlockResult.swift */,
-						7E4AC97D2F269A000037CA75 /* Card.swift */,
-						D3A000112F7600010037CA75 /* Suit.swift */,
-						D3A000122F7600010037CA75 /* CardColor.swift */,
-						D3A000132F7600010037CA75 /* Rank.swift */,
-						7E4AC97F2F269A100037CA75 /* Deck.swift */,
-					BB0000032F2800010037CA75 /* GameBlock.swift */,
-					AB1000012F4200010037CA75 /* GameBlockFormatter.swift */,
-					BB0000012F2800010037CA75 /* GamePhase.swift */,
-					CC0000022F2800010037CA75 /* GameConstants.swift */,
-					E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */,
-					B10000222F7500010037CA75 /* GameStatisticsPlayerRecord.swift */,
-					B10000232F7500010037CA75 /* GameStatisticsSnapshot.swift */,
-					B10000212F7500010037CA75 /* GameStatisticsScope.swift */,
-					7E4AC9892F269A600037CA75 /* GameState.swift */,
-					F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */,
-					F20000052F5200010037CA75 /* JokerPlayStyle.swift */,
-					F20000092F5200010037CA75 /* JokerPlayDecision.swift */,
-						F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
-						F200000C2F5300010037CA75 /* PlayerControlType.swift */,
-						F40000032F5600010037CA75 /* BotDifficulty.swift */,
-						F40000042F5600010037CA75 /* BotTuning.swift */,
-						C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */,
-					BB0000052F2800010037CA75 /* PlayerInfo.swift */,
-					AA0000012F2800010037CA75 /* RoundResult.swift */,
-					F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
+			children = (
+				AA0000052F2800010037CA75 /* BlockResult.swift */,
+				7E4AC97D2F269A000037CA75 /* Card.swift */,
+				D3A000112F7600010037CA75 /* Suit.swift */,
+				D3A000122F7600010037CA75 /* CardColor.swift */,
+				D3A000132F7600010037CA75 /* Rank.swift */,
+				7E4AC97F2F269A100037CA75 /* Deck.swift */,
+				BB0000032F2800010037CA75 /* GameBlock.swift */,
+				AB1000012F4200010037CA75 /* GameBlockFormatter.swift */,
+				BB0000012F2800010037CA75 /* GamePhase.swift */,
+				CC0000022F2800010037CA75 /* GameConstants.swift */,
+				E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */,
+				B10000222F7500010037CA75 /* GameStatisticsPlayerRecord.swift */,
+				B10000232F7500010037CA75 /* GameStatisticsSnapshot.swift */,
+				B10000212F7500010037CA75 /* GameStatisticsScope.swift */,
+				7E4AC9892F269A600037CA75 /* GameState.swift */,
+				F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */,
+				F20000052F5200010037CA75 /* JokerPlayStyle.swift */,
+				F20000092F5200010037CA75 /* JokerPlayDecision.swift */,
+				F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
+				F200000C2F5300010037CA75 /* PlayerControlType.swift */,
+				F40000032F5600010037CA75 /* BotDifficulty.swift */,
+				F40000042F5600010037CA75 /* BotTuning.swift */,
+				C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */,
+				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
+				AA0000012F2800010037CA75 /* RoundResult.swift */,
+				F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -359,29 +372,6 @@
 			path = Nodes;
 			sourceTree = "<group>";
 		};
-		C0DE30012F5000010037CA75 /* Coordinator */ = {
-			isa = PBXGroup;
-			children = (
-				C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */,
-			);
-			path = Coordinator;
-			sourceTree = "<group>";
-		};
-		C0DE30022F5000010037CA75 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-					C0DE20042F5000010037CA75 /* GameAnimationService.swift */,
-					C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
-					C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
-					C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
-					B10000242F7500010037CA75 /* GameStatisticsStore.swift */,
-					C0DE20022F5000010037CA75 /* GameRoundService.swift */,
-					C0DE20032F5000010037CA75 /* GameTurnService.swift */,
-					B10000252F7500010037CA75 /* UserDefaultsGameStatisticsStore.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
 		AA1000062F2800020037CA75 /* Scoring */ = {
 			isa = PBXGroup;
 			children = (
@@ -399,43 +389,53 @@
 				B10000262F7500010037CA75 /* GameStatisticsViewController.swift */,
 				B10000282F7500010037CA75 /* GameStatisticsTableView.swift */,
 				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
-					F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */,
-					F30000022F5300010037CA75 /* BidSelectionViewController.swift */,
-					C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */,
-					AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
-					AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
+				F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */,
+				F30000022F5300010037CA75 /* BidSelectionViewController.swift */,
+				C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */,
+				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
+				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
 		};
-		7E4AC95E2F268D860037CA75 /* JockerTests */ = {
+		AA1000082F2800030037CA75 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
-				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
-				E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */,
-				B10000272F7500010037CA75 /* GameStatisticsStoreTests.swift */,
-				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
-					C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
-					C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
-					C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
-					F40000082F5600010037CA75 /* BotTuningTests.swift */,
-					7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
-					DD1000012F3E00010037CA75 /* GameStateTests.swift */,
-					AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
-				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
-				F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */,
+				7E4AC9492F268D820037CA75 /* Actions.sks */,
+				7E4AC9472F268D820037CA75 /* GameScene.sks */,
 			);
-			path = JockerTests;
+			path = Resources;
 			sourceTree = "<group>";
 		};
-		7E4AC9682F268D860037CA75 /* JockerUITests */ = {
+		C0DE30012F5000010037CA75 /* Coordinator */ = {
 			isa = PBXGroup;
 			children = (
-				7E4AC9692F268D860037CA75 /* JockerUITests.swift */,
-				7E4AC96B2F268D860037CA75 /* JockerUITestsLaunchTests.swift */,
+				C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */,
 			);
-			path = JockerUITests;
+			path = Coordinator;
+			sourceTree = "<group>";
+		};
+		C0DE30022F5000010037CA75 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE20042F5000010037CA75 /* GameAnimationService.swift */,
+				C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
+				C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
+				C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
+				B10000242F7500010037CA75 /* GameStatisticsStore.swift */,
+				C0DE20022F5000010037CA75 /* GameRoundService.swift */,
+				C0DE20032F5000010037CA75 /* GameTurnService.swift */,
+				B10000252F7500010037CA75 /* UserDefaultsGameStatisticsStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		CC0000052F2800010037CA75 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				CC0000042F2800010037CA75 /* GameColors.swift */,
+			);
+			path = Core;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -570,61 +570,61 @@
 		7E4AC93E2F268D810037CA75 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-				files = (
-					7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
-					D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */,
-					D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */,
-					D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */,
-					D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */,
-					7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
-					E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */,
-					B10000162F7500010037CA75 /* GameStatisticsViewController.swift in Sources */,
-					B10000182F7500010037CA75 /* GameStatisticsTableView.swift in Sources */,
-					7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */,
+			files = (
+				7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
+				D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */,
+				D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */,
+				D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */,
+				D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */,
+				7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
+				E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */,
+				B10000162F7500010037CA75 /* GameStatisticsViewController.swift in Sources */,
+				B10000182F7500010037CA75 /* GameStatisticsTableView.swift in Sources */,
+				7E4AC9792F268E000037CA75 /* PlayerSelectionViewController.swift in Sources */,
 				AA2000022F2A00010037CA75 /* ScoreTableViewController.swift in Sources */,
 				AA2000042F2A00010037CA75 /* ScoreTableView.swift in Sources */,
-					F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */,
-					F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */,
-						C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */,
-						7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
-						7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
-						D3A000012F7600010037CA75 /* Suit.swift in Sources */,
-						D3A000022F7600010037CA75 /* CardColor.swift in Sources */,
-						D3A000032F7600010037CA75 /* Rank.swift in Sources */,
-						7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
+				F20000082F5200010037CA75 /* JokerModeSelectionViewController.swift in Sources */,
+				F30000012F5300010037CA75 /* BidSelectionViewController.swift in Sources */,
+				C0DE91032F5500010037CA75 /* TrumpSelectionViewController.swift in Sources */,
+				7E4AC97A2F268F000037CA75 /* PlayerNode.swift in Sources */,
+				7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
+				D3A000012F7600010037CA75 /* Suit.swift in Sources */,
+				D3A000022F7600010037CA75 /* CardColor.swift in Sources */,
+				D3A000032F7600010037CA75 /* Rank.swift in Sources */,
+				7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
 				7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */,
 				7E4AC9822F269A300037CA75 /* CardHandNode.swift in Sources */,
 				7E4AC9842F269A400037CA75 /* TrumpIndicator.swift in Sources */,
 				7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */,
 				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
-					F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */,
-					F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */,
-						F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */,
-						F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
-						F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */,
-						F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */,
-						F40000022F5600010037CA75 /* BotTuning.swift in Sources */,
-						C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */,
-						7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
-						C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
-						C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,
-						C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
-						C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
-						C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
-						B10000142F7500010037CA75 /* GameStatisticsStore.swift in Sources */,
-						C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
-					C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
-					B10000152F7500010037CA75 /* UserDefaultsGameStatisticsStore.swift in Sources */,
+				F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */,
+				F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */,
+				F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */,
+				F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
+				F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */,
+				F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */,
+				F40000022F5600010037CA75 /* BotTuning.swift in Sources */,
+				C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */,
+				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
+				C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
+				C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,
+				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
+				C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
+				C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
+				B10000142F7500010037CA75 /* GameStatisticsStore.swift in Sources */,
+				C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
+				C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
+				B10000152F7500010037CA75 /* UserDefaultsGameStatisticsStore.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
 				AA0000022F2800010037CA75 /* RoundResult.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
 				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,
-					AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
-					BB0000022F2800010037CA75 /* GamePhase.swift in Sources */,
-					BB0000042F2800010037CA75 /* GameBlock.swift in Sources */,
-					AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */,
-					BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
-					BB0000082F2800010037CA75 /* GameButton.swift in Sources */,
+				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
+				BB0000022F2800010037CA75 /* GamePhase.swift in Sources */,
+				BB0000042F2800010037CA75 /* GameBlock.swift in Sources */,
+				AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */,
+				BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
+				BB0000082F2800010037CA75 /* GameButton.swift in Sources */,
 				CC0000012F2800010037CA75 /* GameConstants.swift in Sources */,
 				E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */,
 				B10000122F7500010037CA75 /* GameStatisticsPlayerRecord.swift in Sources */,
@@ -645,14 +645,14 @@
 				D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */,
 				E10000052F7400010037CA75 /* GameFinalPlayerSummaryTests.swift in Sources */,
 				B10000172F7500010037CA75 /* GameStatisticsStoreTests.swift in Sources */,
-					C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
-					C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
-					C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,
-					C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */,
-					F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */,
-					7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
-					DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
-					AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,
+				C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
+				C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
+				C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,
+				C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */,
+				F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */,
+				7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
+				DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
+				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,
 				AA00000C2F2800010037CA75 /* ScoreManagerTests.swift in Sources */,
 				F10000042F4100010037CA75 /* TrickTakingResolverTests.swift in Sources */,
 			);
@@ -828,7 +828,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 66ZBRPZ9N2;
+				DEVELOPMENT_TEAM = C28KDXHKVA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Джокер";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -857,7 +857,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 66ZBRPZ9N2;
+				DEVELOPMENT_TEAM = C28KDXHKVA;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Джокер";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

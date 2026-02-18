@@ -18,6 +18,11 @@ class GameButton: SKNode {
     
     /// Callback при нажатии
     var onTap: (() -> Void)?
+    var isEnabled: Bool = true {
+        didSet {
+            updateEnabledAppearance()
+        }
+    }
     
     private let backgroundNode: SKShapeNode
     private let titleLabel: SKLabelNode
@@ -98,6 +103,7 @@ class GameButton: SKNode {
         backgroundNode.addChild(shadow)
         
         backgroundNode.addChild(titleLabel)
+        updateEnabledAppearance()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -117,12 +123,14 @@ class GameButton: SKNode {
     
     /// Проверить, содержит ли кнопка указанную точку (в координатах родителя)
     func containsTouchPoint(_ point: CGPoint) -> Bool {
+        guard isEnabled else { return false }
         let localPoint = convert(point, from: parent ?? self)
         return backgroundNode.contains(localPoint)
     }
     
     /// Анимация нажатия с вызовом callback по завершении
     func animateTap() {
+        guard isEnabled else { return }
         let scaleDown = SKAction.scale(to: 0.95, duration: 0.1)
         let scaleUp = SKAction.scale(to: 1.0, duration: 0.1)
         let pulse = SKAction.sequence([scaleDown, scaleUp])
@@ -130,5 +138,9 @@ class GameButton: SKNode {
         run(pulse) { [weak self] in
             self?.onTap?()
         }
+    }
+
+    private func updateEnabledAppearance() {
+        alpha = isEnabled ? 1.0 : 0.45
     }
 }
