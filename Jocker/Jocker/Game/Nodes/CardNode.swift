@@ -35,7 +35,7 @@ class CardNode: SKNode {
         shadow.fillColor = .black
         shadow.strokeColor = .clear
         shadow.alpha = 0.3
-        shadow.position = CGPoint(x: 4.8, y: -4.8)
+        shadow.position = CGPoint(x: CardNode.scaled(4.8), y: -CardNode.scaled(4.8))
         shadow.zPosition = -1
         return shadow
     }()
@@ -45,14 +45,20 @@ class CardNode: SKNode {
     private var backPattern: SKNode?
 
     private enum Style {
-        static let baseBorderLineWidth: CGFloat = 4.8
-        static let highlightedBorderLineWidth: CGFloat = 6.0
+        static let baseBorderLineWidth: CGFloat = CardNode.scaled(4.8)
+        static let highlightedBorderLineWidth: CGFloat = CardNode.scaled(6.0)
+    }
+
+    private static let sizeMultiplier: CGFloat = 1.1
+
+    private static func scaled(_ value: CGFloat) -> CGFloat {
+        return value * sizeMultiplier
     }
     
-    // Размеры карты (уменьшены на 20% от предыдущих)
-    static let cardWidth: CGFloat = 192
-    static let cardHeight: CGFloat = 288
-    static let cornerRadius: CGFloat = 19.2
+    // Базовые размеры карты с глобальным увеличением на 10%.
+    static let cardWidth: CGFloat = CardNode.scaled(192)
+    static let cardHeight: CGFloat = CardNode.scaled(288)
+    static let cornerRadius: CGFloat = CardNode.scaled(19.2)
     private static var cardRect: CGRect {
         CGRect(
             x: -CardNode.cardWidth / 2,
@@ -105,40 +111,40 @@ class CardNode: SKNode {
         
         let color = cardColor(for: suit)
         
-        // Верхний левый угол - ранг (уменьшено на 20%)
+        // Верхний левый угол - ранг
         let topRankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         topRankLabel.text = rank.symbol
-        topRankLabel.fontSize = 43.2
+        topRankLabel.fontSize = CardNode.scaled(43.2)
         topRankLabel.fontColor = color
         topRankLabel.horizontalAlignmentMode = .left
         topRankLabel.verticalAlignmentMode = .top
         topRankLabel.position = CGPoint(
-            x: -CardNode.cardWidth / 2 + 19.2,
-            y: CardNode.cardHeight / 2 - 19.2
+            x: -CardNode.cardWidth / 2 + CardNode.scaled(19.2),
+            y: CardNode.cardHeight / 2 - CardNode.scaled(19.2)
         )
         topRankLabel.zPosition = 2
         addChild(topRankLabel)
         rankLabel = topRankLabel
         
-        // Верхний левый угол - масть (уменьшено на 20%)
+        // Верхний левый угол - масть
         let topSuitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         topSuitLabel.text = suit.rawValue
-        topSuitLabel.fontSize = 38.4
+        topSuitLabel.fontSize = CardNode.scaled(38.4)
         topSuitLabel.fontColor = color
         topSuitLabel.horizontalAlignmentMode = .left
         topSuitLabel.verticalAlignmentMode = .top
         topSuitLabel.position = CGPoint(
-            x: -CardNode.cardWidth / 2 + 19.2,
-            y: CardNode.cardHeight / 2 - 62.4
+            x: -CardNode.cardWidth / 2 + CardNode.scaled(19.2),
+            y: CardNode.cardHeight / 2 - CardNode.scaled(62.4)
         )
         topSuitLabel.zPosition = 2
         addChild(topSuitLabel)
         suitLabel = topSuitLabel
         
-        // Центральная масть (большая) - уменьшено на 20%
+        // Центральная масть (большая)
         let middleSuitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         middleSuitLabel.text = suit.rawValue
-        middleSuitLabel.fontSize = 115.2
+        middleSuitLabel.fontSize = CardNode.scaled(115.2)
         middleSuitLabel.fontColor = color
         middleSuitLabel.horizontalAlignmentMode = .center
         middleSuitLabel.verticalAlignmentMode = .center
@@ -147,31 +153,31 @@ class CardNode: SKNode {
         addChild(middleSuitLabel)
         centerSuitLabel = middleSuitLabel
         
-        // Нижний правый угол - ранг (перевёрнутый) - уменьшено на 20%
+        // Нижний правый угол - ранг (перевёрнутый)
         let bottomRankLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         bottomRankLabel.text = rank.symbol
-        bottomRankLabel.fontSize = 43.2
+        bottomRankLabel.fontSize = CardNode.scaled(43.2)
         bottomRankLabel.fontColor = color
         bottomRankLabel.horizontalAlignmentMode = .right
         bottomRankLabel.verticalAlignmentMode = .bottom
         bottomRankLabel.position = CGPoint(
-            x: CardNode.cardWidth / 2 - 19.2,
-            y: -CardNode.cardHeight / 2 + 19.2
+            x: CardNode.cardWidth / 2 - CardNode.scaled(19.2),
+            y: -CardNode.cardHeight / 2 + CardNode.scaled(19.2)
         )
         bottomRankLabel.zRotation = .pi  // Поворачиваем на 180 градусов
         bottomRankLabel.zPosition = 2
         addChild(bottomRankLabel)
         
-        // Нижний правый угол - масть (перевёрнутая) - уменьшено на 20%
+        // Нижний правый угол - масть (перевёрнутая)
         let bottomSuitLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         bottomSuitLabel.text = suit.rawValue
-        bottomSuitLabel.fontSize = 38.4
+        bottomSuitLabel.fontSize = CardNode.scaled(38.4)
         bottomSuitLabel.fontColor = color
         bottomSuitLabel.horizontalAlignmentMode = .right
         bottomSuitLabel.verticalAlignmentMode = .bottom
         bottomSuitLabel.position = CGPoint(
-            x: CardNode.cardWidth / 2 - 19.2,
-            y: -CardNode.cardHeight / 2 + 62.4
+            x: CardNode.cardWidth / 2 - CardNode.scaled(19.2),
+            y: -CardNode.cardHeight / 2 + CardNode.scaled(62.4)
         )
         bottomSuitLabel.zRotation = .pi  // Поворачиваем на 180 градусов
         bottomSuitLabel.zPosition = 2
@@ -179,23 +185,23 @@ class CardNode: SKNode {
     }
     
     private func setupJokerVisuals() {
-        // Джокер - специальное оформление (уменьшено на 20%)
+        // Джокер - специальное оформление
         let jokerLabel = SKLabelNode(text: "🃏")
-        jokerLabel.fontSize = 134.4
+        jokerLabel.fontSize = CardNode.scaled(134.4)
         jokerLabel.horizontalAlignmentMode = .center
         jokerLabel.verticalAlignmentMode = .center
         jokerLabel.position = CGPoint(x: 0, y: 0)
         jokerLabel.zPosition = 2
         addChild(jokerLabel)
         
-        // Текст "JOKER" (уменьшено на 20%)
+        // Текст "JOKER"
         let textLabel = SKLabelNode(fontNamed: "Helvetica-Bold")
         textLabel.text = "JOKER"
-        textLabel.fontSize = 33.6
+        textLabel.fontSize = CardNode.scaled(33.6)
         textLabel.fontColor = GameColors.jokerText
         textLabel.horizontalAlignmentMode = .center
         textLabel.verticalAlignmentMode = .center
-        textLabel.position = CGPoint(x: 0, y: -84)
+        textLabel.position = CGPoint(x: 0, y: -CardNode.scaled(84))
         textLabel.zPosition = 2
         addChild(textLabel)
         
@@ -204,33 +210,33 @@ class CardNode: SKNode {
     }
     
     private func setupBackVisuals() {
-        // Рубашка карты (размеры уменьшены на 20%)
+        // Рубашка карты
         let pattern = SKNode()
         pattern.zPosition = 2
         
         // Фон рубашки - синий с узором
         cardBackground.fillColor = GameColors.cardBack
         
-        // Внутренний прямоугольник (отступы уменьшены на 20%)
+        // Внутренний прямоугольник
         let innerRect = CGRect(
-            x: -CardNode.cardWidth / 2 + 24,
-            y: -CardNode.cardHeight / 2 + 24,
-            width: CardNode.cardWidth - 48,
-            height: CardNode.cardHeight - 48
+            x: -CardNode.cardWidth / 2 + CardNode.scaled(24),
+            y: -CardNode.cardHeight / 2 + CardNode.scaled(24),
+            width: CardNode.cardWidth - CardNode.scaled(48),
+            height: CardNode.cardHeight - CardNode.scaled(48)
         )
-        let innerBorder = SKShapeNode(rect: innerRect, cornerRadius: 9.6)
+        let innerBorder = SKShapeNode(rect: innerRect, cornerRadius: CardNode.scaled(9.6))
         innerBorder.strokeColor = .white
-        innerBorder.lineWidth = 4.8
+        innerBorder.lineWidth = CardNode.scaled(4.8)
         innerBorder.fillColor = .clear
         innerBorder.zPosition = 0
         pattern.addChild(innerBorder)
         
-        // Узор из ромбов (размеры уменьшены на 20%)
-        let diamondSize: CGFloat = 28.8
-        let spacing: CGFloat = 38.4
+        // Узор из ромбов
+        let diamondSize: CGFloat = CardNode.scaled(28.8)
+        let spacing: CGFloat = CardNode.scaled(38.4)
         
-        for row in stride(from: -CardNode.cardHeight / 2 + 48, to: CardNode.cardHeight / 2 - 24, by: spacing) {
-            for col in stride(from: -CardNode.cardWidth / 2 + 48, to: CardNode.cardWidth / 2 - 24, by: spacing) {
+        for row in stride(from: -CardNode.cardHeight / 2 + CardNode.scaled(48), to: CardNode.cardHeight / 2 - CardNode.scaled(24), by: spacing) {
+            for col in stride(from: -CardNode.cardWidth / 2 + CardNode.scaled(48), to: CardNode.cardWidth / 2 - CardNode.scaled(24), by: spacing) {
                 let diamond = createDiamond(size: diamondSize)
                 diamond.position = CGPoint(x: col, y: row)
                 diamond.fillColor = SKColor(white: 1.0, alpha: 0.3)
