@@ -13,15 +13,8 @@ extension GameScene {
 
     func presentFirstPlayerAnnouncementModal(firstPlayerName: String) {
         guard !firstPlayerName.isEmpty else { return }
-        guard let presenter = topPresentedViewController() else { return }
-
-        let alert = UIAlertController(
-            title: nil,
-            message: "Первый по списку: \(firstPlayerName)",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        presenter.present(alert, animated: true)
+        let modal = makeFirstPlayerAnnouncementModal(firstPlayerName: firstPlayerName)
+        _ = presentOverlayModal(modal)
     }
 
     @discardableResult
@@ -242,6 +235,86 @@ extension GameScene {
         if !presentOverlayModal(modal) {
             completion(fallbackDecision)
         }
+    }
+
+    private func makeFirstPlayerAnnouncementModal(firstPlayerName: String) -> UIViewController {
+        let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.62)
+        let surfaceColor = UIColor(red: 0.15, green: 0.21, blue: 0.32, alpha: 0.98)
+        let borderColor = GameColors.goldTranslucent
+        let titleColor = GameColors.textPrimary
+        let subtitleColor = GameColors.textSecondary
+        let accentColor = GameColors.buttonFill
+        let accentBorderColor = GameColors.buttonStroke
+        let accentTextColor = GameColors.buttonText
+
+        let modal = UIViewController()
+        modal.isModalInPresentation = true
+        modal.view.backgroundColor = overlayColor
+
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.backgroundColor = surfaceColor
+        containerView.layer.cornerRadius = 16
+        containerView.layer.borderWidth = 1
+        containerView.layer.borderColor = borderColor.cgColor
+        containerView.clipsToBounds = true
+        modal.view.addSubview(containerView)
+
+        let titleLabel = UILabel()
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "Первый по списку"
+        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 24)
+        titleLabel.textColor = titleColor
+        titleLabel.textAlignment = .center
+        containerView.addSubview(titleLabel)
+
+        let nameLabel = UILabel()
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        nameLabel.text = firstPlayerName
+        nameLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 22)
+        nameLabel.textColor = subtitleColor
+        nameLabel.textAlignment = .center
+        containerView.addSubview(nameLabel)
+
+        let confirmButton = UIButton(type: .system)
+        confirmButton.translatesAutoresizingMaskIntoConstraints = false
+        confirmButton.setTitle("ОК", for: .normal)
+        confirmButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 20)
+        confirmButton.setTitleColor(accentTextColor, for: .normal)
+        confirmButton.backgroundColor = accentColor
+        confirmButton.layer.cornerRadius = 12
+        confirmButton.layer.borderWidth = 1
+        confirmButton.layer.borderColor = accentBorderColor.cgColor
+        confirmButton.addAction(
+            UIAction { [weak modal] _ in
+                modal?.dismiss(animated: true)
+            },
+            for: .touchUpInside
+        )
+        containerView.addSubview(confirmButton)
+
+        NSLayoutConstraint.activate([
+            containerView.centerXAnchor.constraint(equalTo: modal.view.centerXAnchor),
+            containerView.centerYAnchor.constraint(equalTo: modal.view.centerYAnchor),
+            containerView.widthAnchor.constraint(lessThanOrEqualTo: modal.view.widthAnchor, multiplier: 0.74),
+            containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 360),
+
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+
+            nameLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            nameLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+
+            confirmButton.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 20),
+            confirmButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            confirmButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            confirmButton.heightAnchor.constraint(equalToConstant: 50),
+            confirmButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -18)
+        ])
+
+        return modal
     }
 
     private func topPresentedViewController() -> UIViewController? {
