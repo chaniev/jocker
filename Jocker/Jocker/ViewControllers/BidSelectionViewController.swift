@@ -45,6 +45,7 @@ final class BidSelectionViewController: UIViewController {
     private let biddingOrder: [Int]
     private let currentPlayerIndex: Int?
     private let forbiddenBid: Int?
+    private let trumpSuit: Suit?
     private let isPreDealBlindChoice: Bool
     private let canChooseBlind: Bool
     private let onSelectBid: ((Int) -> Void)?
@@ -60,6 +61,7 @@ final class BidSelectionViewController: UIViewController {
         biddingOrder: [Int],
         currentPlayerIndex: Int?,
         forbiddenBid: Int?,
+        trumpSuit: Suit?,
         onSelect: @escaping (Int) -> Void
     ) {
         self.playerName = playerName
@@ -72,6 +74,7 @@ final class BidSelectionViewController: UIViewController {
         self.biddingOrder = biddingOrder
         self.currentPlayerIndex = currentPlayerIndex
         self.forbiddenBid = forbiddenBid
+        self.trumpSuit = trumpSuit
         self.isPreDealBlindChoice = false
         self.canChooseBlind = false
         self.onSelectBid = onSelect
@@ -95,6 +98,7 @@ final class BidSelectionViewController: UIViewController {
         self.biddingOrder = []
         self.currentPlayerIndex = nil
         self.forbiddenBid = nil
+        self.trumpSuit = nil
         self.isPreDealBlindChoice = true
         self.canChooseBlind = canChooseBlind
         self.onSelectBid = nil
@@ -133,6 +137,13 @@ final class BidSelectionViewController: UIViewController {
             numberOfLines: 3
         )
         containerView.addSubview(subtitleLabel)
+
+        let trumpLabel = makeLabel(
+            text: trumpDisplayText(),
+            font: UIFont(name: "AvenirNext-DemiBold", size: 14),
+            textColor: GameColors.gold
+        )
+        containerView.addSubview(trumpLabel)
 
         let hintText: String?
         if let forbiddenBid, displayedBids.contains(forbiddenBid) {
@@ -190,7 +201,11 @@ final class BidSelectionViewController: UIViewController {
             subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            hintLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 10),
+            trumpLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 8),
+            trumpLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            trumpLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+
+            hintLabel.topAnchor.constraint(equalTo: trumpLabel.bottomAnchor, constant: 8),
             hintLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             hintLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
         ])
@@ -638,6 +653,11 @@ final class BidSelectionViewController: UIViewController {
         let firstRow = cardTitles.prefix(firstRowCount).joined(separator: " ")
         let secondRow = cardTitles.dropFirst(firstRowCount).joined(separator: " ")
         return "\(firstRow)\n\(secondRow)"
+    }
+
+    func trumpDisplayText() -> String {
+        guard let trumpSuit else { return "Без козыря" }
+        return "Козырь: \(trumpSuit.name)"
     }
 }
 

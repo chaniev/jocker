@@ -10,6 +10,40 @@ import SpriteKit
 @testable import Jocker
 
 final class GameScenePlayingFlowTests: XCTestCase {
+    func testBidSelectionTrumpDisplayText_whenTrumpSet_showsSuitOnly() {
+        let viewController = BidSelectionViewController(
+            playerName: "Игрок 1",
+            handCards: [],
+            allowedBids: [0, 1],
+            maxBid: 1,
+            playerNames: ["Игрок 1"],
+            displayedBidsByPlayer: [nil],
+            biddingOrder: [0],
+            currentPlayerIndex: 0,
+            forbiddenBid: nil,
+            trumpSuit: .hearts
+        ) { _ in }
+
+        XCTAssertEqual(viewController.trumpDisplayText(), "Козырь: \(Suit.hearts.name)")
+    }
+
+    func testBidSelectionTrumpDisplayText_whenNoTrump_showsNoTrumpLabel() {
+        let viewController = BidSelectionViewController(
+            playerName: "Игрок 1",
+            handCards: [],
+            allowedBids: [0, 1],
+            maxBid: 1,
+            playerNames: ["Игрок 1"],
+            displayedBidsByPlayer: [nil],
+            biddingOrder: [0],
+            currentPlayerIndex: 0,
+            forbiddenBid: nil,
+            trumpSuit: nil
+        ) { _ in }
+
+        XCTAssertEqual(viewController.trumpDisplayText(), "Без козыря")
+    }
+
     func testTrumpIndicator_whenNoTrump_displaysJokerCard() {
         let indicator = TrumpIndicator()
 

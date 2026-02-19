@@ -100,7 +100,8 @@ extension GameScene {
             displayedBidsByPlayer: displayedBidsByPlayer,
             biddingOrder: biddingOrder,
             currentPlayerIndex: playerIndex,
-            forbiddenBid: forbiddenBid
+            forbiddenBid: forbiddenBid,
+            trumpSuit: currentTrump
         ) { [weak self] selectedBid in
             self?.isAwaitingHumanBidChoice = false
             completion(selectedBid)
