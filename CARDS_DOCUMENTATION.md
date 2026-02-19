@@ -80,6 +80,13 @@
   - `style` (`faceUp` или `faceDown`);
   - `leadDeclaration` для первого хода (`wish`, `above`, `takes`).
 
+### `Jocker/Jocker/Models/DealTrainingMoveSample.swift`
+
+- Training-сэмпл одного хода в раздаче:
+  - состояние до хода (рука, legal-карты, контекст взятки, заявка/взятки игрока);
+  - действие (карта + режим розыгрыша джокера);
+  - исход (кто выиграл взятку, выиграл ли ходивший).
+
 ## Узлы SpriteKit
 
 ### `Jocker/Jocker/Game/Nodes/CardNode.swift`
@@ -186,6 +193,22 @@
 - Для быстрого запуска доступен alias через `Makefile`:
   `make bt` (или `make train-bot`).
 
+### `Jocker/Jocker/Game/Services/DealHistoryStore.swift`
+
+- Хранит историю раздачи в памяти:
+  - козырь по раздаче;
+  - последовательность взяток и ходов;
+  - training-сэмплы на каждый ход (`state + action + outcome`).
+- Outcome training-сэмплов проставляется при резолве взятки (когда известен победитель).
+
+### `Jocker/Jocker/Game/Services/DealHistoryExportService.swift`
+
+- Экспортирует историю раздач и training-сэмплы в persistent JSON.
+- Точки вызова:
+  - после завершения блока;
+  - после завершения всей игры.
+- Формирует payload с игроками, раздачами, ходами и плоским списком training-сэмплов.
+
 ### `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`
 
 - Модальное окно выбора розыгрыша джокера:
@@ -207,6 +230,9 @@
   единообразной валидации обязательных ходов.
 - `TrickNode` поддерживает режим `rendersCards: false` для ускоренного self-play
   без создания/анимации `CardNode` в тренировочной симуляции.
+- `GameScene` выполняет авто-экспорт истории (`DealHistoryExportService`) при
+  завершении блока и финале партии, чтобы данные можно было использовать
+  в оффлайн-обучении без ручного сбора.
 - Таблица очков (`ScoreTableView`) форматирует итоговые значения через единый
   `NumberFormatter` (`ru_RU`) и применяет единый метод отрисовки summary-строк.
 - `ScoreManager` использует общий путь расчёта базовых очков блока в текущем и

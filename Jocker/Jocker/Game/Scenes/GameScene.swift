@@ -89,6 +89,7 @@ class GameScene: SKScene {
     }()
     let gameStatisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore()
     let dealHistoryStore = DealHistoryStore()
+    let dealHistoryExportService = DealHistoryExportService()
     let shouldRevealAllPlayersCards = false
     var isSelectingFirstDealer = false
     var isAwaitingJokerDecision = false
@@ -106,6 +107,8 @@ class GameScene: SKScene {
     var hasPresentedGameResultsModal = false
     var lastPresentedBlockResultsCount = 0
     var hasSavedGameStatistics = false
+    var exportedBlockIndices: Set<Int> = []
+    var hasExportedFinalGameHistory = false
     var hasDealtAtLeastOnce = false
 
     var isInteractionBlocked: Bool {
@@ -734,6 +737,8 @@ class GameScene: SKScene {
         hasPresentedGameResultsModal = false
         lastPresentedBlockResultsCount = 0
         hasSavedGameStatistics = false
+        exportedBlockIndices.removeAll()
+        hasExportedFinalGameHistory = false
         hasDealtAtLeastOnce = false
 
         isAwaitingJokerDecision = false
@@ -1048,6 +1053,8 @@ class GameScene: SKScene {
         guard completedBlockCount > lastPresentedBlockResultsCount else { return false }
         guard gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock else { return false }
 
+        exportCompletedBlockHistoryIfNeeded(completedBlockCount: completedBlockCount)
+
         if !presentBlockResultsModal(forCompletedBlockCount: completedBlockCount) {
             return false
         }
@@ -1072,6 +1079,8 @@ class GameScene: SKScene {
         let playerSummaries = buildFinalGamePlayerSummaries()
         guard !playerSummaries.isEmpty else { return false }
 
+        exportFinalGameHistoryIfNeeded()
+
         hasPresentedGameResultsModal = true
         gameState.markGameEnded()
         updateGameInfoLabel()
@@ -1083,6 +1092,34 @@ class GameScene: SKScene {
         }
 
         return true
+    }
+
+    private func exportCompletedBlockHistoryIfNeeded(completedBlockCount: Int) {
+        let blockIndex = completedBlockCount - 1
+        guard blockIndex >= 0 else { return }
+        guard !exportedBlockIndices.contains(blockIndex) else { return }
+
+        exportedBlockIndices.insert(blockIndex)
+        exportDealHistorySnapshot(reason: .blockCompleted(blockIndex: blockIndex))
+    }
+
+    private func exportFinalGameHistoryIfNeeded() {
+        guard !hasExportedFinalGameHistory else { return }
+        hasExportedFinalGameHistory = true
+        exportDealHistorySnapshot(reason: .gameCompleted)
+    }
+
+    private func exportDealHistorySnapshot(reason: DealHistoryExportService.ExportReason) {
+        let histories = dealHistoryStore.allHistories()
+        guard !histories.isEmpty else { return }
+
+        _ = dealHistoryExportService.export(
+            histories: histories,
+            playerCount: playerCount,
+            playerNames: currentPlayerNames,
+            playerControlTypes: playerControlTypes,
+            reason: reason
+        )
     }
 
     private func phaseTitle(for phase: GamePhase) -> String {

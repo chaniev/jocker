@@ -123,6 +123,13 @@ extension GameScene {
         jokerPlayStyle: JokerPlayStyle = .faceUp,
         jokerLeadDeclaration: JokerLeadDeclaration? = nil
     ) {
+        captureTrainingSampleBeforeCardPlay(
+            card: card,
+            playerIndex: playerIndex,
+            jokerPlayStyle: jokerPlayStyle,
+            jokerLeadDeclaration: jokerLeadDeclaration
+        )
+
         let isLeadCard = trickNode.playedCards.isEmpty
         if isLeadCard {
             clearJokerLeadInfo()
@@ -153,6 +160,57 @@ extension GameScene {
         updateGameInfoLabel()
         updateTurnUI(animated: true)
         runBotTurnIfNeeded()
+    }
+
+    private func captureTrainingSampleBeforeCardPlay(
+        card: Card,
+        playerIndex: Int,
+        jokerPlayStyle: JokerPlayStyle,
+        jokerLeadDeclaration: JokerLeadDeclaration?
+    ) {
+        guard playerIndex >= 0, playerIndex < playerCount else { return }
+        guard gameState.currentCardsPerPlayer > 0 else { return }
+
+        // К моменту вызова playCardOnTable карта уже удалена из руки, поэтому
+        // восстанавливаем состояние "до хода", добавляя сыгранную карту обратно.
+        var handBeforeMove = players[playerIndex].hand.cards
+        handBeforeMove.append(card)
+        handBeforeMove.sort()
+
+        let playedCardsBeforeMove = trickNode.playedCards
+        let legalCards = handBeforeMove.filter { candidate in
+            trickNode.canPlayCard(candidate, fromHand: handBeforeMove, trump: currentTrump)
+        }
+
+        let trickIndex = max(0, gameState.currentCardsPerPlayer - handBeforeMove.count)
+        let moveIndexInTrick = playedCardsBeforeMove.count
+        let playerBid = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].currentBid
+            : nil
+        let playerTricksTaken = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].tricksTaken
+            : nil
+        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+        let roundIndex = gameState.currentRoundInBlock
+
+        dealHistoryStore.appendMoveSample(
+            blockIndex: blockIndex,
+            roundIndex: roundIndex,
+            trickIndex: trickIndex,
+            moveIndexInTrick: moveIndexInTrick,
+            playerIndex: playerIndex,
+            playerCount: playerCount,
+            cardsInRound: gameState.currentCardsPerPlayer,
+            trump: currentTrump,
+            playerBid: playerBid,
+            playerTricksTakenBeforeMove: playerTricksTaken,
+            handBeforeMove: handBeforeMove,
+            legalCards: legalCards,
+            playedCardsInTrickBeforeMove: playedCardsBeforeMove,
+            selectedCard: card,
+            selectedJokerPlayStyle: jokerPlayStyle,
+            selectedJokerLeadDeclaration: jokerLeadDeclaration
+        )
     }
 
     @discardableResult

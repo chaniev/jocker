@@ -72,4 +72,97 @@ final class DealHistoryStoreTests: XCTestCase {
 
         XCTAssertNil(store.history(blockIndex: 0, roundIndex: 0))
     }
+
+    func testHistory_whenMoveSamplesRecorded_containsStateActionAndOutcome() {
+        let store = DealHistoryStore()
+        store.startDeal(blockIndex: 0, roundIndex: 1)
+        store.setTrump(.clubs, blockIndex: 0, roundIndex: 1)
+
+        store.appendMoveSample(
+            blockIndex: 0,
+            roundIndex: 1,
+            trickIndex: 0,
+            moveIndexInTrick: 0,
+            playerIndex: 0,
+            playerCount: 4,
+            cardsInRound: 2,
+            trump: .clubs,
+            playerBid: 1,
+            playerTricksTakenBeforeMove: 0,
+            handBeforeMove: [
+                .regular(suit: .spades, rank: .ace),
+                .regular(suit: .clubs, rank: .seven)
+            ],
+            legalCards: [
+                .regular(suit: .spades, rank: .ace),
+                .regular(suit: .clubs, rank: .seven)
+            ],
+            playedCardsInTrickBeforeMove: [],
+            selectedCard: .regular(suit: .spades, rank: .ace),
+            selectedJokerPlayStyle: .faceUp,
+            selectedJokerLeadDeclaration: nil
+        )
+
+        store.appendMoveSample(
+            blockIndex: 0,
+            roundIndex: 1,
+            trickIndex: 0,
+            moveIndexInTrick: 1,
+            playerIndex: 1,
+            playerCount: 4,
+            cardsInRound: 2,
+            trump: .clubs,
+            playerBid: 0,
+            playerTricksTakenBeforeMove: 0,
+            handBeforeMove: [
+                .regular(suit: .spades, rank: .king),
+                .regular(suit: .diamonds, rank: .queen)
+            ],
+            legalCards: [
+                .regular(suit: .spades, rank: .king)
+            ],
+            playedCardsInTrickBeforeMove: [
+                PlayedTrickCard(
+                    playerIndex: 0,
+                    card: .regular(suit: .spades, rank: .ace)
+                )
+            ],
+            selectedCard: .regular(suit: .spades, rank: .king),
+            selectedJokerPlayStyle: .faceUp,
+            selectedJokerLeadDeclaration: nil
+        )
+
+        store.appendTrick(
+            blockIndex: 0,
+            roundIndex: 1,
+            playedCards: [
+                PlayedTrickCard(playerIndex: 0, card: .regular(suit: .spades, rank: .ace)),
+                PlayedTrickCard(playerIndex: 1, card: .regular(suit: .spades, rank: .king))
+            ],
+            winnerPlayerIndex: 0
+        )
+
+        guard let history = store.history(blockIndex: 0, roundIndex: 1) else {
+            XCTFail("Expected history for recorded deal")
+            return
+        }
+
+        XCTAssertEqual(history.trainingSamples.count, 2)
+
+        let first = history.trainingSamples[0]
+        XCTAssertEqual(first.playerIndex, 0)
+        XCTAssertEqual(first.trickWinnerPlayerIndex, 0)
+        XCTAssertTrue(first.didPlayerWinTrick)
+        XCTAssertEqual(first.handBeforeMove.count, 2)
+        XCTAssertEqual(first.legalCards.count, 2)
+        XCTAssertEqual(first.playedCardsInTrickBeforeMove.count, 0)
+        XCTAssertEqual(first.selectedCard, .regular(suit: .spades, rank: .ace))
+
+        let second = history.trainingSamples[1]
+        XCTAssertEqual(second.playerIndex, 1)
+        XCTAssertEqual(second.trickWinnerPlayerIndex, 0)
+        XCTAssertFalse(second.didPlayerWinTrick)
+        XCTAssertEqual(second.playedCardsInTrickBeforeMove.count, 1)
+        XCTAssertEqual(second.legalCards, [.regular(suit: .spades, rank: .king)])
+    }
 }

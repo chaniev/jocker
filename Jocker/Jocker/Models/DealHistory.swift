@@ -12,4 +12,17 @@ struct DealHistory: Equatable {
     let key: DealHistoryKey
     let trump: Suit?
     let tricks: [DealTrickHistory]
+    let trainingSamples: [DealTrainingMoveSample]
+
+    init(
+        key: DealHistoryKey,
+        trump: Suit?,
+        tricks: [DealTrickHistory],
+        trainingSamples: [DealTrainingMoveSample] = []
+    ) {
+        self.key = key
+        self.trump = trump
+        self.tricks = tricks
+        self.trainingSamples = trainingSamples
+    }
 }

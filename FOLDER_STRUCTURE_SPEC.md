@@ -51,7 +51,8 @@ This document is the source of truth for repository structure and file placement
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
 - `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
-- `Jocker/Jocker/Game/Services/DealHistoryStore.swift`: in-memory capture of deal playback data (trump per deal, ordered trick moves, and trick winners).
+- `Jocker/Jocker/Game/Services/DealHistoryStore.swift`: in-memory capture of deal playback data (trump per deal, ordered trick moves, trick winners) plus per-move training samples (state/action/outcome).
+- `Jocker/Jocker/Game/Services/DealHistoryExportService.swift`: persistent JSON export of deal history and training samples on block/game completion.
 - `Jocker/Jocker/Game/Services/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Services/GameStatisticsStore.swift`: storage contract for game statistics persistence and retrieval.
 - `Jocker/Jocker/Game/Services/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player statistics.
@@ -66,6 +67,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/DealHistoryKey.swift`: normalized identifier of deal position inside game (block index + round index).
 - `Jocker/Jocker/Models/DealTrickHistory.swift`: trick-level history payload with ordered moves and winner player index.
 - `Jocker/Jocker/Models/DealTrickMove.swift`: move-level history payload with player, card, and joker play context.
+- `Jocker/Jocker/Models/DealTrainingMoveSample.swift`: per-move training payload with pre-move state, chosen action, and trick outcome.
 - `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Models/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
@@ -114,6 +116,7 @@ Jocker/Jocker/
 │       ├── BotTrumpSelectionService.swift
 │       ├── BotTurnStrategyService.swift
 │       ├── DealHistoryStore.swift
+│       ├── DealHistoryExportService.swift
 │       ├── GameStatisticsStore.swift
 │       ├── GameRoundService.swift
 │       ├── GameTurnService.swift
@@ -129,6 +132,7 @@ Jocker/Jocker/
 │   ├── DealHistoryKey.swift
 │   ├── DealTrickHistory.swift
 │   ├── DealTrickMove.swift
+│   ├── DealTrainingMoveSample.swift
 │   ├── GameBlock.swift
 │   ├── GameBlockFormatter.swift
 │   ├── GameConstants.swift
@@ -184,6 +188,7 @@ Jocker/JockerTests/
 ├── BotTrumpSelectionServiceTests.swift
 ├── BotTurnStrategyServiceTests.swift
 ├── DealHistoryStoreTests.swift
+├── DealHistoryExportServiceTests.swift
 ├── GameFlowIntegrationTests.swift
 ├── GameFinalPlayerSummaryTests.swift
 ├── GameStatisticsStoreTests.swift
