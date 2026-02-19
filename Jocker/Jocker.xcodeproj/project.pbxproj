@@ -98,6 +98,9 @@
 		A90001052F7700010037CA75 /* DealHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000152F7700010037CA75 /* DealHistoryStore.swift */; };
 		A90001062F7700010037CA75 /* DealHistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000162F7700010037CA75 /* DealHistoryViewController.swift */; };
 		A90001072F7700010037CA75 /* DealHistoryStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000172F7700010037CA75 /* DealHistoryStoreTests.swift */; };
+		A90001082F7700010037CA75 /* DealTrainingMoveSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */; };
+		A90001092F7700010037CA75 /* DealHistoryExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000192F7700010037CA75 /* DealHistoryExportService.swift */; };
+		A900010A2F7700010037CA75 /* DealHistoryExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -212,6 +215,9 @@
 		A90000152F7700010037CA75 /* DealHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryStore.swift; sourceTree = "<group>"; };
 		A90000162F7700010037CA75 /* DealHistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryViewController.swift; sourceTree = "<group>"; };
 		A90000172F7700010037CA75 /* DealHistoryStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryStoreTests.swift; sourceTree = "<group>"; };
+		A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealTrainingMoveSample.swift; sourceTree = "<group>"; };
+		A90000192F7700010037CA75 /* DealHistoryExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportService.swift; sourceTree = "<group>"; };
+		A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -280,6 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				A90000172F7700010037CA75 /* DealHistoryStoreTests.swift */,
+				A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */,
 				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
 				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
 				E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */,
@@ -348,6 +355,7 @@
 				A90000122F7700010037CA75 /* DealHistoryKey.swift */,
 				A90000142F7700010037CA75 /* DealTrickHistory.swift */,
 				A90000132F7700010037CA75 /* DealTrickMove.swift */,
+				A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -443,6 +451,7 @@
 				C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
 				C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
 				A90000152F7700010037CA75 /* DealHistoryStore.swift */,
+				A90000192F7700010037CA75 /* DealHistoryExportService.swift */,
 				B10000242F7500010037CA75 /* GameStatisticsStore.swift */,
 				C0DE20022F5000010037CA75 /* GameRoundService.swift */,
 				C0DE20032F5000010037CA75 /* GameTurnService.swift */,
@@ -637,6 +646,7 @@
 				C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
 				C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
 				A90001052F7700010037CA75 /* DealHistoryStore.swift in Sources */,
+				A90001092F7700010037CA75 /* DealHistoryExportService.swift in Sources */,
 				B10000152F7500010037CA75 /* UserDefaultsGameStatisticsStore.swift in Sources */,
 				7E4AC9462F268D810037CA75 /* AppDelegate.swift in Sources */,
 				AA0000022F2800010037CA75 /* RoundResult.swift in Sources */,
@@ -644,6 +654,7 @@
 				A90001022F7700010037CA75 /* DealHistoryKey.swift in Sources */,
 				A90001042F7700010037CA75 /* DealTrickHistory.swift in Sources */,
 				A90001032F7700010037CA75 /* DealTrickMove.swift in Sources */,
+				A90001082F7700010037CA75 /* DealTrainingMoveSample.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
 				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,
 				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
@@ -678,6 +689,7 @@
 				C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */,
 				F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */,
 				A90001072F7700010037CA75 /* DealHistoryStoreTests.swift in Sources */,
+				A900010A2F7700010037CA75 /* DealHistoryExportServiceTests.swift in Sources */,
 				7E4AC9602F268D860037CA75 /* JockerTests.swift in Sources */,
 				DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */,
 				AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */,

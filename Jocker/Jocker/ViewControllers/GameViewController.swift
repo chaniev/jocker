@@ -9,6 +9,9 @@ import UIKit
 import SpriteKit
 
 class GameViewController: UIViewController {
+    private enum SceneLayout {
+        static let referenceWidth: CGFloat = 2556
+    }
     
     var playerCount: Int = 4
     var playerNames: [String] = []
@@ -29,8 +32,8 @@ class GameViewController: UIViewController {
         skView.showsNodeCount = false
         skView.ignoresSiblingOrder = true
         
-        // Создаём сцену для горизонтальной ориентации
-        let scene = GameScene(size: CGSize(width: 2556, height: 1179))
+        // Подбираем размер сцены под текущее соотношение сторон, чтобы на iPad не резались края.
+        let scene = GameScene(size: adaptedSceneSize(for: skView.bounds.size))
         scene.scaleMode = .aspectFill
         scene.playerCount = playerCount
         scene.playerNames = playerNames
@@ -146,5 +149,16 @@ class GameViewController: UIViewController {
 
     override var prefersStatusBarHidden: Bool {
         return true
+    }
+
+    private func adaptedSceneSize(for viewSize: CGSize) -> CGSize {
+        let width = max(viewSize.width, 1)
+        let height = max(viewSize.height, 1)
+        let aspectRatio = width / height
+
+        return CGSize(
+            width: SceneLayout.referenceWidth,
+            height: SceneLayout.referenceWidth / aspectRatio
+        )
     }
 }
