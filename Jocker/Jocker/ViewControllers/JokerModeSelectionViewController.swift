@@ -53,7 +53,6 @@ final class JokerModeSelectionViewController: UIViewController {
         let surfaceColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 0.98)
         let borderColor = UIColor(red: 0.31, green: 0.40, blue: 0.55, alpha: 0.85)
         let titleColor = UIColor(red: 0.95, green: 0.97, blue: 1.00, alpha: 1.0)
-        let subtitleColor = UIColor(red: 0.72, green: 0.79, blue: 0.90, alpha: 1.0)
         let accentColor = UIColor(red: 0.16, green: 0.39, blue: 0.77, alpha: 1.0)
 
         view.backgroundColor = overlayColor
@@ -69,22 +68,11 @@ final class JokerModeSelectionViewController: UIViewController {
 
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Розыгрыш джокера"
+        titleLabel.text = "Выберите как положить джокер"
         titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 24)
         titleLabel.textAlignment = .center
         titleLabel.textColor = titleColor
         containerView.addSubview(titleLabel)
-
-        let subtitleLabel = UILabel()
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.text = isLeadCard
-            ? "Первый ход: выберите объявление"
-            : "Выберите как положить джокер"
-        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
-        subtitleLabel.textAlignment = .center
-        subtitleLabel.textColor = subtitleColor
-        subtitleLabel.numberOfLines = 2
-        containerView.addSubview(subtitleLabel)
 
         let contentStack = UIStackView()
         contentStack.translatesAutoresizingMaskIntoConstraints = false
@@ -156,11 +144,7 @@ final class JokerModeSelectionViewController: UIViewController {
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            contentStack.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 18),
+            contentStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 18),
             contentStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             contentStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
