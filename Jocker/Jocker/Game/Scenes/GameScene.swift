@@ -698,9 +698,8 @@ class GameScene: SKScene {
         removeAction(forKey: ActionKey.firstDealerSelection)
 
         firstDealerIndex = selectedDealerIndex
+        resetForNewGameSession()
         gameState.startGame(initialDealerIndex: selectedDealerIndex)
-        hasPresentedGameResultsModal = false
-        hasDealtAtLeastOnce = false
 
         firstDealerAnnouncementNode?.removeFromParent()
         firstDealerAnnouncementNode = nil
@@ -715,6 +714,33 @@ class GameScene: SKScene {
         if let firstPlayerName = firstPlayerOnLeftName(fromDealer: selectedDealerIndex) {
             presentFirstPlayerAnnouncementModal(firstPlayerName: firstPlayerName)
         }
+    }
+
+    func resetForNewGameSession() {
+        removeAction(forKey: ActionKey.botTurn)
+        coordinator.cancelPendingTrickResolution(on: self)
+        coordinator = GameSceneCoordinator(tuning: botTuning)
+
+        scoreManager.reset()
+        clearInProgressRoundResultsForScoreTable()
+
+        hasPresentedGameResultsModal = false
+        hasSavedGameStatistics = false
+        hasDealtAtLeastOnce = false
+
+        isAwaitingJokerDecision = false
+        isAwaitingHumanBidChoice = false
+        isAwaitingHumanBlindChoice = false
+        isAwaitingHumanTrumpChoice = false
+        isRunningBiddingFlow = false
+        isRunningPreDealBlindFlow = false
+        isRunningTrumpSelectionFlow = false
+        pendingBids.removeAll()
+        pendingBlindSelections.removeAll()
+    }
+
+    private func clearInProgressRoundResultsForScoreTable() {
+        scoreManager.clearInProgressRoundResults()
     }
 
     private func firstDealerSelectionDeckPosition() -> CGPoint {

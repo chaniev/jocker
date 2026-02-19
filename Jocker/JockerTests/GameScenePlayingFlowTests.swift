@@ -10,6 +10,52 @@ import SpriteKit
 @testable import Jocker
 
 final class GameScenePlayingFlowTests: XCTestCase {
+    func testResetForNewGameSession_resetsResultPresentationAndScores() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame()
+        scene.hasPresentedGameResultsModal = true
+        scene.hasSavedGameStatistics = true
+        scene.hasDealtAtLeastOnce = true
+
+        scene.scoreManager.recordRoundResults([
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false)
+        ])
+        _ = scene.scoreManager.finalizeBlock()
+        XCTAssertEqual(scene.scoreManager.completedBlocks.count, 1)
+
+        scene.resetForNewGameSession()
+
+        XCTAssertFalse(scene.hasPresentedGameResultsModal)
+        XCTAssertFalse(scene.hasSavedGameStatistics)
+        XCTAssertFalse(scene.hasDealtAtLeastOnce)
+        XCTAssertEqual(scene.scoreManager.completedBlocks.count, 0)
+        XCTAssertEqual(scene.scoreManager.totalScores, [0, 0, 0, 0])
+    }
+
+    func testResetForNewGameSession_resetsCoordinatorDealingState() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame()
+
+        scene.coordinator.markDidDeal()
+        scene.resetForNewGameSession()
+        scene.gameState.startGame()
+
+        let initialRound = scene.gameState.currentRoundInBlock
+        let canDeal = scene.coordinator.prepareForDealing(
+            gameState: scene.gameState,
+            scoreManager: scene.scoreManager,
+            playerCount: scene.playerCount
+        )
+
+        XCTAssertTrue(canDeal)
+        XCTAssertEqual(scene.gameState.currentRoundInBlock, initialRound)
+    }
+
     func testBidSelectionTrumpDisplayText_whenTrumpSet_showsSuitOnly() {
         let viewController = BidSelectionViewController(
             playerName: "Игрок 1",
