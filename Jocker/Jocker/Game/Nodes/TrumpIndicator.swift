@@ -61,8 +61,7 @@ class TrumpIndicator: SKNode {
         self.trumpCard = card
         
         guard let card = card else {
-            labelNode.text = "Без козыря"
-            labelNode.fontColor = GameColors.textSecondary
+            showNoTrumpJoker(animated: animated)
             return
         }
         
@@ -98,8 +97,7 @@ class TrumpIndicator: SKNode {
         trumpCard = nil
 
         guard let suit else {
-            labelNode.text = "Без козыря"
-            labelNode.fontColor = GameColors.textSecondary
+            showNoTrumpJoker(animated: animated)
             return
         }
 
@@ -188,6 +186,30 @@ class TrumpIndicator: SKNode {
             }
             suitSymbolNode = nil
         }
+    }
+
+    private func showNoTrumpJoker(animated: Bool) {
+        let targetScale: CGFloat = 0.52
+        let jokerNode = CardNode(card: .joker, faceUp: true)
+        jokerNode.position = CGPoint(x: 0, y: -24)
+        jokerNode.setScale(targetScale)
+        jokerNode.zPosition = 2
+
+        if animated {
+            jokerNode.alpha = 0
+            jokerNode.setScale(0.4)
+            addChild(jokerNode)
+
+            let fadeIn = SKAction.fadeIn(withDuration: 0.25)
+            let scale = SKAction.scale(to: targetScale, duration: 0.25)
+            jokerNode.run(SKAction.group([fadeIn, scale]))
+        } else {
+            addChild(jokerNode)
+        }
+
+        cardNode = jokerNode
+        labelNode.text = "Без козыря"
+        labelNode.fontColor = GameColors.textSecondary
     }
 
     private func trumpSuitColor(for suit: Suit) -> SKColor {

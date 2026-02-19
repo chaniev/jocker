@@ -10,6 +10,15 @@ import SpriteKit
 @testable import Jocker
 
 final class GameScenePlayingFlowTests: XCTestCase {
+    func testTrumpIndicator_whenNoTrump_displaysJokerCard() {
+        let indicator = TrumpIndicator()
+
+        indicator.setTrumpSuit(nil, animated: false)
+
+        XCTAssertEqual(trumpHeaderText(in: indicator), "Без козыря")
+        XCTAssertTrue(containsJokerCard(in: indicator))
+    }
+
     func testRoundBidInfoText_forHumanIncludesBidAndTakenTricks() {
         let scene = GameScene(size: CGSize(width: 1366, height: 768))
         scene.playerCount = 4
@@ -96,5 +105,17 @@ final class GameScenePlayingFlowTests: XCTestCase {
             .compactMap { $0 as? SKLabelNode }
             .compactMap(\.text)
             .first { $0.hasPrefix("Козырь") }
+            ?? indicator
+                .children
+                .compactMap { $0 as? SKLabelNode }
+                .compactMap(\.text)
+                .first { $0 == "Без козыря" }
+    }
+
+    private func containsJokerCard(in indicator: TrumpIndicator) -> Bool {
+        return indicator
+            .children
+            .compactMap { $0 as? CardNode }
+            .contains { $0.card.isJoker }
     }
 }
