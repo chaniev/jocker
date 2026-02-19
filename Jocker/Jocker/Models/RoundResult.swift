@@ -17,6 +17,8 @@ struct RoundResult {
     let tricksTaken: Int
     /// Была ли ставка сделана «в тёмную» (до раздачи карт)
     let isBlind: Bool
+    /// Дополнительная корректировка очков раунда (например, вшитая премия).
+    let scoreAdjustment: Int
     
     /// Совпала ли ставка с результатом
     var bidMatched: Bool {
@@ -30,7 +32,30 @@ struct RoundResult {
             bid: bid,
             tricksTaken: tricksTaken,
             isBlind: isBlind
+        ) + scoreAdjustment
+    }
+
+    init(
+        cardsInRound: Int,
+        bid: Int,
+        tricksTaken: Int,
+        isBlind: Bool,
+        scoreAdjustment: Int = 0
+    ) {
+        self.cardsInRound = cardsInRound
+        self.bid = bid
+        self.tricksTaken = tricksTaken
+        self.isBlind = isBlind
+        self.scoreAdjustment = scoreAdjustment
+    }
+
+    func addingScoreAdjustment(_ delta: Int) -> RoundResult {
+        return RoundResult(
+            cardsInRound: cardsInRound,
+            bid: bid,
+            tricksTaken: tricksTaken,
+            isBlind: isBlind,
+            scoreAdjustment: scoreAdjustment + delta
         )
     }
 }
-

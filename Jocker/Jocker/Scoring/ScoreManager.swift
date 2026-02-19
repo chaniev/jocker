@@ -121,24 +121,21 @@ class ScoreManager {
     /// - Returns: результат завершённого блока
     @discardableResult
     func finalizeBlock(blockNumber: Int = 0) -> BlockResult {
-        // 1. Базовые очки за блок (сумма очков всех раундов)
-        let baseBlockScores = calculateBaseBlockScores()
-
-        // 2. Определяем всех игроков с премией (совпали все ставки в блоке)
+        // 1. Определяем всех игроков с премией (совпали все ставки в блоке)
         let allPremiumPlayerIndices = determinePremiumPlayers()
 
-        // 3. Среди них определяем, кто получает нулевую премию (блоки 1/3, все ставки=0, все взятки=0)
+        // 2. Среди них определяем, кто получает нулевую премию (блоки 1/3, все ставки=0, все взятки=0)
         let zeroPremiumPlayerIndices = determineZeroPremiumPlayers(
             among: allPremiumPlayerIndices,
             blockNumber: blockNumber
         )
         let zeroPremiumSet = Set(zeroPremiumPlayerIndices)
 
-        // 4. Остальные премиальные игроки получают обычную премию
+        // 3. Остальные премиальные игроки получают обычную премию
         let regularPremiumPlayerIndices = allPremiumPlayerIndices
             .filter { !zeroPremiumSet.contains($0) }
 
-        // 5. Рассчитываем бонусы и штрафы
+        // 4. Рассчитываем бонусы и штрафы
         //    Все премиальные игроки (и обычные, и нулевые) участвуют в системе штрафов:
         //    — защищены от штрафов
         //    — штрафуют соседа справа
@@ -148,17 +145,24 @@ class ScoreManager {
             zeroPremiumPlayers: zeroPremiumPlayerIndices
         )
 
-        // 6. Итоговые очки за блок
+        // 5. Вшиваем премию в очки последней раздачи каждого премиального игрока.
+        let roundResultsWithEmbeddedPremiums = applyingPremiumsToLastDeal(
+            roundResults: currentBlockRoundResults,
+            premiumBonuses: premiumBonuses,
+            zeroPremiumBonuses: zeroPremiumBonuses
+        )
+
+        // 6. Базовые очки за блок (сумма очков всех раздач, включая вшитую премию).
+        let baseBlockScores = calculateBlockScores(roundResultsWithEmbeddedPremiums)
+
+        // 7. Итоговые очки за блок: штрафы применяются один раз поверх суммы раздач.
         var finalBlockScores = Array(repeating: 0, count: playerCount)
         for i in 0..<playerCount {
-            finalBlockScores[i] = baseBlockScores[i]
-                + premiumBonuses[i]
-                + zeroPremiumBonuses[i]
-                - premiumPenalties[i]
+            finalBlockScores[i] = baseBlockScores[i] - premiumPenalties[i]
         }
 
         let blockResult = BlockResult(
-            roundResults: currentBlockRoundResults,
+            roundResults: roundResultsWithEmbeddedPremiums,
             baseScores: baseBlockScores,
             premiumPlayerIndices: regularPremiumPlayerIndices,
             premiumBonuses: premiumBonuses,
@@ -238,8 +242,14 @@ class ScoreManager {
 
     /// Рассчитать базовые очки за текущий блок
     private func calculateBaseBlockScores() -> [Int] {
+        return calculateBlockScores(currentBlockRoundResults)
+    }
+
+    /// Рассчитать сумму очков по каждому игроку на основе переданных раздач блока.
+    private func calculateBlockScores(_ roundResults: [[RoundResult]]) -> [Int] {
         return (0..<playerCount).map { playerIndex in
-            currentBlockRoundResults[playerIndex].reduce(0) { $0 + $1.score }
+            guard roundResults.indices.contains(playerIndex) else { return 0 }
+            return roundResults[playerIndex].reduce(0) { $0 + $1.score }
         }
     }
 
@@ -327,6 +337,31 @@ class ScoreManager {
         }
 
         return (premiumBonuses, zeroPremiumBonuses, penalties)
+    }
+
+    /// Добавляет бонус премии в очки последней раздачи соответствующего игрока.
+    private func applyingPremiumsToLastDeal(
+        roundResults: [[RoundResult]],
+        premiumBonuses: [Int],
+        zeroPremiumBonuses: [Int]
+    ) -> [[RoundResult]] {
+        var updatedRoundResults = roundResults
+
+        for playerIndex in 0..<playerCount {
+            guard updatedRoundResults.indices.contains(playerIndex) else { continue }
+            guard !updatedRoundResults[playerIndex].isEmpty else { continue }
+
+            let premiumBonus = premiumBonuses.indices.contains(playerIndex) ? premiumBonuses[playerIndex] : 0
+            let zeroPremiumBonus = zeroPremiumBonuses.indices.contains(playerIndex) ? zeroPremiumBonuses[playerIndex] : 0
+            let totalBonus = premiumBonus + zeroPremiumBonus
+            guard totalBonus != 0 else { continue }
+
+            let lastRoundIndex = updatedRoundResults[playerIndex].count - 1
+            let lastRound = updatedRoundResults[playerIndex][lastRoundIndex]
+            updatedRoundResults[playerIndex][lastRoundIndex] = lastRound.addingScoreAdjustment(totalBonus)
+        }
+
+        return updatedRoundResults
     }
 
     /// Найти игрока для штрафа за премию

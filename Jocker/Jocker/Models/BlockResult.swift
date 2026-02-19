@@ -11,7 +11,7 @@ import Foundation
 struct BlockResult {
     /// Результаты каждого раунда для каждого игрока: [playerIndex][roundIndex]
     let roundResults: [[RoundResult]]
-    /// Базовые очки каждого игрока за блок (сумма очков за раунды, без премий)
+    /// Очки каждого игрока за блок как сумма очков раздач (премия вшивается в последнюю раздачу).
     let baseScores: [Int]
     /// Индексы игроков, получивших премию
     let premiumPlayerIndices: [Int]
@@ -23,7 +23,6 @@ struct BlockResult {
     let zeroPremiumPlayerIndices: [Int]
     /// Бонусы нулевой премии для каждого игрока (0 или 500)
     let zeroPremiumBonuses: [Int]
-    /// Итоговые очки за блок: baseScores + premiumBonuses - premiumPenalties + zeroPremiumBonuses
+    /// Итоговые очки за блок: baseScores - premiumPenalties
     let finalScores: [Int]
 }
-

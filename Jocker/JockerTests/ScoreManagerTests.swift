@@ -228,14 +228,17 @@ final class ScoreManagerTests: XCTestCase {
         // Максимальное положительное очко игрока 3 (раунды 1 и 2): max(50, 50) = 50
         XCTAssertEqual(result.premiumPenalties[3], 50)
         
-        // Базовые очки
-        XCTAssertEqual(result.baseScores[0], 350)  // 100+100+150
+        // Базовые очки (премия вшита в последнюю раздачу)
+        XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
         XCTAssertEqual(result.baseScores[1], 170)  // 50+20+100
         XCTAssertEqual(result.baseScores[2], 0)    // 50+100-150
         XCTAssertEqual(result.baseScores[3], 150)  // 50+50+50
+
+        // Последняя раздача P0 увеличена на размер премии
+        XCTAssertEqual(result.roundResults[0][2].score, 250)  // 150 + 100
         
         // Итоговые очки
-        XCTAssertEqual(result.finalScores[0], 450)  // 350 + 100 бонус
+        XCTAssertEqual(result.finalScores[0], 450)
         XCTAssertEqual(result.finalScores[1], 170)  // без изменений
         XCTAssertEqual(result.finalScores[2], 0)    // без изменений
         XCTAssertEqual(result.finalScores[3], 100)  // 150 - 50 штраф
@@ -289,17 +292,17 @@ final class ScoreManagerTests: XCTestCase {
         // Штраф × 2 (от двух премий) = 50 + 50 = 100
         XCTAssertEqual(result.premiumPenalties[2], 100)
         
-        // Базовые очки
-        XCTAssertEqual(result.baseScores[0], 350)  // 100+100+150
+        // Базовые очки (премии вшиты в последние раздачи)
+        XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
         XCTAssertEqual(result.baseScores[1], 50)   // 50-100+100
         XCTAssertEqual(result.baseScores[2], 110)  // 50+10+50
-        XCTAssertEqual(result.baseScores[3], 200)  // 50+100+50
+        XCTAssertEqual(result.baseScores[3], 300)  // 50+100+(50+100)
         
         // Итоговые
-        XCTAssertEqual(result.finalScores[0], 450)  // 350 + 100
+        XCTAssertEqual(result.finalScores[0], 450)
         XCTAssertEqual(result.finalScores[1], 50)   // без изменений
         XCTAssertEqual(result.finalScores[2], 10)   // 110 - 100
-        XCTAssertEqual(result.finalScores[3], 300)  // 200 + 100
+        XCTAssertEqual(result.finalScores[3], 300)
     }
     
     // MARK: - Общие очки за несколько блоков
@@ -504,8 +507,8 @@ final class ScoreManagerTests: XCTestCase {
         // Бонус P0: max(200) = 200 (слепая ставка удваивается и входит в бонус)
         XCTAssertEqual(result.premiumBonuses[0], 200)
         
-        // Базовые очки P0: 200 + 100 = 300
-        XCTAssertEqual(result.baseScores[0], 300)
+        // Базовые очки P0: 200 + (100 + 200) = 500
+        XCTAssertEqual(result.baseScores[0], 500)
     }
     
     // MARK: - Три игрока
@@ -543,7 +546,7 @@ final class ScoreManagerTests: XCTestCase {
         // Штраф с P2 (справа от P0): max positive P2 (раунды 1, 2) = max(50, 20) = 50
         XCTAssertEqual(result.premiumPenalties[2], 50)
         
-        // Итого P0: 350 + 100 = 450
+        // Итого P0: 450
         XCTAssertEqual(result.finalScores[0], 450)
         // Итого P2: 120 - 50 = 70
         XCTAssertEqual(result.finalScores[2], 70)
@@ -617,8 +620,11 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertTrue(result.zeroPremiumPlayerIndices.contains(1))
         XCTAssertEqual(result.zeroPremiumBonuses[1], 500)
         
-        // P1 базовые: 50+50+50 = 150
-        XCTAssertEqual(result.baseScores[1], 150)
+        // P1 базовые: 50+50+(50+500) = 650
+        XCTAssertEqual(result.baseScores[1], 650)
+
+        // Последняя раздача P1 увеличена на размер нулевой премии
+        XCTAssertEqual(result.roundResults[1][2].score, 550)  // 50 + 500
         
         // P1 НЕ получает обычную премию — только одна из двух
         XCTAssertFalse(result.premiumPlayerIndices.contains(1))
@@ -678,8 +684,8 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertTrue(result.zeroPremiumPlayerIndices.contains(2))
         XCTAssertEqual(result.zeroPremiumBonuses[2], 500)
         
-        // P2 базовые: 50+50+50 = 150
-        XCTAssertEqual(result.baseScores[2], 150)
+        // P2 базовые: 50+50+(50+500) = 650
+        XCTAssertEqual(result.baseScores[2], 650)
     }
     
     func testZeroPremium_block4_notEligible() {
@@ -776,19 +782,19 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertEqual(result.premiumPenalties[2], 100)
         XCTAssertEqual(result.premiumPenalties[3], 0)
         
-        // Базовые очки
-        XCTAssertEqual(result.baseScores[0], 350)  // 100+100+150
+        // Базовые очки (премии вшиты в последние раздачи)
+        XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
         XCTAssertEqual(result.baseScores[1], 100)  // -100+100+100
         XCTAssertEqual(result.baseScores[2], 0)    // 50-100+50
-        XCTAssertEqual(result.baseScores[3], 150)  // 50+50+50
+        XCTAssertEqual(result.baseScores[3], 650)  // 50+50+(50+500)
         
-        // P0 итого: 350 + 100 (обычная премия: max(100,100)) = 450
+        // P0 итого: 450
         XCTAssertEqual(result.finalScores[0], 450)
         // P1 итого: 100
         XCTAssertEqual(result.finalScores[1], 100)
         // P2 итого: 0 - 100 (штраф) = -100
         XCTAssertEqual(result.finalScores[2], -100)
-        // P3 итого: 150 + 500 (нулевая премия) = 650
+        // P3 итого: 650
         XCTAssertEqual(result.finalScores[3], 650)
     }
     
@@ -855,8 +861,8 @@ final class ScoreManagerTests: XCTestCase {
         // P0 совпал во всех раундах → премия
         XCTAssertTrue(result.premiumPlayerIndices.contains(0))
         
-        // P0 базовые: 100 + 200 + 150 + 50 = 500
-        XCTAssertEqual(result.baseScores[0], 500)
+        // P0 базовые: 100 + 200 + 150 + (50 + 200) = 700
+        XCTAssertEqual(result.baseScores[0], 700)
         
         // P0 бонус: max(100, 200, 150) = 200 (раунды 1-3, исключая последний)
         XCTAssertEqual(result.premiumBonuses[0], 200)
@@ -864,7 +870,7 @@ final class ScoreManagerTests: XCTestCase {
         // Штраф с P3 (справа от P0): max positive P3 (раунды 1-3) = max(-100, 50, 50) = 50
         XCTAssertEqual(result.premiumPenalties[3], 50)
         
-        // P0 итог: 500 + 200 = 700
+        // P0 итог: 700
         XCTAssertEqual(result.finalScores[0], 700)
     }
 }
