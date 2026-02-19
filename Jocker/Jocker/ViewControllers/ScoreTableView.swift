@@ -114,7 +114,21 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             return
         }
 
-        let rowTop = headerHeight + CGFloat(targetRowIndex) * rowHeight
+        scrollToRow(targetRowIndex, animated: animated)
+    }
+
+    func scrollToBlockSummary(blockIndex: Int, animated: Bool) {
+        layoutIfNeeded()
+
+        guard let targetRowIndex = targetSummaryRowIndex(blockIndex: blockIndex) else {
+            return
+        }
+
+        scrollToRow(targetRowIndex, animated: animated)
+    }
+
+    private func scrollToRow(_ rowIndex: Int, animated: Bool) {
+        let rowTop = headerHeight + CGFloat(rowIndex) * rowHeight
         let visibleHeight = max(scrollView.bounds.height, 1)
         let maxOffsetY = max(0, scrollView.contentSize.height - visibleHeight)
         let centeredOffsetY = rowTop - (visibleHeight - rowHeight) / 2
@@ -302,6 +316,8 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         let currentBlockResults = scoreManager.currentBlockRoundResults
         let currentBlockScores = scoreManager.currentBlockBaseScores
 
+        updateHeaderPremiumIndicators(completedBlocks: completedBlocks)
+
         for (rowIndex, mapping) in layout.rowMappings.enumerated() {
             switch mapping.kind {
             case .deal:
@@ -363,6 +379,26 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         }
 
         return dealRows[safeRound].rowIndex
+    }
+
+    private func targetSummaryRowIndex(blockIndex: Int) -> Int? {
+        return summaryRowsForBlock(blockIndex).max()
+    }
+
+    private func updateHeaderPremiumIndicators(completedBlocks: [BlockResult]) {
+        let latestPremiumPlayers = latestPremiumPlayerIndices(in: completedBlocks)
+
+        for displayIndex in 0..<playerCount {
+            let playerIndex = playerDisplayOrder[displayIndex]
+            let baseName = displayName(for: playerIndex)
+            let hasPremium = latestPremiumPlayers.contains(playerIndex)
+            headerLabels[displayIndex].text = hasPremium ? "\(baseName) 🏆" : baseName
+        }
+    }
+
+    private func latestPremiumPlayerIndices(in completedBlocks: [BlockResult]) -> Set<Int> {
+        guard let latestBlock = completedBlocks.last else { return [] }
+        return Set(latestBlock.premiumPlayerIndices + latestBlock.zeroPremiumPlayerIndices)
     }
 
     private func applyDealRow(

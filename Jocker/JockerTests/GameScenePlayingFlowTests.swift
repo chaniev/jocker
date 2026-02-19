@@ -7,6 +7,7 @@
 
 import XCTest
 import SpriteKit
+import UIKit
 @testable import Jocker
 
 final class GameScenePlayingFlowTests: XCTestCase {
@@ -15,6 +16,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
         scene.playerCount = 4
         scene.gameState.startGame()
         scene.hasPresentedGameResultsModal = true
+        scene.lastPresentedBlockResultsCount = 2
         scene.hasSavedGameStatistics = true
         scene.hasDealtAtLeastOnce = true
 
@@ -30,6 +32,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
         scene.resetForNewGameSession()
 
         XCTAssertFalse(scene.hasPresentedGameResultsModal)
+        XCTAssertEqual(scene.lastPresentedBlockResultsCount, 0)
         XCTAssertFalse(scene.hasSavedGameStatistics)
         XCTAssertFalse(scene.hasDealtAtLeastOnce)
         XCTAssertEqual(scene.scoreManager.completedBlocks.count, 0)
@@ -54,6 +57,29 @@ final class GameScenePlayingFlowTests: XCTestCase {
 
         XCTAssertTrue(canDeal)
         XCTAssertEqual(scene.gameState.currentRoundInBlock, initialRound)
+    }
+
+    func testScoreTableView_whenLatestBlockHasPremium_marksPlayerNameWithTrophy() {
+        let manager = ScoreManager(playerCountProvider: { 4 })
+        manager.recordRoundResults([
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 1, isBlind: false)
+        ])
+        _ = manager.finalizeBlock(blockNumber: 1)
+
+        let tableView = ScoreTableView(
+            playerCount: 4,
+            displayStartPlayerIndex: 0,
+            playerNames: ["Анна", "Борис", "Вика", "Глеб"]
+        )
+        tableView.frame = CGRect(x: 0, y: 0, width: 1366, height: 768)
+        tableView.update(with: manager)
+        tableView.layoutIfNeeded()
+
+        let labelTexts = allLabelTexts(in: tableView)
+        XCTAssertTrue(labelTexts.contains("Анна 🏆"))
     }
 
     func testBidSelectionTrumpDisplayText_whenTrumpSet_showsSuitOnly() {
@@ -197,5 +223,16 @@ final class GameScenePlayingFlowTests: XCTestCase {
             .children
             .compactMap { $0 as? CardNode }
             .contains { $0.card.isJoker }
+    }
+
+    private func allLabelTexts(in view: UIView) -> [String] {
+        var texts: [String] = []
+        if let label = view as? UILabel, let text = label.text {
+            texts.append(text)
+        }
+        for subview in view.subviews {
+            texts.append(contentsOf: allLabelTexts(in: subview))
+        }
+        return texts
     }
 }

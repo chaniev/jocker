@@ -30,6 +30,7 @@ extension GameScene {
 
         updateGameInfoLabel()
         updateTurnUI(animated: true)
+        _ = tryPresentBlockResultsIfNeeded()
         _ = tryPresentGameResultsIfNeeded()
     }
 

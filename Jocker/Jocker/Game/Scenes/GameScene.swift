@@ -103,6 +103,7 @@ class GameScene: SKScene {
     var firstDealerAnnouncementLabel: SKLabelNode?
     var firstDealerSelectionCardsNode: SKNode?
     var hasPresentedGameResultsModal = false
+    var lastPresentedBlockResultsCount = 0
     var hasSavedGameStatistics = false
     var hasDealtAtLeastOnce = false
 
@@ -725,6 +726,7 @@ class GameScene: SKScene {
         clearInProgressRoundResultsForScoreTable()
 
         hasPresentedGameResultsModal = false
+        lastPresentedBlockResultsCount = 0
         hasSavedGameStatistics = false
         hasDealtAtLeastOnce = false
 
@@ -1027,6 +1029,25 @@ class GameScene: SKScene {
             playerCount: playerCount,
             completedBlocks: scoreManager.completedBlocks
         )
+    }
+
+    @discardableResult
+    func tryPresentBlockResultsIfNeeded() -> Bool {
+        guard !hasPresentedGameResultsModal else { return false }
+        guard gameState.phase == .roundEnd else { return false }
+
+        let completedBlockCount = scoreManager.completedBlocks.count
+        guard completedBlockCount > 0 else { return false }
+        guard completedBlockCount < GameConstants.totalBlocks else { return false }
+        guard completedBlockCount > lastPresentedBlockResultsCount else { return false }
+        guard gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock else { return false }
+
+        if !presentBlockResultsModal(forCompletedBlockCount: completedBlockCount) {
+            return false
+        }
+
+        lastPresentedBlockResultsCount = completedBlockCount
+        return true
     }
 
     @discardableResult

@@ -40,6 +40,29 @@ extension GameScene {
         return presentOverlayModal(modal)
     }
 
+    @discardableResult
+    func presentBlockResultsModal(forCompletedBlockCount completedBlockCount: Int) -> Bool {
+        guard completedBlockCount > 0 else { return false }
+        guard completedBlockCount < GameConstants.totalBlocks else { return false }
+
+        let blockIndex = completedBlockCount - 1
+        let dealsInBlock = GameConstants.deals(
+            for: GameBlock(rawValue: completedBlockCount) ?? .first,
+            playerCount: playerCount
+        )
+        let lastRoundIndex = max(0, dealsInBlock.count - 1)
+
+        let modal = ScoreTableViewController(
+            scoreManager: scoreManager,
+            firstColumnPlayerIndex: scoreTableFirstPlayerIndex,
+            playerNames: currentPlayerNames,
+            currentBlockIndex: blockIndex,
+            currentRoundIndex: lastRoundIndex,
+            focusOnBlockSummary: true
+        )
+        return presentOverlayModal(modal)
+    }
+
     func requestTrumpChoice(
         forPlayer playerIndex: Int,
         handCards: [Card],

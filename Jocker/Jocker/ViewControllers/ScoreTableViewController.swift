@@ -13,6 +13,7 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
     private let scoreManager: ScoreManager
     private let currentBlockIndex: Int
     private let currentRoundIndex: Int
+    private let focusOnBlockSummary: Bool
     private var didApplyInitialDealScroll = false
     
     init(
@@ -20,11 +21,13 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         firstColumnPlayerIndex: Int = 0,
         playerNames: [String] = [],
         currentBlockIndex: Int = 0,
-        currentRoundIndex: Int = 0
+        currentRoundIndex: Int = 0,
+        focusOnBlockSummary: Bool = false
     ) {
         self.scoreManager = scoreManager
         self.currentBlockIndex = currentBlockIndex
         self.currentRoundIndex = currentRoundIndex
+        self.focusOnBlockSummary = focusOnBlockSummary
         self.tableView = ScoreTableView(
             playerCount: scoreManager.playerCount,
             displayStartPlayerIndex: firstColumnPlayerIndex,
@@ -79,11 +82,15 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         guard !didApplyInitialDealScroll else { return }
         guard tableView.bounds.height > 0 else { return }
 
-        tableView.scrollToDeal(
-            blockIndex: currentBlockIndex,
-            roundIndex: currentRoundIndex,
-            animated: false
-        )
+        if focusOnBlockSummary {
+            tableView.scrollToBlockSummary(blockIndex: currentBlockIndex, animated: false)
+        } else {
+            tableView.scrollToDeal(
+                blockIndex: currentBlockIndex,
+                roundIndex: currentRoundIndex,
+                animated: false
+            )
+        }
         didApplyInitialDealScroll = true
     }
     
