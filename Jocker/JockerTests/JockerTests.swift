@@ -60,6 +60,47 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(result.finalScores, [250, 350])
     }
 
+    func testTrickNodeSimulationMode_tracksCardsWithoutRenderingNodes() {
+        let trickNode = TrickNode(rendersCards: false)
+
+        _ = trickNode.playCard(
+            .regular(suit: .hearts, rank: .queen),
+            fromPlayer: 1,
+            animated: false
+        )
+        _ = trickNode.playCard(
+            .regular(suit: .hearts, rank: .king),
+            fromPlayer: 2,
+            animated: false
+        )
+
+        XCTAssertEqual(trickNode.playedCards.count, 2)
+        XCTAssertEqual(trickNode.children.count, 0)
+        XCTAssertEqual(trickNode.determineWinner(trump: nil), 2)
+
+        var didCompleteClear = false
+        trickNode.clearTrick(toPosition: .zero, animated: false) {
+            didCompleteClear = true
+        }
+
+        XCTAssertTrue(didCompleteClear)
+        XCTAssertTrue(trickNode.playedCards.isEmpty)
+        XCTAssertEqual(trickNode.children.count, 0)
+    }
+
+    func testTrickNodeDefaultMode_keepsRenderingBehavior() {
+        let trickNode = TrickNode()
+
+        _ = trickNode.playCard(
+            .regular(suit: .clubs, rank: .ace),
+            fromPlayer: 1,
+            animated: false
+        )
+
+        XCTAssertEqual(trickNode.playedCards.count, 1)
+        XCTAssertEqual(trickNode.children.count, 1)
+    }
+
     @MainActor
     func testSubtotalRowDisplaysScoresDividedByHundredWithOneFractionDigit() {
         let manager = ScoreManager(playerCountProvider: { 4 })

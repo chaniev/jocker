@@ -12,10 +12,24 @@ class TrickNode: SKNode {
 
     // MARK: - Properties
 
+    private let rendersCards: Bool
     private(set) var playedCards: [PlayedTrickCard] = []
     private var playedCardNodes: [CardNode] = []
     var centerPosition: CGPoint = .zero
     var cardRadius: CGFloat = 100  // Радиус размещения карт вокруг центра
+    private static let simulationPlaceholderCardNode = CardNode(card: .joker, faceUp: false)
+
+    // MARK: - Initialization
+
+    init(rendersCards: Bool = true) {
+        self.rendersCards = rendersCards
+        super.init()
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        rendersCards = true
+        super.init(coder: aDecoder)
+    }
 
     // MARK: - Public Methods
 
@@ -28,12 +42,8 @@ class TrickNode: SKNode {
         to targetPosition: CGPoint? = nil,
         animated: Bool = true
     ) -> CardNode {
-        let resolvedJokerStyle: JokerPlayStyle = card.isJoker ? jokerPlayStyle : .faceUp
-        let shouldShowFaceUp = !card.isJoker || resolvedJokerStyle == .faceUp
-        let cardNode = CardNode(card: card, faceUp: shouldShowFaceUp)
-        cardNode.zPosition = CGFloat(playedCards.count)
-
         let playerIndex = max(0, playerNumber - 1)
+        let resolvedJokerStyle: JokerPlayStyle = card.isJoker ? jokerPlayStyle : .faceUp
         let declaration = (card.isJoker && playedCards.isEmpty) ? jokerLeadDeclaration : nil
         let playedCard = PlayedTrickCard(
             playerIndex: playerIndex,
@@ -42,18 +52,26 @@ class TrickNode: SKNode {
             jokerLeadDeclaration: declaration
         )
 
+        playedCards.append(playedCard)
+        guard rendersCards else {
+            return TrickNode.simulationPlaceholderCardNode
+        }
+
+        let shouldShowFaceUp = !card.isJoker || resolvedJokerStyle == .faceUp
+        let cardNode = CardNode(card: card, faceUp: shouldShowFaceUp)
+        cardNode.zPosition = CGFloat(playedCardNodes.count)
+
         // Вычисляем позицию для карты
         let resolvedTargetPosition: CGPoint
         if let targetPosition {
             resolvedTargetPosition = targetPosition
         } else {
-            let angle = CGFloat(playedCards.count) * (.pi / 2)  // 90 градусов между картами
+            let angle = CGFloat(playedCardNodes.count) * (.pi / 2)  // 90 градусов между картами
             let x = centerPosition.x + cardRadius * cos(angle)
             let y = centerPosition.y + cardRadius * sin(angle)
             resolvedTargetPosition = CGPoint(x: x, y: y)
         }
 
-        playedCards.append(playedCard)
         playedCardNodes.append(cardNode)
         addChild(cardNode)
 
@@ -78,6 +96,13 @@ class TrickNode: SKNode {
 
     /// Очистить взятку (забрать карты)
     func clearTrick(toPosition position: CGPoint, animated: Bool = true, completion: (() -> Void)? = nil) {
+        guard rendersCards else {
+            playedCardNodes.removeAll()
+            playedCards.removeAll()
+            completion?()
+            return
+        }
+
         guard !playedCardNodes.isEmpty else {
             completion?()
             return

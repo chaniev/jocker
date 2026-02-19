@@ -9,11 +9,14 @@ This document is the source of truth for repository structure and file placement
 ```
 /
 ├── AGENTS.md
+├── Makefile
 ├── FOLDER_STRUCTURE_SPEC.md
 ├── CARDS_DOCUMENTATION.md
 ├── README.md
 ├── README_CARDS.md
 ├── XCODE_INTEGRATION.md
+├── scripts/
+│   └── train_bot_tuning.sh
 ├── правила игры/
 │   ├── выбор козыря.txt
 │   ├── выбор первого раздающего.txt
@@ -44,6 +47,8 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
 - `Jocker/Jocker/Game/Services/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration) plus deterministic self-play evolution API for tuning coefficients.
+- `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow.
+- `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
 - `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
 - `Jocker/Jocker/Game/Services/DealHistoryStore.swift`: in-memory capture of deal playback data (trump per deal, ordered trick moves, and trick winners).
@@ -206,6 +211,7 @@ Jocker/JockerUITests/
 - UIKit controllers and views are placed in `Jocker/Jocker/ViewControllers/`.
 - Shared core primitives are placed in `Jocker/Jocker/Core/`.
 - Resource files (`.sks`, assets, storyboards) stay under `Jocker/Jocker/Resources/`, `Jocker/Jocker/Assets.xcassets/`, and `Jocker/Jocker/Base.lproj/`.
+- Developer automation scripts are placed in `scripts/` at repository root.
 
 ## Type/File Rule
 

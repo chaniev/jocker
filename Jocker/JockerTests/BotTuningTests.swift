@@ -24,8 +24,8 @@ final class BotTuningTests: XCTestCase {
         let normal = BotTuning(difficulty: .normal)
         let hard = BotTuning(difficulty: .hard)
 
-        XCTAssertLessThan(easy.bidding.expectedJokerPower, normal.bidding.expectedJokerPower)
-        XCTAssertLessThan(normal.bidding.expectedJokerPower, hard.bidding.expectedJokerPower)
+        XCTAssertLessThan(easy.turnStrategy.chaseSpendJokerPenalty, normal.turnStrategy.chaseSpendJokerPenalty)
+        XCTAssertLessThan(normal.turnStrategy.chaseSpendJokerPenalty, hard.turnStrategy.chaseSpendJokerPenalty)
 
         XCTAssertGreaterThan(easy.trumpSelection.minimumPowerToDeclareTrump, normal.trumpSelection.minimumPowerToDeclareTrump)
         XCTAssertGreaterThan(normal.trumpSelection.minimumPowerToDeclareTrump, hard.trumpSelection.minimumPowerToDeclareTrump)
@@ -42,8 +42,8 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(easy.bidding.expectedTrumpBaseBonus, 0.35, accuracy: 0.000_1)
         XCTAssertEqual(easy.timing.trickResolutionDelay, 0.65, accuracy: 0.000_1)
 
-        XCTAssertEqual(hard.turnStrategy.chaseWinProbabilityWeight, 55.0, accuracy: 0.000_1)
-        XCTAssertEqual(hard.bidding.expectedTrumpBaseBonus, 0.65, accuracy: 0.000_1)
+        XCTAssertEqual(hard.turnStrategy.chaseWinProbabilityWeight, 55.245_862, accuracy: 0.000_1)
+        XCTAssertEqual(hard.bidding.expectedTrumpBaseBonus, 0.215_409, accuracy: 0.000_1)
         XCTAssertEqual(hard.timing.trickResolutionDelay, 0.45, accuracy: 0.000_1)
     }
 

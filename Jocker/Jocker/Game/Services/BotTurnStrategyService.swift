@@ -1337,7 +1337,7 @@ extension BotTuning {
         var trickLeader = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
 
         for _ in 0..<cardsInRound {
-            let trickNode = TrickNode()
+            let trickNode = TrickNode(rendersCards: false)
 
             for offset in 0..<playerCount {
                 let player = normalizedPlayerIndex(trickLeader + offset, playerCount: playerCount)

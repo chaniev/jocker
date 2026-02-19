@@ -181,6 +181,10 @@
   - детерминированный self-play симулятор раундов;
   - эволюция коэффициентов (мутация + кроссовер);
   - возврат лучшего набора параметров и истории fitness по поколениям.
+- Для dev-запуска обучения используется скрипт `scripts/train_bot_tuning.sh`
+  (пример: `scripts/train_bot_tuning.sh --difficulty hard --seed 20260220`).
+- Для быстрого запуска доступен alias через `Makefile`:
+  `make bt` (или `make train-bot`).
 
 ### `Jocker/Jocker/ViewControllers/JokerModeSelectionViewController.swift`
 
@@ -201,6 +205,8 @@
   кнопки вызова торгов в сцене нет.
 - `TrickNode` содержит локальный helper проверки масти в руке (`hasSuit`) для
   единообразной валидации обязательных ходов.
+- `TrickNode` поддерживает режим `rendersCards: false` для ускоренного self-play
+  без создания/анимации `CardNode` в тренировочной симуляции.
 - Таблица очков (`ScoreTableView`) форматирует итоговые значения через единый
   `NumberFormatter` (`ru_RU`) и применяет единый метод отрисовки summary-строк.
 - `ScoreManager` использует общий путь расчёта базовых очков блока в текущем и
