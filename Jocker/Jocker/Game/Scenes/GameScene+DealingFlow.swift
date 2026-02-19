@@ -64,6 +64,12 @@ extension GameScene {
         pendingBids = Array(repeating: 0, count: playerCount)
         pendingBlindSelections = Array(repeating: false, count: playerCount)
 
+        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+        dealHistoryStore.startDeal(
+            blockIndex: blockIndex,
+            roundIndex: gameState.currentRoundInBlock
+        )
+
         if gameState.currentBlock == .fourth {
             startPreDealBlindFlowIfNeeded { [weak self] in
                 self?.runDealFlowForCurrentRound()
@@ -101,7 +107,14 @@ extension GameScene {
                 trumpCard: dealResult.trump,
                 trumpIndicator: trumpIndicator,
                 onTrumpResolved: { [weak self] trump in
-                    self?.currentTrump = trump
+                    guard let self else { return }
+                    self.currentTrump = trump
+                    let blockIndex = max(0, self.gameState.currentBlock.rawValue - 1)
+                    self.dealHistoryStore.setTrump(
+                        trump,
+                        blockIndex: blockIndex,
+                        roundIndex: self.gameState.currentRoundInBlock
+                    )
                 },
                 onHighlightTurn: { [weak self] in
                     self?.updateTurnUI(animated: true)
@@ -263,6 +276,12 @@ extension GameScene {
             ) { [weak self] selectedTrump in
                 guard let self else { return }
                 self.currentTrump = selectedTrump
+                let blockIndex = max(0, self.gameState.currentBlock.rawValue - 1)
+                self.dealHistoryStore.setTrump(
+                    selectedTrump,
+                    blockIndex: blockIndex,
+                    roundIndex: self.gameState.currentRoundInBlock
+                )
                 let animateTrumpReveal = !self.isBotPlayer(chooserPlayerIndex)
                 self.trumpIndicator.setTrumpSuit(selectedTrump, animated: animateTrumpReveal)
 

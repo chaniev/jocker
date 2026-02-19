@@ -88,6 +88,7 @@ class GameScene: SKScene {
         return BotTrumpSelectionService(tuning: botTuning)
     }()
     let gameStatisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore()
+    let dealHistoryStore = DealHistoryStore()
     let shouldRevealAllPlayersCards = false
     var isSelectingFirstDealer = false
     var isAwaitingJokerDecision = false
@@ -139,6 +140,10 @@ class GameScene: SKScene {
 
     var currentPlayerNames: [String] {
         return gameState.players.map { $0.name }
+    }
+
+    func dealHistory(forBlockIndex blockIndex: Int, roundIndex: Int) -> DealHistory? {
+        return dealHistoryStore.history(blockIndex: blockIndex, roundIndex: roundIndex)
     }
 
     var canDealCards: Bool {
@@ -724,6 +729,7 @@ class GameScene: SKScene {
 
         scoreManager.reset()
         clearInProgressRoundResultsForScoreTable()
+        dealHistoryStore.reset()
 
         hasPresentedGameResultsModal = false
         lastPresentedBlockResultsCount = 0

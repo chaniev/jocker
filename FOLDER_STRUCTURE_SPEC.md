@@ -46,6 +46,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration) plus deterministic self-play evolution API for tuning coefficients.
 - `Jocker/Jocker/Game/Services/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
+- `Jocker/Jocker/Game/Services/DealHistoryStore.swift`: in-memory capture of deal playback data (trump per deal, ordered trick moves, and trick winners).
 - `Jocker/Jocker/Game/Services/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Services/GameStatisticsStore.swift`: storage contract for game statistics persistence and retrieval.
 - `Jocker/Jocker/Game/Services/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player statistics.
@@ -56,6 +57,10 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/GameStatisticsScope.swift`: statistics tabs (`all games`, `4 players`, `3 players`) and visible seat count per tab.
 - `Jocker/Jocker/Models/GameStatisticsPlayerRecord.swift`: aggregated counters by player seat (games, places, premiums by block, blind bids, max/min game score).
 - `Jocker/Jocker/Models/GameStatisticsSnapshot.swift`: persisted statistics snapshot grouped by scope.
+- `Jocker/Jocker/Models/DealHistory.swift`: immutable snapshot of one deal history (deal key, trump, and trick history list).
+- `Jocker/Jocker/Models/DealHistoryKey.swift`: normalized identifier of deal position inside game (block index + round index).
+- `Jocker/Jocker/Models/DealTrickHistory.swift`: trick-level history payload with ordered moves and winner player index.
+- `Jocker/Jocker/Models/DealTrickMove.swift`: move-level history payload with player, card, and joker play context.
 - `Jocker/Jocker/Models/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Models/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
@@ -68,6 +73,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
 - `Jocker/Jocker/ViewControllers/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player games, and 3-player games.
 - `Jocker/Jocker/ViewControllers/GameStatisticsTableView.swift`: grid-style statistics table where rows are metrics and columns are player seats.
+- `Jocker/Jocker/ViewControllers/DealHistoryViewController.swift`: modal details for a selected deal with trump, full move sequence, and trick winners.
 
 ## App Source Layout
 
@@ -102,6 +108,7 @@ Jocker/Jocker/
 │       ├── BotBiddingService.swift
 │       ├── BotTrumpSelectionService.swift
 │       ├── BotTurnStrategyService.swift
+│       ├── DealHistoryStore.swift
 │       ├── GameStatisticsStore.swift
 │       ├── GameRoundService.swift
 │       ├── GameTurnService.swift
@@ -113,6 +120,10 @@ Jocker/Jocker/
 │   ├── CardColor.swift
 │   ├── Card.swift
 │   ├── Deck.swift
+│   ├── DealHistory.swift
+│   ├── DealHistoryKey.swift
+│   ├── DealTrickHistory.swift
+│   ├── DealTrickMove.swift
 │   ├── GameBlock.swift
 │   ├── GameBlockFormatter.swift
 │   ├── GameConstants.swift
@@ -141,6 +152,7 @@ Jocker/Jocker/
 │   └── ScoreManager.swift
 ├── ViewControllers/
 │   ├── BidSelectionViewController.swift
+│   ├── DealHistoryViewController.swift
 │   ├── GameViewController.swift
 │   ├── GameStatisticsViewController.swift
 │   ├── GameStatisticsTableView.swift
@@ -166,6 +178,7 @@ Jocker/JockerTests/
 ├── BotTuningTests.swift
 ├── BotTrumpSelectionServiceTests.swift
 ├── BotTurnStrategyServiceTests.swift
+├── DealHistoryStoreTests.swift
 ├── GameFlowIntegrationTests.swift
 ├── GameFinalPlayerSummaryTests.swift
 ├── GameStatisticsStoreTests.swift

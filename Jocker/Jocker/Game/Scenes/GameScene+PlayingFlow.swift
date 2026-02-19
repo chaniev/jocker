@@ -12,6 +12,16 @@ extension GameScene {
 
     private func registerTrickWin(for playerIndex: Int) {
         guard playerIndex >= 0, playerIndex < playerCount else { return }
+        let playedCards = trickNode.playedCards
+        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+        let roundIndex = gameState.currentRoundInBlock
+        dealHistoryStore.appendTrick(
+            blockIndex: blockIndex,
+            roundIndex: roundIndex,
+            playedCards: playedCards,
+            winnerPlayerIndex: playerIndex
+        )
+
         clearJokerLeadInfo()
         trickNode.clearTrick(
             toPosition: players[playerIndex].position,

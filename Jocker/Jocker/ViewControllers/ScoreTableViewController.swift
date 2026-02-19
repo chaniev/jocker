@@ -15,6 +15,7 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
     private let currentRoundIndex: Int
     private let focusOnBlockSummary: Bool
     private var didApplyInitialDealScroll = false
+    var onDealSelected: ((Int, Int) -> Void)?
     
     init(
         scoreManager: ScoreManager,
@@ -61,6 +62,9 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
     
     private func setupTableView() {
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.onDealRowTapped = { [weak self] blockIndex, roundIndex in
+            self?.onDealSelected?(blockIndex, roundIndex)
+        }
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([

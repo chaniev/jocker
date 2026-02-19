@@ -32,6 +32,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let playerNames: [String]
     private let layout: Layout
     private var scoreManager: ScoreManager?
+    var onDealRowTapped: ((Int, Int) -> Void)?
 
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -153,6 +154,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         scrollView.indicatorStyle = .black
         scrollView.delegate = self
         addSubview(scrollView)
+
+        let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTableTap(_:)))
+        tapRecognizer.cancelsTouchesInView = false
+        scrollView.addGestureRecognizer(tapRecognizer)
 
         NSLayoutConstraint.activate([
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -302,6 +307,24 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         updatePinnedHeaderPosition()
+    }
+
+    @objc private func handleTableTap(_ recognizer: UITapGestureRecognizer) {
+        guard recognizer.state == .ended else { return }
+        let locationInScrollView = recognizer.location(in: scrollView)
+        guard locationInScrollView.y >= headerHeight else { return }
+
+        let location = recognizer.location(in: contentView)
+        guard location.x >= 0, location.x <= contentView.bounds.width else { return }
+
+        let rowIndex = Int((location.y - headerHeight) / rowHeight)
+        guard layout.rowMappings.indices.contains(rowIndex) else { return }
+
+        let mapping = layout.rowMappings[rowIndex]
+        guard case .deal = mapping.kind else { return }
+        guard let roundIndex = mapping.roundIndex else { return }
+
+        onDealRowTapped?(mapping.blockIndex, roundIndex)
     }
 
     // MARK: - Данные

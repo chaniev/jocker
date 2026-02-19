@@ -53,6 +53,14 @@ extension GameScene {
             currentRoundIndex: lastRoundIndex,
             focusOnBlockSummary: true
         )
+        modal.onDealSelected = { [weak self, weak modal] selectedBlockIndex, selectedRoundIndex in
+            guard let self, let modal else { return }
+            self.presentDealHistoryModal(
+                from: modal,
+                blockIndex: selectedBlockIndex,
+                roundIndex: selectedRoundIndex
+            )
+        }
         return presentOverlayModal(modal)
     }
 
@@ -382,5 +390,34 @@ extension GameScene {
             playerSummaries: playerSummaries,
             completedBlocks: scoreManager.completedBlocks
         )
+    }
+
+    private func presentDealHistoryModal(from presenter: UIViewController, blockIndex: Int, roundIndex: Int) {
+        guard let dealHistory = dealHistory(forBlockIndex: blockIndex, roundIndex: roundIndex) else {
+            showMissingDealHistoryAlert(
+                from: presenter,
+                blockIndex: blockIndex,
+                roundIndex: roundIndex
+            )
+            return
+        }
+
+        let historyViewController = DealHistoryViewController(
+            dealHistory: dealHistory,
+            playerNames: currentPlayerNames
+        )
+        historyViewController.modalPresentationStyle = .fullScreen
+        historyViewController.modalTransitionStyle = .crossDissolve
+        presenter.present(historyViewController, animated: true)
+    }
+
+    private func showMissingDealHistoryAlert(from presenter: UIViewController, blockIndex: Int, roundIndex: Int) {
+        let alert = UIAlertController(
+            title: "История недоступна",
+            message: "Для блока \(blockIndex + 1), раздачи \(roundIndex + 1) ещё нет сохранённых ходов.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "ОК", style: .default))
+        presenter.present(alert, animated: true)
     }
 }
