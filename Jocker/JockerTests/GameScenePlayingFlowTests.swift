@@ -10,6 +10,28 @@ import SpriteKit
 @testable import Jocker
 
 final class GameScenePlayingFlowTests: XCTestCase {
+    func testRoundBidInfoText_forHumanIncludesBidAndTakenTricks() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.playerControlTypes = [.human, .bot, .bot, .bot]
+        scene.gameState.startGame()
+        scene.gameState.setBid(2, forPlayerAt: 0)
+        scene.gameState.beginPlayingAfterBids()
+        scene.gameState.completeTrick(winner: 0)
+
+        XCTAssertEqual(scene.roundBidInfoText(for: 0), "Игрок 1: 2 / 1")
+    }
+
+    func testRoundBidInfoText_forBotShowsOnlyBid() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.playerControlTypes = [.human, .bot, .bot, .bot]
+        scene.gameState.startGame()
+        scene.gameState.setBid(1, forPlayerAt: 1)
+
+        XCTAssertEqual(scene.roundBidInfoText(for: 1), "Игрок 2: 1")
+    }
+
     func testCanDealCards_whenRoundInProgress_returnsFalse() {
         let scene = makeSceneInPlayingPhase(playerCount: 4)
         scene.hasDealtAtLeastOnce = true

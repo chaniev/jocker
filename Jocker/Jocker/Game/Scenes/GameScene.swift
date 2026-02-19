@@ -15,16 +15,19 @@ class GameScene: SKScene {
     }
 
     private enum LayoutMetrics {
+        static let roundBidInfoFontScale: CGFloat = 1.1
         static let actionButtonSize = CGSize(width: 300, height: 86)
         static let actionButtonHorizontalInset: CGFloat = 34
         static let actionButtonBottomInset: CGFloat = 24
         static let roundBidInfoWidth: CGFloat = 300
         static let roundBidInfoTopSpacing: CGFloat = 14
         static let roundBidInfoVerticalPadding: CGFloat = 12
-        static let roundBidInfoTitleHeight: CGFloat = 24
-        static let roundBidInfoRowHeight: CGFloat = 26
+        static let roundBidInfoTitleHeight: CGFloat = 24 * roundBidInfoFontScale
+        static let roundBidInfoRowHeight: CGFloat = 26 * roundBidInfoFontScale
         static let roundBidInfoRowSpacing: CGFloat = 6
         static let roundBidInfoTitleToRowsSpacing: CGFloat = 10
+        static let roundBidInfoTitleFontSize: CGFloat = 21 * roundBidInfoFontScale
+        static let roundBidInfoRowFontSize: CGFloat = 20 * roundBidInfoFontScale
         static let gameInfoTopInset: CGFloat = 34
         static let trickCenterYOffset: CGFloat = 20
         static let trumpIndicatorInset: CGFloat = 116
@@ -479,7 +482,7 @@ class GameScene: SKScene {
         panel.position = roundBidInfoPosition(insets: safeInsets())
 
         let titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
-        titleLabel.fontSize = 21
+        titleLabel.fontSize = LayoutMetrics.roundBidInfoTitleFontSize
         titleLabel.fontColor = GameColors.gold
         titleLabel.horizontalAlignmentMode = .center
         titleLabel.verticalAlignmentMode = .center
@@ -500,7 +503,7 @@ class GameScene: SKScene {
         var rowLabels: [SKLabelNode] = []
         for rowIndex in 0..<max(playerCount, 1) {
             let rowLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
-            rowLabel.fontSize = 20
+            rowLabel.fontSize = LayoutMetrics.roundBidInfoRowFontSize
             rowLabel.fontColor = GameColors.textPrimary
             rowLabel.horizontalAlignmentMode = .center
             rowLabel.verticalAlignmentMode = .center
@@ -534,18 +537,24 @@ class GameScene: SKScene {
         }
 
         for rowIndex in roundBidInfoRowLabels.indices {
-            guard gameState.players.indices.contains(rowIndex) else {
+            guard let text = roundBidInfoText(for: rowIndex) else {
                 roundBidInfoRowLabels[rowIndex].text = ""
                 roundBidInfoRowLabels[rowIndex].isHidden = true
                 continue
             }
 
-            let player = gameState.players[rowIndex]
-            roundBidInfoRowLabels[rowIndex].text = "\(player.name): \(player.currentBid)"
+            roundBidInfoRowLabels[rowIndex].text = text
             roundBidInfoRowLabels[rowIndex].isHidden = false
         }
 
         panel.isHidden = false
+    }
+
+    func roundBidInfoText(for playerIndex: Int) -> String? {
+        guard gameState.players.indices.contains(playerIndex) else { return nil }
+        let player = gameState.players[playerIndex]
+        let bidText = "\(player.name): \(player.currentBid)"
+        return isHumanPlayer(playerIndex) ? "\(bidText) / \(player.tricksTaken)" : bidText
     }
 
     // MARK: - Игровые компоненты
