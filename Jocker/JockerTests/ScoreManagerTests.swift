@@ -224,9 +224,9 @@ final class ScoreManagerTests: XCTestCase {
         // Бонус игрока 0: max(100, 100) = 100 (раунды 1 и 2, исключая последний)
         XCTAssertEqual(result.premiumBonuses[0], 100)
         
-        // Штраф берётся с игрока справа от 0 → это игрок 3
-        // Максимальное положительное очко игрока 3 (раунды 1 и 2): max(50, 50) = 50
-        XCTAssertEqual(result.premiumPenalties[3], 50)
+        // Штраф берётся с игрока слева от 0 → это игрок 1
+        // Максимальное положительное очко игрока 1 (раунды 1 и 2): max(50, 20) = 50
+        XCTAssertEqual(result.premiumPenalties[1], 50)
         
         // Базовые очки (премия вшита в последнюю раздачу)
         XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
@@ -239,9 +239,52 @@ final class ScoreManagerTests: XCTestCase {
         
         // Итоговые очки
         XCTAssertEqual(result.finalScores[0], 450)
-        XCTAssertEqual(result.finalScores[1], 170)  // без изменений
+        XCTAssertEqual(result.finalScores[1], 120)  // 170 - 50 штраф
         XCTAssertEqual(result.finalScores[2], 0)    // без изменений
-        XCTAssertEqual(result.finalScores[3], 100)  // 150 - 50 штраф
+        XCTAssertEqual(result.finalScores[3], 150)  // без изменений
+    }
+
+    func testFinalizeBlock_onePremium_penaltyAppliedToLeftNeighborFromRules() {
+        let manager = ScoreManager(playerCountProvider: { 4 })
+
+        // Сценарий из реальной партии (4 раздачи по 9 карт):
+        // P0 (Мурад) совпадает во всех раздачах и получает премию.
+        // По новым правилам слева от P0 находится P1, значит штраф должен идти в P1.
+        manager.recordRoundResults([
+            matchedResult(bid: 2, cardsInRound: 9),                      // P0: 150
+            mismatchedResult(bid: 3, tricksTaken: 2, cardsInRound: 9),   // P1: -100
+            mismatchedResult(bid: 2, tricksTaken: 1, cardsInRound: 9),   // P2: -100
+            mismatchedResult(bid: 3, tricksTaken: 4, cardsInRound: 9)    // P3: 40
+        ])
+        manager.recordRoundResults([
+            matchedResult(bid: 2, cardsInRound: 9),                      // P0: 150
+            matchedResult(bid: 2, cardsInRound: 9),                      // P1: 150
+            matchedResult(bid: 2, cardsInRound: 9),                      // P2: 150
+            mismatchedResult(bid: 2, tricksTaken: 3, cardsInRound: 9)    // P3: 30
+        ])
+        manager.recordRoundResults([
+            matchedResult(bid: 0, cardsInRound: 9),                      // P0: 50
+            mismatchedResult(bid: 3, tricksTaken: 6, cardsInRound: 9),   // P1: 60
+            matchedResult(bid: 3, cardsInRound: 9),                      // P2: 200
+            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 9)    // P3: -150
+        ])
+        manager.recordRoundResults([
+            matchedResult(bid: 2, cardsInRound: 9),                      // P0: 150 (+премия)
+            matchedResult(bid: 2, cardsInRound: 9),                      // P1: 150
+            mismatchedResult(bid: 2, tricksTaken: 5, cardsInRound: 9),   // P2: 50
+            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 9)    // P3: -150
+        ])
+
+        let result = manager.finalizeBlock()
+
+        XCTAssertEqual(result.premiumPlayerIndices, [0])
+        XCTAssertEqual(result.premiumBonuses[0], 150)    // max(150, 150, 50)
+        XCTAssertEqual(result.roundResults[0][3].score, 300)
+
+        // Штраф только с P1 (слева от P0): max positive P1 на 1..N-1 = max(-100, 150, 60) = 150
+        XCTAssertEqual(result.premiumPenalties, [0, 150, 0, 0])
+        XCTAssertEqual(result.baseScores, [650, 260, 300, -230])
+        XCTAssertEqual(result.finalScores, [650, 110, 300, -230])
     }
     
     // MARK: - Премия: пропуск соседа с премией
@@ -250,8 +293,8 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Игроки 0 и 3 получают премию
-        // Игрок 0: справа — игрок 3 (у него тоже премия) → штраф с игрока 2
-        // Игрок 3: справа — игрок 2 (без премии) → штраф с игрока 2
+        // Игрок 0: слева — игрок 1 (без премии) → штраф с игрока 1
+        // Игрок 3: слева — игрок 0 (премия) → пропуск → игрок 1 → штраф с игрока 1
         
         // Раунд 1 (C=1)
         manager.recordRoundResults([
@@ -285,12 +328,12 @@ final class ScoreManagerTests: XCTestCase {
         // Бонус игрока 3: max(50, 100) = 100
         XCTAssertEqual(result.premiumBonuses[3], 100)
         
-        // Штраф: игрок 0 → справа 3 (премия) → пропуск → игрок 2
-        // Игрок 3 → справа 2 (без премии) → штраф с игрока 2
-        // Игрок 2 получает двойной штраф
-        // Макс. положительное очко игрока 2 (раунды 1, 2): max(50, 10) = 50
+        // Штраф: игрок 0 → слева 1 (без премии) → штраф с игрока 1
+        // Игрок 3 → слева 0 (премия) → пропуск → игрок 1 (без премии) → штраф с игрока 1
+        // Игрок 1 получает двойной штраф
+        // Макс. положительное очко игрока 1 (раунды 1, 2): max(50, -100) = 50
         // Штраф × 2 (от двух премий) = 50 + 50 = 100
-        XCTAssertEqual(result.premiumPenalties[2], 100)
+        XCTAssertEqual(result.premiumPenalties[1], 100)
         
         // Базовые очки (премии вшиты в последние раздачи)
         XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
@@ -300,8 +343,8 @@ final class ScoreManagerTests: XCTestCase {
         
         // Итоговые
         XCTAssertEqual(result.finalScores[0], 450)
-        XCTAssertEqual(result.finalScores[1], 50)   // без изменений
-        XCTAssertEqual(result.finalScores[2], 10)   // 110 - 100
+        XCTAssertEqual(result.finalScores[1], -50)  // 50 - 100
+        XCTAssertEqual(result.finalScores[2], 110)  // без изменений
         XCTAssertEqual(result.finalScores[3], 300)
     }
     
@@ -513,11 +556,11 @@ final class ScoreManagerTests: XCTestCase {
     
     // MARK: - Три игрока
     
-    func testThreePlayers_rightNeighbor() {
+    func testThreePlayers_leftNeighbor() {
         let manager = ScoreManager(playerCountProvider: { 3 })
-        
+
         // Игрок 0 получает премию
-        // Справа от 0 → игрок 2 (0-1+3)%3 = 2
+        // Слева от 0 → игрок 1 (0+1)%3 = 1
         
         manager.recordRoundResults([
             matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
@@ -543,13 +586,15 @@ final class ScoreManagerTests: XCTestCase {
         // Бонус P0: max(100, 100) = 100 (раунды 1, 2; не последний)
         XCTAssertEqual(result.premiumBonuses[0], 100)
         
-        // Штраф с P2 (справа от P0): max positive P2 (раунды 1, 2) = max(50, 20) = 50
-        XCTAssertEqual(result.premiumPenalties[2], 50)
+        // Штраф с P1 (слева от P0): max positive P1 (раунды 1, 2) = max(-100, 50) = 50
+        XCTAssertEqual(result.premiumPenalties[1], 50)
         
         // Итого P0: 450
         XCTAssertEqual(result.finalScores[0], 450)
-        // Итого P2: 120 - 50 = 70
-        XCTAssertEqual(result.finalScores[2], 70)
+        // Итого P1: 50 - 50 = 0
+        XCTAssertEqual(result.finalScores[1], 0)
+        // Итого P2: 120
+        XCTAssertEqual(result.finalScores[2], 120)
     }
     
     // MARK: - Краевые случаи
@@ -740,7 +785,7 @@ final class ScoreManagerTests: XCTestCase {
         
         // P3 заказывает 0 и берёт 0 во всех раундах → нулевая премия
         // P0 все ставки совпали → обычная премия
-        // Обе премии защищают от штрафов и штрафуют соседа справа
+        // Обе премии защищают от штрафов и штрафуют соседа слева
         manager.recordRoundResults([
             matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
             mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),   // P1: -100
@@ -775,11 +820,11 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertFalse(result.zeroPremiumPlayerIndices.contains(0))
         
         // P3 защищён от штрафов (нулевая премия тоже защищает)
-        // P0 штраф → справа P3 (защищён!) → пропуск → P2 (без премии) → штраф с P2
-        // P3 штраф → справа P2 (без премии) → штраф с P2
-        // P2 получает двойной штраф
-        // P2 очки за раунды 1,2: [50, -100]. Max positive = 50. Штраф = 50 × 2 = 100
-        XCTAssertEqual(result.premiumPenalties[2], 100)
+        // P0 штраф → слева P1 (без премии) → штраф с P1
+        // P3 штраф → слева P0 (защищён) → пропуск → P1 (без премии) → штраф с P1
+        // P1 получает двойной штраф
+        // P1 очки за раунды 1,2: [-100, 100]. Max positive = 100. Штраф = 100 × 2 = 200
+        XCTAssertEqual(result.premiumPenalties[1], 200)
         XCTAssertEqual(result.premiumPenalties[3], 0)
         
         // Базовые очки (премии вшиты в последние раздачи)
@@ -790,10 +835,10 @@ final class ScoreManagerTests: XCTestCase {
         
         // P0 итого: 450
         XCTAssertEqual(result.finalScores[0], 450)
-        // P1 итого: 100
-        XCTAssertEqual(result.finalScores[1], 100)
-        // P2 итого: 0 - 100 (штраф) = -100
-        XCTAssertEqual(result.finalScores[2], -100)
+        // P1 итого: 100 - 200 = -100
+        XCTAssertEqual(result.finalScores[1], -100)
+        // P2 итого: 0
+        XCTAssertEqual(result.finalScores[2], 0)
         // P3 итого: 650
         XCTAssertEqual(result.finalScores[3], 650)
     }
@@ -867,8 +912,8 @@ final class ScoreManagerTests: XCTestCase {
         // P0 бонус: max(100, 200, 150) = 200 (раунды 1-3, исключая последний)
         XCTAssertEqual(result.premiumBonuses[0], 200)
         
-        // Штраф с P3 (справа от P0): max positive P3 (раунды 1-3) = max(-100, 50, 50) = 50
-        XCTAssertEqual(result.premiumPenalties[3], 50)
+        // Штраф с P1 (слева от P0): max positive P1 (раунды 1-3) = max(50, 100, -100) = 100
+        XCTAssertEqual(result.premiumPenalties[1], 100)
         
         // P0 итог: 700
         XCTAssertEqual(result.finalScores[0], 700)

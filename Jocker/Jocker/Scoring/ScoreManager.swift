@@ -138,7 +138,7 @@ class ScoreManager {
         // 4. Рассчитываем бонусы и штрафы
         //    Все премиальные игроки (и обычные, и нулевые) участвуют в системе штрафов:
         //    — защищены от штрафов
-        //    — штрафуют соседа справа
+        //    — штрафуют соседа слева
         let (premiumBonuses, zeroPremiumBonuses, premiumPenalties) = calculateAllPremiums(
             allPremiumPlayers: allPremiumPlayerIndices,
             regularPremiumPlayers: regularPremiumPlayerIndices,
@@ -290,7 +290,7 @@ class ScoreManager {
     ///
     /// Все премиальные игроки (обычные и нулевые) одинаково:
     /// — защищены от штрафов за чужие премии
-    /// — штрафуют соседа справа (максимальное положительное очко за раунд)
+    /// — штрафуют соседа слева (максимальное положительное очко за раунд)
     ///
     /// Отличие: бонус обычной премии = max(очки раундов 1..N-1),
     ///          бонус нулевой премии = 500
@@ -322,7 +322,7 @@ class ScoreManager {
             zeroPremiumBonuses[playerIndex] = ScoreCalculator.zeroPremiumAmount
         }
 
-        // Штрафы: все премиальные игроки (и обычные, и нулевые) штрафуют соседа справа
+        // Штрафы: все премиальные игроки (и обычные, и нулевые) штрафуют соседа слева
         // и все защищены от штрафов
         for playerIndex in allPremiumPlayers {
             if let penaltyTarget = findPenaltyTarget(
@@ -366,23 +366,23 @@ class ScoreManager {
 
     /// Найти игрока для штрафа за премию
     ///
-    /// Ищет первого игрока справа, у которого нет премии.
-    /// Если справа сидящий тоже получает премию — пропускаем его
-    /// и ищем следующего справа.
+    /// Ищет первого игрока слева, у которого нет премии.
+    /// Если слева сидящий тоже получает премию — пропускаем его
+    /// и ищем следующего слева.
     ///
     /// - Parameters:
     ///   - playerIndex: индекс игрока с премией
     ///   - premiumPlayers: множество индексов игроков с премией
     /// - Returns: индекс игрока для штрафа, или nil если все имеют премию
     private func findPenaltyTarget(for playerIndex: Int, premiumPlayers: Set<Int>) -> Int? {
-        var candidate = rightNeighbor(of: playerIndex)
+        var candidate = leftNeighbor(of: playerIndex)
         var checked = 0
 
         while checked < playerCount - 1 {
             if !premiumPlayers.contains(candidate) {
                 return candidate
             }
-            candidate = rightNeighbor(of: candidate)
+            candidate = leftNeighbor(of: candidate)
             checked += 1
         }
 
@@ -390,14 +390,14 @@ class ScoreManager {
         return nil
     }
 
-    /// Получить индекс игрока справа (0-based)
+    /// Получить индекс игрока слева (0-based)
     ///
-    /// Для игрока 1 справа сидит игрок 4 (0-based: 0 → 3)
-    /// Для игрока 2 справа сидит игрок 1 (0-based: 1 → 0)
-    /// Для игрока 3 справа сидит игрок 2 (0-based: 2 → 1)
-    /// Для игрока 4 справа сидит игрок 3 (0-based: 3 → 2)
-    private func rightNeighbor(of playerIndex: Int) -> Int {
-        return (playerIndex - 1 + playerCount) % playerCount
+    /// Для игрока 1 слева сидит игрок 2 (0-based: 0 → 1)
+    /// Для игрока 2 слева сидит игрок 3 (0-based: 1 → 2)
+    /// Для игрока 3 слева сидит игрок 4 (0-based: 2 → 3)
+    /// Для игрока 4 слева сидит игрок 1 (0-based: 3 → 0)
+    private func leftNeighbor(of playerIndex: Int) -> Int {
+        return (playerIndex + 1) % playerCount
     }
 
     /// Сбросить данные текущего блока
