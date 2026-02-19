@@ -8,6 +8,9 @@
 import UIKit
 
 class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
+    private enum StorageKey {
+        static let firstPlayerName = "Jocker.PlayerSelection.firstPlayerName.v1"
+    }
     
     private var selectedPlayerCount: Int = 4
     private var selectedBotDifficulty: BotDifficulty = .hard
@@ -100,6 +103,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         
         view.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
         playerOneNameField.delegate = self
+        playerOneNameField.text = loadSavedFirstPlayerName()
         setupUI()
         updateButtonStates()
     }
@@ -185,8 +189,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
     }
     
     private func selectedPlayerNames() -> [String] {
-        let rawFirstName = playerOneNameField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let firstName = rawFirstName.isEmpty ? "Игрок 1" : rawFirstName
+        let firstName = normalizedFirstPlayerName(from: playerOneNameField.text)
 
         return (0..<selectedPlayerCount).map { index in
             if index == 0 {
@@ -194,6 +197,22 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
             }
             return "Игрок \(index + 1)"
         }
+    }
+
+    private func normalizedFirstPlayerName(from rawName: String?) -> String {
+        let trimmedName = rawName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmedName.isEmpty ? "Игрок 1" : trimmedName
+    }
+
+    private func loadSavedFirstPlayerName() -> String {
+        let savedName = UserDefaults.standard.string(forKey: StorageKey.firstPlayerName)
+        return normalizedFirstPlayerName(from: savedName)
+    }
+
+    private func saveFirstPlayerName() {
+        let normalizedName = normalizedFirstPlayerName(from: playerOneNameField.text)
+        playerOneNameField.text = normalizedName
+        UserDefaults.standard.set(normalizedName, forKey: StorageKey.firstPlayerName)
     }
     
     @objc private func handleBackgroundTap() {
@@ -212,6 +231,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
     }
     
     private func startGame() {
+        saveFirstPlayerName()
         let names = selectedPlayerNames()
         
         let gameVC = GameViewController()
@@ -232,6 +252,11 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
+    }
+
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard textField === playerOneNameField else { return }
+        saveFirstPlayerName()
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
