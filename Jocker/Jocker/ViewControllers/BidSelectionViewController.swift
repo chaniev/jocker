@@ -123,19 +123,24 @@ final class BidSelectionViewController: UIViewController {
 
     private func setupPostDealBidView() {
         let containerView = makeContainerView()
-        let titleLabel = makeLabel(
-            text: "Ваш заказ взяток",
+        let turnLabel = makeLabel(
+            text: "Ваше слово",
             font: UIFont(name: "AvenirNext-Bold", size: 24),
             textColor: Appearance.titleColor
         )
-        containerView.addSubview(titleLabel)
+        turnLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        turnLabel.setContentHuggingPriority(.required, for: .vertical)
+        containerView.addSubview(turnLabel)
 
         let subtitleLabel = makeLabel(
             text: handCardsDisplayText(),
             font: UIFont(name: "AvenirNext-Medium", size: 14),
             textColor: Appearance.subtitleColor,
-            numberOfLines: 3
+            numberOfLines: 2
         )
+        subtitleLabel.lineBreakMode = .byWordWrapping
+        subtitleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        subtitleLabel.setContentHuggingPriority(.required, for: .vertical)
         containerView.addSubview(subtitleLabel)
 
         let trumpLabel = makeLabel(
@@ -143,6 +148,8 @@ final class BidSelectionViewController: UIViewController {
             font: UIFont(name: "AvenirNext-DemiBold", size: 14),
             textColor: GameColors.gold
         )
+        trumpLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        trumpLabel.setContentHuggingPriority(.required, for: .vertical)
         containerView.addSubview(trumpLabel)
 
         let hintText: String?
@@ -193,17 +200,20 @@ final class BidSelectionViewController: UIViewController {
             includeCompactHeight: true
         )
         constraints.append(contentsOf: [
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            turnLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            turnLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            turnLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            turnLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 30),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            subtitleLabel.topAnchor.constraint(equalTo: turnLabel.bottomAnchor, constant: 8),
             subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            subtitleLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 36),
 
             trumpLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 8),
             trumpLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             trumpLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            trumpLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 18),
 
             hintLabel.topAnchor.constraint(equalTo: trumpLabel.bottomAnchor, constant: 8),
             hintLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
@@ -645,19 +655,13 @@ final class BidSelectionViewController: UIViewController {
             }
         }
 
-        guard cardTitles.count > 6 else {
-            return cardTitles.joined(separator: " ")
-        }
-
-        let firstRowCount = Int(ceil(Double(cardTitles.count) / 2.0))
-        let firstRow = cardTitles.prefix(firstRowCount).joined(separator: " ")
-        let secondRow = cardTitles.dropFirst(firstRowCount).joined(separator: " ")
-        return "\(firstRow)\n\(secondRow)"
+        let cardRows = cardTitles.chunked(into: LayoutMetrics.maxButtonsPerRow)
+        return cardRows.map { $0.joined(separator: " ") }.joined(separator: "\n")
     }
 
     func trumpDisplayText() -> String {
-        guard let trumpSuit else { return "Без козыря" }
-        return "Козырь: \(trumpSuit.name)"
+        guard let trumpSuit else { return "Козырь: без козыря" }
+        return "Козырь: \(trumpSuit.rawValue) \(trumpSuit.name)"
     }
 }
 
