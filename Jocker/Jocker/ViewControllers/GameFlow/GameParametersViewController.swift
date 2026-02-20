@@ -191,7 +191,7 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         if playerIndex == 0 {
             let hintLabel = UILabel()
             hintLabel.translatesAutoresizingMaskIntoConstraints = false
-            hintLabel.text = "Сложность не задается для игрока 1"
+            hintLabel.text = "Уровень записиь от самого игрока"
             hintLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
             hintLabel.textColor = Appearance.subtitleColor
             hintLabel.numberOfLines = 2
@@ -200,7 +200,7 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         } else {
             let difficultyLabel = UILabel()
             difficultyLabel.translatesAutoresizingMaskIntoConstraints = false
-            difficultyLabel.text = "Сложность бота"
+            difficultyLabel.text = "Уровень"
             difficultyLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
             difficultyLabel.textColor = Appearance.subtitleColor
             difficultyLabel.textAlignment = .left
