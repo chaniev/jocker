@@ -3,28 +3,43 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/train_bot_tuning.sh [options]
+Использование:
+  scripts/train_bot_tuning.sh [параметры]
 
-Runs BotTuning self-play evolution in a standalone dev workflow.
+Назначение:
+  Запускает офлайн-обучение BotTuning через self-play
+  (эволюция коэффициентов бота по fitness-метрике).
 
-Options:
-  --difficulty <easy|normal|hard>   Base preset to evolve (default: hard)
-  --seed <uint64>                   RNG seed (default: 20260220)
-  --population-size <int>           Population size (default: 12)
-  --generations <int>               Number of generations (default: 10)
-  --games-per-candidate <int>       Self-play games per candidate (default: 20)
-  --rounds-per-game <int>           Rounds per simulated game (default: 8)
-  --player-count <int>              Player count in simulation (default: 4)
-  --cards-min <int>                 Min cards per round (default: 2)
-  --cards-max <int>                 Max cards per round (default: 9)
-  --elite-count <int>               Number of elite candidates kept (default: 3)
-  --mutation-chance <double>        Mutation chance [0..1] (default: 0.34)
-  --mutation-magnitude <double>     Mutation magnitude (default: 0.16)
-  --selection-pool-ratio <double>   Parent selection pool ratio (default: 0.55)
-  --output <path>                   Optional output log file
-  -h, --help                        Show this help
+Параметры:
+  --difficulty <easy|normal|hard>   Базовый пресет, от которого начинается эволюция
+                                     (по умолчанию: hard).
+  --seed <uint64>                   Seed генератора случайных чисел; одинаковый seed
+                                     дает воспроизводимый результат (по умолчанию: 20260220).
+  --population-size <int>           Размер популяции в поколении; больше = стабильнее поиск,
+                                     но дольше выполнение (по умолчанию: 12).
+  --generations <int>               Количество поколений эволюции; больше = глубже поиск,
+                                     но дольше запуск (по умолчанию: 10).
+  --games-per-candidate <int>       Кол-во self-play игр для оценки одного кандидата;
+                                     больше = менее шумная оценка fitness (по умолчанию: 20).
+  --rounds-per-game <int>           Кол-во раундов в одной симулированной игре
+                                     (по умолчанию: 8).
+  --player-count <int>              Число игроков в симуляции (в коде нормализуется к 3..4;
+                                     по умолчанию: 4).
+  --cards-min <int>                 Минимум карт на раунд (по умолчанию: 2).
+  --cards-max <int>                 Максимум карт на раунд (по умолчанию: 9).
+  --elite-count <int>               Сколько лучших кандидатов переносить без изменений
+                                     в следующее поколение (по умолчанию: 3).
+  --mutation-chance <double>        Вероятность мутации параметра [0..1]
+                                     (по умолчанию: 0.34).
+  --mutation-magnitude <double>     Сила мутации (амплитуда изменения параметров)
+                                     (по умолчанию: 0.16).
+  --selection-pool-ratio <double>   Доля лучших кандидатов для выбора родителей;
+                                     в коде ограничивается диапазоном [0.2..1.0]
+                                     (по умолчанию: 0.55).
+  --output <path>                   Путь для сохранения полного лога запуска.
+  -h, --help                        Показать эту справку.
 
-Examples:
+Примеры:
   scripts/train_bot_tuning.sh
   scripts/train_bot_tuning.sh --seed 123456 --generations 14 --games-per-candidate 40
   scripts/train_bot_tuning.sh --difficulty normal --output .derivedData/bot-train.log
