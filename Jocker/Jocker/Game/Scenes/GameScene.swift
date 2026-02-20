@@ -32,7 +32,7 @@ class GameScene: SKScene {
         static let trickCenterYOffset: CGFloat = 20
         static let trumpIndicatorInset: CGFloat = 116
         static let jokerLeadInfoSize = CGSize(width: 264, height: 156)
-        static let jokerLeadInfoRightInset: CGFloat = 120
+        static let jokerLeadInfoHorizontalMargin: CGFloat = 18
         static let jokerLeadInfoTopInset: CGFloat = 22
     }
 
@@ -568,7 +568,7 @@ class GameScene: SKScene {
         titleLabel.fontColor = GameColors.gold
         titleLabel.horizontalAlignmentMode = .center
         titleLabel.verticalAlignmentMode = .center
-        titleLabel.text = "Заказы на раунд"
+        titleLabel.text = "Заказанные взятки"
 
         let contentTop = panelSize.height / 2 - LayoutMetrics.roundBidInfoVerticalPadding
         titleLabel.position = CGPoint(
@@ -1058,7 +1058,10 @@ class GameScene: SKScene {
             - LayoutMetrics.jokerLeadInfoSize.height / 2
 
         return CGPoint(
-            x: size.width - insets.right - LayoutMetrics.jokerLeadInfoRightInset,
+            x: size.width
+                - insets.right
+                - LayoutMetrics.jokerLeadInfoHorizontalMargin
+                - LayoutMetrics.jokerLeadInfoSize.width / 2,
             y: centerY
         )
     }
