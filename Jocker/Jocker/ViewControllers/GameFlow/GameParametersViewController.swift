@@ -191,7 +191,7 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         if playerIndex == 0 {
             let hintLabel = UILabel()
             hintLabel.translatesAutoresizingMaskIntoConstraints = false
-            hintLabel.text = "Уровень записиь от самого игрока"
+            hintLabel.text = "Уровень зависит от самого игрока"
             hintLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
             hintLabel.textColor = Appearance.subtitleColor
             hintLabel.numberOfLines = 2
