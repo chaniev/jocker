@@ -1082,7 +1082,7 @@ class GameScene: SKScene {
         panel.addChild(panelShadow)
 
         let titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
-        titleLabel.text = "Заход бота с джокера"
+        titleLabel.text = "Заход с джокера"
         titleLabel.fontSize = 18
         titleLabel.fontColor = GameColors.textPrimary
         titleLabel.horizontalAlignmentMode = .center

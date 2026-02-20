@@ -58,7 +58,7 @@ class PlayerNode: SKNode {
         self.position = position
         self.zPosition = 10
         
-        setupVisuals(seatDirection: seatDirection, playerName: playerName)
+        setupVisuals(playerName: playerName)
         setupCardHand(seatDirection: seatDirection)
     }
     
@@ -66,9 +66,9 @@ class PlayerNode: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupVisuals(seatDirection: CGVector, playerName: String) {
+    private func setupVisuals(playerName: String) {
         let avatarRadius: CGFloat = 58
-        let isSideSeat = abs(seatDirection.dx) > abs(seatDirection.dy)
+        let avatarNameSpacing: CGFloat = 12
         
         // Фоновый круг для аватара
         backgroundCircle.path = CGPath(
@@ -99,15 +99,9 @@ class PlayerNode: SKNode {
         nameLabel.fontSize = 34
         nameLabel.fontColor = GameColors.textPrimary
         nameLabel.verticalAlignmentMode = .center
-        nameLabel.horizontalAlignmentMode = .center
+        nameLabel.horizontalAlignmentMode = .left
         nameLabel.zPosition = 1
-        
-        // Текст ставим снаружи от стола, чтобы не пересекался с рукой
-        if isSideSeat {
-            nameLabel.position = CGPoint(x: 0, y: -88)
-        } else {
-            nameLabel.position = CGPoint(x: 118, y: 0)
-        }
+        nameLabel.position = CGPoint(x: avatarRadius + avatarNameSpacing, y: 0)
         
         addChild(nameLabel)
         
@@ -120,26 +114,7 @@ class PlayerNode: SKNode {
         shadow.zPosition = -1
         addChild(shadow)
         
-        // Счётчик взяток
-        trickCountLabel.fontSize = 22
-        trickCountLabel.fontColor = GameColors.textSecondary
-        trickCountLabel.horizontalAlignmentMode = .center
-        trickCountLabel.verticalAlignmentMode = .center
-        trickCountLabel.position = isSideSeat ? CGPoint(x: 0, y: -118) : CGPoint(x: 118, y: -40)
-        trickCountLabel.zPosition = 3
-        trickCountLabel.text = "0/0"
-        addChild(trickCountLabel)
-        
-        // Индикатор ставки
-        bidLabel.fontSize = 19
-        bidLabel.fontColor = GameColors.gold
-        bidLabel.horizontalAlignmentMode = .center
-        bidLabel.verticalAlignmentMode = .center
-        bidLabel.position = isSideSeat ? CGPoint(x: 0, y: -90) : CGPoint(x: 118, y: -68)
-        bidLabel.zPosition = 3
-        bidLabel.text = ""
-        bidLabel.isHidden = true
-        addChild(bidLabel)
+        // Счётчик взяток и текст ставки скрыты по UI-решению.
     }
     
     private func setupCardHand(seatDirection: CGVector) {
