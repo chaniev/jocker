@@ -289,23 +289,14 @@
 		7E4AC95E2F268D860037CA75 /* JockerTests */ = {
 			isa = PBXGroup;
 			children = (
-				A90000172F7700010037CA75 /* DealHistoryStoreTests.swift */,
-				A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */,
-				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
-				B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */,
-				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
-				E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */,
-				B10000272F7500010037CA75 /* GameStatisticsStoreTests.swift */,
-				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
-				C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
-				C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
-				C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
-				F40000082F5600010037CA75 /* BotTuningTests.swift */,
+				A91040012F7900010037CA75 /* Bot */,
+				A91040022F7900010037CA75 /* Flow */,
+				A91040032F7900010037CA75 /* History */,
+				A91040042F7900010037CA75 /* Results */,
+				A91040052F7900010037CA75 /* Rules */,
+				A91040062F7900010037CA75 /* Scoring */,
+				A91040072F7900010037CA75 /* Statistics */,
 				7E4AC95F2F268D860037CA75 /* JockerTests.swift */,
-				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
-				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
-				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
-				F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */,
 			);
 			path = JockerTests;
 			sourceTree = "<group>";
@@ -331,37 +322,13 @@
 		AA1000022F2800020037CA75 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				AA0000052F2800010037CA75 /* BlockResult.swift */,
-				7E4AC97D2F269A000037CA75 /* Card.swift */,
-				D3A000112F7600010037CA75 /* Suit.swift */,
-				D3A000122F7600010037CA75 /* CardColor.swift */,
-				D3A000132F7600010037CA75 /* Rank.swift */,
-				7E4AC97F2F269A100037CA75 /* Deck.swift */,
-				BB0000032F2800010037CA75 /* GameBlock.swift */,
-				AB1000012F4200010037CA75 /* GameBlockFormatter.swift */,
-				BB0000012F2800010037CA75 /* GamePhase.swift */,
-				CC0000022F2800010037CA75 /* GameConstants.swift */,
-				E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */,
-				B10000222F7500010037CA75 /* GameStatisticsPlayerRecord.swift */,
-				B10000232F7500010037CA75 /* GameStatisticsSnapshot.swift */,
-				B10000212F7500010037CA75 /* GameStatisticsScope.swift */,
-				7E4AC9892F269A600037CA75 /* GameState.swift */,
-				F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */,
-				F20000052F5200010037CA75 /* JokerPlayStyle.swift */,
-				F20000092F5200010037CA75 /* JokerPlayDecision.swift */,
-				F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
-				F200000C2F5300010037CA75 /* PlayerControlType.swift */,
-				F40000032F5600010037CA75 /* BotDifficulty.swift */,
-				F40000042F5600010037CA75 /* BotTuning.swift */,
-				C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */,
-				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
-				AA0000012F2800010037CA75 /* RoundResult.swift */,
-				F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
-				A90000112F7700010037CA75 /* DealHistory.swift */,
-				A90000122F7700010037CA75 /* DealHistoryKey.swift */,
-				A90000142F7700010037CA75 /* DealTrickHistory.swift */,
-				A90000132F7700010037CA75 /* DealTrickMove.swift */,
-				A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */,
+				A91010012F7900010037CA75 /* Bot */,
+				A91010022F7900010037CA75 /* Cards */,
+				A91010032F7900010037CA75 /* Gameplay */,
+				A91010042F7900010037CA75 /* History */,
+				A91010052F7900010037CA75 /* Joker */,
+				A91010062F7900010037CA75 /* Players */,
+				A91010072F7900010037CA75 /* Statistics */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -417,17 +384,10 @@
 		AA1000072F2800020037CA75 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
-				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
-				E10000042F7400010037CA75 /* GameResultsViewController.swift */,
-				B10000262F7500010037CA75 /* GameStatisticsViewController.swift */,
-				B10000282F7500010037CA75 /* GameStatisticsTableView.swift */,
-				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
-				F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */,
-				F30000022F5300010037CA75 /* BidSelectionViewController.swift */,
-				C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */,
-				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
-				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
-				A90000162F7700010037CA75 /* DealHistoryViewController.swift */,
+				A91020012F7900010037CA75 /* Bidding */,
+				A91020022F7900010037CA75 /* GameFlow */,
+				A91020032F7900010037CA75 /* Results */,
+				A91020042F7900010037CA75 /* Statistics */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -452,18 +412,234 @@
 		C0DE30022F5000010037CA75 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				C0DE20042F5000010037CA75 /* GameAnimationService.swift */,
+				A91030012F7900010037CA75 /* AI */,
+				A91030022F7900010037CA75 /* Flow */,
+				A91030032F7900010037CA75 /* History */,
+				A91030042F7900010037CA75 /* Statistics */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A91010012F7900010037CA75 /* Bot */ = {
+			isa = PBXGroup;
+			children = (
+				F40000032F5600010037CA75 /* BotDifficulty.swift */,
+				F40000042F5600010037CA75 /* BotTuning.swift */,
+			);
+			path = Bot;
+			sourceTree = "<group>";
+		};
+		A91010022F7900010037CA75 /* Cards */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC97D2F269A000037CA75 /* Card.swift */,
+				D3A000122F7600010037CA75 /* CardColor.swift */,
+				7E4AC97F2F269A100037CA75 /* Deck.swift */,
+				D3A000132F7600010037CA75 /* Rank.swift */,
+				D3A000112F7600010037CA75 /* Suit.swift */,
+			);
+			path = Cards;
+			sourceTree = "<group>";
+		};
+		A91010032F7900010037CA75 /* Gameplay */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000052F2800010037CA75 /* BlockResult.swift */,
+				BB0000032F2800010037CA75 /* GameBlock.swift */,
+				AB1000012F4200010037CA75 /* GameBlockFormatter.swift */,
+				CC0000022F2800010037CA75 /* GameConstants.swift */,
+				BB0000012F2800010037CA75 /* GamePhase.swift */,
+				7E4AC9892F269A600037CA75 /* GameState.swift */,
+				AA0000012F2800010037CA75 /* RoundResult.swift */,
+				F10000012F4100010037CA75 /* TrickTakingResolver.swift */,
+				C0DE90022F5500010037CA75 /* TrumpSelectionRules.swift */,
+			);
+			path = Gameplay;
+			sourceTree = "<group>";
+		};
+		A91010042F7900010037CA75 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				A90000112F7700010037CA75 /* DealHistory.swift */,
+				A90000122F7700010037CA75 /* DealHistoryKey.swift */,
+				A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */,
+				A90000142F7700010037CA75 /* DealTrickHistory.swift */,
+				A90000132F7700010037CA75 /* DealTrickMove.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		A91010052F7900010037CA75 /* Joker */ = {
+			isa = PBXGroup;
+			children = (
+				F20000042F5200010037CA75 /* JokerLeadDeclaration.swift */,
+				F20000092F5200010037CA75 /* JokerPlayDecision.swift */,
+				F20000052F5200010037CA75 /* JokerPlayStyle.swift */,
+				F20000062F5200010037CA75 /* PlayedTrickCard.swift */,
+			);
+			path = Joker;
+			sourceTree = "<group>";
+		};
+		A91010062F7900010037CA75 /* Players */ = {
+			isa = PBXGroup;
+			children = (
+				F200000C2F5300010037CA75 /* PlayerControlType.swift */,
+				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
+			);
+			path = Players;
+			sourceTree = "<group>";
+		};
+		A91010072F7900010037CA75 /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */,
+				B10000222F7500010037CA75 /* GameStatisticsPlayerRecord.swift */,
+				B10000212F7500010037CA75 /* GameStatisticsScope.swift */,
+				B10000232F7500010037CA75 /* GameStatisticsSnapshot.swift */,
+			);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		A91020012F7900010037CA75 /* Bidding */ = {
+			isa = PBXGroup;
+			children = (
+				F30000022F5300010037CA75 /* BidSelectionViewController.swift */,
+				F200000A2F5200010037CA75 /* JokerModeSelectionViewController.swift */,
+				C0DE90032F5500010037CA75 /* TrumpSelectionViewController.swift */,
+			);
+			path = Bidding;
+			sourceTree = "<group>";
+		};
+		A91020022F7900010037CA75 /* GameFlow */ = {
+			isa = PBXGroup;
+			children = (
+				7E4AC94D2F268D820037CA75 /* GameViewController.swift */,
+				7E4AC9782F268E000037CA75 /* PlayerSelectionViewController.swift */,
+			);
+			path = GameFlow;
+			sourceTree = "<group>";
+		};
+		A91020032F7900010037CA75 /* Results */ = {
+			isa = PBXGroup;
+			children = (
+				A90000162F7700010037CA75 /* DealHistoryViewController.swift */,
+				E10000042F7400010037CA75 /* GameResultsViewController.swift */,
+				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
+				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
+			);
+			path = Results;
+			sourceTree = "<group>";
+		};
+		A91020042F7900010037CA75 /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				B10000282F7500010037CA75 /* GameStatisticsTableView.swift */,
+				B10000262F7500010037CA75 /* GameStatisticsViewController.swift */,
+			);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		A91030012F7900010037CA75 /* AI */ = {
+			isa = PBXGroup;
+			children = (
 				C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
 				C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
 				C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
-				A90000152F7700010037CA75 /* DealHistoryStore.swift */,
-				A90000192F7700010037CA75 /* DealHistoryExportService.swift */,
-				B10000242F7500010037CA75 /* GameStatisticsStore.swift */,
+			);
+			path = AI;
+			sourceTree = "<group>";
+		};
+		A91030022F7900010037CA75 /* Flow */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE20042F5000010037CA75 /* GameAnimationService.swift */,
 				C0DE20022F5000010037CA75 /* GameRoundService.swift */,
 				C0DE20032F5000010037CA75 /* GameTurnService.swift */,
+			);
+			path = Flow;
+			sourceTree = "<group>";
+		};
+		A91030032F7900010037CA75 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				A90000192F7700010037CA75 /* DealHistoryExportService.swift */,
+				A90000152F7700010037CA75 /* DealHistoryStore.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		A91030042F7900010037CA75 /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				B10000242F7500010037CA75 /* GameStatisticsStore.swift */,
 				B10000252F7500010037CA75 /* UserDefaultsGameStatisticsStore.swift */,
 			);
-			path = Services;
+			path = Statistics;
+			sourceTree = "<group>";
+		};
+		A91040012F7900010037CA75 /* Bot */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
+				C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
+				F40000082F5600010037CA75 /* BotTuningTests.swift */,
+				C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
+			);
+			path = Bot;
+			sourceTree = "<group>";
+		};
+		A91040022F7900010037CA75 /* Flow */ = {
+			isa = PBXGroup;
+			children = (
+				C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
+				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
+				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
+				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
+			);
+			path = Flow;
+			sourceTree = "<group>";
+		};
+		A91040032F7900010037CA75 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */,
+				A90000172F7700010037CA75 /* DealHistoryStoreTests.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		A91040042F7900010037CA75 /* Results */ = {
+			isa = PBXGroup;
+			children = (
+				B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */,
+			);
+			path = Results;
+			sourceTree = "<group>";
+		};
+		A91040052F7900010037CA75 /* Rules */ = {
+			isa = PBXGroup;
+			children = (
+				F10000032F4100010037CA75 /* TrickTakingResolverTests.swift */,
+			);
+			path = Rules;
+			sourceTree = "<group>";
+		};
+		A91040062F7900010037CA75 /* Scoring */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */,
+				AA00000B2F2800010037CA75 /* ScoreManagerTests.swift */,
+			);
+			path = Scoring;
+			sourceTree = "<group>";
+		};
+		A91040072F7900010037CA75 /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				E10000062F7400010037CA75 /* GameFinalPlayerSummaryTests.swift */,
+				B10000272F7500010037CA75 /* GameStatisticsStoreTests.swift */,
+			);
+			path = Statistics;
 			sourceTree = "<group>";
 		};
 		CC0000052F2800010037CA75 /* Core */ = {
