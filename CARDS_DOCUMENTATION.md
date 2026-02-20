@@ -192,6 +192,10 @@
   (пример: `scripts/train_bot_tuning.sh --difficulty hard --seed 20260220`).
 - Для быстрого запуска доступен alias через `Makefile`:
   `make bt` (или `make train-bot`).
+- Сохранённые пресеты прогонов в `Makefile`:
+  - `hard`: `make bt-hard-smoke`, `make bt-hard-balanced`, `make bt-hard-battle`
+  - `normal`: `make bt-normal-smoke`, `make bt-normal-balanced`, `make bt-normal-battle`
+  - `easy`: `make bt-easy-smoke`, `make bt-easy-balanced`, `make bt-easy-battle`
 
 ### `Jocker/Jocker/Game/Services/DealHistoryStore.swift`
 
