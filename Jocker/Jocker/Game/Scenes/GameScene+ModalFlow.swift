@@ -72,7 +72,7 @@ extension GameScene {
         handCards: [Card],
         completion: @escaping (Suit?) -> Void
     ) {
-        let fallbackTrump = botTrumpSelectionService.selectTrump(from: handCards)
+        let fallbackTrump = botTrumpSelectionService(for: playerIndex).selectTrump(from: handCards)
 
         if isBotPlayer(playerIndex) {
             completion(fallbackTrump)

@@ -20,7 +20,9 @@ final class GameStatisticsViewController: UIViewController {
     }
 
     private let statisticsStore: GameStatisticsStore
+    private let playersSettingsStore: GamePlayersSettingsStore
     private var snapshot: GameStatisticsSnapshot
+    private var playersSettings: GamePlayersSettings
     private var selectedScope: GameStatisticsScope = .allGames
 
     private let containerView = UIView()
@@ -30,9 +32,14 @@ final class GameStatisticsViewController: UIViewController {
     private let statisticsTableView = GameStatisticsTableView()
     private let closeButton = UIButton(type: .system)
 
-    init(statisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore()) {
+    init(
+        statisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore(),
+        playersSettingsStore: GamePlayersSettingsStore = GamePlayersSettingsStore()
+    ) {
         self.statisticsStore = statisticsStore
+        self.playersSettingsStore = playersSettingsStore
         self.snapshot = statisticsStore.loadSnapshot()
+        self.playersSettings = playersSettingsStore.loadSettings()
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -52,6 +59,7 @@ final class GameStatisticsViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         snapshot = statisticsStore.loadSnapshot()
+        playersSettings = playersSettingsStore.loadSettings()
         refreshStatisticsTable()
     }
 
@@ -170,7 +178,8 @@ final class GameStatisticsViewController: UIViewController {
     private func refreshStatisticsTable() {
         statisticsTableView.update(
             records: displayedRecords,
-            visiblePlayerCount: selectedScope.visiblePlayerCount
+            visiblePlayerCount: selectedScope.visiblePlayerCount,
+            playerNames: playersSettings.playerNames
         )
     }
 

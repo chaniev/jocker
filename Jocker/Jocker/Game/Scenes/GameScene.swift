@@ -75,18 +75,38 @@ class GameScene: SKScene {
     }()
     var firstDealerIndex: Int = 0
     var botDifficulty: BotDifficulty = .hard
-    lazy var botTuning: BotTuning = {
-        return BotTuning(difficulty: botDifficulty)
-    }()
+    var botDifficultiesByPlayer: [BotDifficulty] = []
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     lazy var coordinator: GameSceneCoordinator = {
-        return GameSceneCoordinator(tuning: botTuning)
+        return GameSceneCoordinator()
     }()
-    lazy var botBiddingService: BotBiddingService = {
-        return BotBiddingService(tuning: botTuning)
+    private lazy var botTuningsByDifficulty: [BotDifficulty: BotTuning] = {
+        var map: [BotDifficulty: BotTuning] = [:]
+        for difficulty in BotDifficulty.allCases {
+            map[difficulty] = BotTuning(difficulty: difficulty)
+        }
+        return map
     }()
-    lazy var botTrumpSelectionService: BotTrumpSelectionService = {
-        return BotTrumpSelectionService(tuning: botTuning)
+    private lazy var botBiddingServicesByDifficulty: [BotDifficulty: BotBiddingService] = {
+        var map: [BotDifficulty: BotBiddingService] = [:]
+        for difficulty in BotDifficulty.allCases {
+            map[difficulty] = BotBiddingService(tuning: tuning(for: difficulty))
+        }
+        return map
+    }()
+    private lazy var botTrumpSelectionServicesByDifficulty: [BotDifficulty: BotTrumpSelectionService] = {
+        var map: [BotDifficulty: BotTrumpSelectionService] = [:]
+        for difficulty in BotDifficulty.allCases {
+            map[difficulty] = BotTrumpSelectionService(tuning: tuning(for: difficulty))
+        }
+        return map
+    }()
+    private lazy var botTurnServicesByDifficulty: [BotDifficulty: GameTurnService] = {
+        var map: [BotDifficulty: GameTurnService] = [:]
+        for difficulty in BotDifficulty.allCases {
+            map[difficulty] = GameTurnService(tuning: tuning(for: difficulty))
+        }
+        return map
     }()
     let gameStatisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore()
     let dealHistoryStore = DealHistoryStore()
@@ -193,6 +213,7 @@ class GameScene: SKScene {
 
         applyConfiguredPlayerNames()
         applyConfiguredPlayerControlTypes()
+        applyConfiguredBotDifficulties()
 
         setupPokerTable()
         setupPlayers()
@@ -228,6 +249,22 @@ class GameScene: SKScene {
         }
     }
 
+    private func applyConfiguredBotDifficulties() {
+        var resolved = Array(repeating: BotDifficulty.hard, count: playerCount)
+
+        for index in 0..<playerCount {
+            if botDifficultiesByPlayer.indices.contains(index) {
+                resolved[index] = botDifficultiesByPlayer[index]
+            }
+        }
+
+        if !resolved.isEmpty {
+            resolved[0] = .hard
+        }
+
+        botDifficultiesByPlayer = resolved
+    }
+
     func isHumanPlayer(_ index: Int) -> Bool {
         guard playerControlTypes.indices.contains(index) else { return false }
         return playerControlTypes[index] == .human
@@ -235,6 +272,38 @@ class GameScene: SKScene {
 
     func isBotPlayer(_ index: Int) -> Bool {
         return !isHumanPlayer(index)
+    }
+
+    func botDifficulty(for playerIndex: Int) -> BotDifficulty {
+        guard isBotPlayer(playerIndex) else { return .hard }
+        guard botDifficultiesByPlayer.indices.contains(playerIndex) else {
+            return botDifficulty
+        }
+        return botDifficultiesByPlayer[playerIndex]
+    }
+
+    func botBiddingService(for playerIndex: Int) -> BotBiddingService {
+        let difficulty = botDifficulty(for: playerIndex)
+        return botBiddingServicesByDifficulty[difficulty] ?? BotBiddingService(tuning: tuning(for: difficulty))
+    }
+
+    func botTrumpSelectionService(for playerIndex: Int) -> BotTrumpSelectionService {
+        let difficulty = botDifficulty(for: playerIndex)
+        return botTrumpSelectionServicesByDifficulty[difficulty] ??
+            BotTrumpSelectionService(tuning: tuning(for: difficulty))
+    }
+
+    func botTurnService(for playerIndex: Int) -> GameTurnService {
+        let difficulty = botDifficulty(for: playerIndex)
+        return botTurnServicesByDifficulty[difficulty] ?? GameTurnService(tuning: tuning(for: difficulty))
+    }
+
+    func timing(for playerIndex: Int) -> BotTuning.Timing {
+        return tuning(for: botDifficulty(for: playerIndex)).timing
+    }
+
+    private func tuning(for difficulty: BotDifficulty) -> BotTuning {
+        return botTuningsByDifficulty[difficulty] ?? BotTuning(difficulty: difficulty)
     }
 
     // MARK: - Покерный стол
@@ -734,7 +803,7 @@ class GameScene: SKScene {
         removeAction(forKey: ActionKey.firstDealerSelection)
         removeAction(forKey: ActionKey.botTurn)
         coordinator.cancelPendingTrickResolution(on: self)
-        coordinator = GameSceneCoordinator(tuning: botTuning)
+        coordinator = GameSceneCoordinator()
 
         deck.reset()
         currentTrump = nil

@@ -54,6 +54,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/History/DealHistoryStore.swift`: in-memory capture of deal playback data (trump per deal, ordered trick moves, trick winners) plus per-move training samples (state/action/outcome).
 - `Jocker/Jocker/Game/Services/History/DealHistoryExportService.swift`: persistent JSON export of deal history and training samples on block/game completion.
 - `Jocker/Jocker/Game/Services/Flow/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
+- `Jocker/Jocker/Game/Services/Settings/GamePlayersSettingsStore.swift`: persistence of editable player names and per-bot difficulty presets (`UserDefaults`, v1 key).
 - `Jocker/Jocker/Game/Services/Statistics/GameStatisticsStore.swift`: storage contract for game statistics persistence and retrieval.
 - `Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player statistics.
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
@@ -69,6 +70,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/History/DealTrickMove.swift`: move-level history payload with player, card, and joker play context.
 - `Jocker/Jocker/Models/History/DealTrainingMoveSample.swift`: per-move training payload with pre-move state, chosen action, and trick outcome.
 - `Jocker/Jocker/Models/Players/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
+- `Jocker/Jocker/Models/Players/GamePlayersSettings.swift`: normalized snapshot of editable names for 4 player slots and stored bot difficulties for slots 2–4.
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
@@ -77,6 +79,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human bid amount and pre-deal blind choice, built from shared UI factories (container, labels, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/Bidding/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
+- `Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift`: full-screen settings form for all player names and per-bot difficulty controls.
 - `Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
 - `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player games, and 3-player games.
 - `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsTableView.swift`: grid-style statistics table where rows are metrics and columns are player seats.
@@ -122,6 +125,8 @@ Jocker/Jocker/
 │       ├── History/
 │       │   ├── DealHistoryExportService.swift
 │       │   └── DealHistoryStore.swift
+│       ├── Settings/
+│       │   └── GamePlayersSettingsStore.swift
 │       └── Statistics/
 │           ├── GameStatisticsStore.swift
 │           └── UserDefaultsGameStatisticsStore.swift
@@ -157,6 +162,7 @@ Jocker/Jocker/
 │   │   ├── JokerPlayStyle.swift
 │   │   └── PlayedTrickCard.swift
 │   ├── Players/
+│   │   ├── GamePlayersSettings.swift
 │   │   ├── PlayerControlType.swift
 │   │   └── PlayerInfo.swift
 │   └── Statistics/
@@ -176,6 +182,7 @@ Jocker/Jocker/
 │   │   ├── JokerModeSelectionViewController.swift
 │   │   └── TrumpSelectionViewController.swift
 │   ├── GameFlow/
+│   │   ├── GameParametersViewController.swift
 │   │   ├── GameViewController.swift
 │   │   └── PlayerSelectionViewController.swift
 │   ├── Results/
@@ -210,6 +217,8 @@ Jocker/JockerTests/
 ├── History/
 │   ├── DealHistoryExportServiceTests.swift
 │   └── DealHistoryStoreTests.swift
+├── Players/
+│   └── GamePlayersSettingsStoreTests.swift
 ├── Results/
 │   └── GameResultsPresentationIntegrationTests.swift
 ├── Rules/
@@ -219,6 +228,7 @@ Jocker/JockerTests/
 │   └── ScoreManagerTests.swift
 ├── Statistics/
 │   ├── GameFinalPlayerSummaryTests.swift
+│   ├── GameStatisticsTableViewTests.swift
 │   └── GameStatisticsStoreTests.swift
 └── JockerTests.swift
 
@@ -234,7 +244,7 @@ Jocker/JockerUITests/
 - Scene classes are placed in `Jocker/Jocker/Game/Scenes/`.
 - Scene coordinators are placed in `Jocker/Jocker/Game/Coordinator/`.
 - SpriteKit node classes are placed in `Jocker/Jocker/Game/Nodes/`.
-- Game services are grouped by responsibility in `Jocker/Jocker/Game/Services/AI/`, `Jocker/Jocker/Game/Services/Flow/`, `Jocker/Jocker/Game/Services/History/`, and `Jocker/Jocker/Game/Services/Statistics/`.
+- Game services are grouped by responsibility in `Jocker/Jocker/Game/Services/AI/`, `Jocker/Jocker/Game/Services/Flow/`, `Jocker/Jocker/Game/Services/History/`, `Jocker/Jocker/Game/Services/Settings/`, and `Jocker/Jocker/Game/Services/Statistics/`.
 - Domain and state models are grouped in `Jocker/Jocker/Models/Bot/`, `Jocker/Jocker/Models/Cards/`, `Jocker/Jocker/Models/Gameplay/`, `Jocker/Jocker/Models/History/`, `Jocker/Jocker/Models/Joker/`, `Jocker/Jocker/Models/Players/`, and `Jocker/Jocker/Models/Statistics/`.
 - Scoring logic is placed in `Jocker/Jocker/Scoring/`.
 - UIKit controllers and views are grouped by flow in `Jocker/Jocker/ViewControllers/Bidding/`, `Jocker/Jocker/ViewControllers/GameFlow/`, `Jocker/Jocker/ViewControllers/Results/`, and `Jocker/Jocker/ViewControllers/Statistics/`.

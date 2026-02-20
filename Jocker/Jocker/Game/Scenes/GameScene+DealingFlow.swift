@@ -223,7 +223,7 @@ extension GameScene {
             return
         }
 
-        let blindBid = botBiddingService.makePreDealBlindBid(
+        let blindBid = botBiddingService(for: playerIndex).makePreDealBlindBid(
             playerIndex: playerIndex,
             dealerIndex: gameState.currentDealer,
             cardsInRound: gameState.currentCardsPerPlayer,

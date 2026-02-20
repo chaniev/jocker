@@ -52,7 +52,11 @@ final class GameStatisticsTableView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func update(records: [GameStatisticsPlayerRecord], visiblePlayerCount: Int) {
+    func update(
+        records: [GameStatisticsPlayerRecord],
+        visiblePlayerCount: Int,
+        playerNames: [String]
+    ) {
         let playerCount = max(1, visiblePlayerCount)
         let sortedRecords = records.sorted { $0.playerIndex < $1.playerIndex }
         var shownRecords = Array(sortedRecords.prefix(playerCount))
@@ -65,7 +69,11 @@ final class GameStatisticsTableView: UIView {
         }
 
         resolveColumnWidths(playerCount: playerCount)
-        rebuildRows(records: shownRecords, showFourthPlaceRow: playerCount >= 4)
+        rebuildRows(
+            records: shownRecords,
+            playerNames: playerNames,
+            showFourthPlaceRow: playerCount >= 4
+        )
         updateContentWidth(playerCount: playerCount)
     }
 
@@ -112,10 +120,16 @@ final class GameStatisticsTableView: UIView {
         minWidthConstraint.isActive = true
     }
 
-    private func rebuildRows(records: [GameStatisticsPlayerRecord], showFourthPlaceRow: Bool) {
+    private func rebuildRows(
+        records: [GameStatisticsPlayerRecord],
+        playerNames: [String],
+        showFourthPlaceRow: Bool
+    ) {
         clearRows()
 
-        let playerHeaders = records.map { "Игрок \($0.playerIndex + 1)" }
+        let playerHeaders = records.map { record in
+            displayName(for: record.playerIndex, playerNames: playerNames)
+        }
         rowsStackView.addArrangedSubview(
             makeRow(
                 title: "Показатель",
@@ -186,6 +200,15 @@ final class GameStatisticsTableView: UIView {
         ))
 
         return rows
+    }
+
+    private func displayName(for playerIndex: Int, playerNames: [String]) -> String {
+        guard playerNames.indices.contains(playerIndex) else {
+            return "Игрок \(playerIndex + 1)"
+        }
+
+        let trimmedName = playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedName.isEmpty ? "Игрок \(playerIndex + 1)" : trimmedName
     }
 
     private func makeRow(

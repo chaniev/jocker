@@ -23,6 +23,7 @@ class GameViewController: UIViewController {
     var playerNames: [String] = []
     var playerControlTypes: [PlayerControlType] = []
     var botDifficulty: BotDifficulty = .hard
+    var botDifficultiesByPlayer: [BotDifficulty] = []
     private var gameScene: GameScene?
     private var uiTestFinishButton: UIButton?
 
@@ -50,6 +51,7 @@ class GameViewController: UIViewController {
         scene.playerNames = playerNames
         scene.playerControlTypes = playerControlTypes
         scene.botDifficulty = botDifficulty
+        scene.botDifficultiesByPlayer = botDifficultiesByPlayer
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
         }

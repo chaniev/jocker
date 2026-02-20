@@ -15,6 +15,9 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(BotDifficulty.normal.rawValue, "normal")
         XCTAssertEqual(BotDifficulty.hard.rawValue, "hard")
         XCTAssertEqual(BotDifficulty.allCases, [.easy, .normal, .hard])
+        XCTAssertEqual(BotDifficulty.easy.settingsDisplayTitle, "И с двумя джокерами отнимусь")
+        XCTAssertEqual(BotDifficulty.normal.settingsDisplayTitle, "Главное свое взял")
+        XCTAssertEqual(BotDifficulty.hard.settingsDisplayTitle, "Гранд мастер бит")
     }
 
     func testBotDifficultyInitializationFromRawValue() {

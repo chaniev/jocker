@@ -7,15 +7,13 @@
 
 import UIKit
 
-class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
-    private enum StorageKey {
-        static let firstPlayerName = "Jocker.PlayerSelection.firstPlayerName.v1"
-    }
-    
+class PlayerSelectionViewController: UIViewController {
     private var selectedPlayerCount: Int = 4
-    private var selectedBotDifficulty: BotDifficulty = .hard
     private var isStartingGame = false
-    
+
+    private let playersSettingsStore = GamePlayersSettingsStore()
+    private var gamePlayersSettings: GamePlayersSettings = .default
+
     private let threePlayersButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("3 игрока", for: .normal)
@@ -30,7 +28,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         button.accessibilityIdentifier = "player_count_3_button"
         return button
     }()
-    
+
     private let fourPlayersButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("4 игрока", for: .normal)
@@ -76,58 +74,46 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         button.accessibilityIdentifier = "statistics_button"
         return button
     }()
-    
-    private let playerOneNameField: UITextField = {
-        let textField = UITextField()
-        textField.text = "Игрок 1"
-        textField.placeholder = "Игрок 1"
-        textField.font = UIFont.systemFont(ofSize: 22, weight: .medium)
-        textField.textColor = .white
-        textField.tintColor = .white
-        textField.backgroundColor = UIColor.white.withAlphaComponent(0.12)
-        textField.layer.cornerRadius = 12
-        textField.layer.borderWidth = 1
-        textField.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
-        textField.clearButtonMode = .whileEditing
-        textField.autocapitalizationType = .words
-        textField.autocorrectionType = .no
-        textField.returnKeyType = .done
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.heightAnchor.constraint(equalToConstant: 52).isActive = true
-        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 1))
-        textField.leftViewMode = .always
-        textField.rightView = UIView(frame: CGRect(x: 0, y: 0, width: 14, height: 1))
-        textField.rightViewMode = .always
-        return textField
+
+    private let gameParametersButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Параметры игры", for: .normal)
+        button.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 22)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(red: 0.25, green: 0.37, blue: 0.24, alpha: 0.95)
+        button.layer.cornerRadius = 14
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 0.95).cgColor
+        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityIdentifier = "game_parameters_button"
+        return button
     }()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
+        gamePlayersSettings = playersSettingsStore.loadSettings()
+
         view.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
-        playerOneNameField.delegate = self
-        playerOneNameField.text = loadSavedFirstPlayerName()
         setupUI()
         updateButtonStates()
     }
-    
+
     private func setupUI() {
         view.addSubview(contentContainerView)
         view.addSubview(statisticsButton)
+        view.addSubview(gameParametersButton)
         contentContainerView.addSubview(countButtonsStack)
-        contentContainerView.addSubview(playerOneNameField)
-        
+
         countButtonsStack.addArrangedSubview(fourPlayersButton)
         countButtonsStack.addArrangedSubview(threePlayersButton)
-        
+
         threePlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
         fourPlayersButton.addTarget(self, action: #selector(playerCountButtonTapped(_:)), for: .touchUpInside)
         statisticsButton.addTarget(self, action: #selector(showStatisticsTapped), for: .touchUpInside)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleBackgroundTap))
-        tapGesture.cancelsTouchesInView = false
-        view.addGestureRecognizer(tapGesture)
-        
+        gameParametersButton.addTarget(self, action: #selector(showGameParametersTapped), for: .touchUpInside)
+
         NSLayoutConstraint.activate([
             contentContainerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             contentContainerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -137,30 +123,28 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
             countButtonsStack.centerXAnchor.constraint(equalTo: contentContainerView.centerXAnchor),
             countButtonsStack.leadingAnchor.constraint(equalTo: contentContainerView.leadingAnchor),
             countButtonsStack.trailingAnchor.constraint(equalTo: contentContainerView.trailingAnchor),
-            
+            countButtonsStack.bottomAnchor.constraint(equalTo: contentContainerView.bottomAnchor),
+
             fourPlayersButton.heightAnchor.constraint(equalToConstant: 72),
             threePlayersButton.heightAnchor.constraint(equalToConstant: 72),
-            
-            playerOneNameField.topAnchor.constraint(equalTo: countButtonsStack.bottomAnchor, constant: 22),
-            playerOneNameField.centerXAnchor.constraint(equalTo: contentContainerView.centerXAnchor),
-            playerOneNameField.leadingAnchor.constraint(equalTo: contentContainerView.leadingAnchor),
-            playerOneNameField.trailingAnchor.constraint(equalTo: contentContainerView.trailingAnchor),
-            playerOneNameField.bottomAnchor.constraint(equalTo: contentContainerView.bottomAnchor),
 
             statisticsButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             statisticsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            statisticsButton.heightAnchor.constraint(equalToConstant: 54)
+            statisticsButton.heightAnchor.constraint(equalToConstant: 54),
+
+            gameParametersButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            gameParametersButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            gameParametersButton.heightAnchor.constraint(equalToConstant: 54)
         ])
     }
-    
+
     @objc private func playerCountButtonTapped(_ sender: UIButton) {
         guard !isStartingGame else { return }
 
-        view.endEditing(true)
         selectedPlayerCount = sender.tag
         updateButtonStates()
         isStartingGame = true
-        
+
         UIView.animate(withDuration: 0.1, animations: {
             sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }) { _ in
@@ -172,10 +156,10 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
             }
         }
     }
-    
+
     private func updateButtonStates() {
         let buttons = [threePlayersButton, fourPlayersButton]
-        
+
         for button in buttons {
             if button.tag == selectedPlayerCount {
                 button.backgroundColor = UIColor(red: 0.13, green: 0.55, blue: 0.13, alpha: 1.0)
@@ -190,82 +174,55 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
             }
         }
     }
-    
-    private func selectedPlayerNames() -> [String] {
-        let firstName = normalizedFirstPlayerName(from: playerOneNameField.text)
-
-        return (0..<selectedPlayerCount).map { index in
-            if index == 0 {
-                return firstName
-            }
-            return "Игрок \(index + 1)"
-        }
-    }
-
-    private func normalizedFirstPlayerName(from rawName: String?) -> String {
-        let trimmedName = rawName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return trimmedName.isEmpty ? "Игрок 1" : trimmedName
-    }
-
-    private func loadSavedFirstPlayerName() -> String {
-        let savedName = UserDefaults.standard.string(forKey: StorageKey.firstPlayerName)
-        return normalizedFirstPlayerName(from: savedName)
-    }
-
-    private func saveFirstPlayerName() {
-        let normalizedName = normalizedFirstPlayerName(from: playerOneNameField.text)
-        playerOneNameField.text = normalizedName
-        UserDefaults.standard.set(normalizedName, forKey: StorageKey.firstPlayerName)
-    }
-    
-    @objc private func handleBackgroundTap() {
-        view.endEditing(true)
-    }
 
     @objc private func showStatisticsTapped() {
         guard !isStartingGame else { return }
-
-        view.endEditing(true)
 
         let statisticsViewController = GameStatisticsViewController()
         statisticsViewController.modalPresentationStyle = .fullScreen
         statisticsViewController.modalTransitionStyle = .crossDissolve
         present(statisticsViewController, animated: true)
     }
-    
+
+    @objc private func showGameParametersTapped() {
+        guard !isStartingGame else { return }
+
+        let parametersViewController = GameParametersViewController(
+            settings: gamePlayersSettings,
+            onSave: { [weak self] updatedSettings in
+                guard let self else { return }
+                self.gamePlayersSettings = updatedSettings
+                self.playersSettingsStore.saveSettings(updatedSettings)
+            }
+        )
+        parametersViewController.modalPresentationStyle = .fullScreen
+        parametersViewController.modalTransitionStyle = .crossDissolve
+        present(parametersViewController, animated: true)
+    }
+
     private func startGame() {
-        saveFirstPlayerName()
-        let names = selectedPlayerNames()
-        
+        let activeNames = gamePlayersSettings.activePlayerNames(playerCount: selectedPlayerCount)
+        let activeDifficulties = gamePlayersSettings.activeBotDifficulties(playerCount: selectedPlayerCount)
+
         let gameVC = GameViewController()
         gameVC.playerCount = selectedPlayerCount
-        gameVC.playerNames = names
+        gameVC.playerNames = activeNames
         gameVC.playerControlTypes = (0..<selectedPlayerCount).map { index in
             index == 0 ? .human : .bot
         }
-        gameVC.botDifficulty = selectedBotDifficulty
+        gameVC.botDifficultiesByPlayer = activeDifficulties
         gameVC.modalPresentationStyle = .fullScreen
         gameVC.modalTransitionStyle = .crossDissolve
-        
+
         present(gameVC, animated: true) { [weak self] in
             self?.isStartingGame = false
         }
     }
-    
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        return true
-    }
 
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        guard textField === playerOneNameField else { return }
-        saveFirstPlayerName()
-    }
-    
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return .landscape
     }
-    
+
     override var prefersStatusBarHidden: Bool {
         return true
     }

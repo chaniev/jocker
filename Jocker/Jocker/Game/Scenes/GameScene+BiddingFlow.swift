@@ -82,7 +82,7 @@ extension GameScene {
             return
         }
 
-        let candidateBid = botBiddingService.makeBid(
+        let candidateBid = botBiddingService(for: playerIndex).makeBid(
             hand: players[playerIndex].hand.cards,
             cardsInRound: gameState.currentCardsPerPlayer,
             trump: currentTrump,
@@ -96,7 +96,7 @@ extension GameScene {
 
         run(
             .sequence([
-                .wait(forDuration: botTuning.timing.biddingStepDelay),
+                .wait(forDuration: timing(for: playerIndex).biddingStepDelay),
                 .run { [weak self] in
                     self?.processBiddingStep(order: order, step: step + 1)
                 }

@@ -95,14 +95,14 @@ extension GameScene {
             ? gameState.players[playerIndex].tricksTaken
             : nil
 
-        guard let turnDecision = coordinator.automaticTurnDecision(
-            for: playerIndex,
-            players: players,
+        guard let turnDecision = botTurnService(for: playerIndex).automaticTurnDecision(
+            from: players[playerIndex].hand.cards,
             trickNode: trickNode,
             trump: currentTrump,
             bid: bid,
             tricksTaken: tricksTaken,
-            cardsInRound: gameState.currentCardsPerPlayer
+            cardsInRound: gameState.currentCardsPerPlayer,
+            playerCount: playerCount
         ) else {
             return
         }
@@ -153,7 +153,7 @@ extension GameScene {
 
         gameState.playCard(byPlayer: playerIndex)
 
-        if resolveTrickIfNeeded() {
+        if resolveTrickIfNeeded(resolutionDelay: timing(for: playerIndex).trickResolutionDelay) {
             return
         }
 
@@ -214,13 +214,13 @@ extension GameScene {
     }
 
     @discardableResult
-    private func resolveTrickIfNeeded() -> Bool {
+    private func resolveTrickIfNeeded(resolutionDelay: TimeInterval) -> Bool {
         return coordinator.resolveTrickIfNeeded(
             on: self,
             trickNode: trickNode,
             playerCount: playerCount,
             trump: currentTrump,
-            resolutionDelay: botTuning.timing.trickResolutionDelay
+            resolutionDelay: resolutionDelay
         ) { [weak self] winnerIndex in
             guard let self = self else { return }
             self.registerTrickWin(for: winnerIndex)
@@ -312,9 +312,12 @@ extension GameScene {
         guard isBotPlayer(gameState.currentPlayer) else { return }
         guard action(forKey: ActionKey.botTurn) == nil else { return }
 
+        let currentBotIndex = gameState.currentPlayer
+        let botTurnDelay = timing(for: currentBotIndex).playingBotTurnDelay
+
         run(
             .sequence([
-                .wait(forDuration: botTuning.timing.playingBotTurnDelay),
+                .wait(forDuration: botTurnDelay),
                 .run { [weak self] in
                     guard let self = self else { return }
                     guard self.gameState.phase == .playing else { return }
