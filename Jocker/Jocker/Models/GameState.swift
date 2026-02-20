@@ -41,6 +41,8 @@ class GameState {
     
     /// Начать игру
     func startGame(initialDealerIndex: Int = 0) {
+        resetPlayersForNewGame()
+
         currentBlock = .first
         currentRoundInBlock = 0
         currentDealer = normalizedPlayerIndex(initialDealerIndex)
@@ -56,6 +58,13 @@ class GameState {
         
         // Следующий игрок после дилера начинает ставки
         currentPlayer = normalizedPlayerIndex(currentDealer + 1)
+    }
+
+    private func resetPlayersForNewGame() {
+        for index in players.indices {
+            players[index].score = 0
+            players[index].resetForNewRound()
+        }
     }
     
     /// Установить имена игроков.

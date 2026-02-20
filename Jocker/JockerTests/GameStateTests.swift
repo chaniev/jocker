@@ -30,6 +30,39 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentPlayer, 3)
     }
 
+    func testStartGame_resetsAllPlayerRuntimeValuesForNewSession() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+
+        gameState.setBid(1, forPlayerAt: 0, isBlind: true, lockBeforeDeal: true)
+        gameState.setBid(0, forPlayerAt: 1)
+        gameState.setBid(0, forPlayerAt: 2)
+        gameState.setBid(0, forPlayerAt: 3)
+        gameState.beginPlayingAfterBids()
+        gameState.completeTrick(winner: 0)
+        gameState.completeRound()
+
+        XCTAssertTrue(gameState.players.contains { $0.score != 0 })
+        XCTAssertTrue(gameState.players.contains { $0.currentBid != 0 || $0.tricksTaken != 0 || $0.isBlindBid || $0.isBidLockedBeforeDeal })
+
+        gameState.startGame(initialDealerIndex: 1)
+
+        XCTAssertEqual(gameState.currentBlock, .first)
+        XCTAssertEqual(gameState.currentRoundInBlock, 0)
+        XCTAssertEqual(gameState.currentCardsPerPlayer, 1)
+        XCTAssertEqual(gameState.currentDealer, 1)
+        XCTAssertEqual(gameState.currentPlayer, 2)
+        XCTAssertEqual(gameState.phase, .bidding)
+
+        for player in gameState.players {
+            XCTAssertEqual(player.score, 0)
+            XCTAssertEqual(player.currentBid, 0)
+            XCTAssertEqual(player.tricksTaken, 0)
+            XCTAssertFalse(player.isBlindBid)
+            XCTAssertFalse(player.isBidLockedBeforeDeal)
+        }
+    }
+
     func testStartNewRound_progressesCardsInFirstBlockAndMovesToSecond() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()

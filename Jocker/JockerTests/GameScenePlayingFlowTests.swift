@@ -15,10 +15,43 @@ final class GameScenePlayingFlowTests: XCTestCase {
         let scene = GameScene(size: CGSize(width: 1366, height: 768))
         scene.playerCount = 4
         scene.gameState.startGame()
+        scene.currentTrump = .hearts
+        scene.trumpIndicator.setTrumpSuit(.hearts, animated: false)
+        _ = scene.trickNode.playCard(
+            .regular(suit: .spades, rank: .ace),
+            fromPlayer: 1,
+            to: .zero,
+            animated: false
+        )
         scene.hasPresentedGameResultsModal = true
         scene.lastPresentedBlockResultsCount = 2
         scene.hasSavedGameStatistics = true
         scene.hasDealtAtLeastOnce = true
+        scene.isSelectingFirstDealer = true
+        scene.isAwaitingJokerDecision = true
+        scene.isAwaitingHumanBidChoice = true
+        scene.isAwaitingHumanBlindChoice = true
+        scene.isAwaitingHumanTrumpChoice = true
+        scene.isRunningBiddingFlow = true
+        scene.isRunningPreDealBlindFlow = true
+        scene.isRunningTrumpSelectionFlow = true
+        scene.pendingBids = [1, 0, 2, 0]
+        scene.pendingBlindSelections = [true, false, false, true]
+
+        let playerNode = PlayerNode(
+            playerNumber: 1,
+            playerName: "Игрок 1",
+            avatar: "👨‍💼",
+            position: CGPoint(x: 200, y: 200),
+            seatDirection: CGVector(dx: 0, dy: -1),
+            isLocalPlayer: true,
+            shouldRevealCards: false,
+            totalPlayers: 4
+        )
+        playerNode.hand.addCard(.regular(suit: .clubs, rank: .king), animated: false)
+        playerNode.setBid(2, isBlind: true, animated: false)
+        playerNode.incrementTricks()
+        scene.players = [playerNode]
 
         scene.scoreManager.recordRoundResults([
             RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
@@ -35,8 +68,25 @@ final class GameScenePlayingFlowTests: XCTestCase {
         XCTAssertEqual(scene.lastPresentedBlockResultsCount, 0)
         XCTAssertFalse(scene.hasSavedGameStatistics)
         XCTAssertFalse(scene.hasDealtAtLeastOnce)
+        XCTAssertFalse(scene.isSelectingFirstDealer)
+        XCTAssertFalse(scene.isAwaitingJokerDecision)
+        XCTAssertFalse(scene.isAwaitingHumanBidChoice)
+        XCTAssertFalse(scene.isAwaitingHumanBlindChoice)
+        XCTAssertFalse(scene.isAwaitingHumanTrumpChoice)
+        XCTAssertFalse(scene.isRunningBiddingFlow)
+        XCTAssertFalse(scene.isRunningPreDealBlindFlow)
+        XCTAssertFalse(scene.isRunningTrumpSelectionFlow)
+        XCTAssertTrue(scene.pendingBids.isEmpty)
+        XCTAssertTrue(scene.pendingBlindSelections.isEmpty)
+        XCTAssertNil(scene.currentTrump)
+        XCTAssertEqual(scene.trickNode.playedCards.count, 0)
+        XCTAssertEqual(trumpHeaderText(in: scene.trumpIndicator), "Козырь")
         XCTAssertEqual(scene.scoreManager.completedBlocks.count, 0)
         XCTAssertEqual(scene.scoreManager.totalScores, [0, 0, 0, 0])
+        XCTAssertEqual(playerNode.hand.cards.count, 0)
+        XCTAssertEqual(playerNode.bid, 0)
+        XCTAssertEqual(playerNode.tricksTaken, 0)
+        XCTAssertFalse(playerNode.isBlindBid)
     }
 
     func testResetForNewGameSession_resetsCoordinatorDealingState() {

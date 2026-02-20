@@ -726,9 +726,33 @@ class GameScene: SKScene {
     }
 
     func resetForNewGameSession() {
+        removeAllActions()
+        removeAction(forKey: ActionKey.firstDealerSelection)
         removeAction(forKey: ActionKey.botTurn)
         coordinator.cancelPendingTrickResolution(on: self)
         coordinator = GameSceneCoordinator(tuning: botTuning)
+
+        deck.reset()
+        currentTrump = nil
+        trickNode.clearTrick(
+            toPosition: trickNode.centerPosition,
+            animated: false
+        )
+        trumpIndicator.resetDisplay(animated: false)
+        clearJokerLeadInfo()
+
+        for player in players {
+            player.hand.removeAllCards(animated: false)
+            player.resetForNewRound()
+            player.highlight(false)
+            player.setHandDimmed(false, animated: false)
+        }
+
+        firstDealerAnnouncementNode?.removeFromParent()
+        firstDealerAnnouncementNode = nil
+        firstDealerAnnouncementLabel = nil
+        firstDealerSelectionCardsNode?.removeFromParent()
+        firstDealerSelectionCardsNode = nil
 
         scoreManager.reset()
         clearInProgressRoundResultsForScoreTable()
@@ -740,6 +764,7 @@ class GameScene: SKScene {
         exportedBlockIndices.removeAll()
         hasExportedFinalGameHistory = false
         hasDealtAtLeastOnce = false
+        isSelectingFirstDealer = false
 
         isAwaitingJokerDecision = false
         isAwaitingHumanBidChoice = false
@@ -750,6 +775,7 @@ class GameScene: SKScene {
         isRunningTrumpSelectionFlow = false
         pendingBids.removeAll()
         pendingBlindSelections.removeAll()
+        updateDealButtonState()
     }
 
     private func clearInProgressRoundResultsForScoreTable() {
