@@ -41,6 +41,7 @@ class GameScene: SKScene {
     var playerControlTypes: [PlayerControlType] = []
     var onScoreButtonTapped: (() -> Void)?
     var onJokerDecisionRequested: ((_ isLeadCard: Bool, _ completion: @escaping (JokerPlayDecision?) -> Void) -> Void)?
+    var gameResultsModalPresenter: (([GameFinalPlayerSummary]) -> Bool)?
     var pokerTable: PokerTableNode?
     var players: [PlayerNode] = []
     var dealButton: GameButton?
@@ -110,6 +111,9 @@ class GameScene: SKScene {
     var exportedBlockIndices: Set<Int> = []
     var hasExportedFinalGameHistory = false
     var hasDealtAtLeastOnce = false
+    var isUITestMode: Bool {
+        return ProcessInfo.processInfo.arguments.contains("-uiTestMode")
+    }
 
     var isInteractionBlocked: Bool {
         return coordinator.isInteractionLocked ||
@@ -782,6 +786,40 @@ class GameScene: SKScene {
         scoreManager.clearInProgressRoundResults()
     }
 
+    func completeGameAndPresentResultsForUITest() {
+        guard isUITestMode else { return }
+
+        resetForNewGameSession()
+        gameState.startGame(initialDealerIndex: 0)
+        populateCompletedBlocksForUITest()
+        gameState.markGameEnded()
+
+        updateGameInfoLabel()
+        updateTurnUI(animated: false)
+        _ = tryPresentGameResultsIfNeeded()
+    }
+
+    private func populateCompletedBlocksForUITest() {
+        scoreManager.reset()
+
+        let allBlocks: [GameBlock] = [.first, .second, .third, .fourth]
+        for block in allBlocks {
+            let deals = GameConstants.deals(for: block, playerCount: playerCount)
+            for cardsInRound in deals {
+                let roundResults = (0..<playerCount).map { _ in
+                    RoundResult(
+                        cardsInRound: cardsInRound,
+                        bid: 0,
+                        tricksTaken: 0,
+                        isBlind: false
+                    )
+                }
+                scoreManager.recordRoundResults(roundResults)
+            }
+            _ = scoreManager.finalizeBlock(blockNumber: block.rawValue)
+        }
+    }
+
     private func firstDealerSelectionDeckPosition() -> CGPoint {
         return CGPoint(x: size.width / 2, y: size.height / 2 + 164)
     }
@@ -1112,7 +1150,14 @@ class GameScene: SKScene {
         updateGameInfoLabel()
         updateTurnUI(animated: true)
 
-        if !presentGameResultsModal(playerSummaries: playerSummaries) {
+        let didPresentModal: Bool
+        if let gameResultsModalPresenter {
+            didPresentModal = gameResultsModalPresenter(playerSummaries)
+        } else {
+            didPresentModal = presentGameResultsModal(playerSummaries: playerSummaries)
+        }
+
+        if !didPresentModal {
             hasPresentedGameResultsModal = false
             return false
         }

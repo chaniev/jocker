@@ -27,6 +27,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         button.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0).cgColor
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tag = 3
+        button.accessibilityIdentifier = "player_count_3_button"
         return button
     }()
     
@@ -41,6 +42,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
         button.translatesAutoresizingMaskIntoConstraints = false
         button.tag = 4
+        button.accessibilityIdentifier = "player_count_4_button"
         return button
     }()
 
@@ -71,6 +73,7 @@ class PlayerSelectionViewController: UIViewController, UITextFieldDelegate {
         button.layer.borderColor = UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 0.95).cgColor
         button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 20, bottom: 10, right: 20)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.accessibilityIdentifier = "statistics_button"
         return button
     }()
     

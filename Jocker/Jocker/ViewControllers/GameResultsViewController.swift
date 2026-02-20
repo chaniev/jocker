@@ -77,6 +77,7 @@ final class GameResultsViewController: UIViewController {
             font: UIFont(name: "AvenirNext-Bold", size: 28),
             color: Appearance.titleColor
         )
+        titleLabel.accessibilityIdentifier = "game_results_title_label"
         containerView.addSubview(titleLabel)
 
         let subtitleLabel = makeLabel(
@@ -137,6 +138,7 @@ final class GameResultsViewController: UIViewController {
         closeButton.layer.cornerRadius = 12
         closeButton.layer.borderWidth = 1
         closeButton.layer.borderColor = GameColors.buttonStroke.cgColor
+        closeButton.accessibilityIdentifier = "game_results_close_button"
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
         containerView.addSubview(closeButton)
 

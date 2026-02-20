@@ -12,12 +12,23 @@ class GameViewController: UIViewController {
     private enum SceneLayout {
         static let referenceWidth: CGFloat = 2556
     }
+
+    private enum UITestLayout {
+        static let finishButtonHeight: CGFloat = 44
+        static let finishButtonRightInset: CGFloat = 18
+        static let finishButtonTopInset: CGFloat = 12
+    }
     
     var playerCount: Int = 4
     var playerNames: [String] = []
     var playerControlTypes: [PlayerControlType] = []
     var botDifficulty: BotDifficulty = .hard
     private var gameScene: GameScene?
+    private var uiTestFinishButton: UIButton?
+
+    private var isUITestMode: Bool {
+        return ProcessInfo.processInfo.arguments.contains("-uiTestMode")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -53,6 +64,7 @@ class GameViewController: UIViewController {
         
         // Показываем сцену
         skView.presentScene(scene)
+        setupUITestControlsIfNeeded()
     }
 
     private func presentScoreTable() {
@@ -140,6 +152,38 @@ class GameViewController: UIViewController {
             presenter = presented
         }
         return presenter
+    }
+
+    private func setupUITestControlsIfNeeded() {
+        guard isUITestMode else { return }
+        guard uiTestFinishButton == nil else { return }
+
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("UITest: финал", for: .normal)
+        button.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 18)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(red: 0.77, green: 0.21, blue: 0.18, alpha: 0.94)
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.white.withAlphaComponent(0.6).cgColor
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 14, bottom: 8, right: 14)
+        button.accessibilityIdentifier = "ui_test_finish_game_button"
+        button.addAction(
+            UIAction { [weak self] _ in
+                self?.gameScene?.completeGameAndPresentResultsForUITest()
+            },
+            for: .touchUpInside
+        )
+
+        view.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: UITestLayout.finishButtonTopInset),
+            button.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -UITestLayout.finishButtonRightInset),
+            button.heightAnchor.constraint(equalToConstant: UITestLayout.finishButtonHeight)
+        ])
+
+        uiTestFinishButton = button
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {

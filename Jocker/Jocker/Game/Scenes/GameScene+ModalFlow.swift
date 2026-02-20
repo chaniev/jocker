@@ -12,6 +12,9 @@ extension GameScene {
     // MARK: - Modal Flow
 
     func presentFirstPlayerAnnouncementModal(firstPlayerName: String) {
+        if isUITestMode {
+            return
+        }
         guard !firstPlayerName.isEmpty else { return }
         let modal = makeFirstPlayerAnnouncementModal(firstPlayerName: firstPlayerName)
         _ = presentOverlayModal(modal)

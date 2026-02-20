@@ -190,6 +190,7 @@ Jocker/JockerTests/
 ├── DealHistoryStoreTests.swift
 ├── DealHistoryExportServiceTests.swift
 ├── GameFlowIntegrationTests.swift
+├── GameResultsPresentationIntegrationTests.swift
 ├── GameFinalPlayerSummaryTests.swift
 ├── GameStatisticsStoreTests.swift
 ├── GameScenePlayingFlowTests.swift
@@ -201,6 +202,7 @@ Jocker/JockerTests/
 
 Jocker/JockerUITests/
 ├── AGENTS.md
+├── GameRepeatResultsFlowUITests.swift
 ├── JockerUITests.swift
 └── JockerUITestsLaunchTests.swift
 ```
