@@ -365,28 +365,28 @@ struct BotTuning {
                 turnStrategy: TurnStrategy(
                     utilityTieTolerance: 0.000_05,
 
-                    chaseWinProbabilityWeight: 55.245_862,
-                    chaseThreatPenaltyWeight: 0.188_093,
-                    chaseSpendJokerPenalty: 80.192_701,
+                    chaseWinProbabilityWeight: 61.270907,
+                    chaseThreatPenaltyWeight: 0.182273,
+                    chaseSpendJokerPenalty: 59.270469,
                     chaseLeadWishBonus: 14.0,
 
-                    dumpAvoidWinWeight: 65.813_347,
-                    dumpThreatRewardWeight: 0.188_897,
-                    dumpSpendJokerPenalty: 75.535_974,
+                    dumpAvoidWinWeight: 54.191704,
+                    dumpThreatRewardWeight: 0.244049,
+                    dumpSpendJokerPenalty: 74.054775,
                     dumpFaceUpNonLeadJokerPenalty: 45.0,
                     dumpLeadTakesNonTrumpBonus: 8.0,
 
-                    holdFromDistributionWeight: 0.899_377,
-                    powerConfidenceWeight: 0.100_623,
+                    holdFromDistributionWeight: 0.970000,
+                    powerConfidenceWeight: 0.030000,
 
-                    futureJokerPower: 1.397_471,
+                    futureJokerPower: 1.463446,
                     futureRegularBasePower: 0.18,
                     futureRegularRankWeight: 0.82,
                     futureTrumpBaseBonus: 0.42,
                     futureTrumpRankWeight: 0.35,
                     futureHighRankBonus: 0.15,
                     futureLongSuitBonusPerCard: 0.07,
-                    futureTricksScale: 0.676_39,
+                    futureTricksScale: 0.585433,
 
                     threatFaceDownLeadJoker: 28.0,
                     threatFaceDownNonLeadJoker: 3.0,
@@ -394,8 +394,8 @@ struct BotTuning {
                     threatLeadAboveJoker: 95.0,
                     threatLeadWishJoker: 110.0,
                     threatNonLeadFaceUpJoker: 110.0,
-                    threatTrumpBonus: 12.018_376,
-                    threatHighRankBonus: 4.370_318,
+                    threatTrumpBonus: 12.080791,
+                    threatHighRankBonus: 4.393014,
 
                     powerFaceDownJoker: 1,
                     powerLeadTakesJoker: 45,
@@ -407,11 +407,11 @@ struct BotTuning {
                     powerNormalizationValue: 1000.0
                 ),
                 bidding: Bidding(
-                    expectedJokerPower: 0.430_818,
-                    expectedRankWeight: 0.274_157,
-                    expectedTrumpBaseBonus: 0.215_409,
-                    expectedTrumpRankWeight: 0.176_244,
-                    expectedHighRankBonus: 0.070_497,
+                    expectedJokerPower: 0.400000,
+                    expectedRankWeight: 0.174907,
+                    expectedTrumpBaseBonus: 0.137427,
+                    expectedTrumpRankWeight: 0.112440,
+                    expectedHighRankBonus: 0.044976,
 
                     blindDesperateBehindThreshold: 250,
                     blindCatchUpBehindThreshold: 140,
@@ -420,8 +420,8 @@ struct BotTuning {
                     blindCatchUpTargetShare: 0.52
                 ),
                 trumpSelection: TrumpSelection(
-                    cardBasePower: 0.638_293,
-                    minimumPowerToDeclareTrump: 1.211_691
+                    cardBasePower: 0.614618,
+                    minimumPowerToDeclareTrump: 1.251596
                 ),
                 timing: Timing(
                     playingBotTurnDelay: 0.22,
