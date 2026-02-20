@@ -123,6 +123,56 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(decision?.jokerDecision.style, .faceUp)
     }
 
+    func testMakeTurnDecision_whenLeadJokerAboveWithTrumpRequested_playsHighestTrump() {
+        let service = BotTurnStrategyService()
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(
+            .joker,
+            fromPlayer: 1,
+            jokerLeadDeclaration: .above(suit: .spades),
+            animated: false
+        )
+
+        let decision = service.makeTurnDecision(
+            handCards: [
+                card(.spades, .seven),
+                card(.spades, .ace),
+                card(.clubs, .king)
+            ],
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 0,
+            tricksTaken: 0
+        )
+
+        XCTAssertEqual(decision?.card, card(.spades, .ace))
+    }
+
+    func testMakeTurnDecision_whenLeadJokerAboveWithRequestedSuitInHand_playsHighestRequestedSuit() {
+        let service = BotTurnStrategyService()
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(
+            .joker,
+            fromPlayer: 1,
+            jokerLeadDeclaration: .above(suit: .hearts),
+            animated: false
+        )
+
+        let decision = service.makeTurnDecision(
+            handCards: [
+                card(.hearts, .seven),
+                card(.hearts, .ace),
+                card(.spades, .king)
+            ],
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 0,
+            tricksTaken: 0
+        )
+
+        XCTAssertEqual(decision?.card, card(.hearts, .ace))
+    }
+
     func testMakeTurnDecision_whenLeadJokerAndDumping_usesTakesDeclarationNotTrump() {
         let service = BotTurnStrategyService()
         let trickNode = TrickNode()

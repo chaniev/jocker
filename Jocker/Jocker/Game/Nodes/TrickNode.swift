@@ -173,12 +173,17 @@ class TrickNode: SKNode {
             return true
         }
 
+        let shouldForceHighestForRequiredSuit = isLeadJokerAboveMode
+
         guard let leadSuit = effectiveLeadSuit else {
             return true
         }
 
         // Должны следовать в масть
         if cardSuit == leadSuit {
+            if shouldForceHighestForRequiredSuit {
+                return isHighestCard(card, of: leadSuit, in: hand)
+            }
             return true
         }
 
@@ -194,7 +199,8 @@ class TrickNode: SKNode {
         // если есть козырь в руке, обязаны сыграть козырь (или джокер, обработан выше).
         if let trump {
             if hasSuit(trump, in: hand) {
-                return cardSuit == trump
+                guard cardSuit == trump else { return false }
+                return true
             }
         }
 
@@ -227,6 +233,34 @@ class TrickNode: SKNode {
         case .above, .takes:
             return false
         }
+    }
+
+    private var isLeadJokerAboveMode: Bool {
+        guard let leadCard = playedCards.first else { return false }
+        guard leadCard.card.isJoker else { return false }
+
+        switch leadCard.jokerLeadDeclaration {
+        case .above:
+            return true
+        case .wish, .takes, .none:
+            return false
+        }
+    }
+
+    private func isHighestCard(_ card: Card, of suit: Suit, in hand: [Card]) -> Bool {
+        guard case .regular(_, let cardRank) = card else { return false }
+
+        let highestRank = hand
+            .compactMap { handCard -> Rank? in
+                guard case .regular(let handSuit, let handRank) = handCard, handSuit == suit else {
+                    return nil
+                }
+                return handRank
+            }
+            .max()
+
+        guard let highestRank else { return false }
+        return cardRank == highestRank
     }
 
     private func hasSuit(_ suit: Suit, in hand: [Card]) -> Bool {

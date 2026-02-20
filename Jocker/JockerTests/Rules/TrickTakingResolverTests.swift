@@ -240,10 +240,46 @@ final class TrickTakingResolverTests: XCTestCase {
 
     func testCanPlayCard_whenLeadJokerAboveAndNoRequestedSuitButHasTrump_requiresTrumpOrJoker() {
         let trickNode = trickNodeWithLeadJoker(declaration: .above(suit: .hearts))
-        let hand: [Card] = [card(.spades, .seven), card(.clubs, .king), .joker]
+        let hand: [Card] = [
+            card(.spades, .seven),
+            card(.spades, .ace),
+            card(.clubs, .king),
+            .joker
+        ]
 
         XCTAssertFalse(trickNode.canPlayCard(card(.clubs, .king), fromHand: hand, trump: .spades))
         XCTAssertTrue(trickNode.canPlayCard(card(.spades, .seven), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(card(.spades, .ace), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(.joker, fromHand: hand, trump: .spades))
+    }
+
+    func testCanPlayCard_whenLeadJokerAboveAndRequestedSuitIsTrump_requiresHighestTrump() {
+        let trickNode = trickNodeWithLeadJoker(declaration: .above(suit: .spades))
+        let hand: [Card] = [
+            card(.spades, .seven),
+            card(.spades, .ace),
+            card(.clubs, .king),
+            .joker
+        ]
+
+        XCTAssertFalse(trickNode.canPlayCard(card(.spades, .seven), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(card(.spades, .ace), fromHand: hand, trump: .spades))
+        XCTAssertFalse(trickNode.canPlayCard(card(.clubs, .king), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(.joker, fromHand: hand, trump: .spades))
+    }
+
+    func testCanPlayCard_whenLeadJokerAboveAndRequestedSuitExists_requiresHighestRequestedSuit() {
+        let trickNode = trickNodeWithLeadJoker(declaration: .above(suit: .hearts))
+        let hand: [Card] = [
+            card(.hearts, .seven),
+            card(.hearts, .ace),
+            card(.spades, .king),
+            .joker
+        ]
+
+        XCTAssertFalse(trickNode.canPlayCard(card(.hearts, .seven), fromHand: hand, trump: .spades))
+        XCTAssertTrue(trickNode.canPlayCard(card(.hearts, .ace), fromHand: hand, trump: .spades))
+        XCTAssertFalse(trickNode.canPlayCard(card(.spades, .king), fromHand: hand, trump: .spades))
         XCTAssertTrue(trickNode.canPlayCard(.joker, fromHand: hand, trump: .spades))
     }
 
