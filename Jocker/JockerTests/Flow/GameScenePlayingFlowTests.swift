@@ -109,7 +109,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
         XCTAssertEqual(scene.gameState.currentRoundInBlock, initialRound)
     }
 
-    func testScoreTableView_whenLatestBlockHasPremium_marksPlayerNameWithTrophy() {
+    func testScoreTableView_whenLatestBlockHasPremium_showsTrophyInPremiumMarkerArea() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         manager.recordRoundResults([
             RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
@@ -129,7 +129,9 @@ final class GameScenePlayingFlowTests: XCTestCase {
         tableView.layoutIfNeeded()
 
         let labelTexts = allLabelTexts(in: tableView)
-        XCTAssertTrue(labelTexts.contains("Анна 🏆"))
+        XCTAssertTrue(labelTexts.contains("Анна"))
+        XCTAssertFalse(labelTexts.contains("Анна 🏆"))
+        XCTAssertTrue(labelTexts.contains("🏆"))
     }
 
     func testBidSelectionTrumpDisplayText_whenTrumpSet_showsSuitOnly() {

@@ -244,6 +244,38 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertEqual(result.finalScores[3], 150)  // без изменений
     }
 
+    func testFinalizeBlock_onePremium_penaltyRoundWithEqualScoresChoosesEarliestDeal() {
+        let manager = ScoreManager(playerCountProvider: { 4 })
+
+        manager.recordRoundResults([
+            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
+            matchedResult(bid: 1, cardsInRound: 1),                      // P1: 100
+            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 1),   // P2: 10
+            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 1)    // P3: 10
+        ])
+        manager.recordRoundResults([
+            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
+            matchedResult(bid: 1, cardsInRound: 2),                      // P1: 100
+            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 2),   // P2: -100
+            matchedResult(bid: 0, cardsInRound: 2)                       // P3: 50
+        ])
+        manager.recordRoundResults([
+            matchedResult(bid: 1, cardsInRound: 3),                      // P0: 100
+            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 3),   // P1: -150
+            matchedResult(bid: 1, cardsInRound: 3),                      // P2: 100
+            mismatchedResult(bid: 0, tricksTaken: 2, cardsInRound: 3)    // P3: 20
+        ])
+
+        let result = manager.finalizeBlock(blockNumber: 1)
+
+        XCTAssertEqual(result.premiumPlayerIndices, [0])
+        XCTAssertEqual(result.premiumPenalties[1], 100)
+        XCTAssertEqual(result.premiumPenaltyRoundIndices[1], 0)
+        XCTAssertEqual(result.premiumPenaltyRoundScores[1], 100)
+
+        XCTAssertEqual(result.finalScores[1], result.baseScores[1] - 100)
+    }
+
     func testFinalizeBlock_onePremium_penaltyAppliedToLeftNeighborFromRules() {
         let manager = ScoreManager(playerCountProvider: { 4 })
 

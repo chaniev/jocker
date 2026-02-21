@@ -43,6 +43,8 @@ final class JockerTests: XCTestCase {
             premiumPlayerIndices: [0],
             premiumBonuses: [100, 0],
             premiumPenalties: [0, 100],
+            premiumPenaltyRoundIndices: [nil, 0],
+            premiumPenaltyRoundScores: [0, 100],
             zeroPremiumPlayerIndices: [1],
             zeroPremiumBonuses: [0, 500],
             finalScores: [250, 350]
@@ -58,6 +60,10 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(result.premiumPlayerIndices, [0])
         XCTAssertEqual(result.premiumBonuses, [100, 0])
         XCTAssertEqual(result.premiumPenalties, [0, 100])
+        XCTAssertEqual(result.premiumPenaltyRoundIndices.count, 2)
+        XCTAssertNil(result.premiumPenaltyRoundIndices[0])
+        XCTAssertEqual(result.premiumPenaltyRoundIndices[1], 0)
+        XCTAssertEqual(result.premiumPenaltyRoundScores, [0, 100])
         XCTAssertEqual(result.zeroPremiumPlayerIndices, [1])
         XCTAssertEqual(result.zeroPremiumBonuses, [0, 500])
         XCTAssertEqual(result.finalScores, [250, 350])
@@ -152,6 +158,64 @@ final class JockerTests: XCTestCase {
         let cumulativeRowIndex = 14
         XCTAssertEqual(displayedPoints(at: cumulativeRowIndex, in: tableView), ["3,0", "-1,5", "-0,5", "2,0"])
     }
+
+    @MainActor
+    func testPenaltyStrikeInDealPoints_withEqualPenaltyCandidates_marksOnlyEarliestDeal() {
+        let manager = ScoreManager(playerCountProvider: { 4 })
+
+        manager.recordRoundResults([
+            makeRoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1),   // P0: 100 (premium candidate)
+            makeRoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1),   // P1: 100 (candidate #1)
+            makeRoundResult(cardsInRound: 1, bid: 0, tricksTaken: 1),   // P2: 10
+            makeRoundResult(cardsInRound: 1, bid: 0, tricksTaken: 1)    // P3: 10
+        ])
+        manager.recordRoundResults([
+            makeRoundResult(cardsInRound: 2, bid: 1, tricksTaken: 1),   // P0: 100
+            makeRoundResult(cardsInRound: 2, bid: 1, tricksTaken: 1),   // P1: 100 (candidate #2)
+            makeRoundResult(cardsInRound: 2, bid: 1, tricksTaken: 0),   // P2: -100
+            makeRoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0)    // P3: 50
+        ])
+        manager.recordRoundResults([
+            makeRoundResult(cardsInRound: 3, bid: 1, tricksTaken: 1),   // P0: 100 (keeps premium)
+            makeRoundResult(cardsInRound: 3, bid: 2, tricksTaken: 0),   // P1: -150 (no premium)
+            makeRoundResult(cardsInRound: 3, bid: 1, tricksTaken: 1),   // P2: 100
+            makeRoundResult(cardsInRound: 3, bid: 0, tricksTaken: 2)    // P3: 20
+        ])
+        let result = manager.finalizeBlock(blockNumber: 1)
+
+        XCTAssertEqual(result.premiumPenalties[1], 100)
+        XCTAssertEqual(result.premiumPenaltyRoundIndices[1], 0)
+        XCTAssertEqual(result.premiumPenaltyRoundScores[1], 100)
+
+        let tableView = ScoreTableView(playerCount: 4)
+        tableView.frame = CGRect(x: 0, y: 0, width: 420, height: 700)
+        tableView.layoutIfNeeded()
+        tableView.update(with: manager)
+        tableView.layoutIfNeeded()
+
+        guard let firstDealRow = dealRowIndex(blockIndex: 0, roundIndex: 0, in: tableView) else {
+            XCTFail("Не удалось найти строку первой раздачи")
+            return
+        }
+        guard let secondDealRow = dealRowIndex(blockIndex: 0, roundIndex: 1, in: tableView) else {
+            XCTFail("Не удалось найти строку второй раздачи")
+            return
+        }
+
+        guard let firstPenaltyLabel = pointsLabel(at: firstDealRow, playerDisplayIndex: 1, in: tableView) else {
+            XCTFail("Не удалось получить label очков для первой раздачи")
+            return
+        }
+        guard let secondPenaltyLabel = pointsLabel(at: secondDealRow, playerDisplayIndex: 1, in: tableView) else {
+            XCTFail("Не удалось получить label очков для второй раздачи")
+            return
+        }
+
+        XCTAssertEqual(displayedText(of: firstPenaltyLabel), "100")
+        XCTAssertEqual(displayedText(of: secondPenaltyLabel), "100")
+        XCTAssertTrue(hasStrikethrough(firstPenaltyLabel))
+        XCTAssertFalse(hasStrikethrough(secondPenaltyLabel))
+    }
     
     private func makeRoundResult(cardsInRound: Int, bid: Int, tricksTaken: Int) -> RoundResult {
         return RoundResult(cardsInRound: cardsInRound, bid: bid, tricksTaken: tricksTaken, isBlind: false)
@@ -169,5 +233,49 @@ final class JockerTests: XCTestCase {
         }
         
         return pointsLabels[rowIndex].map { $0.text ?? "" }
+    }
+
+    private func pointsLabel(at rowIndex: Int, playerDisplayIndex: Int, in tableView: ScoreTableView) -> UILabel? {
+        guard let pointsLabels = Mirror(reflecting: tableView).descendant("pointsLabels") as? [[UILabel]] else {
+            return nil
+        }
+        guard pointsLabels.indices.contains(rowIndex) else { return nil }
+        guard pointsLabels[rowIndex].indices.contains(playerDisplayIndex) else { return nil }
+        return pointsLabels[rowIndex][playerDisplayIndex]
+    }
+
+    private func displayedText(of label: UILabel) -> String {
+        if let attributed = label.attributedText {
+            return attributed.string
+        }
+        return label.text ?? ""
+    }
+
+    private func hasStrikethrough(_ label: UILabel) -> Bool {
+        guard let attributed = label.attributedText, attributed.length > 0 else { return false }
+        if let style = attributed.attribute(.strikethroughStyle, at: 0, effectiveRange: nil) as? NSNumber {
+            return style.intValue != 0
+        }
+        if let style = attributed.attribute(.strikethroughStyle, at: 0, effectiveRange: nil) as? Int {
+            return style != 0
+        }
+        return false
+    }
+
+    private func dealRowIndex(blockIndex: Int, roundIndex: Int, in tableView: ScoreTableView) -> Int? {
+        guard let rowMappings = Mirror(reflecting: tableView).descendant("layout", "rowMappings") as? [Any] else {
+            return nil
+        }
+
+        for (rowIndexCandidate, rowMapping) in rowMappings.enumerated() {
+            let mirror = Mirror(reflecting: rowMapping)
+            guard let mappedBlockIndex = mirror.descendant("blockIndex") as? Int else { continue }
+            guard mappedBlockIndex == blockIndex else { continue }
+            guard let mappedRoundIndex = mirror.descendant("roundIndex") as? Int else { continue }
+            guard mappedRoundIndex == roundIndex else { continue }
+            return rowIndexCandidate
+        }
+
+        return nil
     }
 }

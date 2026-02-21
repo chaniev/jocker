@@ -102,9 +102,30 @@ enum ScoreCalculator {
     /// - Parameter roundScores: очки за каждый раунд блока (игрока-соседа)
     /// - Returns: штраф (неотрицательное число)
     static func calculatePremiumPenalty(roundScores: [Int]) -> Int {
-        guard roundScores.count >= 2 else { return 0 }
+        return selectPremiumPenaltyRound(roundScores: roundScores).penalty
+    }
+
+    /// Выбрать штрафную раздачу за премию другого игрока
+    ///
+    /// Берётся максимальное положительное значение очков среди раздач блока
+    /// кроме последней. Если таких раздач несколько — выбирается самая ранняя.
+    ///
+    /// - Parameter roundScores: очки за каждый раунд блока (игрока-соседа)
+    /// - Returns: размер штрафа и индекс выбранной раздачи внутри блока
+    static func selectPremiumPenaltyRound(roundScores: [Int]) -> (penalty: Int, roundIndex: Int?) {
+        guard roundScores.count >= 2 else { return (0, nil) }
+
         let scoresExcludingLast = Array(roundScores.dropLast())
-        let maxPositive = scoresExcludingLast.filter { $0 > 0 }.max() ?? 0
-        return maxPositive
+        var maxPositive = 0
+        var selectedRoundIndex: Int?
+
+        for (roundIndex, score) in scoresExcludingLast.enumerated() where score > 0 {
+            if score > maxPositive {
+                maxPositive = score
+                selectedRoundIndex = roundIndex
+            }
+        }
+
+        return (maxPositive, selectedRoundIndex)
     }
 }

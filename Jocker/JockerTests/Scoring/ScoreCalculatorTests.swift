@@ -250,6 +250,14 @@ final class ScoreCalculatorTests: XCTestCase {
         let penalty = ScoreCalculator.calculatePremiumPenalty(roundScores: [100])
         XCTAssertEqual(penalty, 0)
     }
+
+    func testSelectPremiumPenaltyRound_sameMaxInMultipleDeals_picksEarliest() {
+        // Исключая последний: [100, 100, 50] -> штраф 100 и ранний индекс 0
+        let selection = ScoreCalculator.selectPremiumPenaltyRound(roundScores: [100, 100, 50, -10])
+
+        XCTAssertEqual(selection.penalty, 100)
+        XCTAssertEqual(selection.roundIndex, 0)
+    }
     
     // MARK: - Нулевая премия
     

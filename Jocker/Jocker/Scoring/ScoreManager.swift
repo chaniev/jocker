@@ -139,7 +139,13 @@ class ScoreManager {
         //    Все премиальные игроки (и обычные, и нулевые) участвуют в системе штрафов:
         //    — защищены от штрафов
         //    — штрафуют соседа слева
-        let (premiumBonuses, zeroPremiumBonuses, premiumPenalties) = calculateAllPremiums(
+        let (
+            premiumBonuses,
+            zeroPremiumBonuses,
+            premiumPenalties,
+            premiumPenaltyRoundIndices,
+            premiumPenaltyRoundScores
+        ) = calculateAllPremiums(
             allPremiumPlayers: allPremiumPlayerIndices,
             regularPremiumPlayers: regularPremiumPlayerIndices,
             zeroPremiumPlayers: zeroPremiumPlayerIndices
@@ -167,6 +173,8 @@ class ScoreManager {
             premiumPlayerIndices: regularPremiumPlayerIndices,
             premiumBonuses: premiumBonuses,
             premiumPenalties: premiumPenalties,
+            premiumPenaltyRoundIndices: premiumPenaltyRoundIndices,
+            premiumPenaltyRoundScores: premiumPenaltyRoundScores,
             zeroPremiumPlayerIndices: zeroPremiumPlayerIndices,
             zeroPremiumBonuses: zeroPremiumBonuses,
             finalScores: finalBlockScores
@@ -299,15 +307,24 @@ class ScoreManager {
     ///   - allPremiumPlayers: все игроки с премией
     ///   - regularPremiumPlayers: игроки с обычной премией
     ///   - zeroPremiumPlayers: игроки с нулевой премией
-    /// - Returns: кортеж (обычные бонусы, нулевые бонусы, штрафы)
+    /// - Returns: кортеж (обычные бонусы, нулевые бонусы, штрафы,
+    ///   индексы штрафных раздач, размеры штрафных раздач)
     private func calculateAllPremiums(
         allPremiumPlayers: [Int],
         regularPremiumPlayers: [Int],
         zeroPremiumPlayers: [Int]
-    ) -> (premiumBonuses: [Int], zeroPremiumBonuses: [Int], penalties: [Int]) {
+    ) -> (
+        premiumBonuses: [Int],
+        zeroPremiumBonuses: [Int],
+        penalties: [Int],
+        penaltyRoundIndices: [Int?],
+        penaltyRoundScores: [Int]
+    ) {
         var premiumBonuses = Array(repeating: 0, count: playerCount)
         var zeroPremiumBonuses = Array(repeating: 0, count: playerCount)
         var penalties = Array(repeating: 0, count: playerCount)
+        var penaltyRoundIndices = Array(repeating: Optional<Int>.none, count: playerCount)
+        var penaltyRoundScores = Array(repeating: 0, count: playerCount)
 
         let allPremiumSet = Set(allPremiumPlayers)
 
@@ -330,13 +347,29 @@ class ScoreManager {
                 premiumPlayers: allPremiumSet
             ) {
                 let targetRoundScores = currentBlockRoundResults[penaltyTarget].map { $0.score }
-                let penalty = ScoreCalculator.calculatePremiumPenalty(roundScores: targetRoundScores)
+                let selection = ScoreCalculator.selectPremiumPenaltyRound(roundScores: targetRoundScores)
+                let penalty = selection.penalty
                 // += потому что несколько премий могут штрафовать одного игрока
                 penalties[penaltyTarget] += penalty
+
+                if
+                    penalty > 0,
+                    penaltyRoundIndices[penaltyTarget] == nil,
+                    let roundIndex = selection.roundIndex
+                {
+                    penaltyRoundIndices[penaltyTarget] = roundIndex
+                    penaltyRoundScores[penaltyTarget] = penalty
+                }
             }
         }
 
-        return (premiumBonuses, zeroPremiumBonuses, penalties)
+        return (
+            premiumBonuses,
+            zeroPremiumBonuses,
+            penalties,
+            penaltyRoundIndices,
+            penaltyRoundScores
+        )
     }
 
     /// Добавляет бонус премии в очки последней раздачи соответствующего игрока.

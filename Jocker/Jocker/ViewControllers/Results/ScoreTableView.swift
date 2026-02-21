@@ -61,6 +61,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let gridThickColor = UIColor(red: 0.52, green: 0.58, blue: 0.68, alpha: 1.0)
     private let textPrimaryColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0)
     private let textSecondaryColor = UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0)
+    private let premiumPenaltyColor = UIColor(red: 0.86, green: 0.23, blue: 0.15, alpha: 0.95)
 
     private static let summaryScoreFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -179,7 +180,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         thickGridLayer.lineWidth = 2.0
 
         premiumLossLayer.fillColor = UIColor.clear.cgColor
-        premiumLossLayer.strokeColor = UIColor(red: 0.86, green: 0.23, blue: 0.15, alpha: 0.95).cgColor
+        premiumLossLayer.strokeColor = premiumPenaltyColor.cgColor
         premiumLossLayer.lineWidth = 2.0
         premiumLossLayer.lineCap = .round
 
@@ -416,14 +417,19 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         currentBlockResults: [[RoundResult]]
     ) {
         let results: [[RoundResult]]?
+        let penaltyStrikeDataByPlayer: [Int: (roundIndex: Int, score: Int)]
         let isCurrentBlock = blockIndex == completedBlocks.count
 
         if blockIndex < completedBlocks.count {
-            results = completedBlocks[blockIndex].roundResults
+            let completedBlock = completedBlocks[blockIndex]
+            results = completedBlock.roundResults
+            penaltyStrikeDataByPlayer = penaltyStrikeData(for: completedBlock)
         } else if isCurrentBlock {
             results = currentBlockResults
+            penaltyStrikeDataByPlayer = [:]
         } else {
             results = nil
+            penaltyStrikeDataByPlayer = [:]
         }
 
         for displayIndex in 0..<playerCount {
@@ -437,12 +443,15 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
                 roundIndex < results[playerIndex].count
             {
                 let roundResult = results[playerIndex][roundIndex]
+                let strikeData = penaltyStrikeDataByPlayer[playerIndex]
+                let shouldStrikePenalty = strikeData?.roundIndex == roundIndex && strikeData?.score == roundResult.score
                 applyRoundResult(
                     roundResult,
                     to: tricksLabel,
                     pointsLabel: pointsLabel,
                     displayedTricksTaken: nil,
-                    pointsText: "\(roundResult.score)"
+                    pointsText: "\(roundResult.score)",
+                    isPenaltyStruck: shouldStrikePenalty
                 )
                 continue
             }
@@ -460,12 +469,14 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
                     to: tricksLabel,
                     pointsLabel: pointsLabel,
                     displayedTricksTaken: 0,
-                    pointsText: "0"
+                    pointsText: "0",
+                    isPenaltyStruck: false
                 )
                 continue
             }
 
             tricksLabel.text = ""
+            pointsLabel.attributedText = nil
             pointsLabel.text = ""
         }
     }
@@ -475,7 +486,8 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         to tricksLabel: UILabel,
         pointsLabel: UILabel,
         displayedTricksTaken: Int?,
-        pointsText: String
+        pointsText: String,
+        isPenaltyStruck: Bool
     ) {
         let tricksTaken = displayedTricksTaken ?? roundResult.tricksTaken
         if roundResult.isBlind {
@@ -483,7 +495,38 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         } else {
             tricksLabel.text = "\(roundResult.bid)/\(tricksTaken)"
         }
-        pointsLabel.text = pointsText
+        applyPointsText(pointsText, to: pointsLabel, strikethrough: isPenaltyStruck)
+    }
+
+    private func applyPointsText(_ text: String, to label: UILabel, strikethrough: Bool) {
+        if strikethrough {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: label.font as Any,
+                .foregroundColor: textPrimaryColor,
+                .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                .strikethroughColor: premiumPenaltyColor
+            ]
+            label.attributedText = NSAttributedString(string: text, attributes: attributes)
+            return
+        }
+
+        label.attributedText = nil
+        label.text = text
+    }
+
+    private func penaltyStrikeData(for blockResult: BlockResult) -> [Int: (roundIndex: Int, score: Int)] {
+        var data: [Int: (roundIndex: Int, score: Int)] = [:]
+
+        for playerIndex in 0..<playerCount {
+            guard blockResult.premiumPenaltyRoundIndices.indices.contains(playerIndex) else { continue }
+            guard blockResult.premiumPenaltyRoundScores.indices.contains(playerIndex) else { continue }
+            guard let roundIndex = blockResult.premiumPenaltyRoundIndices[playerIndex] else { continue }
+            let score = blockResult.premiumPenaltyRoundScores[playerIndex]
+            guard score > 0 else { continue }
+            data[playerIndex] = (roundIndex: roundIndex, score: score)
+        }
+
+        return data
     }
 
     private func circledBidText(_ bid: Int) -> String {
