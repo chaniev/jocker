@@ -3,12 +3,17 @@ SHELL := /bin/bash
 .PHONY: bt train-bot \
 	bt-hard-smoke bt-hard-balanced bt-hard-battle \
 	bt-normal-smoke bt-normal-balanced bt-normal-battle \
-	bt-easy-smoke bt-easy-balanced bt-easy-battle
+	bt-easy-smoke bt-easy-balanced bt-easy-battle \
+	bt-hard-fullgame-smoke bt-hard-fullgame-balanced bt-hard-fullgame-battle bt-hard-final
 
 TRAIN_SCRIPT := ./scripts/train_bot_tuning.sh
-SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate 4 --rounds-per-game 3 --player-count 4 --cards-min 2 --cards-max 6 --elite-count 1 --mutation-chance 0.30 --mutation-magnitude 0.12 --selection-pool-ratio 0.50
-BALANCED_ARGS := --population-size 12 --generations 12 --games-per-candidate 24 --rounds-per-game 8 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 3 --mutation-chance 0.34 --mutation-magnitude 0.16 --selection-pool-ratio 0.55
-BATTLE_ARGS := --population-size 28 --generations 60 --games-per-candidate 200 --rounds-per-game 16 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 5 --mutation-chance 0.28 --mutation-magnitude 0.10 --selection-pool-ratio 0.45
+SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate 4 --rounds-per-game 3 --player-count 4 --cards-min 2 --cards-max 6 --elite-count 1 --mutation-chance 0.30 --mutation-magnitude 0.12 --selection-pool-ratio 0.50 --use-full-match-rules false --rotate-candidate-across-seats false
+BALANCED_ARGS := --population-size 12 --generations 12 --games-per-candidate 24 --rounds-per-game 8 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 3 --mutation-chance 0.34 --mutation-magnitude 0.16 --selection-pool-ratio 0.55 --use-full-match-rules false --rotate-candidate-across-seats false
+BATTLE_ARGS := --population-size 28 --generations 60 --games-per-candidate 200 --rounds-per-game 16 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 5 --mutation-chance 0.28 --mutation-magnitude 0.10 --selection-pool-ratio 0.45 --use-full-match-rules false --rotate-candidate-across-seats false
+
+FULLGAME_SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate 3 --rounds-per-game 24 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 1 --mutation-chance 0.30 --mutation-magnitude 0.16 --selection-pool-ratio 0.50 --use-full-match-rules true --rotate-candidate-across-seats true --fitness-win-rate-weight 1.0 --fitness-score-diff-weight 1.0 --score-diff-normalization 450
+FULLGAME_BALANCED_ARGS := --population-size 10 --generations 10 --games-per-candidate 8 --rounds-per-game 24 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 2 --mutation-chance 0.32 --mutation-magnitude 0.18 --selection-pool-ratio 0.55 --use-full-match-rules true --rotate-candidate-across-seats true --fitness-win-rate-weight 1.0 --fitness-score-diff-weight 1.0 --score-diff-normalization 450
+FULLGAME_BATTLE_ARGS := --population-size 20 --generations 36 --games-per-candidate 16 --rounds-per-game 24 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 4 --mutation-chance 0.28 --mutation-magnitude 0.14 --selection-pool-ratio 0.50 --use-full-match-rules true --rotate-candidate-across-seats true --fitness-win-rate-weight 1.0 --fitness-score-diff-weight 1.0 --score-diff-normalization 450
 
 bt train-bot:
 	@$(TRAIN_SCRIPT) $(ARGS)
@@ -39,3 +44,14 @@ bt-easy-balanced:
 
 bt-easy-battle:
 	@$(TRAIN_SCRIPT) --difficulty easy --seed 20260222 $(BATTLE_ARGS) --output .derivedData/bot-train-easy-battle.log
+
+bt-hard-fullgame-smoke:
+	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_SMOKE_ARGS) --output .derivedData/bot-train-hard-fullgame-smoke.log
+
+bt-hard-fullgame-balanced:
+	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_BALANCED_ARGS) --output .derivedData/bot-train-hard-fullgame-balanced.log
+
+bt-hard-fullgame-battle:
+	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_BATTLE_ARGS) --output .derivedData/bot-train-hard-fullgame-battle.log
+
+bt-hard-final: bt-hard-fullgame-battle

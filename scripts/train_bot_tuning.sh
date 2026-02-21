@@ -36,6 +36,21 @@ usage() {
   --selection-pool-ratio <double>   Доля лучших кандидатов для выбора родителей;
                                      в коде ограничивается диапазоном [0.2..1.0]
                                      (по умолчанию: 0.55).
+  --use-full-match-rules <true|false>
+                                     Включить симуляцию полной партии по блокам 1..4
+                                     с blind и премиями (по умолчанию: true).
+  --rotate-candidate-across-seats <true|false>
+                                     Оценивать кандидата на всех местах за столом для
+                                     каждого seed-сценария (по умолчанию: true).
+  --fitness-win-rate-weight <double>
+                                     Вес компоненты win-rate в fitness (по умолчанию: 1.0).
+  --fitness-score-diff-weight <double>
+                                     Вес компоненты разницы очков vs соперники
+                                     в fitness (по умолчанию: 1.0).
+  --score-diff-normalization <double>
+                                     Делитель для компоненты разницы очков;
+                                     больше значение = меньше вклад scoreDiff
+                                     (по умолчанию: 450).
   --output <path>                   Путь для сохранения полного лога запуска.
   -h, --help                        Показать эту справку.
 
@@ -43,6 +58,7 @@ usage() {
   scripts/train_bot_tuning.sh
   scripts/train_bot_tuning.sh --seed 123456 --generations 14 --games-per-candidate 40
   scripts/train_bot_tuning.sh --difficulty normal --output .derivedData/bot-train.log
+  scripts/train_bot_tuning.sh --games-per-candidate 24 --use-full-match-rules true --rotate-candidate-across-seats true
 EOF
 }
 
@@ -64,6 +80,18 @@ require_double() {
   fi
 }
 
+require_bool() {
+  local value="$1"
+  local flag="$2"
+  case "$value" in
+    true|false) ;;
+    *)
+      echo "Invalid boolean for $flag: $value (use true|false)" >&2
+      exit 1
+      ;;
+  esac
+}
+
 difficulty="hard"
 seed="20260220"
 population_size="12"
@@ -77,6 +105,11 @@ elite_count="3"
 mutation_chance="0.34"
 mutation_magnitude="0.16"
 selection_pool_ratio="0.55"
+use_full_match_rules="true"
+rotate_candidate_across_seats="true"
+fitness_win_rate_weight="1.0"
+fitness_score_diff_weight="1.0"
+score_diff_normalization="450"
 output_path=""
 
 while (($# > 0)); do
@@ -133,6 +166,26 @@ while (($# > 0)); do
       selection_pool_ratio="${2:-}"
       shift 2
       ;;
+    --use-full-match-rules)
+      use_full_match_rules="${2:-}"
+      shift 2
+      ;;
+    --rotate-candidate-across-seats)
+      rotate_candidate_across_seats="${2:-}"
+      shift 2
+      ;;
+    --fitness-win-rate-weight)
+      fitness_win_rate_weight="${2:-}"
+      shift 2
+      ;;
+    --fitness-score-diff-weight)
+      fitness_score_diff_weight="${2:-}"
+      shift 2
+      ;;
+    --score-diff-normalization)
+      score_diff_normalization="${2:-}"
+      shift 2
+      ;;
     --output)
       output_path="${2:-}"
       shift 2
@@ -169,6 +222,11 @@ require_int "$elite_count" "--elite-count"
 require_double "$mutation_chance" "--mutation-chance"
 require_double "$mutation_magnitude" "--mutation-magnitude"
 require_double "$selection_pool_ratio" "--selection-pool-ratio"
+require_bool "$use_full_match_rules" "--use-full-match-rules"
+require_bool "$rotate_candidate_across_seats" "--rotate-candidate-across-seats"
+require_double "$fitness_win_rate_weight" "--fitness-win-rate-weight"
+require_double "$fitness_score_diff_weight" "--fitness-score-diff-weight"
+require_double "$score_diff_normalization" "--score-diff-normalization"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
@@ -197,7 +255,12 @@ let config = BotTuning.SelfPlayEvolutionConfig(
     eliteCount: $elite_count,
     mutationChance: $mutation_chance,
     mutationMagnitude: $mutation_magnitude,
-    selectionPoolRatio: $selection_pool_ratio
+    selectionPoolRatio: $selection_pool_ratio,
+    useFullMatchRules: $use_full_match_rules,
+    rotateCandidateAcrossSeats: $rotate_candidate_across_seats,
+    fitnessWinRateWeight: $fitness_win_rate_weight,
+    fitnessScoreDiffWeight: $fitness_score_diff_weight,
+    scoreDiffNormalization: $score_diff_normalization
 )
 
 let seed: UInt64 = $seed
@@ -214,9 +277,18 @@ let trump = result.bestTuning.trumpSelection
 print("=== Bot Self-Play Training ===")
 print("difficulty=\\(baseDifficulty.rawValue)")
 print("seed=\\(seed)")
+print("useFullMatchRules=\\(config.useFullMatchRules)")
+print("rotateCandidateAcrossSeats=\\(config.rotateCandidateAcrossSeats)")
+print("fitnessWinRateWeight=\\(fmt(config.fitnessWinRateWeight))")
+print("fitnessScoreDiffWeight=\\(fmt(config.fitnessScoreDiffWeight))")
+print("scoreDiffNormalization=\\(fmt(config.scoreDiffNormalization))")
 print("baselineFitness=\\(fmt(result.baselineFitness))")
 print("bestFitness=\\(fmt(result.bestFitness))")
 print("improvement=\\(fmt(result.improvement))")
+print("baselineWinRate=\\(fmt(result.baselineWinRate))")
+print("bestWinRate=\\(fmt(result.bestWinRate))")
+print("baselineAverageScoreDiff=\\(fmt(result.baselineAverageScoreDiff))")
+print("bestAverageScoreDiff=\\(fmt(result.bestAverageScoreDiff))")
 print("generationBestFitness=[\\(result.generationBestFitness.map(fmt).joined(separator: ", "))]")
 print("")
 print("=== Suggested Tuned Values ===")
@@ -253,6 +325,8 @@ swift_sources=(
   "$repo_root/Jocker/Jocker/Models/Joker/JokerLeadDeclaration.swift"
   "$repo_root/Jocker/Jocker/Models/Joker/JokerPlayStyle.swift"
   "$repo_root/Jocker/Jocker/Models/Joker/JokerPlayDecision.swift"
+  "$repo_root/Jocker/Jocker/Models/Gameplay/GameBlock.swift"
+  "$repo_root/Jocker/Jocker/Models/Gameplay/GameConstants.swift"
   "$repo_root/Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift"
   "$repo_root/Jocker/Jocker/Models/Bot/BotDifficulty.swift"
   "$repo_root/Jocker/Jocker/Models/Bot/BotTuning.swift"

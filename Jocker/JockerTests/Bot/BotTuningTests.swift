@@ -169,5 +169,44 @@ final class BotTuningTests: XCTestCase {
 
         XCTAssertEqual(result.generationBestFitness.count, config.generations)
         XCTAssertTrue(result.bestFitness.isFinite)
+        XCTAssertTrue(result.baselineWinRate.isFinite)
+        XCTAssertTrue(result.bestWinRate.isFinite)
+        XCTAssertTrue(result.baselineAverageScoreDiff.isFinite)
+        XCTAssertTrue(result.bestAverageScoreDiff.isFinite)
+    }
+
+    func testSelfPlayEvolution_fullMatchAndSeatRotation_reportsFitnessComponents() {
+        let base = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 2,
+            roundsPerGame: 4,
+            playerCount: 4,
+            cardsPerRoundRange: 2...6,
+            eliteCount: 1,
+            mutationChance: 0.25,
+            mutationMagnitude: 0.12,
+            selectionPoolRatio: 0.5,
+            useFullMatchRules: true,
+            rotateCandidateAcrossSeats: true,
+            fitnessWinRateWeight: 1.0,
+            fitnessScoreDiffWeight: 1.0,
+            scoreDiffNormalization: 450.0
+        )
+
+        let result = BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: config,
+            seed: 2026_0221
+        )
+
+        XCTAssertEqual(result.generationBestFitness.count, config.generations)
+        XCTAssertGreaterThanOrEqual(result.baselineWinRate, 0.0)
+        XCTAssertLessThanOrEqual(result.baselineWinRate, 1.0)
+        XCTAssertGreaterThanOrEqual(result.bestWinRate, 0.0)
+        XCTAssertLessThanOrEqual(result.bestWinRate, 1.0)
+        XCTAssertTrue(result.baselineAverageScoreDiff.isFinite)
+        XCTAssertTrue(result.bestAverageScoreDiff.isFinite)
     }
 }

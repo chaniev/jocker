@@ -644,19 +644,35 @@ final class BotTurnStrategyService {
     }
 }
 
+
 extension BotTuning {
     /// Конфигурация эволюции параметров бота через self-play.
     struct SelfPlayEvolutionConfig {
         let populationSize: Int
-        let generations: Int
+        /// Количество seed-сценариев для оценки одного кандидата.
         let gamesPerCandidate: Int
+        let generations: Int
+        /// Используется только в legacy-режиме (`useFullMatchRules = false`).
         let roundsPerGame: Int
         let playerCount: Int
+        /// Используется только в legacy-режиме (`useFullMatchRules = false`).
         let cardsPerRoundRange: ClosedRange<Int>
         let eliteCount: Int
         let mutationChance: Double
         let mutationMagnitude: Double
         let selectionPoolRatio: Double
+
+        /// Включает симуляцию полной партии по блокам (1..4) с премиями и blind.
+        let useFullMatchRules: Bool
+        /// Для каждого seed кандидат оценивается на всех местах за столом.
+        let rotateCandidateAcrossSeats: Bool
+
+        /// Вес win-rate компоненты в fitness.
+        let fitnessWinRateWeight: Double
+        /// Вес компоненты разницы очков относительно оппонентов.
+        let fitnessScoreDiffWeight: Double
+        /// Нормализация score-diff компоненты (чем больше, тем слабее вклад).
+        let scoreDiffNormalization: Double
 
         init(
             populationSize: Int = 16,
@@ -668,7 +684,12 @@ extension BotTuning {
             eliteCount: Int = 2,
             mutationChance: Double = 0.35,
             mutationMagnitude: Double = 0.18,
-            selectionPoolRatio: Double = 0.5
+            selectionPoolRatio: Double = 0.5,
+            useFullMatchRules: Bool = true,
+            rotateCandidateAcrossSeats: Bool = true,
+            fitnessWinRateWeight: Double = 1.0,
+            fitnessScoreDiffWeight: Double = 1.0,
+            scoreDiffNormalization: Double = 450.0
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -695,6 +716,11 @@ extension BotTuning {
                 selectionPoolRatio,
                 to: 0.2...1.0
             )
+            self.useFullMatchRules = useFullMatchRules
+            self.rotateCandidateAcrossSeats = rotateCandidateAcrossSeats
+            self.fitnessWinRateWeight = max(0.0, fitnessWinRateWeight)
+            self.fitnessScoreDiffWeight = max(0.0, fitnessScoreDiffWeight)
+            self.scoreDiffNormalization = max(1.0, scoreDiffNormalization)
         }
 
         private static func clamp(
@@ -711,6 +737,10 @@ extension BotTuning {
         let baselineFitness: Double
         let bestFitness: Double
         let generationBestFitness: [Double]
+        let baselineWinRate: Double
+        let bestWinRate: Double
+        let baselineAverageScoreDiff: Double
+        let bestAverageScoreDiff: Double
 
         var improvement: Double {
             return bestFitness - baselineFitness
@@ -746,24 +776,28 @@ extension BotTuning {
         while population.count < populationSize {
             let randomGenome = randomGenome(
                 around: .identity,
-                magnitude: max(config.mutationMagnitude, 0.06),
+                magnitude: max(config.mutationMagnitude, 0.08),
                 using: &rng
             )
             population.append(randomGenome)
         }
 
-        let baselineFitness = evaluateGenome(
+        let baselineBreakdown = evaluateGenome(
             .identity,
             baseTuning: baseTuning,
             playerCount: playerCount,
-            gamesPerCandidate: config.gamesPerCandidate,
             roundsPerGame: config.roundsPerGame,
             cardsPerRoundRange: cardsRange,
-            evaluationSeeds: evaluationSeeds
+            evaluationSeeds: evaluationSeeds,
+            useFullMatchRules: config.useFullMatchRules,
+            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+            fitnessWinRateWeight: config.fitnessWinRateWeight,
+            fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
+            scoreDiffNormalization: config.scoreDiffNormalization
         )
 
         var bestGenome = EvolutionGenome.identity
-        var bestFitness = baselineFitness
+        var bestBreakdown = baselineBreakdown
         var generationBestFitness: [Double] = []
         generationBestFitness.reserveCapacity(config.generations)
 
@@ -775,32 +809,36 @@ extension BotTuning {
                 .map { genome in
                     return ScoredGenome(
                         genome: genome,
-                        fitness: evaluateGenome(
+                        breakdown: evaluateGenome(
                             genome,
                             baseTuning: baseTuning,
                             playerCount: playerCount,
-                            gamesPerCandidate: config.gamesPerCandidate,
                             roundsPerGame: config.roundsPerGame,
                             cardsPerRoundRange: cardsRange,
-                            evaluationSeeds: generationSeeds
+                            evaluationSeeds: generationSeeds,
+                            useFullMatchRules: config.useFullMatchRules,
+                            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+                            fitnessWinRateWeight: config.fitnessWinRateWeight,
+                            fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
+                            scoreDiffNormalization: config.scoreDiffNormalization
                         )
                     )
                 }
                 .sorted(by: { (lhs: ScoredGenome, rhs: ScoredGenome) -> Bool in
-                    if lhs.fitness == rhs.fitness {
+                    if lhs.breakdown.fitness == rhs.breakdown.fitness {
                         return isLexicographicallySmaller(
                             lhs.genome.lexicographicKey,
                             than: rhs.genome.lexicographicKey
                         )
                     }
-                    return lhs.fitness > rhs.fitness
+                    return lhs.breakdown.fitness > rhs.breakdown.fitness
                 })
 
             guard let generationBest = scoredPopulation.first else { continue }
-            generationBestFitness.append(generationBest.fitness)
+            generationBestFitness.append(generationBest.breakdown.fitness)
 
-            if generationBest.fitness > bestFitness {
-                bestFitness = generationBest.fitness
+            if generationBest.breakdown.fitness > bestBreakdown.fitness {
+                bestBreakdown = generationBest.breakdown
                 bestGenome = generationBest.genome
             }
 
@@ -834,15 +872,31 @@ extension BotTuning {
         let bestTuning = tuning(byApplying: bestGenome, to: baseTuning)
         return SelfPlayEvolutionResult(
             bestTuning: bestTuning,
-            baselineFitness: baselineFitness,
-            bestFitness: bestFitness,
-            generationBestFitness: generationBestFitness
+            baselineFitness: baselineBreakdown.fitness,
+            bestFitness: bestBreakdown.fitness,
+            generationBestFitness: generationBestFitness,
+            baselineWinRate: baselineBreakdown.winRate,
+            bestWinRate: bestBreakdown.winRate,
+            baselineAverageScoreDiff: baselineBreakdown.averageScoreDiff,
+            bestAverageScoreDiff: bestBreakdown.averageScoreDiff
         )
     }
 
     private struct ScoredGenome {
         let genome: EvolutionGenome
+        let breakdown: FitnessBreakdown
+    }
+
+    private struct FitnessBreakdown {
         let fitness: Double
+        let winRate: Double
+        let averageScoreDiff: Double
+
+        static let zero = FitnessBreakdown(
+            fitness: 0.0,
+            winRate: 0.0,
+            averageScoreDiff: 0.0
+        )
     }
 
     private struct EvolutionGenome {
@@ -856,7 +910,13 @@ extension BotTuning {
         var futureTricksScale: Double
         var futureJokerPowerScale: Double
         var threatPreservationScale: Double
-        var biddingPowerScale: Double
+
+        var biddingJokerPowerScale: Double
+        var biddingRankWeightScale: Double
+        var biddingTrumpBaseBonusScale: Double
+        var biddingTrumpRankWeightScale: Double
+        var biddingHighRankBonusScale: Double
+
         var trumpCardBasePowerScale: Double
         var trumpThresholdScale: Double
 
@@ -871,7 +931,11 @@ extension BotTuning {
             futureTricksScale: 1.0,
             futureJokerPowerScale: 1.0,
             threatPreservationScale: 1.0,
-            biddingPowerScale: 1.0,
+            biddingJokerPowerScale: 1.0,
+            biddingRankWeightScale: 1.0,
+            biddingTrumpBaseBonusScale: 1.0,
+            biddingTrumpRankWeightScale: 1.0,
+            biddingHighRankBonusScale: 1.0,
             trumpCardBasePowerScale: 1.0,
             trumpThresholdScale: 1.0
         )
@@ -888,7 +952,11 @@ extension BotTuning {
                 futureTricksScale,
                 futureJokerPowerScale,
                 threatPreservationScale,
-                biddingPowerScale,
+                biddingJokerPowerScale,
+                biddingRankWeightScale,
+                biddingTrumpBaseBonusScale,
+                biddingTrumpRankWeightScale,
+                biddingHighRankBonusScale,
                 trumpCardBasePowerScale,
                 trumpThresholdScale
             ]
@@ -916,6 +984,11 @@ extension BotTuning {
             let max53 = Double(1 << 53)
             return Double(bits) / max53
         }
+    }
+
+    private struct PreDealBlindContext {
+        let lockedBids: [Int]
+        let blindSelections: [Bool]
     }
 
     private static func randomGenome(
@@ -984,10 +1057,34 @@ extension BotTuning {
                 range: 0.55...1.70,
                 using: &rng
             ),
-            biddingPowerScale: randomizedScale(
-                base.biddingPowerScale,
+            biddingJokerPowerScale: randomizedScale(
+                base.biddingJokerPowerScale,
                 magnitude: magnitude,
-                range: 0.55...1.65,
+                range: 0.35...4.00,
+                using: &rng
+            ),
+            biddingRankWeightScale: randomizedScale(
+                base.biddingRankWeightScale,
+                magnitude: magnitude,
+                range: 0.35...12.00,
+                using: &rng
+            ),
+            biddingTrumpBaseBonusScale: randomizedScale(
+                base.biddingTrumpBaseBonusScale,
+                magnitude: magnitude,
+                range: 0.35...12.00,
+                using: &rng
+            ),
+            biddingTrumpRankWeightScale: randomizedScale(
+                base.biddingTrumpRankWeightScale,
+                magnitude: magnitude,
+                range: 0.35...12.00,
+                using: &rng
+            ),
+            biddingHighRankBonusScale: randomizedScale(
+                base.biddingHighRankBonusScale,
+                magnitude: magnitude,
+                range: 0.35...15.00,
                 using: &rng
             ),
             trumpCardBasePowerScale: randomizedScale(
@@ -1071,10 +1168,34 @@ extension BotTuning {
                 range: 0.55...1.70,
                 using: &rng
             ),
-            biddingPowerScale: mixedScale(
-                first.biddingPowerScale,
-                second.biddingPowerScale,
-                range: 0.55...1.65,
+            biddingJokerPowerScale: mixedScale(
+                first.biddingJokerPowerScale,
+                second.biddingJokerPowerScale,
+                range: 0.35...4.00,
+                using: &rng
+            ),
+            biddingRankWeightScale: mixedScale(
+                first.biddingRankWeightScale,
+                second.biddingRankWeightScale,
+                range: 0.35...12.00,
+                using: &rng
+            ),
+            biddingTrumpBaseBonusScale: mixedScale(
+                first.biddingTrumpBaseBonusScale,
+                second.biddingTrumpBaseBonusScale,
+                range: 0.35...12.00,
+                using: &rng
+            ),
+            biddingTrumpRankWeightScale: mixedScale(
+                first.biddingTrumpRankWeightScale,
+                second.biddingTrumpRankWeightScale,
+                range: 0.35...12.00,
+                using: &rng
+            ),
+            biddingHighRankBonusScale: mixedScale(
+                first.biddingHighRankBonusScale,
+                second.biddingHighRankBonusScale,
+                range: 0.35...15.00,
                 using: &rng
             ),
             trumpCardBasePowerScale: mixedScale(
@@ -1170,10 +1291,38 @@ extension BotTuning {
             using: &rng
         )
         mutateScale(
-            &mutated.biddingPowerScale,
+            &mutated.biddingJokerPowerScale,
             chance: chance,
             magnitude: magnitude,
-            range: 0.55...1.65,
+            range: 0.35...4.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingRankWeightScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.35...12.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingTrumpBaseBonusScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.35...12.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingTrumpRankWeightScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.35...12.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingHighRankBonusScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.35...15.00,
             using: &rng
         )
         mutateScale(
@@ -1198,40 +1347,91 @@ extension BotTuning {
         _ genome: EvolutionGenome,
         baseTuning: BotTuning,
         playerCount: Int,
-        gamesPerCandidate: Int,
         roundsPerGame: Int,
         cardsPerRoundRange: ClosedRange<Int>,
-        evaluationSeeds: [UInt64]
-    ) -> Double {
-        guard !evaluationSeeds.isEmpty else { return 0.0 }
+        evaluationSeeds: [UInt64],
+        useFullMatchRules: Bool,
+        rotateCandidateAcrossSeats: Bool,
+        fitnessWinRateWeight: Double,
+        fitnessScoreDiffWeight: Double,
+        scoreDiffNormalization: Double
+    ) -> FitnessBreakdown {
+        guard !evaluationSeeds.isEmpty else { return .zero }
 
         let candidateTuning = tuning(byApplying: genome, to: baseTuning)
-        var totalFitness = 0.0
+        let candidateSeats: [Int] = rotateCandidateAcrossSeats
+            ? Array(0..<playerCount)
+            : [0]
 
-        for gameIndex in 0..<gamesPerCandidate {
-            let candidateSeat = gameIndex % playerCount
-            var tuningsBySeat = Array(repeating: baseTuning, count: playerCount)
-            tuningsBySeat[candidateSeat] = candidateTuning
+        var totalWinRate = 0.0
+        var totalScoreDiff = 0.0
+        var simulationsCount = 0
 
-            let gameSeed = evaluationSeeds[gameIndex % evaluationSeeds.count] ^
-                (UInt64(gameIndex + 1) &* 0xD1B5_4A32_D192_ED03)
-            let totalScores = simulateGame(
-                tuningsBySeat: tuningsBySeat,
-                rounds: roundsPerGame,
-                cardsPerRoundRange: cardsPerRoundRange,
-                seed: gameSeed
-            )
+        for evaluationSeed in evaluationSeeds {
+            for candidateSeat in candidateSeats {
+                var tuningsBySeat = Array(repeating: baseTuning, count: playerCount)
+                tuningsBySeat[candidateSeat] = candidateTuning
 
-            let candidateScore = totalScores[candidateSeat]
-            let opponentsTotal = totalScores.reduce(0, +) - candidateScore
-            let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
-            totalFitness += Double(candidateScore) - opponentsAverage
+                let totalScores = simulateGame(
+                    tuningsBySeat: tuningsBySeat,
+                    rounds: roundsPerGame,
+                    cardsPerRoundRange: cardsPerRoundRange,
+                    seed: evaluationSeed,
+                    useFullMatchRules: useFullMatchRules
+                )
+
+                guard totalScores.indices.contains(candidateSeat) else { continue }
+                let candidateScore = totalScores[candidateSeat]
+                let opponentsTotal = totalScores.reduce(0, +) - candidateScore
+                let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
+
+                let maxScore = totalScores.max() ?? candidateScore
+                let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
+                let winShare = candidateScore == maxScore ? 1.0 / Double(winnersCount) : 0.0
+
+                totalWinRate += winShare
+                totalScoreDiff += Double(candidateScore) - opponentsAverage
+                simulationsCount += 1
+            }
         }
 
-        return totalFitness / Double(gamesPerCandidate)
+        guard simulationsCount > 0 else { return .zero }
+
+        let averageWinRate = totalWinRate / Double(simulationsCount)
+        let averageScoreDiff = totalScoreDiff / Double(simulationsCount)
+        let fitness = averageWinRate * fitnessWinRateWeight +
+            (averageScoreDiff / scoreDiffNormalization) * fitnessScoreDiffWeight
+
+        return FitnessBreakdown(
+            fitness: fitness,
+            winRate: averageWinRate,
+            averageScoreDiff: averageScoreDiff
+        )
     }
 
     private static func simulateGame(
+        tuningsBySeat: [BotTuning],
+        rounds: Int,
+        cardsPerRoundRange: ClosedRange<Int>,
+        seed: UInt64,
+        useFullMatchRules: Bool
+    ) -> [Int] {
+        if useFullMatchRules {
+            return simulateFullMatch(
+                tuningsBySeat: tuningsBySeat,
+                seed: seed
+            )
+        }
+
+        return simulateLegacyGame(
+            tuningsBySeat: tuningsBySeat,
+            rounds: rounds,
+            cardsPerRoundRange: cardsPerRoundRange,
+            seed: seed
+        )
+    }
+
+    private static func simulateLegacyGame(
         tuningsBySeat: [BotTuning],
         rounds: Int,
         cardsPerRoundRange: ClosedRange<Int>,
@@ -1289,35 +1489,324 @@ extension BotTuning {
         return totalScores
     }
 
+    private static func simulateFullMatch(
+        tuningsBySeat: [BotTuning],
+        seed: UInt64
+    ) -> [Int] {
+        let playerCount = tuningsBySeat.count
+        var rng = SelfPlayRandomGenerator(seed: seed)
+
+        let turnServices = tuningsBySeat.map { BotTurnStrategyService(tuning: $0) }
+        let biddingServices = tuningsBySeat.map { BotBiddingService(tuning: $0) }
+        let trumpServices = tuningsBySeat.map { BotTrumpSelectionService(tuning: $0) }
+
+        let blockDeals = GameConstants.allBlockDeals(playerCount: playerCount)
+
+        var totalScores = Array(repeating: 0, count: playerCount)
+        var dealer = Int.random(in: 0..<playerCount, using: &rng)
+
+        for (blockIndex, dealsInBlock) in blockDeals.enumerated() {
+            let blockNumber = blockIndex + 1
+            var blockRoundResults = Array(repeating: [RoundResult](), count: playerCount)
+            var blockBaseScores = Array(repeating: 0, count: playerCount)
+
+            for cardsInRound in dealsInBlock {
+                let hands = dealHands(
+                    cardsPerPlayer: cardsInRound,
+                    playerCount: playerCount,
+                    dealer: dealer,
+                    using: &rng
+                )
+
+                let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+                let trump = trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
+
+                let totalsIncludingCurrentBlock = (0..<playerCount).map { index in
+                    totalScores[index] + blockBaseScores[index]
+                }
+
+                let blindContext: PreDealBlindContext
+                if blockNumber == GameBlock.fourth.rawValue {
+                    blindContext = resolvePreDealBlindContext(
+                        dealer: dealer,
+                        cardsInRound: cardsInRound,
+                        playerCount: playerCount,
+                        biddingServices: biddingServices,
+                        totalScoresIncludingCurrentBlock: totalsIncludingCurrentBlock
+                    )
+                } else {
+                    blindContext = PreDealBlindContext(
+                        lockedBids: Array(repeating: 0, count: playerCount),
+                        blindSelections: Array(repeating: false, count: playerCount)
+                    )
+                }
+
+                let bids = makeBids(
+                    hands: hands,
+                    dealer: dealer,
+                    cardsInRound: cardsInRound,
+                    trump: trump,
+                    biddingServices: biddingServices,
+                    preLockedBids: blindContext.lockedBids,
+                    blindSelections: blindContext.blindSelections
+                )
+                let tricksTaken = playRound(
+                    hands: hands,
+                    bids: bids,
+                    dealer: dealer,
+                    cardsInRound: cardsInRound,
+                    trump: trump,
+                    turnServices: turnServices
+                )
+
+                for playerIndex in 0..<playerCount {
+                    let isBlind = blindContext.blindSelections.indices.contains(playerIndex)
+                        ? blindContext.blindSelections[playerIndex]
+                        : false
+                    let roundResult = RoundResult(
+                        cardsInRound: cardsInRound,
+                        bid: bids[playerIndex],
+                        tricksTaken: tricksTaken[playerIndex],
+                        isBlind: isBlind
+                    )
+                    blockRoundResults[playerIndex].append(roundResult)
+                    blockBaseScores[playerIndex] += roundResult.score
+                }
+
+                dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+            }
+
+            let finalizedBlockScores = finalizeBlockScores(
+                blockRoundResults: blockRoundResults,
+                blockNumber: blockNumber,
+                playerCount: playerCount
+            )
+            for playerIndex in 0..<playerCount {
+                totalScores[playerIndex] += finalizedBlockScores[playerIndex]
+            }
+        }
+
+        return totalScores
+    }
+
+    private static func resolvePreDealBlindContext(
+        dealer: Int,
+        cardsInRound: Int,
+        playerCount: Int,
+        biddingServices: [BotBiddingService],
+        totalScoresIncludingCurrentBlock: [Int]
+    ) -> PreDealBlindContext {
+        var lockedBids = Array(repeating: 0, count: playerCount)
+        var blindSelections = Array(repeating: false, count: playerCount)
+
+        for playerIndex in biddingOrder(dealer: dealer, playerCount: playerCount) {
+            guard canChooseBlindBid(
+                forPlayer: playerIndex,
+                dealer: dealer,
+                blindSelections: blindSelections
+            ) else {
+                continue
+            }
+
+            let allowedBlindBids = allowedBids(
+                forPlayer: playerIndex,
+                dealer: dealer,
+                cardsInRound: cardsInRound,
+                bids: lockedBids,
+                playerCount: playerCount
+            )
+            guard !allowedBlindBids.isEmpty else { continue }
+
+            let blindBid = biddingServices[playerIndex].makePreDealBlindBid(
+                playerIndex: playerIndex,
+                dealerIndex: dealer,
+                cardsInRound: cardsInRound,
+                allowedBlindBids: allowedBlindBids,
+                canChooseBlind: true,
+                totalScores: totalScoresIncludingCurrentBlock
+            )
+
+            guard let blindBid else { continue }
+            let resolvedBlindBid = allowedBlindBids.contains(blindBid)
+                ? blindBid
+                : (allowedBlindBids.first ?? 0)
+            blindSelections[playerIndex] = true
+            lockedBids[playerIndex] = resolvedBlindBid
+        }
+
+        return PreDealBlindContext(
+            lockedBids: lockedBids,
+            blindSelections: blindSelections
+        )
+    }
+
+    private static func finalizeBlockScores(
+        blockRoundResults: [[RoundResult]],
+        blockNumber: Int,
+        playerCount: Int
+    ) -> [Int] {
+        guard playerCount > 0 else { return [] }
+
+        let allPremiumPlayers = (0..<playerCount).filter { playerIndex in
+            let results = blockRoundResults.indices.contains(playerIndex)
+                ? blockRoundResults[playerIndex]
+                : []
+            guard !results.isEmpty else { return false }
+            return results.allSatisfy(\.bidMatched)
+        }
+
+        let zeroPremiumPlayers: [Int]
+        if blockNumber == GameBlock.first.rawValue || blockNumber == GameBlock.third.rawValue {
+            zeroPremiumPlayers = allPremiumPlayers.filter { playerIndex in
+                let results = blockRoundResults.indices.contains(playerIndex)
+                    ? blockRoundResults[playerIndex]
+                    : []
+                return ScoreCalculator.isZeroPremiumEligible(roundResults: results)
+            }
+        } else {
+            zeroPremiumPlayers = []
+        }
+
+        let zeroPremiumSet = Set(zeroPremiumPlayers)
+        let regularPremiumPlayers = allPremiumPlayers.filter { !zeroPremiumSet.contains($0) }
+
+        var premiumBonuses = Array(repeating: 0, count: playerCount)
+        var zeroPremiumBonuses = Array(repeating: 0, count: playerCount)
+        var premiumPenalties = Array(repeating: 0, count: playerCount)
+
+        for playerIndex in regularPremiumPlayers {
+            let roundScores = blockRoundResults[playerIndex].map(\.score)
+            premiumBonuses[playerIndex] = ScoreCalculator.calculatePremiumBonus(roundScores: roundScores)
+        }
+
+        for playerIndex in zeroPremiumPlayers {
+            zeroPremiumBonuses[playerIndex] = ScoreCalculator.zeroPremiumAmount
+        }
+
+        let premiumSet = Set(allPremiumPlayers)
+        for playerIndex in allPremiumPlayers {
+            guard let penaltyTarget = findPenaltyTarget(
+                for: playerIndex,
+                premiumPlayers: premiumSet,
+                playerCount: playerCount
+            ) else {
+                continue
+            }
+            let targetRoundScores = blockRoundResults[penaltyTarget].map(\.score)
+            premiumPenalties[penaltyTarget] += ScoreCalculator.calculatePremiumPenalty(
+                roundScores: targetRoundScores
+            )
+        }
+
+        var roundsWithPremiums = blockRoundResults
+        for playerIndex in 0..<playerCount {
+            guard roundsWithPremiums.indices.contains(playerIndex) else { continue }
+            guard !roundsWithPremiums[playerIndex].isEmpty else { continue }
+
+            let bonus = premiumBonuses[playerIndex] + zeroPremiumBonuses[playerIndex]
+            guard bonus != 0 else { continue }
+
+            let lastRoundIndex = roundsWithPremiums[playerIndex].count - 1
+            let lastRound = roundsWithPremiums[playerIndex][lastRoundIndex]
+            roundsWithPremiums[playerIndex][lastRoundIndex] = lastRound.addingScoreAdjustment(bonus)
+        }
+
+        let baseBlockScores = (0..<playerCount).map { playerIndex in
+            guard roundsWithPremiums.indices.contains(playerIndex) else { return 0 }
+            return roundsWithPremiums[playerIndex].reduce(0) { $0 + $1.score }
+        }
+
+        return (0..<playerCount).map { playerIndex in
+            baseBlockScores[playerIndex] - premiumPenalties[playerIndex]
+        }
+    }
+
+    private static func findPenaltyTarget(
+        for playerIndex: Int,
+        premiumPlayers: Set<Int>,
+        playerCount: Int
+    ) -> Int? {
+        guard playerCount > 1 else { return nil }
+
+        var candidate = leftNeighbor(of: playerIndex, playerCount: playerCount)
+        var checked = 0
+
+        while checked < playerCount - 1 {
+            if !premiumPlayers.contains(candidate) {
+                return candidate
+            }
+            candidate = leftNeighbor(of: candidate, playerCount: playerCount)
+            checked += 1
+        }
+
+        return nil
+    }
+
+    private static func leftNeighbor(of playerIndex: Int, playerCount: Int) -> Int {
+        guard playerCount > 0 else { return 0 }
+        return (playerIndex + 1) % playerCount
+    }
+
     private static func makeBids(
         hands: [[Card]],
         dealer: Int,
         cardsInRound: Int,
         trump: Suit?,
-        biddingServices: [BotBiddingService]
+        biddingServices: [BotBiddingService],
+        preLockedBids: [Int]? = nil,
+        blindSelections: [Bool]? = nil
     ) -> [Int] {
         let playerCount = hands.count
         let firstBidder = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
-        var bids = Array(repeating: 0, count: playerCount)
+
+        let resolvedLockedBids: [Int]
+        if let preLockedBids, preLockedBids.count == playerCount {
+            resolvedLockedBids = preLockedBids
+        } else {
+            resolvedLockedBids = Array(repeating: 0, count: playerCount)
+        }
+
+        let resolvedBlindSelections: [Bool]
+        if let blindSelections, blindSelections.count == playerCount {
+            resolvedBlindSelections = blindSelections
+        } else {
+            resolvedBlindSelections = Array(repeating: false, count: playerCount)
+        }
+
+        var bids = resolvedLockedBids
 
         for step in 0..<playerCount {
             let player = normalizedPlayerIndex(firstBidder + step, playerCount: playerCount)
-            let forbiddenBid: Int?
-            if player == dealer {
-                let totalWithoutDealer = bids.enumerated().reduce(0) { partial, item in
-                    return item.offset == dealer ? partial : partial + item.element
-                }
-                forbiddenBid = cardsInRound - totalWithoutDealer
-            } else {
-                forbiddenBid = nil
+            if resolvedBlindSelections[player] {
+                continue
             }
 
-            bids[player] = biddingServices[player].makeBid(
+            let allowed = allowedBids(
+                forPlayer: player,
+                dealer: dealer,
+                cardsInRound: cardsInRound,
+                bids: bids,
+                playerCount: playerCount
+            )
+            let fallbackBid = allowed.first ?? 0
+            let forbiddenBid = dealerForbiddenBid(
+                forPlayer: player,
+                dealer: dealer,
+                cardsInRound: cardsInRound,
+                bids: bids,
+                playerCount: playerCount
+            )
+
+            let candidateBid = biddingServices[player].makeBid(
                 hand: hands[player],
                 cardsInRound: cardsInRound,
                 trump: trump,
                 forbiddenBid: forbiddenBid
             )
+
+            bids[player] = allowed.contains(candidateBid)
+                ? candidateBid
+                : fallbackBid
         }
 
         return bids
@@ -1456,6 +1945,86 @@ extension BotTuning {
         return hands
     }
 
+    private static func allowedBids(
+        forPlayer playerIndex: Int,
+        dealer: Int,
+        cardsInRound: Int,
+        bids: [Int],
+        playerCount: Int
+    ) -> [Int] {
+        guard playerCount > 0 else { return [] }
+        guard playerIndex >= 0 && playerIndex < playerCount else { return [] }
+
+        let maxBid = max(0, cardsInRound)
+        var allowed = Array(0...maxBid)
+
+        guard playerCount > 1, playerIndex == dealer else {
+            return allowed
+        }
+
+        let totalWithoutDealer = (0..<playerCount).reduce(0) { partial, index in
+            guard index != dealer else { return partial }
+            let rawBid = bids.indices.contains(index) ? bids[index] : 0
+            let clampedBid = min(max(rawBid, 0), maxBid)
+            return partial + clampedBid
+        }
+
+        let forbiddenBid = cardsInRound - totalWithoutDealer
+        if let forbiddenIndex = allowed.firstIndex(of: forbiddenBid) {
+            allowed.remove(at: forbiddenIndex)
+        }
+
+        return allowed
+    }
+
+    private static func dealerForbiddenBid(
+        forPlayer playerIndex: Int,
+        dealer: Int,
+        cardsInRound: Int,
+        bids: [Int],
+        playerCount: Int
+    ) -> Int? {
+        guard playerCount > 1, playerIndex == dealer else { return nil }
+
+        let totalWithoutDealer = (0..<playerCount).reduce(0) { partial, index in
+            guard index != dealer else { return partial }
+            let rawBid = bids.indices.contains(index) ? bids[index] : 0
+            return partial + min(max(rawBid, 0), max(0, cardsInRound))
+        }
+
+        let forbidden = cardsInRound - totalWithoutDealer
+        guard forbidden >= 0 && forbidden <= cardsInRound else { return nil }
+        return forbidden
+    }
+
+    private static func canChooseBlindBid(
+        forPlayer playerIndex: Int,
+        dealer: Int,
+        blindSelections: [Bool]
+    ) -> Bool {
+        guard playerIndex >= 0 && playerIndex < blindSelections.count else { return false }
+
+        if playerIndex != dealer {
+            return true
+        }
+
+        for index in blindSelections.indices where index != dealer {
+            guard blindSelections[index] else {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private static func biddingOrder(dealer: Int, playerCount: Int) -> [Int] {
+        guard playerCount > 0 else { return [] }
+        let start = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+        return (0..<playerCount).map { offset in
+            normalizedPlayerIndex(start + offset, playerCount: playerCount)
+        }
+    }
+
     private static func tuning(
         byApplying genome: EvolutionGenome,
         to base: BotTuning
@@ -1545,23 +2114,23 @@ extension BotTuning {
         let baseBidding = base.bidding
         let bidding = BotTuning.Bidding(
             expectedJokerPower: clamp(
-                baseBidding.expectedJokerPower * genome.biddingPowerScale,
+                baseBidding.expectedJokerPower * genome.biddingJokerPowerScale,
                 to: 0.40...2.60
             ),
             expectedRankWeight: clamp(
-                baseBidding.expectedRankWeight * genome.biddingPowerScale,
+                baseBidding.expectedRankWeight * genome.biddingRankWeightScale,
                 to: 0.10...1.80
             ),
             expectedTrumpBaseBonus: clamp(
-                baseBidding.expectedTrumpBaseBonus * genome.biddingPowerScale,
+                baseBidding.expectedTrumpBaseBonus * genome.biddingTrumpBaseBonusScale,
                 to: 0.05...2.20
             ),
             expectedTrumpRankWeight: clamp(
-                baseBidding.expectedTrumpRankWeight * genome.biddingPowerScale,
+                baseBidding.expectedTrumpRankWeight * genome.biddingTrumpRankWeightScale,
                 to: 0.05...2.20
             ),
             expectedHighRankBonus: clamp(
-                baseBidding.expectedHighRankBonus * genome.biddingPowerScale,
+                baseBidding.expectedHighRankBonus * genome.biddingHighRankBonusScale,
                 to: 0.02...1.20
             ),
 
