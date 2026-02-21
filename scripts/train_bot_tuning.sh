@@ -474,6 +474,38 @@ func aggregateTunings(_ tunings: [BotTuning], method: String) -> BotTuning {
         powerNormalizationValue: template.turnStrategy.powerNormalizationValue
     )
 
+    let aggregatedBlindDesperateBehindThreshold = max(
+        100,
+        Int(aggregate(tunings.map { Double(\$0.bidding.blindDesperateBehindThreshold) }, method: method).rounded())
+    )
+    let aggregatedBlindCatchUpBehindThreshold = max(
+        60,
+        Int(aggregate(tunings.map { Double(\$0.bidding.blindCatchUpBehindThreshold) }, method: method).rounded())
+    )
+    let resolvedBlindCatchUpBehindThreshold = min(
+        aggregatedBlindDesperateBehindThreshold,
+        aggregatedBlindCatchUpBehindThreshold
+    )
+    let resolvedBlindSafeLeadThreshold = max(
+        80,
+        Int(aggregate(tunings.map { Double(\$0.bidding.blindSafeLeadThreshold) }, method: method).rounded())
+    )
+    let aggregatedBlindCatchUpTargetShare = min(
+        0.90,
+        max(0.10, aggregate(tunings.map { \$0.bidding.blindCatchUpTargetShare }, method: method))
+    )
+    let aggregatedBlindCatchUpConservativeTargetShare = min(
+        aggregatedBlindCatchUpTargetShare,
+        min(
+            0.85,
+            max(0.05, aggregate(tunings.map { \$0.bidding.blindCatchUpConservativeTargetShare }, method: method))
+        )
+    )
+    let aggregatedBlindDesperateTargetShare = min(
+        0.95,
+        max(aggregatedBlindCatchUpTargetShare, aggregate(tunings.map { \$0.bidding.blindDesperateTargetShare }, method: method))
+    )
+
     let bidding = BotTuning.Bidding(
         expectedJokerPower: aggregate(tunings.map { \$0.bidding.expectedJokerPower }, method: method),
         expectedRankWeight: aggregate(tunings.map { \$0.bidding.expectedRankWeight }, method: method),
@@ -484,12 +516,12 @@ func aggregateTunings(_ tunings: [BotTuning], method: String) -> BotTuning {
         expectedTrumpDensityBonus: aggregate(tunings.map { \$0.bidding.expectedTrumpDensityBonus }, method: method),
         expectedNoTrumpHighCardBonus: aggregate(tunings.map { \$0.bidding.expectedNoTrumpHighCardBonus }, method: method),
         expectedNoTrumpJokerSynergy: aggregate(tunings.map { \$0.bidding.expectedNoTrumpJokerSynergy }, method: method),
-        blindDesperateBehindThreshold: template.bidding.blindDesperateBehindThreshold,
-        blindCatchUpBehindThreshold: template.bidding.blindCatchUpBehindThreshold,
-        blindSafeLeadThreshold: template.bidding.blindSafeLeadThreshold,
-        blindDesperateTargetShare: template.bidding.blindDesperateTargetShare,
-        blindCatchUpTargetShare: template.bidding.blindCatchUpTargetShare,
-        blindCatchUpConservativeTargetShare: template.bidding.blindCatchUpConservativeTargetShare
+        blindDesperateBehindThreshold: aggregatedBlindDesperateBehindThreshold,
+        blindCatchUpBehindThreshold: resolvedBlindCatchUpBehindThreshold,
+        blindSafeLeadThreshold: resolvedBlindSafeLeadThreshold,
+        blindDesperateTargetShare: aggregatedBlindDesperateTargetShare,
+        blindCatchUpTargetShare: aggregatedBlindCatchUpTargetShare,
+        blindCatchUpConservativeTargetShare: aggregatedBlindCatchUpConservativeTargetShare
     )
 
     let trumpSelection = BotTuning.TrumpSelection(
@@ -720,6 +752,12 @@ print("bidding.expectedLongSuitBonusPerCard=\\(fmt(bidding.expectedLongSuitBonus
 print("bidding.expectedTrumpDensityBonus=\\(fmt(bidding.expectedTrumpDensityBonus))")
 print("bidding.expectedNoTrumpHighCardBonus=\\(fmt(bidding.expectedNoTrumpHighCardBonus))")
 print("bidding.expectedNoTrumpJokerSynergy=\\(fmt(bidding.expectedNoTrumpJokerSynergy))")
+print("bidding.blindDesperateBehindThreshold=\\(bidding.blindDesperateBehindThreshold)")
+print("bidding.blindCatchUpBehindThreshold=\\(bidding.blindCatchUpBehindThreshold)")
+print("bidding.blindSafeLeadThreshold=\\(bidding.blindSafeLeadThreshold)")
+print("bidding.blindDesperateTargetShare=\\(fmt(bidding.blindDesperateTargetShare))")
+print("bidding.blindCatchUpTargetShare=\\(fmt(bidding.blindCatchUpTargetShare))")
+print("bidding.blindCatchUpConservativeTargetShare=\\(fmt(bidding.blindCatchUpConservativeTargetShare))")
 print("trumpSelection.cardBasePower=\\(fmt(trump.cardBasePower))")
 print("trumpSelection.minimumPowerToDeclareTrump=\\(fmt(trump.minimumPowerToDeclareTrump))")
 SWIFT

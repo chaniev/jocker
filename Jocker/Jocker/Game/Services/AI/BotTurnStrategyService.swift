@@ -1138,6 +1138,12 @@ extension BotTuning {
         var biddingTrumpDensityBonusScale: Double
         var biddingNoTrumpHighCardBonusScale: Double
         var biddingNoTrumpJokerSynergyScale: Double
+        var blindDesperateBehindThresholdScale: Double
+        var blindCatchUpBehindThresholdScale: Double
+        var blindSafeLeadThresholdScale: Double
+        var blindDesperateTargetShareScale: Double
+        var blindCatchUpTargetShareScale: Double
+        var blindCatchUpConservativeTargetShareScale: Double
 
         var trumpCardBasePowerScale: Double
         var trumpThresholdScale: Double
@@ -1162,6 +1168,12 @@ extension BotTuning {
             biddingTrumpDensityBonusScale: 1.0,
             biddingNoTrumpHighCardBonusScale: 1.0,
             biddingNoTrumpJokerSynergyScale: 1.0,
+            blindDesperateBehindThresholdScale: 1.0,
+            blindCatchUpBehindThresholdScale: 1.0,
+            blindSafeLeadThresholdScale: 1.0,
+            blindDesperateTargetShareScale: 1.0,
+            blindCatchUpTargetShareScale: 1.0,
+            blindCatchUpConservativeTargetShareScale: 1.0,
             trumpCardBasePowerScale: 1.0,
             trumpThresholdScale: 1.0
         )
@@ -1187,6 +1199,12 @@ extension BotTuning {
                 biddingTrumpDensityBonusScale,
                 biddingNoTrumpHighCardBonusScale,
                 biddingNoTrumpJokerSynergyScale,
+                blindDesperateBehindThresholdScale,
+                blindCatchUpBehindThresholdScale,
+                blindSafeLeadThresholdScale,
+                blindDesperateTargetShareScale,
+                blindCatchUpTargetShareScale,
+                blindCatchUpConservativeTargetShareScale,
                 trumpCardBasePowerScale,
                 trumpThresholdScale
             ]
@@ -1350,6 +1368,42 @@ extension BotTuning {
                 range: 0.35...15.00,
                 using: &rng
             ),
+            blindDesperateBehindThresholdScale: randomizedScale(
+                base.blindDesperateBehindThresholdScale,
+                magnitude: magnitude,
+                range: 0.60...1.70,
+                using: &rng
+            ),
+            blindCatchUpBehindThresholdScale: randomizedScale(
+                base.blindCatchUpBehindThresholdScale,
+                magnitude: magnitude,
+                range: 0.55...1.75,
+                using: &rng
+            ),
+            blindSafeLeadThresholdScale: randomizedScale(
+                base.blindSafeLeadThresholdScale,
+                magnitude: magnitude,
+                range: 0.55...1.80,
+                using: &rng
+            ),
+            blindDesperateTargetShareScale: randomizedScale(
+                base.blindDesperateTargetShareScale,
+                magnitude: magnitude,
+                range: 0.60...1.55,
+                using: &rng
+            ),
+            blindCatchUpTargetShareScale: randomizedScale(
+                base.blindCatchUpTargetShareScale,
+                magnitude: magnitude,
+                range: 0.55...1.65,
+                using: &rng
+            ),
+            blindCatchUpConservativeTargetShareScale: randomizedScale(
+                base.blindCatchUpConservativeTargetShareScale,
+                magnitude: magnitude,
+                range: 0.55...1.70,
+                using: &rng
+            ),
             trumpCardBasePowerScale: randomizedScale(
                 base.trumpCardBasePowerScale,
                 magnitude: magnitude,
@@ -1483,6 +1537,42 @@ extension BotTuning {
                 first.biddingNoTrumpJokerSynergyScale,
                 second.biddingNoTrumpJokerSynergyScale,
                 range: 0.35...15.00,
+                using: &rng
+            ),
+            blindDesperateBehindThresholdScale: mixedScale(
+                first.blindDesperateBehindThresholdScale,
+                second.blindDesperateBehindThresholdScale,
+                range: 0.60...1.70,
+                using: &rng
+            ),
+            blindCatchUpBehindThresholdScale: mixedScale(
+                first.blindCatchUpBehindThresholdScale,
+                second.blindCatchUpBehindThresholdScale,
+                range: 0.55...1.75,
+                using: &rng
+            ),
+            blindSafeLeadThresholdScale: mixedScale(
+                first.blindSafeLeadThresholdScale,
+                second.blindSafeLeadThresholdScale,
+                range: 0.55...1.80,
+                using: &rng
+            ),
+            blindDesperateTargetShareScale: mixedScale(
+                first.blindDesperateTargetShareScale,
+                second.blindDesperateTargetShareScale,
+                range: 0.60...1.55,
+                using: &rng
+            ),
+            blindCatchUpTargetShareScale: mixedScale(
+                first.blindCatchUpTargetShareScale,
+                second.blindCatchUpTargetShareScale,
+                range: 0.55...1.65,
+                using: &rng
+            ),
+            blindCatchUpConservativeTargetShareScale: mixedScale(
+                first.blindCatchUpConservativeTargetShareScale,
+                second.blindCatchUpConservativeTargetShareScale,
+                range: 0.55...1.70,
                 using: &rng
             ),
             trumpCardBasePowerScale: mixedScale(
@@ -1638,6 +1728,48 @@ extension BotTuning {
             chance: chance,
             magnitude: max(magnitude * 2.2, 0.22),
             range: 0.35...15.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.blindDesperateBehindThresholdScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.60...1.70,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.blindCatchUpBehindThresholdScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.55...1.75,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.blindSafeLeadThresholdScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.55...1.80,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.blindDesperateTargetShareScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.60...1.55,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.blindCatchUpTargetShareScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.55...1.65,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.blindCatchUpConservativeTargetShareScale,
+            chance: chance,
+            magnitude: magnitude,
+            range: 0.55...1.70,
             using: &rng
         )
         mutateScale(
@@ -2945,6 +3077,48 @@ extension BotTuning {
         )
 
         let baseBidding = base.bidding
+        let evolvedBlindDesperateBehindThreshold = Int(
+            clamp(
+                Double(baseBidding.blindDesperateBehindThreshold) * genome.blindDesperateBehindThresholdScale,
+                to: 100.0...700.0
+            ).rounded()
+        )
+        let evolvedBlindCatchUpBehindThreshold = Int(
+            clamp(
+                Double(baseBidding.blindCatchUpBehindThreshold) * genome.blindCatchUpBehindThresholdScale,
+                to: 60.0...600.0
+            ).rounded()
+        )
+        let resolvedBlindCatchUpBehindThreshold = min(
+            evolvedBlindDesperateBehindThreshold,
+            evolvedBlindCatchUpBehindThreshold
+        )
+        let resolvedBlindSafeLeadThreshold = Int(
+            clamp(
+                Double(baseBidding.blindSafeLeadThreshold) * genome.blindSafeLeadThresholdScale,
+                to: 80.0...800.0
+            ).rounded()
+        )
+        let evolvedBlindCatchUpTargetShare = clamp(
+            baseBidding.blindCatchUpTargetShare * genome.blindCatchUpTargetShareScale,
+            to: 0.10...0.90
+        )
+        let evolvedBlindCatchUpConservativeTargetShare = clamp(
+            baseBidding.blindCatchUpConservativeTargetShare * genome.blindCatchUpConservativeTargetShareScale,
+            to: 0.05...0.85
+        )
+        let resolvedBlindCatchUpConservativeTargetShare = min(
+            evolvedBlindCatchUpTargetShare,
+            evolvedBlindCatchUpConservativeTargetShare
+        )
+        let evolvedBlindDesperateTargetShare = clamp(
+            baseBidding.blindDesperateTargetShare * genome.blindDesperateTargetShareScale,
+            to: 0.15...0.95
+        )
+        let resolvedBlindDesperateTargetShare = max(
+            evolvedBlindCatchUpTargetShare,
+            evolvedBlindDesperateTargetShare
+        )
         let bidding = BotTuning.Bidding(
             expectedJokerPower: clamp(
                 baseBidding.expectedJokerPower * genome.biddingJokerPowerScale,
@@ -2983,12 +3157,12 @@ extension BotTuning {
                 to: 0.05...2.20
             ),
 
-            blindDesperateBehindThreshold: baseBidding.blindDesperateBehindThreshold,
-            blindCatchUpBehindThreshold: baseBidding.blindCatchUpBehindThreshold,
-            blindSafeLeadThreshold: baseBidding.blindSafeLeadThreshold,
-            blindDesperateTargetShare: baseBidding.blindDesperateTargetShare,
-            blindCatchUpTargetShare: baseBidding.blindCatchUpTargetShare,
-            blindCatchUpConservativeTargetShare: baseBidding.blindCatchUpConservativeTargetShare
+            blindDesperateBehindThreshold: evolvedBlindDesperateBehindThreshold,
+            blindCatchUpBehindThreshold: resolvedBlindCatchUpBehindThreshold,
+            blindSafeLeadThreshold: resolvedBlindSafeLeadThreshold,
+            blindDesperateTargetShare: resolvedBlindDesperateTargetShare,
+            blindCatchUpTargetShare: evolvedBlindCatchUpTargetShare,
+            blindCatchUpConservativeTargetShare: resolvedBlindCatchUpConservativeTargetShare
         )
 
         let baseTrump = base.trumpSelection
