@@ -252,14 +252,19 @@ final class JockerTests: XCTestCase {
     }
 
     private func hasStrikethrough(_ label: UILabel) -> Bool {
-        guard let attributed = label.attributedText, attributed.length > 0 else { return false }
-        if let style = attributed.attribute(.strikethroughStyle, at: 0, effectiveRange: nil) as? NSNumber {
-            return style.intValue != 0
+        if let attributed = label.attributedText, attributed.length > 0 {
+            if let style = attributed.attribute(.strikethroughStyle, at: 0, effectiveRange: nil) as? NSNumber {
+                return style.intValue != 0
+            }
+            if let style = attributed.attribute(.strikethroughStyle, at: 0, effectiveRange: nil) as? Int {
+                return style != 0
+            }
         }
-        if let style = attributed.attribute(.strikethroughStyle, at: 0, effectiveRange: nil) as? Int {
-            return style != 0
+
+        return (label.layer.sublayers ?? []).contains { sublayer in
+            guard let shapeLayer = sublayer as? CAShapeLayer else { return false }
+            return shapeLayer.path != nil && shapeLayer.lineWidth > 0
         }
-        return false
     }
 
     private func dealRowIndex(blockIndex: Int, roundIndex: Int, in tableView: ScoreTableView) -> Int? {

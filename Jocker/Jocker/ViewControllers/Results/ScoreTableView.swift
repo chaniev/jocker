@@ -39,6 +39,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let thinGridLayer = CAShapeLayer()
     private let thickGridLayer = CAShapeLayer()
     private let premiumLossLayer = CAShapeLayer()
+    private var premiumScoreStrikeLayers: [CAShapeLayer] = []
     private var premiumTrophyLabels: [UILabel] = []
 
     private var leftColumnWidth: CGFloat = 36
@@ -334,9 +335,12 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private func applyScoreDataIfNeeded() {
         guard let scoreManager = scoreManager else {
             premiumLossLayer.path = nil
+            clearPremiumScoreStrikeLayers()
             clearPremiumTrophyLabels()
             return
         }
+
+        clearPremiumScoreStrikeLayers()
 
         let completedBlocks = scoreManager.completedBlocks
         let currentBlockResults = scoreManager.currentBlockRoundResults
@@ -476,7 +480,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             }
 
             tricksLabel.text = ""
-            pointsLabel.attributedText = nil
             pointsLabel.text = ""
         }
     }
@@ -499,19 +502,37 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     }
 
     private func applyPointsText(_ text: String, to label: UILabel, strikethrough: Bool) {
-        if strikethrough {
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: label.font as Any,
-                .foregroundColor: textPrimaryColor,
-                .strikethroughStyle: NSUnderlineStyle.single.rawValue,
-                .strikethroughColor: premiumPenaltyColor
-            ]
-            label.attributedText = NSAttributedString(string: text, attributes: attributes)
-            return
-        }
-
-        label.attributedText = nil
         label.text = text
+        if strikethrough {
+            addPremiumScoreStrikeLayer(on: label)
+        }
+    }
+
+    private func addPremiumScoreStrikeLayer(on label: UILabel) {
+        let bounds = label.bounds
+        guard bounds.width > 2, bounds.height > 2 else { return }
+
+        let path = UIBezierPath()
+        let y = round(bounds.midY)
+        path.move(to: CGPoint(x: bounds.minX + 1, y: y))
+        path.addLine(to: CGPoint(x: bounds.maxX - 1, y: y))
+
+        let strikeLayer = CAShapeLayer()
+        strikeLayer.fillColor = UIColor.clear.cgColor
+        strikeLayer.strokeColor = premiumLossLayer.strokeColor
+        strikeLayer.lineWidth = premiumLossLayer.lineWidth
+        strikeLayer.lineCap = premiumLossLayer.lineCap
+        strikeLayer.path = path.cgPath
+
+        label.layer.addSublayer(strikeLayer)
+        premiumScoreStrikeLayers.append(strikeLayer)
+    }
+
+    private func clearPremiumScoreStrikeLayers() {
+        for layer in premiumScoreStrikeLayers {
+            layer.removeFromSuperlayer()
+        }
+        premiumScoreStrikeLayers.removeAll()
     }
 
     private func penaltyStrikeData(for blockResult: BlockResult) -> [Int: (roundIndex: Int, score: Int)] {
