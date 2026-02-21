@@ -74,6 +74,12 @@ usage() {
   --notrump-control-underbid-normalization <double>
                                      Делитель для компоненты недозаказа
                                      в no-trump контрольных руках (по умолчанию: 2200).
+  --show-progress <true|false>       Показывать live-прогресс обучения
+                                     (по умолчанию: true).
+  --progress-candidate-step <int>    Частота прогресса по кандидатам внутри поколения:
+                                     1 = печатать после каждого кандидата,
+                                     5 = после каждого 5-го и в конце поколения
+                                     (по умолчанию: 1).
   --output <path>                   Путь для сохранения полного лога запуска.
   -h, --help                        Показать эту справку.
 
@@ -81,6 +87,7 @@ usage() {
   scripts/train_bot_tuning.sh
   scripts/train_bot_tuning.sh --seed 123456 --generations 14 --games-per-candidate 40
   scripts/train_bot_tuning.sh --seed-list 20260220,20260221,20260222 --ensemble-method median
+  scripts/train_bot_tuning.sh --show-progress true --progress-candidate-step 2
   scripts/train_bot_tuning.sh --difficulty normal --output .derivedData/bot-train.log
   scripts/train_bot_tuning.sh --games-per-candidate 24 --use-full-match-rules true --rotate-candidate-across-seats true
 EOF
@@ -151,6 +158,8 @@ score_diff_normalization="450"
 underbid_loss_normalization="6000"
 trump_density_underbid_normalization="2800"
 notrump_control_underbid_normalization="2200"
+show_progress="true"
+progress_candidate_step="1"
 output_path=""
 
 while (($# > 0)); do
@@ -259,6 +268,14 @@ while (($# > 0)); do
       notrump_control_underbid_normalization="${2:-}"
       shift 2
       ;;
+    --show-progress)
+      show_progress="${2:-}"
+      shift 2
+      ;;
+    --progress-candidate-step)
+      progress_candidate_step="${2:-}"
+      shift 2
+      ;;
     --output)
       output_path="${2:-}"
       shift 2
@@ -309,6 +326,12 @@ require_double "$score_diff_normalization" "--score-diff-normalization"
 require_double "$underbid_loss_normalization" "--underbid-loss-normalization"
 require_double "$trump_density_underbid_normalization" "--trump-density-underbid-normalization"
 require_double "$notrump_control_underbid_normalization" "--notrump-control-underbid-normalization"
+require_bool "$show_progress" "--show-progress"
+require_int "$progress_candidate_step" "--progress-candidate-step"
+if [[ "$progress_candidate_step" -lt 1 ]]; then
+  echo "Invalid value for --progress-candidate-step: $progress_candidate_step (must be >= 1)" >&2
+  exit 1
+fi
 
 case "$ensemble_method" in
   median|mean) ;;
@@ -328,9 +351,19 @@ mkdir -p "$build_dir"
 
 cat > "$runner_main" <<SWIFT
 import Foundation
+import Darwin
 
 func fmt(_ value: Double) -> String {
     return String(format: "%.6f", value)
+}
+
+func fmtDuration(_ seconds: Double?) -> String {
+    guard let seconds else { return "--:--:--" }
+    let clamped = max(0, Int(seconds.rounded()))
+    let h = clamped / 3600
+    let m = (clamped % 3600) / 60
+    let s = clamped % 60
+    return String(format: "%02d:%02d:%02d", h, m, s)
 }
 
 func average(_ values: [Double]) -> Double {
@@ -465,6 +498,8 @@ let config = BotTuning.SelfPlayEvolutionConfig(
 let seed: UInt64 = $seed
 let seedListRaw = "$seed_list"
 let ensembleMethod = "$ensemble_method"
+let showProgress = $show_progress
+let progressCandidateStep = max(1, $progress_candidate_step)
 let parsedSeedList: [UInt64] = seedListRaw
     .split(separator: ",")
     .compactMap { UInt64(\$0) }
@@ -475,11 +510,76 @@ struct SeedRun {
     let result: BotTuning.SelfPlayEvolutionResult
 }
 
+func logProgress(
+    seed: UInt64,
+    event: BotTuning.SelfPlayEvolutionProgress,
+    candidateStep: Int
+) {
+    switch event.stage {
+    case .started:
+        print(
+            "[progress] seed=\\(seed) started " +
+            "work=\\(event.totalWorkUnits) units"
+        )
+    case .baselineCompleted:
+        print(
+            "[progress] seed=\\(seed) baseline " +
+            "fitness=\\(fmt(event.currentFitness ?? 0.0)) " +
+            "elapsed=\\(fmtDuration(event.elapsedSeconds)) " +
+            "eta=\\(fmtDuration(event.estimatedRemainingSeconds))"
+        )
+    case .generationStarted:
+        let generation = (event.generationIndex ?? 0) + 1
+        print(
+            "[progress] seed=\\(seed) generation " +
+            "\\(generation)/\\(event.totalGenerations) started"
+        )
+    case .candidateEvaluated:
+        let generation = (event.generationIndex ?? 0) + 1
+        let candidate = event.evaluatedCandidatesInGeneration ?? 0
+        let shouldPrint = candidate == 1 ||
+            candidate == event.populationSize ||
+            (candidate % candidateStep == 0)
+        guard shouldPrint else { return }
+        print(
+            "[progress] seed=\\(seed) g=\\(generation)/\\(event.totalGenerations) " +
+            "candidate=\\(candidate)/\\(event.populationSize) " +
+            "fitness=\\(fmt(event.currentFitness ?? 0.0)) " +
+            "genBest=\\(fmt(event.generationBestFitness ?? 0.0)) " +
+            "overallBest=\\(fmt(event.overallBestFitness ?? 0.0)) " +
+            "elapsed=\\(fmtDuration(event.elapsedSeconds)) " +
+            "eta=\\(fmtDuration(event.estimatedRemainingSeconds))"
+        )
+    case .generationCompleted:
+        let generation = (event.generationIndex ?? 0) + 1
+        print(
+            "[progress] seed=\\(seed) generation " +
+            "\\(generation)/\\(event.totalGenerations) done " +
+            "genBest=\\(fmt(event.generationBestFitness ?? 0.0)) " +
+            "overallBest=\\(fmt(event.overallBestFitness ?? 0.0)) " +
+            "elapsed=\\(fmtDuration(event.elapsedSeconds)) " +
+            "eta=\\(fmtDuration(event.estimatedRemainingSeconds))"
+        )
+    case .finished:
+        print(
+            "[progress] seed=\\(seed) finished " +
+            "overallBest=\\(fmt(event.overallBestFitness ?? 0.0)) " +
+            "elapsed=\\(fmtDuration(event.elapsedSeconds))"
+        )
+    }
+    fflush(stdout)
+}
+
 let seedRuns: [SeedRun] = runSeeds.map { runSeed in
     let runResult = BotTuning.evolveViaSelfPlay(
         baseTuning: baseTuning,
         config: config,
-        seed: runSeed
+        seed: runSeed,
+        progress: showProgress
+            ? { event in
+                logProgress(seed: runSeed, event: event, candidateStep: progressCandidateStep)
+            }
+            : nil
     )
     return SeedRun(seed: runSeed, result: runResult)
 }
@@ -519,6 +619,8 @@ print("scoreDiffNormalization=\\(fmt(config.scoreDiffNormalization))")
 print("underbidLossNormalization=\\(fmt(config.underbidLossNormalization))")
 print("trumpDensityUnderbidNormalization=\\(fmt(config.trumpDensityUnderbidNormalization))")
 print("noTrumpControlUnderbidNormalization=\\(fmt(config.noTrumpControlUnderbidNormalization))")
+print("showProgress=\\(showProgress)")
+print("progressCandidateStep=\\(progressCandidateStep)")
 if seedRuns.count > 1 {
     let perSeedFitness = seedRuns.map { "\\(\$0.seed):\\(fmt(\$0.result.bestFitness))" }.joined(separator: ", ")
     print("perSeedBestFitness=[\\(perSeedFitness)]")

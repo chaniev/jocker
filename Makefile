@@ -15,6 +15,7 @@ FULLGAME_SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate
 FULLGAME_BALANCED_ARGS := --population-size 10 --generations 10 --games-per-candidate 8 --rounds-per-game 24 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 2 --mutation-chance 0.32 --mutation-magnitude 0.18 --selection-pool-ratio 0.55 --use-full-match-rules true --rotate-candidate-across-seats true --fitness-win-rate-weight 1.0 --fitness-score-diff-weight 1.0 --fitness-underbid-loss-weight 0.85 --fitness-trump-density-underbid-weight 0.60 --fitness-notrump-control-underbid-weight 0.70 --score-diff-normalization 450 --underbid-loss-normalization 6000 --trump-density-underbid-normalization 2800 --notrump-control-underbid-normalization 2200
 FULLGAME_BATTLE_ARGS := --population-size 20 --generations 36 --games-per-candidate 16 --rounds-per-game 24 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 4 --mutation-chance 0.28 --mutation-magnitude 0.14 --selection-pool-ratio 0.50 --use-full-match-rules true --rotate-candidate-across-seats true --fitness-win-rate-weight 1.0 --fitness-score-diff-weight 1.0 --fitness-underbid-loss-weight 0.85 --fitness-trump-density-underbid-weight 0.60 --fitness-notrump-control-underbid-weight 0.70 --score-diff-normalization 450 --underbid-loss-normalization 6000 --trump-density-underbid-normalization 2800 --notrump-control-underbid-normalization 2200
 FINAL_ENSEMBLE_SEEDS := 20260220,20260221,20260222,20260223,20260224
+PROGRESS_ARGS := --show-progress true --progress-candidate-step 5
 
 bt train-bot:
 	@$(TRAIN_SCRIPT) $(ARGS)
@@ -47,13 +48,13 @@ bt-easy-battle:
 	@$(TRAIN_SCRIPT) --difficulty easy --seed 20260222 $(BATTLE_ARGS) --output .derivedData/bot-train-easy-battle.log
 
 bt-hard-fullgame-smoke:
-	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_SMOKE_ARGS) --output .derivedData/bot-train-hard-fullgame-smoke.log
+	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_SMOKE_ARGS) $(PROGRESS_ARGS) --output .derivedData/bot-train-hard-fullgame-smoke.log
 
 bt-hard-fullgame-balanced:
-	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_BALANCED_ARGS) --output .derivedData/bot-train-hard-fullgame-balanced.log
+	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_BALANCED_ARGS) $(PROGRESS_ARGS) --output .derivedData/bot-train-hard-fullgame-balanced.log
 
 bt-hard-fullgame-battle:
-	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_BATTLE_ARGS) --output .derivedData/bot-train-hard-fullgame-battle.log
+	@$(TRAIN_SCRIPT) --difficulty hard --seed 20260220 $(FULLGAME_BATTLE_ARGS) $(PROGRESS_ARGS) --output .derivedData/bot-train-hard-fullgame-battle.log
 
 bt-hard-final:
-	@$(TRAIN_SCRIPT) --difficulty hard --seed-list $(FINAL_ENSEMBLE_SEEDS) --ensemble-method median $(FULLGAME_BATTLE_ARGS) --output .derivedData/bot-train-hard-final-ensemble.log
+	@$(TRAIN_SCRIPT) --difficulty hard --seed-list $(FINAL_ENSEMBLE_SEEDS) --ensemble-method median $(FULLGAME_BATTLE_ARGS) $(PROGRESS_ARGS) --output .derivedData/bot-train-hard-final-ensemble.log

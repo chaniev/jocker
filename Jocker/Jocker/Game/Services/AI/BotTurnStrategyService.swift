@@ -777,11 +777,37 @@ extension BotTuning {
         }
     }
 
+    /// Событие прогресса эволюции self-play.
+    struct SelfPlayEvolutionProgress {
+        enum Stage {
+            case started
+            case baselineCompleted
+            case generationStarted
+            case candidateEvaluated
+            case generationCompleted
+            case finished
+        }
+
+        let stage: Stage
+        let generationIndex: Int?
+        let totalGenerations: Int
+        let evaluatedCandidatesInGeneration: Int?
+        let populationSize: Int
+        let currentFitness: Double?
+        let generationBestFitness: Double?
+        let overallBestFitness: Double?
+        let completedWorkUnits: Int
+        let totalWorkUnits: Int
+        let elapsedSeconds: Double
+        let estimatedRemainingSeconds: Double?
+    }
+
     /// Запускает эволюционный поиск параметров бота на серии self-play матчей.
     static func evolveViaSelfPlay(
         baseTuning: BotTuning,
         config: SelfPlayEvolutionConfig = SelfPlayEvolutionConfig(),
-        seed: UInt64 = 0x5EED
+        seed: UInt64 = 0x5EED,
+        progress: ((SelfPlayEvolutionProgress) -> Void)? = nil
     ) -> SelfPlayEvolutionResult {
         let playerCount = min(4, max(3, config.playerCount))
         let deckLimit = max(1, Deck().cards.count / playerCount)
@@ -812,6 +838,49 @@ extension BotTuning {
             population.append(randomGenome)
         }
 
+        let runStartedAt = Date()
+        let totalWorkUnits = 1 + config.generations * populationSize
+        var completedWorkUnits = 0
+
+        func notifyProgress(
+            stage: SelfPlayEvolutionProgress.Stage,
+            generationIndex: Int? = nil,
+            evaluatedCandidatesInGeneration: Int? = nil,
+            currentFitness: Double? = nil,
+            generationBestFitness: Double? = nil,
+            overallBestFitness: Double? = nil
+        ) {
+            guard let progress else { return }
+            let elapsed = Date().timeIntervalSince(runStartedAt)
+            let estimatedRemaining: Double?
+            if completedWorkUnits > 0 {
+                let averagePerUnit = elapsed / Double(completedWorkUnits)
+                let unitsLeft = max(0, totalWorkUnits - completedWorkUnits)
+                estimatedRemaining = averagePerUnit * Double(unitsLeft)
+            } else {
+                estimatedRemaining = nil
+            }
+
+            progress(
+                SelfPlayEvolutionProgress(
+                    stage: stage,
+                    generationIndex: generationIndex,
+                    totalGenerations: config.generations,
+                    evaluatedCandidatesInGeneration: evaluatedCandidatesInGeneration,
+                    populationSize: populationSize,
+                    currentFitness: currentFitness,
+                    generationBestFitness: generationBestFitness,
+                    overallBestFitness: overallBestFitness,
+                    completedWorkUnits: completedWorkUnits,
+                    totalWorkUnits: totalWorkUnits,
+                    elapsedSeconds: elapsed,
+                    estimatedRemainingSeconds: estimatedRemaining
+                )
+            )
+        }
+
+        notifyProgress(stage: .started)
+
         let baselineBreakdown = evaluateGenome(
             .identity,
             baseTuning: baseTuning,
@@ -831,6 +900,13 @@ extension BotTuning {
             trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
             noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
         )
+        completedWorkUnits += 1
+        notifyProgress(
+            stage: .baselineCompleted,
+            currentFitness: baselineBreakdown.fitness,
+            generationBestFitness: baselineBreakdown.fitness,
+            overallBestFitness: baselineBreakdown.fitness
+        )
 
         var bestGenome = EvolutionGenome.identity
         var bestBreakdown = baselineBreakdown
@@ -838,35 +914,59 @@ extension BotTuning {
         generationBestFitness.reserveCapacity(config.generations)
 
         for generation in 0..<config.generations {
+            notifyProgress(
+                stage: .generationStarted,
+                generationIndex: generation,
+                overallBestFitness: bestBreakdown.fitness
+            )
             let generationSeedMask = UInt64(generation + 1) &* 0x9E37_79B9_7F4A_7C15
             let generationSeeds = evaluationSeeds.map { $0 ^ generationSeedMask }
 
-            let scoredPopulation: [ScoredGenome] = population
-                .map { genome in
-                    return ScoredGenome(
+            var scoredPopulation: [ScoredGenome] = []
+            scoredPopulation.reserveCapacity(populationSize)
+            var generationBestFitnessSoFar: Double?
+
+            for (candidateOffset, genome) in population.enumerated() {
+                let breakdown = evaluateGenome(
+                    genome,
+                    baseTuning: baseTuning,
+                    playerCount: playerCount,
+                    roundsPerGame: config.roundsPerGame,
+                    cardsPerRoundRange: cardsRange,
+                    evaluationSeeds: generationSeeds,
+                    useFullMatchRules: config.useFullMatchRules,
+                    rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+                    fitnessWinRateWeight: config.fitnessWinRateWeight,
+                    fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
+                    fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
+                    fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
+                    fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
+                    scoreDiffNormalization: config.scoreDiffNormalization,
+                    underbidLossNormalization: config.underbidLossNormalization,
+                    trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
+                    noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
+                )
+                scoredPopulation.append(
+                    ScoredGenome(
                         genome: genome,
-                        breakdown: evaluateGenome(
-                            genome,
-                            baseTuning: baseTuning,
-                            playerCount: playerCount,
-                            roundsPerGame: config.roundsPerGame,
-                            cardsPerRoundRange: cardsRange,
-                            evaluationSeeds: generationSeeds,
-                            useFullMatchRules: config.useFullMatchRules,
-                            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
-                            fitnessWinRateWeight: config.fitnessWinRateWeight,
-                            fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
-                            fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
-                            fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
-                            fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
-                            scoreDiffNormalization: config.scoreDiffNormalization,
-                            underbidLossNormalization: config.underbidLossNormalization,
-                            trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
-                            noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
-                        )
+                        breakdown: breakdown
                     )
-                }
-                .sorted(by: { (lhs: ScoredGenome, rhs: ScoredGenome) -> Bool in
+                )
+
+                completedWorkUnits += 1
+                generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.fitness, breakdown.fitness)
+                let overallBestSoFar = max(bestBreakdown.fitness, generationBestFitnessSoFar ?? breakdown.fitness)
+                notifyProgress(
+                    stage: .candidateEvaluated,
+                    generationIndex: generation,
+                    evaluatedCandidatesInGeneration: candidateOffset + 1,
+                    currentFitness: breakdown.fitness,
+                    generationBestFitness: generationBestFitnessSoFar,
+                    overallBestFitness: overallBestSoFar
+                )
+            }
+
+            scoredPopulation.sort(by: { (lhs: ScoredGenome, rhs: ScoredGenome) -> Bool in
                     if lhs.breakdown.fitness == rhs.breakdown.fitness {
                         return isLexicographicallySmaller(
                             lhs.genome.lexicographicKey,
@@ -883,6 +983,12 @@ extension BotTuning {
                 bestBreakdown = generationBest.breakdown
                 bestGenome = generationBest.genome
             }
+            notifyProgress(
+                stage: .generationCompleted,
+                generationIndex: generation,
+                generationBestFitness: generationBest.breakdown.fitness,
+                overallBestFitness: bestBreakdown.fitness
+            )
 
             guard generation + 1 < config.generations else { continue }
 
@@ -912,6 +1018,10 @@ extension BotTuning {
         }
 
         let bestTuning = tuning(byApplying: bestGenome, to: baseTuning)
+        notifyProgress(
+            stage: .finished,
+            overallBestFitness: bestBreakdown.fitness
+        )
         return SelfPlayEvolutionResult(
             bestTuning: bestTuning,
             baselineFitness: baselineBreakdown.fitness,
