@@ -8,7 +8,7 @@ SHELL := /bin/bash
 TRAIN_SCRIPT := ./scripts/train_bot_tuning.sh
 SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate 4 --rounds-per-game 3 --player-count 4 --cards-min 2 --cards-max 6 --elite-count 1 --mutation-chance 0.30 --mutation-magnitude 0.12 --selection-pool-ratio 0.50
 BALANCED_ARGS := --population-size 12 --generations 12 --games-per-candidate 24 --rounds-per-game 8 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 3 --mutation-chance 0.34 --mutation-magnitude 0.16 --selection-pool-ratio 0.55
-BATTLE_ARGS := --population-size 28 --generations 40 --games-per-candidate 100 --rounds-per-game 12 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 5 --mutation-chance 0.28 --mutation-magnitude 0.10 --selection-pool-ratio 0.45
+BATTLE_ARGS := --population-size 28 --generations 60 --games-per-candidate 200 --rounds-per-game 16 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 5 --mutation-chance 0.28 --mutation-magnitude 0.10 --selection-pool-ratio 0.45
 
 bt train-bot:
 	@$(TRAIN_SCRIPT) $(ARGS)
