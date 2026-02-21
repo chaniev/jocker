@@ -1751,13 +1751,14 @@ extension BotTuning {
 
             let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
             let trump = trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
-            let bids = makeBids(
+            let biddingOutcome = makeBids(
                 hands: hands,
                 dealer: dealer,
                 cardsInRound: cardsInRound,
                 trump: trump,
                 biddingServices: biddingServices
             )
+            let bids = biddingOutcome.bids
             let tricksTaken = playRound(
                 hands: hands,
                 bids: bids,
@@ -1783,7 +1784,14 @@ extension BotTuning {
                 )
                 underbidLosses[playerIndex] += jokerBidFloorUnderbidPenalty(
                     hand: hands[playerIndex],
-                    bid: bids[playerIndex]
+                    bid: bids[playerIndex],
+                    maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
+                )
+                underbidLosses[playerIndex] += jokerAllInEdgeMaxBidPenalty(
+                    hand: hands[playerIndex],
+                    bid: bids[playerIndex],
+                    cardsInRound: cardsInRound,
+                    maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
                 )
                 trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
                     hand: hands[playerIndex],
@@ -1867,7 +1875,7 @@ extension BotTuning {
                     )
                 }
 
-                let bids = makeBids(
+                let biddingOutcome = makeBids(
                     hands: hands,
                     dealer: dealer,
                     cardsInRound: cardsInRound,
@@ -1876,6 +1884,7 @@ extension BotTuning {
                     preLockedBids: blindContext.lockedBids,
                     blindSelections: blindContext.blindSelections
                 )
+                let bids = biddingOutcome.bids
                 let tricksTaken = playRound(
                     hands: hands,
                     bids: bids,
@@ -1905,7 +1914,14 @@ extension BotTuning {
                     )
                     underbidLosses[playerIndex] += jokerBidFloorUnderbidPenalty(
                         hand: hands[playerIndex],
-                        bid: bids[playerIndex]
+                        bid: bids[playerIndex],
+                        maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
+                    )
+                    underbidLosses[playerIndex] += jokerAllInEdgeMaxBidPenalty(
+                        hand: hands[playerIndex],
+                        bid: bids[playerIndex],
+                        cardsInRound: cardsInRound,
+                        maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
                     )
                     trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
                         hand: hands[playerIndex],
@@ -2025,12 +2041,14 @@ extension BotTuning {
     /// поэтому такое занижение рассматривается как потеря потенциальных очков.
     private static func jokerBidFloorUnderbidPenalty(
         hand: [Card],
-        bid: Int
+        bid: Int,
+        maxAllowedBid: Int
     ) -> Double {
         let jokerCount = hand.reduce(0) { partial, card in
             partial + (card.isJoker ? 1 : 0)
         }
-        let deficit = max(0, jokerCount - max(0, bid))
+        let reachableJokerFloor = min(jokerCount, max(0, maxAllowedBid))
+        let deficit = max(0, reachableJokerFloor - max(0, bid))
         guard deficit > 0 else { return 0.0 }
         let penaltyPerMissingTrick = 10_000.0
         var penalty = Double(deficit) * penaltyPerMissingTrick
@@ -2042,6 +2060,31 @@ extension BotTuning {
         }
 
         return penalty
+    }
+
+    /// Граничный сценарий для self-play: если на руке ровно 2 джокера при раздаче 2 карт,
+    /// бот должен стремиться к максимально допустимому заказу.
+    private static func jokerAllInEdgeMaxBidPenalty(
+        hand: [Card],
+        bid: Int,
+        cardsInRound: Int,
+        maxAllowedBid: Int
+    ) -> Double {
+        guard cardsInRound == 2 else { return 0.0 }
+        guard hand.count == 2 else { return 0.0 }
+        let jokerCount = hand.reduce(0) { partial, card in
+            partial + (card.isJoker ? 1 : 0)
+        }
+        guard jokerCount == 2 else { return 0.0 }
+
+        let targetBid = min(max(0, maxAllowedBid), cardsInRound)
+        let resolvedBid = min(max(0, bid), cardsInRound)
+        let deficit = max(0, targetBid - resolvedBid)
+        guard deficit > 0 else { return 0.0 }
+
+        let penaltyPerMissingTrick = 65_000.0
+        let certaintyBonus = targetBid == cardsInRound ? 25_000.0 : 10_000.0
+        return Double(deficit) * penaltyPerMissingTrick + certaintyBonus
     }
 
     /// Дополнительный штраф за недозаказ в руках с высокой плотностью козырей.
@@ -2224,6 +2267,11 @@ extension BotTuning {
         return (playerIndex + 1) % playerCount
     }
 
+    private struct BiddingRoundOutcome {
+        let bids: [Int]
+        let maxAllowedBids: [Int]
+    }
+
     private static func makeBids(
         hands: [[Card]],
         dealer: Int,
@@ -2232,7 +2280,7 @@ extension BotTuning {
         biddingServices: [BotBiddingService],
         preLockedBids: [Int]? = nil,
         blindSelections: [Bool]? = nil
-    ) -> [Int] {
+    ) -> BiddingRoundOutcome {
         let playerCount = hands.count
         let firstBidder = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
 
@@ -2251,13 +2299,10 @@ extension BotTuning {
         }
 
         var bids = resolvedLockedBids
+        var maxAllowedBids = Array(repeating: 0, count: playerCount)
 
         for step in 0..<playerCount {
             let player = normalizedPlayerIndex(firstBidder + step, playerCount: playerCount)
-            if resolvedBlindSelections[player] {
-                continue
-            }
-
             let allowed = allowedBids(
                 forPlayer: player,
                 dealer: dealer,
@@ -2265,6 +2310,12 @@ extension BotTuning {
                 bids: bids,
                 playerCount: playerCount
             )
+            maxAllowedBids[player] = allowed.max() ?? 0
+
+            if resolvedBlindSelections[player] {
+                continue
+            }
+
             let fallbackBid = allowed.first ?? 0
             let forbiddenBid = dealerForbiddenBid(
                 forPlayer: player,
@@ -2286,7 +2337,10 @@ extension BotTuning {
                 : fallbackBid
         }
 
-        return bids
+        return BiddingRoundOutcome(
+            bids: bids,
+            maxAllowedBids: maxAllowedBids
+        )
     }
 
     private static func playRound(
