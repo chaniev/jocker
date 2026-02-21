@@ -2987,7 +2987,8 @@ extension BotTuning {
             blindCatchUpBehindThreshold: baseBidding.blindCatchUpBehindThreshold,
             blindSafeLeadThreshold: baseBidding.blindSafeLeadThreshold,
             blindDesperateTargetShare: baseBidding.blindDesperateTargetShare,
-            blindCatchUpTargetShare: baseBidding.blindCatchUpTargetShare
+            blindCatchUpTargetShare: baseBidding.blindCatchUpTargetShare,
+            blindCatchUpConservativeTargetShare: baseBidding.blindCatchUpConservativeTargetShare
         )
 
         let baseTrump = base.trumpSelection

@@ -174,4 +174,49 @@ final class BotBiddingServiceTests: XCTestCase {
             XCTAssertTrue([2, 3, 4, 5, 6].contains(blindBid))
         }
     }
+
+    func testMakePreDealBlindBid_whenSlightlyBehind_usesLowerCatchUpBid() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let blindBid = service.makePreDealBlindBid(
+            playerIndex: 2,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: Array(0...9),
+            canChooseBlind: true,
+            totalScores: [1000, 980, 850, 840] // отставание от лидера: 150 (catch-up зона)
+        )
+
+        XCTAssertNotNil(blindBid)
+        if let blindBid {
+            XCTAssertLessThanOrEqual(blindBid, 4) // раньше здесь чаще получалось 5+
+        }
+    }
+
+    func testMakePreDealBlindBid_whenGapGrows_bidAlsoGrows() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let catchUpBid = service.makePreDealBlindBid(
+            playerIndex: 2,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: Array(0...9),
+            canChooseBlind: true,
+            totalScores: [1000, 980, 850, 840] // отставание: 150
+        )
+        let desperateBid = service.makePreDealBlindBid(
+            playerIndex: 2,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: Array(0...9),
+            canChooseBlind: true,
+            totalScores: [1200, 980, 850, 840] // отставание: 350
+        )
+
+        XCTAssertNotNil(catchUpBid)
+        XCTAssertNotNil(desperateBid)
+        if let catchUpBid, let desperateBid {
+            XCTAssertGreaterThan(desperateBid, catchUpBid)
+        }
+    }
 }

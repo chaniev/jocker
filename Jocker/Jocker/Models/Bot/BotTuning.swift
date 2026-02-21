@@ -170,6 +170,9 @@ struct BotTuning {
         /// Целевая доля тёмной ставки в догоняющем режиме.
         /// Пример: `0.55` чаще выбирает средне-высокие ставки.
         let blindCatchUpTargetShare: Double
+        /// Консервативная доля тёмной ставки на нижней границе догоняющего режима.
+        /// Пример: `0.30` при небольшом отставании снижает риск ради стабильного добора.
+        let blindCatchUpConservativeTargetShare: Double
     }
 
     struct TrumpSelection {
@@ -291,7 +294,8 @@ struct BotTuning {
                     blindCatchUpBehindThreshold: 180,
                     blindSafeLeadThreshold: 140,
                     blindDesperateTargetShare: 0.45,
-                    blindCatchUpTargetShare: 0.30
+                    blindCatchUpTargetShare: 0.30,
+                    blindCatchUpConservativeTargetShare: 0.20
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.35,
@@ -366,7 +370,8 @@ struct BotTuning {
                     blindCatchUpBehindThreshold: 130,
                     blindSafeLeadThreshold: 180,
                     blindDesperateTargetShare: 0.65,
-                    blindCatchUpTargetShare: 0.45
+                    blindCatchUpTargetShare: 0.45,
+                    blindCatchUpConservativeTargetShare: 0.26
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.45,
@@ -441,7 +446,8 @@ struct BotTuning {
                     blindCatchUpBehindThreshold: 140,
                     blindSafeLeadThreshold: 300,
                     blindDesperateTargetShare: 0.72,
-                    blindCatchUpTargetShare: 0.52
+                    blindCatchUpTargetShare: 0.52,
+                    blindCatchUpConservativeTargetShare: 0.30
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.443479,

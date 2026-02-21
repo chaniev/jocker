@@ -488,7 +488,8 @@ func aggregateTunings(_ tunings: [BotTuning], method: String) -> BotTuning {
         blindCatchUpBehindThreshold: template.bidding.blindCatchUpBehindThreshold,
         blindSafeLeadThreshold: template.bidding.blindSafeLeadThreshold,
         blindDesperateTargetShare: template.bidding.blindDesperateTargetShare,
-        blindCatchUpTargetShare: template.bidding.blindCatchUpTargetShare
+        blindCatchUpTargetShare: template.bidding.blindCatchUpTargetShare,
+        blindCatchUpConservativeTargetShare: template.bidding.blindCatchUpConservativeTargetShare
     )
 
     let trumpSelection = BotTuning.TrumpSelection(

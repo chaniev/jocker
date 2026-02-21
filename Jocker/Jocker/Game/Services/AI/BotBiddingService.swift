@@ -99,9 +99,24 @@ final class BotBiddingService {
         guard shouldRiskBlind else { return nil }
 
         let cards = max(0, cardsInRound)
-        let targetShare = behindByLeader >= bidding.blindDesperateBehindThreshold
-            ? bidding.blindDesperateTargetShare
-            : bidding.blindCatchUpTargetShare
+        let targetShare: Double
+        if behindByLeader >= bidding.blindDesperateBehindThreshold {
+            targetShare = bidding.blindDesperateTargetShare
+        } else {
+            let pressureDenominator = max(
+                1,
+                bidding.blindDesperateBehindThreshold - bidding.blindCatchUpBehindThreshold
+            )
+            let pressure = Double(max(0, behindByLeader - bidding.blindCatchUpBehindThreshold)) /
+                Double(pressureDenominator)
+            let normalizedPressure = min(max(pressure, 0.0), 1.0)
+            let conservativeShare = min(
+                bidding.blindCatchUpTargetShare,
+                max(0.0, bidding.blindCatchUpConservativeTargetShare)
+            )
+            targetShare = conservativeShare +
+                (bidding.blindCatchUpTargetShare - conservativeShare) * normalizedPressure
+        }
         let targetBid = Int((Double(cards) * targetShare).rounded())
         return nearestAllowedBid(to: targetBid, allowed: allowed)
     }
