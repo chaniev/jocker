@@ -411,7 +411,7 @@ struct BotTuning {
                     expectedRankWeight: 0.100000,
                     expectedTrumpBaseBonus: 0.050000,
                     expectedTrumpRankWeight:0.050000,
-                    expectedHighRankBonus: 0.020000
+                    expectedHighRankBonus: 0.020000,
 
                     blindDesperateBehindThreshold: 250,
                     blindCatchUpBehindThreshold: 140,
