@@ -16,6 +16,7 @@ This document is the source of truth for repository structure and file placement
 ├── README_CARDS.md
 ├── XCODE_INTEGRATION.md
 ├── scripts/
+│   ├── run_all_tests.sh
 │   └── train_bot_tuning.sh
 ├── правила игры/
 │   ├── выбор козыря.txt
@@ -48,6 +49,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration) plus deterministic self-play evolution API for tuning coefficients.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`, while `bt-hard-fullgame-<smoke|balanced|battle>` and alias `bt-hard-final` run full-match (4-block) multi-seed training with seat rotation.
+- `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/AI/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
