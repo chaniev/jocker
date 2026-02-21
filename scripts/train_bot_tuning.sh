@@ -15,6 +15,10 @@ usage() {
                                      (по умолчанию: hard).
   --seed <uint64>                   Seed генератора случайных чисел; одинаковый seed
                                      дает воспроизводимый результат (по умолчанию: 20260220).
+  --seed-list <a,b,c>               Список seed через запятую для multi-seed ensemble.
+                                     Если задан, параметр --seed игнорируется.
+  --ensemble-method <median|mean>   Способ агрегации итоговых коэффициентов по seed
+                                     (по умолчанию: median).
   --population-size <int>           Размер популяции в поколении; больше = стабильнее поиск,
                                      но дольше выполнение (по умолчанию: 12).
   --generations <int>               Количество поколений эволюции; больше = глубже поиск,
@@ -47,16 +51,36 @@ usage() {
   --fitness-score-diff-weight <double>
                                      Вес компоненты разницы очков vs соперники
                                      в fitness (по умолчанию: 1.0).
+  --fitness-underbid-loss-weight <double>
+                                     Вес компоненты потерь от недозаказа
+                                     в fitness (по умолчанию: 0.85).
+  --fitness-trump-density-underbid-weight <double>
+                                     Вес компоненты недозаказа в руках
+                                     с высокой плотностью козырей (по умолчанию: 0.60).
+  --fitness-notrump-control-underbid-weight <double>
+                                     Вес компоненты недозаказа в no-trump контрольных
+                                     руках (старшие/длинная масть/джокер) (по умолчанию: 0.70).
   --score-diff-normalization <double>
                                      Делитель для компоненты разницы очков;
                                      больше значение = меньше вклад scoreDiff
                                      (по умолчанию: 450).
+  --underbid-loss-normalization <double>
+                                     Делитель для компоненты underbidLoss;
+                                     больше значение = меньше вклад
+                                     штрафа за недозаказ (по умолчанию: 6000).
+  --trump-density-underbid-normalization <double>
+                                     Делитель для компоненты недозаказа
+                                     в "козырной плотности" (по умолчанию: 2800).
+  --notrump-control-underbid-normalization <double>
+                                     Делитель для компоненты недозаказа
+                                     в no-trump контрольных руках (по умолчанию: 2200).
   --output <path>                   Путь для сохранения полного лога запуска.
   -h, --help                        Показать эту справку.
 
 Примеры:
   scripts/train_bot_tuning.sh
   scripts/train_bot_tuning.sh --seed 123456 --generations 14 --games-per-candidate 40
+  scripts/train_bot_tuning.sh --seed-list 20260220,20260221,20260222 --ensemble-method median
   scripts/train_bot_tuning.sh --difficulty normal --output .derivedData/bot-train.log
   scripts/train_bot_tuning.sh --games-per-candidate 24 --use-full-match-rules true --rotate-candidate-across-seats true
 EOF
@@ -92,8 +116,19 @@ require_bool() {
   esac
 }
 
+require_seed_list() {
+  local value="$1"
+  local flag="$2"
+  if [[ ! "$value" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+    echo "Invalid seed list for $flag: $value (expected comma-separated uint64)" >&2
+    exit 1
+  fi
+}
+
 difficulty="hard"
 seed="20260220"
+seed_list=""
+ensemble_method="median"
 population_size="12"
 generations="10"
 games_per_candidate="20"
@@ -109,7 +144,13 @@ use_full_match_rules="true"
 rotate_candidate_across_seats="true"
 fitness_win_rate_weight="1.0"
 fitness_score_diff_weight="1.0"
+fitness_underbid_loss_weight="0.85"
+fitness_trump_density_underbid_weight="0.60"
+fitness_notrump_control_underbid_weight="0.70"
 score_diff_normalization="450"
+underbid_loss_normalization="6000"
+trump_density_underbid_normalization="2800"
+notrump_control_underbid_normalization="2200"
 output_path=""
 
 while (($# > 0)); do
@@ -120,6 +161,14 @@ while (($# > 0)); do
       ;;
     --seed)
       seed="${2:-}"
+      shift 2
+      ;;
+    --seed-list)
+      seed_list="${2:-}"
+      shift 2
+      ;;
+    --ensemble-method)
+      ensemble_method="${2:-}"
       shift 2
       ;;
     --population-size)
@@ -182,8 +231,32 @@ while (($# > 0)); do
       fitness_score_diff_weight="${2:-}"
       shift 2
       ;;
+    --fitness-underbid-loss-weight)
+      fitness_underbid_loss_weight="${2:-}"
+      shift 2
+      ;;
+    --fitness-trump-density-underbid-weight)
+      fitness_trump_density_underbid_weight="${2:-}"
+      shift 2
+      ;;
+    --fitness-notrump-control-underbid-weight)
+      fitness_notrump_control_underbid_weight="${2:-}"
+      shift 2
+      ;;
     --score-diff-normalization)
       score_diff_normalization="${2:-}"
+      shift 2
+      ;;
+    --underbid-loss-normalization)
+      underbid_loss_normalization="${2:-}"
+      shift 2
+      ;;
+    --trump-density-underbid-normalization)
+      trump_density_underbid_normalization="${2:-}"
+      shift 2
+      ;;
+    --notrump-control-underbid-normalization)
+      notrump_control_underbid_normalization="${2:-}"
       shift 2
       ;;
     --output)
@@ -211,6 +284,9 @@ case "$difficulty" in
 esac
 
 require_int "$seed" "--seed"
+if [[ -n "$seed_list" ]]; then
+  require_seed_list "$seed_list" "--seed-list"
+fi
 require_int "$population_size" "--population-size"
 require_int "$generations" "--generations"
 require_int "$games_per_candidate" "--games-per-candidate"
@@ -226,7 +302,21 @@ require_bool "$use_full_match_rules" "--use-full-match-rules"
 require_bool "$rotate_candidate_across_seats" "--rotate-candidate-across-seats"
 require_double "$fitness_win_rate_weight" "--fitness-win-rate-weight"
 require_double "$fitness_score_diff_weight" "--fitness-score-diff-weight"
+require_double "$fitness_underbid_loss_weight" "--fitness-underbid-loss-weight"
+require_double "$fitness_trump_density_underbid_weight" "--fitness-trump-density-underbid-weight"
+require_double "$fitness_notrump_control_underbid_weight" "--fitness-notrump-control-underbid-weight"
 require_double "$score_diff_normalization" "--score-diff-normalization"
+require_double "$underbid_loss_normalization" "--underbid-loss-normalization"
+require_double "$trump_density_underbid_normalization" "--trump-density-underbid-normalization"
+require_double "$notrump_control_underbid_normalization" "--notrump-control-underbid-normalization"
+
+case "$ensemble_method" in
+  median|mean) ;;
+  *)
+    echo "Invalid ensemble method: $ensemble_method (use median|mean)" >&2
+    exit 1
+    ;;
+esac
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
@@ -241,6 +331,109 @@ import Foundation
 
 func fmt(_ value: Double) -> String {
     return String(format: "%.6f", value)
+}
+
+func average(_ values: [Double]) -> Double {
+    guard !values.isEmpty else { return 0.0 }
+    return values.reduce(0.0, +) / Double(values.count)
+}
+
+func median(_ values: [Double]) -> Double {
+    guard !values.isEmpty else { return 0.0 }
+    let sorted = values.sorted()
+    let mid = sorted.count / 2
+    if sorted.count % 2 == 0 {
+        return (sorted[mid - 1] + sorted[mid]) / 2.0
+    }
+    return sorted[mid]
+}
+
+func aggregate(_ values: [Double], method: String) -> Double {
+    switch method {
+    case "mean":
+        return average(values)
+    default:
+        return median(values)
+    }
+}
+
+func aggregateTunings(_ tunings: [BotTuning], method: String) -> BotTuning {
+    guard let template = tunings.first else {
+        return BotTuning(difficulty: .hard)
+    }
+
+    let holdWeight = aggregate(tunings.map { \$0.turnStrategy.holdFromDistributionWeight }, method: method)
+    let clampedHoldWeight = min(max(holdWeight, 0.55), 0.97)
+    let powerWeight = 1.0 - clampedHoldWeight
+
+    let turn = BotTuning.TurnStrategy(
+        utilityTieTolerance: template.turnStrategy.utilityTieTolerance,
+        chaseWinProbabilityWeight: aggregate(tunings.map { \$0.turnStrategy.chaseWinProbabilityWeight }, method: method),
+        chaseThreatPenaltyWeight: aggregate(tunings.map { \$0.turnStrategy.chaseThreatPenaltyWeight }, method: method),
+        chaseSpendJokerPenalty: aggregate(tunings.map { \$0.turnStrategy.chaseSpendJokerPenalty }, method: method),
+        chaseLeadWishBonus: template.turnStrategy.chaseLeadWishBonus,
+        dumpAvoidWinWeight: aggregate(tunings.map { \$0.turnStrategy.dumpAvoidWinWeight }, method: method),
+        dumpThreatRewardWeight: aggregate(tunings.map { \$0.turnStrategy.dumpThreatRewardWeight }, method: method),
+        dumpSpendJokerPenalty: aggregate(tunings.map { \$0.turnStrategy.dumpSpendJokerPenalty }, method: method),
+        dumpFaceUpNonLeadJokerPenalty: template.turnStrategy.dumpFaceUpNonLeadJokerPenalty,
+        dumpLeadTakesNonTrumpBonus: template.turnStrategy.dumpLeadTakesNonTrumpBonus,
+        holdFromDistributionWeight: clampedHoldWeight,
+        powerConfidenceWeight: powerWeight,
+        futureJokerPower: aggregate(tunings.map { \$0.turnStrategy.futureJokerPower }, method: method),
+        futureRegularBasePower: template.turnStrategy.futureRegularBasePower,
+        futureRegularRankWeight: template.turnStrategy.futureRegularRankWeight,
+        futureTrumpBaseBonus: template.turnStrategy.futureTrumpBaseBonus,
+        futureTrumpRankWeight: template.turnStrategy.futureTrumpRankWeight,
+        futureHighRankBonus: template.turnStrategy.futureHighRankBonus,
+        futureLongSuitBonusPerCard: template.turnStrategy.futureLongSuitBonusPerCard,
+        futureTricksScale: aggregate(tunings.map { \$0.turnStrategy.futureTricksScale }, method: method),
+        threatFaceDownLeadJoker: template.turnStrategy.threatFaceDownLeadJoker,
+        threatFaceDownNonLeadJoker: template.turnStrategy.threatFaceDownNonLeadJoker,
+        threatLeadTakesJoker: template.turnStrategy.threatLeadTakesJoker,
+        threatLeadAboveJoker: template.turnStrategy.threatLeadAboveJoker,
+        threatLeadWishJoker: template.turnStrategy.threatLeadWishJoker,
+        threatNonLeadFaceUpJoker: template.turnStrategy.threatNonLeadFaceUpJoker,
+        threatTrumpBonus: aggregate(tunings.map { \$0.turnStrategy.threatTrumpBonus }, method: method),
+        threatHighRankBonus: aggregate(tunings.map { \$0.turnStrategy.threatHighRankBonus }, method: method),
+        powerFaceDownJoker: template.turnStrategy.powerFaceDownJoker,
+        powerLeadTakesJoker: template.turnStrategy.powerLeadTakesJoker,
+        powerLeadAboveJoker: template.turnStrategy.powerLeadAboveJoker,
+        powerLeadWishJoker: template.turnStrategy.powerLeadWishJoker,
+        powerNonLeadFaceUpJoker: template.turnStrategy.powerNonLeadFaceUpJoker,
+        powerTrumpBonus: template.turnStrategy.powerTrumpBonus,
+        powerLeadSuitBonus: template.turnStrategy.powerLeadSuitBonus,
+        powerNormalizationValue: template.turnStrategy.powerNormalizationValue
+    )
+
+    let bidding = BotTuning.Bidding(
+        expectedJokerPower: aggregate(tunings.map { \$0.bidding.expectedJokerPower }, method: method),
+        expectedRankWeight: aggregate(tunings.map { \$0.bidding.expectedRankWeight }, method: method),
+        expectedTrumpBaseBonus: aggregate(tunings.map { \$0.bidding.expectedTrumpBaseBonus }, method: method),
+        expectedTrumpRankWeight: aggregate(tunings.map { \$0.bidding.expectedTrumpRankWeight }, method: method),
+        expectedHighRankBonus: aggregate(tunings.map { \$0.bidding.expectedHighRankBonus }, method: method),
+        expectedLongSuitBonusPerCard: aggregate(tunings.map { \$0.bidding.expectedLongSuitBonusPerCard }, method: method),
+        expectedTrumpDensityBonus: aggregate(tunings.map { \$0.bidding.expectedTrumpDensityBonus }, method: method),
+        expectedNoTrumpHighCardBonus: aggregate(tunings.map { \$0.bidding.expectedNoTrumpHighCardBonus }, method: method),
+        expectedNoTrumpJokerSynergy: aggregate(tunings.map { \$0.bidding.expectedNoTrumpJokerSynergy }, method: method),
+        blindDesperateBehindThreshold: template.bidding.blindDesperateBehindThreshold,
+        blindCatchUpBehindThreshold: template.bidding.blindCatchUpBehindThreshold,
+        blindSafeLeadThreshold: template.bidding.blindSafeLeadThreshold,
+        blindDesperateTargetShare: template.bidding.blindDesperateTargetShare,
+        blindCatchUpTargetShare: template.bidding.blindCatchUpTargetShare
+    )
+
+    let trumpSelection = BotTuning.TrumpSelection(
+        cardBasePower: aggregate(tunings.map { \$0.trumpSelection.cardBasePower }, method: method),
+        minimumPowerToDeclareTrump: aggregate(tunings.map { \$0.trumpSelection.minimumPowerToDeclareTrump }, method: method)
+    )
+
+    return BotTuning(
+        difficulty: template.difficulty,
+        turnStrategy: turn,
+        bidding: bidding,
+        trumpSelection: trumpSelection,
+        timing: template.timing
+    )
 }
 
 let baseDifficulty = BotDifficulty(rawValue: "$difficulty") ?? .hard
@@ -260,36 +453,97 @@ let config = BotTuning.SelfPlayEvolutionConfig(
     rotateCandidateAcrossSeats: $rotate_candidate_across_seats,
     fitnessWinRateWeight: $fitness_win_rate_weight,
     fitnessScoreDiffWeight: $fitness_score_diff_weight,
-    scoreDiffNormalization: $score_diff_normalization
+    fitnessUnderbidLossWeight: $fitness_underbid_loss_weight,
+    fitnessTrumpDensityUnderbidWeight: $fitness_trump_density_underbid_weight,
+    fitnessNoTrumpControlUnderbidWeight: $fitness_notrump_control_underbid_weight,
+    scoreDiffNormalization: $score_diff_normalization,
+    underbidLossNormalization: $underbid_loss_normalization,
+    trumpDensityUnderbidNormalization: $trump_density_underbid_normalization,
+    noTrumpControlUnderbidNormalization: $notrump_control_underbid_normalization
 )
 
 let seed: UInt64 = $seed
-let result = BotTuning.evolveViaSelfPlay(
-    baseTuning: baseTuning,
-    config: config,
-    seed: seed
-)
+let seedListRaw = "$seed_list"
+let ensembleMethod = "$ensemble_method"
+let parsedSeedList: [UInt64] = seedListRaw
+    .split(separator: ",")
+    .compactMap { UInt64(\$0) }
+let runSeeds: [UInt64] = parsedSeedList.isEmpty ? [seed] : parsedSeedList
 
-let turn = result.bestTuning.turnStrategy
-let bidding = result.bestTuning.bidding
-let trump = result.bestTuning.trumpSelection
+struct SeedRun {
+    let seed: UInt64
+    let result: BotTuning.SelfPlayEvolutionResult
+}
+
+let seedRuns: [SeedRun] = runSeeds.map { runSeed in
+    let runResult = BotTuning.evolveViaSelfPlay(
+        baseTuning: baseTuning,
+        config: config,
+        seed: runSeed
+    )
+    return SeedRun(seed: runSeed, result: runResult)
+}
+
+guard let selectedRun = seedRuns.max(by: { \$0.result.bestFitness < \$1.result.bestFitness }) else {
+    fatalError("Failed to run self-play evolution")
+}
+
+let tunedForOutput: BotTuning
+if seedRuns.count > 1 {
+    tunedForOutput = aggregateTunings(seedRuns.map { \$0.result.bestTuning }, method: ensembleMethod)
+} else {
+    tunedForOutput = selectedRun.result.bestTuning
+}
+
+let turn = tunedForOutput.turnStrategy
+let bidding = tunedForOutput.bidding
+let trump = tunedForOutput.trumpSelection
 
 print("=== Bot Self-Play Training ===")
 print("difficulty=\\(baseDifficulty.rawValue)")
-print("seed=\\(seed)")
+if seedRuns.count == 1 {
+    print("seed=\\(selectedRun.seed)")
+} else {
+    print("seedList=[\\(runSeeds.map(String.init).joined(separator: ", "))]")
+    print("ensembleMethod=\\(ensembleMethod)")
+    print("ensembleRuns=\\(seedRuns.count)")
+}
 print("useFullMatchRules=\\(config.useFullMatchRules)")
 print("rotateCandidateAcrossSeats=\\(config.rotateCandidateAcrossSeats)")
 print("fitnessWinRateWeight=\\(fmt(config.fitnessWinRateWeight))")
 print("fitnessScoreDiffWeight=\\(fmt(config.fitnessScoreDiffWeight))")
+print("fitnessUnderbidLossWeight=\\(fmt(config.fitnessUnderbidLossWeight))")
+print("fitnessTrumpDensityUnderbidWeight=\\(fmt(config.fitnessTrumpDensityUnderbidWeight))")
+print("fitnessNoTrumpControlUnderbidWeight=\\(fmt(config.fitnessNoTrumpControlUnderbidWeight))")
 print("scoreDiffNormalization=\\(fmt(config.scoreDiffNormalization))")
-print("baselineFitness=\\(fmt(result.baselineFitness))")
-print("bestFitness=\\(fmt(result.bestFitness))")
-print("improvement=\\(fmt(result.improvement))")
-print("baselineWinRate=\\(fmt(result.baselineWinRate))")
-print("bestWinRate=\\(fmt(result.bestWinRate))")
-print("baselineAverageScoreDiff=\\(fmt(result.baselineAverageScoreDiff))")
-print("bestAverageScoreDiff=\\(fmt(result.bestAverageScoreDiff))")
-print("generationBestFitness=[\\(result.generationBestFitness.map(fmt).joined(separator: ", "))]")
+print("underbidLossNormalization=\\(fmt(config.underbidLossNormalization))")
+print("trumpDensityUnderbidNormalization=\\(fmt(config.trumpDensityUnderbidNormalization))")
+print("noTrumpControlUnderbidNormalization=\\(fmt(config.noTrumpControlUnderbidNormalization))")
+if seedRuns.count > 1 {
+    let perSeedFitness = seedRuns.map { "\\(\$0.seed):\\(fmt(\$0.result.bestFitness))" }.joined(separator: ", ")
+    print("perSeedBestFitness=[\\(perSeedFitness)]")
+    print("ensembleAverageBestFitness=\\(fmt(average(seedRuns.map { \$0.result.bestFitness })))")
+    print("ensembleAverageBestWinRate=\\(fmt(average(seedRuns.map { \$0.result.bestWinRate })))")
+    print("ensembleAverageBestScoreDiff=\\(fmt(average(seedRuns.map { \$0.result.bestAverageScoreDiff })))")
+    print("ensembleAverageBestUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageUnderbidLoss })))")
+    print("ensembleAverageBestTrumpDensityUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageTrumpDensityUnderbidLoss })))")
+    print("ensembleAverageBestNoTrumpControlUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageNoTrumpControlUnderbidLoss })))")
+}
+print("selectedSeed=\\(selectedRun.seed)")
+print("baselineFitness=\\(fmt(selectedRun.result.baselineFitness))")
+print("bestFitness=\\(fmt(selectedRun.result.bestFitness))")
+print("improvement=\\(fmt(selectedRun.result.improvement))")
+print("baselineWinRate=\\(fmt(selectedRun.result.baselineWinRate))")
+print("bestWinRate=\\(fmt(selectedRun.result.bestWinRate))")
+print("baselineAverageScoreDiff=\\(fmt(selectedRun.result.baselineAverageScoreDiff))")
+print("bestAverageScoreDiff=\\(fmt(selectedRun.result.bestAverageScoreDiff))")
+print("baselineAverageUnderbidLoss=\\(fmt(selectedRun.result.baselineAverageUnderbidLoss))")
+print("bestAverageUnderbidLoss=\\(fmt(selectedRun.result.bestAverageUnderbidLoss))")
+print("baselineAverageTrumpDensityUnderbidLoss=\\(fmt(selectedRun.result.baselineAverageTrumpDensityUnderbidLoss))")
+print("bestAverageTrumpDensityUnderbidLoss=\\(fmt(selectedRun.result.bestAverageTrumpDensityUnderbidLoss))")
+print("baselineAverageNoTrumpControlUnderbidLoss=\\(fmt(selectedRun.result.baselineAverageNoTrumpControlUnderbidLoss))")
+print("bestAverageNoTrumpControlUnderbidLoss=\\(fmt(selectedRun.result.bestAverageNoTrumpControlUnderbidLoss))")
+print("generationBestFitness=[\\(selectedRun.result.generationBestFitness.map(fmt).joined(separator: ", "))]")
 print("")
 print("=== Suggested Tuned Values ===")
 print("turnStrategy.chaseWinProbabilityWeight=\\(fmt(turn.chaseWinProbabilityWeight))")
@@ -309,6 +563,10 @@ print("bidding.expectedRankWeight=\\(fmt(bidding.expectedRankWeight))")
 print("bidding.expectedTrumpBaseBonus=\\(fmt(bidding.expectedTrumpBaseBonus))")
 print("bidding.expectedTrumpRankWeight=\\(fmt(bidding.expectedTrumpRankWeight))")
 print("bidding.expectedHighRankBonus=\\(fmt(bidding.expectedHighRankBonus))")
+print("bidding.expectedLongSuitBonusPerCard=\\(fmt(bidding.expectedLongSuitBonusPerCard))")
+print("bidding.expectedTrumpDensityBonus=\\(fmt(bidding.expectedTrumpDensityBonus))")
+print("bidding.expectedNoTrumpHighCardBonus=\\(fmt(bidding.expectedNoTrumpHighCardBonus))")
+print("bidding.expectedNoTrumpJokerSynergy=\\(fmt(bidding.expectedNoTrumpJokerSynergy))")
 print("trumpSelection.cardBasePower=\\(fmt(trump.cardBasePower))")
 print("trumpSelection.minimumPowerToDeclareTrump=\\(fmt(trump.minimumPowerToDeclareTrump))")
 SWIFT

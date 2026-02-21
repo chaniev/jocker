@@ -671,8 +671,20 @@ extension BotTuning {
         let fitnessWinRateWeight: Double
         /// Вес компоненты разницы очков относительно оппонентов.
         let fitnessScoreDiffWeight: Double
+        /// Вес компоненты минимизации потерь от недозаказа.
+        let fitnessUnderbidLossWeight: Double
+        /// Вес компоненты минимизации недозаказа в "козырной плотности".
+        let fitnessTrumpDensityUnderbidWeight: Double
+        /// Вес компоненты минимизации недозаказа в no-trump контрольных руках.
+        let fitnessNoTrumpControlUnderbidWeight: Double
         /// Нормализация score-diff компоненты (чем больше, тем слабее вклад).
         let scoreDiffNormalization: Double
+        /// Нормализация underbid-loss компоненты (чем больше, тем слабее вклад).
+        let underbidLossNormalization: Double
+        /// Нормализация компоненты недозаказа в "козырной плотности".
+        let trumpDensityUnderbidNormalization: Double
+        /// Нормализация компоненты недозаказа в no-trump контрольных руках.
+        let noTrumpControlUnderbidNormalization: Double
 
         init(
             populationSize: Int = 16,
@@ -689,7 +701,13 @@ extension BotTuning {
             rotateCandidateAcrossSeats: Bool = true,
             fitnessWinRateWeight: Double = 1.0,
             fitnessScoreDiffWeight: Double = 1.0,
-            scoreDiffNormalization: Double = 450.0
+            fitnessUnderbidLossWeight: Double = 0.85,
+            fitnessTrumpDensityUnderbidWeight: Double = 0.60,
+            fitnessNoTrumpControlUnderbidWeight: Double = 0.70,
+            scoreDiffNormalization: Double = 450.0,
+            underbidLossNormalization: Double = 6000.0,
+            trumpDensityUnderbidNormalization: Double = 2800.0,
+            noTrumpControlUnderbidNormalization: Double = 2200.0
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -720,7 +738,13 @@ extension BotTuning {
             self.rotateCandidateAcrossSeats = rotateCandidateAcrossSeats
             self.fitnessWinRateWeight = max(0.0, fitnessWinRateWeight)
             self.fitnessScoreDiffWeight = max(0.0, fitnessScoreDiffWeight)
+            self.fitnessUnderbidLossWeight = max(0.0, fitnessUnderbidLossWeight)
+            self.fitnessTrumpDensityUnderbidWeight = max(0.0, fitnessTrumpDensityUnderbidWeight)
+            self.fitnessNoTrumpControlUnderbidWeight = max(0.0, fitnessNoTrumpControlUnderbidWeight)
             self.scoreDiffNormalization = max(1.0, scoreDiffNormalization)
+            self.underbidLossNormalization = max(1.0, underbidLossNormalization)
+            self.trumpDensityUnderbidNormalization = max(1.0, trumpDensityUnderbidNormalization)
+            self.noTrumpControlUnderbidNormalization = max(1.0, noTrumpControlUnderbidNormalization)
         }
 
         private static func clamp(
@@ -741,6 +765,12 @@ extension BotTuning {
         let bestWinRate: Double
         let baselineAverageScoreDiff: Double
         let bestAverageScoreDiff: Double
+        let baselineAverageUnderbidLoss: Double
+        let bestAverageUnderbidLoss: Double
+        let baselineAverageTrumpDensityUnderbidLoss: Double
+        let bestAverageTrumpDensityUnderbidLoss: Double
+        let baselineAverageNoTrumpControlUnderbidLoss: Double
+        let bestAverageNoTrumpControlUnderbidLoss: Double
 
         var improvement: Double {
             return bestFitness - baselineFitness
@@ -793,7 +823,13 @@ extension BotTuning {
             rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
             fitnessWinRateWeight: config.fitnessWinRateWeight,
             fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
-            scoreDiffNormalization: config.scoreDiffNormalization
+            fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
+            fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
+            fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
+            scoreDiffNormalization: config.scoreDiffNormalization,
+            underbidLossNormalization: config.underbidLossNormalization,
+            trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
+            noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
         )
 
         var bestGenome = EvolutionGenome.identity
@@ -820,7 +856,13 @@ extension BotTuning {
                             rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
                             fitnessWinRateWeight: config.fitnessWinRateWeight,
                             fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
-                            scoreDiffNormalization: config.scoreDiffNormalization
+                            fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
+                            fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
+                            fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
+                            scoreDiffNormalization: config.scoreDiffNormalization,
+                            underbidLossNormalization: config.underbidLossNormalization,
+                            trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
+                            noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
                         )
                     )
                 }
@@ -878,7 +920,13 @@ extension BotTuning {
             baselineWinRate: baselineBreakdown.winRate,
             bestWinRate: bestBreakdown.winRate,
             baselineAverageScoreDiff: baselineBreakdown.averageScoreDiff,
-            bestAverageScoreDiff: bestBreakdown.averageScoreDiff
+            bestAverageScoreDiff: bestBreakdown.averageScoreDiff,
+            baselineAverageUnderbidLoss: baselineBreakdown.averageUnderbidLoss,
+            bestAverageUnderbidLoss: bestBreakdown.averageUnderbidLoss,
+            baselineAverageTrumpDensityUnderbidLoss: baselineBreakdown.averageTrumpDensityUnderbidLoss,
+            bestAverageTrumpDensityUnderbidLoss: bestBreakdown.averageTrumpDensityUnderbidLoss,
+            baselineAverageNoTrumpControlUnderbidLoss: baselineBreakdown.averageNoTrumpControlUnderbidLoss,
+            bestAverageNoTrumpControlUnderbidLoss: bestBreakdown.averageNoTrumpControlUnderbidLoss
         )
     }
 
@@ -891,11 +939,17 @@ extension BotTuning {
         let fitness: Double
         let winRate: Double
         let averageScoreDiff: Double
+        let averageUnderbidLoss: Double
+        let averageTrumpDensityUnderbidLoss: Double
+        let averageNoTrumpControlUnderbidLoss: Double
 
         static let zero = FitnessBreakdown(
             fitness: 0.0,
             winRate: 0.0,
-            averageScoreDiff: 0.0
+            averageScoreDiff: 0.0,
+            averageUnderbidLoss: 0.0,
+            averageTrumpDensityUnderbidLoss: 0.0,
+            averageNoTrumpControlUnderbidLoss: 0.0
         )
     }
 
@@ -916,6 +970,10 @@ extension BotTuning {
         var biddingTrumpBaseBonusScale: Double
         var biddingTrumpRankWeightScale: Double
         var biddingHighRankBonusScale: Double
+        var biddingLongSuitBonusScale: Double
+        var biddingTrumpDensityBonusScale: Double
+        var biddingNoTrumpHighCardBonusScale: Double
+        var biddingNoTrumpJokerSynergyScale: Double
 
         var trumpCardBasePowerScale: Double
         var trumpThresholdScale: Double
@@ -936,6 +994,10 @@ extension BotTuning {
             biddingTrumpBaseBonusScale: 1.0,
             biddingTrumpRankWeightScale: 1.0,
             biddingHighRankBonusScale: 1.0,
+            biddingLongSuitBonusScale: 1.0,
+            biddingTrumpDensityBonusScale: 1.0,
+            biddingNoTrumpHighCardBonusScale: 1.0,
+            biddingNoTrumpJokerSynergyScale: 1.0,
             trumpCardBasePowerScale: 1.0,
             trumpThresholdScale: 1.0
         )
@@ -957,6 +1019,10 @@ extension BotTuning {
                 biddingTrumpBaseBonusScale,
                 biddingTrumpRankWeightScale,
                 biddingHighRankBonusScale,
+                biddingLongSuitBonusScale,
+                biddingTrumpDensityBonusScale,
+                biddingNoTrumpHighCardBonusScale,
+                biddingNoTrumpJokerSynergyScale,
                 trumpCardBasePowerScale,
                 trumpThresholdScale
             ]
@@ -989,6 +1055,13 @@ extension BotTuning {
     private struct PreDealBlindContext {
         let lockedBids: [Int]
         let blindSelections: [Bool]
+    }
+
+    private struct SimulatedGameOutcome {
+        let totalScores: [Int]
+        let underbidLosses: [Double]
+        let trumpDensityUnderbidLosses: [Double]
+        let noTrumpControlUnderbidLosses: [Double]
     }
 
     private static func randomGenome(
@@ -1059,31 +1132,55 @@ extension BotTuning {
             ),
             biddingJokerPowerScale: randomizedScale(
                 base.biddingJokerPowerScale,
-                magnitude: magnitude,
+                magnitude: max(magnitude * 3.0, 0.35),
                 range: 0.35...4.00,
                 using: &rng
             ),
             biddingRankWeightScale: randomizedScale(
                 base.biddingRankWeightScale,
-                magnitude: magnitude,
+                magnitude: max(magnitude * 3.0, 0.35),
                 range: 0.35...12.00,
                 using: &rng
             ),
             biddingTrumpBaseBonusScale: randomizedScale(
                 base.biddingTrumpBaseBonusScale,
-                magnitude: magnitude,
+                magnitude: max(magnitude * 3.0, 0.35),
                 range: 0.35...12.00,
                 using: &rng
             ),
             biddingTrumpRankWeightScale: randomizedScale(
                 base.biddingTrumpRankWeightScale,
-                magnitude: magnitude,
+                magnitude: max(magnitude * 3.0, 0.35),
                 range: 0.35...12.00,
                 using: &rng
             ),
             biddingHighRankBonusScale: randomizedScale(
                 base.biddingHighRankBonusScale,
-                magnitude: magnitude,
+                magnitude: max(magnitude * 3.0, 0.35),
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingLongSuitBonusScale: randomizedScale(
+                base.biddingLongSuitBonusScale,
+                magnitude: max(magnitude * 3.0, 0.35),
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingTrumpDensityBonusScale: randomizedScale(
+                base.biddingTrumpDensityBonusScale,
+                magnitude: max(magnitude * 3.0, 0.35),
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingNoTrumpHighCardBonusScale: randomizedScale(
+                base.biddingNoTrumpHighCardBonusScale,
+                magnitude: max(magnitude * 3.0, 0.35),
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingNoTrumpJokerSynergyScale: randomizedScale(
+                base.biddingNoTrumpJokerSynergyScale,
+                magnitude: max(magnitude * 3.0, 0.35),
                 range: 0.35...15.00,
                 using: &rng
             ),
@@ -1198,6 +1295,30 @@ extension BotTuning {
                 range: 0.35...15.00,
                 using: &rng
             ),
+            biddingLongSuitBonusScale: mixedScale(
+                first.biddingLongSuitBonusScale,
+                second.biddingLongSuitBonusScale,
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingTrumpDensityBonusScale: mixedScale(
+                first.biddingTrumpDensityBonusScale,
+                second.biddingTrumpDensityBonusScale,
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingNoTrumpHighCardBonusScale: mixedScale(
+                first.biddingNoTrumpHighCardBonusScale,
+                second.biddingNoTrumpHighCardBonusScale,
+                range: 0.35...15.00,
+                using: &rng
+            ),
+            biddingNoTrumpJokerSynergyScale: mixedScale(
+                first.biddingNoTrumpJokerSynergyScale,
+                second.biddingNoTrumpJokerSynergyScale,
+                range: 0.35...15.00,
+                using: &rng
+            ),
             trumpCardBasePowerScale: mixedScale(
                 first.trumpCardBasePowerScale,
                 second.trumpCardBasePowerScale,
@@ -1293,35 +1414,63 @@ extension BotTuning {
         mutateScale(
             &mutated.biddingJokerPowerScale,
             chance: chance,
-            magnitude: magnitude,
+            magnitude: max(magnitude * 2.2, 0.22),
             range: 0.35...4.00,
             using: &rng
         )
         mutateScale(
             &mutated.biddingRankWeightScale,
             chance: chance,
-            magnitude: magnitude,
+            magnitude: max(magnitude * 2.2, 0.22),
             range: 0.35...12.00,
             using: &rng
         )
         mutateScale(
             &mutated.biddingTrumpBaseBonusScale,
             chance: chance,
-            magnitude: magnitude,
+            magnitude: max(magnitude * 2.2, 0.22),
             range: 0.35...12.00,
             using: &rng
         )
         mutateScale(
             &mutated.biddingTrumpRankWeightScale,
             chance: chance,
-            magnitude: magnitude,
+            magnitude: max(magnitude * 2.2, 0.22),
             range: 0.35...12.00,
             using: &rng
         )
         mutateScale(
             &mutated.biddingHighRankBonusScale,
             chance: chance,
-            magnitude: magnitude,
+            magnitude: max(magnitude * 2.2, 0.22),
+            range: 0.35...15.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingLongSuitBonusScale,
+            chance: chance,
+            magnitude: max(magnitude * 2.2, 0.22),
+            range: 0.35...15.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingTrumpDensityBonusScale,
+            chance: chance,
+            magnitude: max(magnitude * 2.2, 0.22),
+            range: 0.35...15.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingNoTrumpHighCardBonusScale,
+            chance: chance,
+            magnitude: max(magnitude * 2.2, 0.22),
+            range: 0.35...15.00,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.biddingNoTrumpJokerSynergyScale,
+            chance: chance,
+            magnitude: max(magnitude * 2.2, 0.22),
             range: 0.35...15.00,
             using: &rng
         )
@@ -1354,7 +1503,13 @@ extension BotTuning {
         rotateCandidateAcrossSeats: Bool,
         fitnessWinRateWeight: Double,
         fitnessScoreDiffWeight: Double,
-        scoreDiffNormalization: Double
+        fitnessUnderbidLossWeight: Double,
+        fitnessTrumpDensityUnderbidWeight: Double,
+        fitnessNoTrumpControlUnderbidWeight: Double,
+        scoreDiffNormalization: Double,
+        underbidLossNormalization: Double,
+        trumpDensityUnderbidNormalization: Double,
+        noTrumpControlUnderbidNormalization: Double
     ) -> FitnessBreakdown {
         guard !evaluationSeeds.isEmpty else { return .zero }
 
@@ -1365,6 +1520,9 @@ extension BotTuning {
 
         var totalWinRate = 0.0
         var totalScoreDiff = 0.0
+        var totalCandidateUnderbidLoss = 0.0
+        var totalCandidateTrumpDensityUnderbidLoss = 0.0
+        var totalCandidateNoTrumpControlUnderbidLoss = 0.0
         var simulationsCount = 0
 
         for evaluationSeed in evaluationSeeds {
@@ -1372,7 +1530,7 @@ extension BotTuning {
                 var tuningsBySeat = Array(repeating: baseTuning, count: playerCount)
                 tuningsBySeat[candidateSeat] = candidateTuning
 
-                let totalScores = simulateGame(
+                let gameOutcome = simulateGame(
                     tuningsBySeat: tuningsBySeat,
                     rounds: roundsPerGame,
                     cardsPerRoundRange: cardsPerRoundRange,
@@ -1380,10 +1538,20 @@ extension BotTuning {
                     useFullMatchRules: useFullMatchRules
                 )
 
+                let totalScores = gameOutcome.totalScores
                 guard totalScores.indices.contains(candidateSeat) else { continue }
                 let candidateScore = totalScores[candidateSeat]
                 let opponentsTotal = totalScores.reduce(0, +) - candidateScore
                 let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
+                let candidateUnderbidLoss = gameOutcome.underbidLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.underbidLosses[candidateSeat]
+                    : 0.0
+                let candidateTrumpDensityUnderbidLoss = gameOutcome.trumpDensityUnderbidLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.trumpDensityUnderbidLosses[candidateSeat]
+                    : 0.0
+                let candidateNoTrumpControlUnderbidLoss = gameOutcome.noTrumpControlUnderbidLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.noTrumpControlUnderbidLosses[candidateSeat]
+                    : 0.0
 
                 let maxScore = totalScores.max() ?? candidateScore
                 let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
@@ -1391,6 +1559,9 @@ extension BotTuning {
 
                 totalWinRate += winShare
                 totalScoreDiff += Double(candidateScore) - opponentsAverage
+                totalCandidateUnderbidLoss += candidateUnderbidLoss
+                totalCandidateTrumpDensityUnderbidLoss += candidateTrumpDensityUnderbidLoss
+                totalCandidateNoTrumpControlUnderbidLoss += candidateNoTrumpControlUnderbidLoss
                 simulationsCount += 1
             }
         }
@@ -1399,13 +1570,22 @@ extension BotTuning {
 
         let averageWinRate = totalWinRate / Double(simulationsCount)
         let averageScoreDiff = totalScoreDiff / Double(simulationsCount)
+        let averageUnderbidLoss = totalCandidateUnderbidLoss / Double(simulationsCount)
+        let averageTrumpDensityUnderbidLoss = totalCandidateTrumpDensityUnderbidLoss / Double(simulationsCount)
+        let averageNoTrumpControlUnderbidLoss = totalCandidateNoTrumpControlUnderbidLoss / Double(simulationsCount)
         let fitness = averageWinRate * fitnessWinRateWeight +
-            (averageScoreDiff / scoreDiffNormalization) * fitnessScoreDiffWeight
+            (averageScoreDiff / scoreDiffNormalization) * fitnessScoreDiffWeight +
+            -(averageUnderbidLoss / underbidLossNormalization) * fitnessUnderbidLossWeight +
+            -(averageTrumpDensityUnderbidLoss / trumpDensityUnderbidNormalization) * fitnessTrumpDensityUnderbidWeight +
+            -(averageNoTrumpControlUnderbidLoss / noTrumpControlUnderbidNormalization) * fitnessNoTrumpControlUnderbidWeight
 
         return FitnessBreakdown(
             fitness: fitness,
             winRate: averageWinRate,
-            averageScoreDiff: averageScoreDiff
+            averageScoreDiff: averageScoreDiff,
+            averageUnderbidLoss: averageUnderbidLoss,
+            averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
+            averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss
         )
     }
 
@@ -1415,7 +1595,7 @@ extension BotTuning {
         cardsPerRoundRange: ClosedRange<Int>,
         seed: UInt64,
         useFullMatchRules: Bool
-    ) -> [Int] {
+    ) -> SimulatedGameOutcome {
         if useFullMatchRules {
             return simulateFullMatch(
                 tuningsBySeat: tuningsBySeat,
@@ -1436,7 +1616,7 @@ extension BotTuning {
         rounds: Int,
         cardsPerRoundRange: ClosedRange<Int>,
         seed: UInt64
-    ) -> [Int] {
+    ) -> SimulatedGameOutcome {
         let playerCount = tuningsBySeat.count
         var rng = SelfPlayRandomGenerator(seed: seed)
 
@@ -1445,6 +1625,9 @@ extension BotTuning {
         let trumpServices = tuningsBySeat.map { BotTrumpSelectionService(tuning: $0) }
 
         var totalScores = Array(repeating: 0, count: playerCount)
+        var underbidLosses = Array(repeating: 0.0, count: playerCount)
+        var trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
+        var noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for _ in 0..<rounds {
@@ -1475,24 +1658,53 @@ extension BotTuning {
             )
 
             for playerIndex in 0..<playerCount {
-                totalScores[playerIndex] += ScoreCalculator.calculateRoundScore(
+                let roundScore = ScoreCalculator.calculateRoundScore(
                     cardsInRound: cardsInRound,
                     bid: bids[playerIndex],
                     tricksTaken: tricksTaken[playerIndex],
                     isBlind: false
+                )
+                totalScores[playerIndex] += roundScore
+                underbidLosses[playerIndex] += underbidLoss(
+                    cardsInRound: cardsInRound,
+                    bid: bids[playerIndex],
+                    tricksTaken: tricksTaken[playerIndex],
+                    isBlind: false
+                )
+                underbidLosses[playerIndex] += jokerBidFloorUnderbidPenalty(
+                    hand: hands[playerIndex],
+                    bid: bids[playerIndex]
+                )
+                trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
+                    hand: hands[playerIndex],
+                    bid: bids[playerIndex],
+                    cardsInRound: cardsInRound,
+                    trump: trump
+                )
+                noTrumpControlUnderbidLosses[playerIndex] += noTrumpControlUnderbidPenalty(
+                    hand: hands[playerIndex],
+                    bid: bids[playerIndex],
+                    cardsInRound: cardsInRound,
+                    trump: trump,
+                    emphasisMultiplier: 0.75
                 )
             }
 
             dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
         }
 
-        return totalScores
+        return SimulatedGameOutcome(
+            totalScores: totalScores,
+            underbidLosses: underbidLosses,
+            trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
+            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses
+        )
     }
 
     private static func simulateFullMatch(
         tuningsBySeat: [BotTuning],
         seed: UInt64
-    ) -> [Int] {
+    ) -> SimulatedGameOutcome {
         let playerCount = tuningsBySeat.count
         var rng = SelfPlayRandomGenerator(seed: seed)
 
@@ -1503,6 +1715,9 @@ extension BotTuning {
         let blockDeals = GameConstants.allBlockDeals(playerCount: playerCount)
 
         var totalScores = Array(repeating: 0, count: playerCount)
+        var underbidLosses = Array(repeating: 0.0, count: playerCount)
+        var trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
+        var noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for (blockIndex, dealsInBlock) in blockDeals.enumerated() {
@@ -1511,15 +1726,16 @@ extension BotTuning {
             var blockBaseScores = Array(repeating: 0, count: playerCount)
 
             for cardsInRound in dealsInBlock {
-                let hands = dealHands(
+                let roundDeal = dealRoundForFullMatch(
                     cardsPerPlayer: cardsInRound,
                     playerCount: playerCount,
                     dealer: dealer,
+                    blockNumber: blockNumber,
+                    trumpServices: trumpServices,
                     using: &rng
                 )
-
-                let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
-                let trump = trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
+                let hands = roundDeal.hands
+                let trump = roundDeal.trump
 
                 let totalsIncludingCurrentBlock = (0..<playerCount).map { index in
                     totalScores[index] + blockBaseScores[index]
@@ -1571,6 +1787,30 @@ extension BotTuning {
                     )
                     blockRoundResults[playerIndex].append(roundResult)
                     blockBaseScores[playerIndex] += roundResult.score
+                    underbidLosses[playerIndex] += underbidLoss(
+                        cardsInRound: cardsInRound,
+                        bid: bids[playerIndex],
+                        tricksTaken: tricksTaken[playerIndex],
+                        isBlind: isBlind
+                    )
+                    underbidLosses[playerIndex] += jokerBidFloorUnderbidPenalty(
+                        hand: hands[playerIndex],
+                        bid: bids[playerIndex]
+                    )
+                    trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
+                        hand: hands[playerIndex],
+                        bid: bids[playerIndex],
+                        cardsInRound: cardsInRound,
+                        trump: trump
+                    )
+                    noTrumpControlUnderbidLosses[playerIndex] += noTrumpControlUnderbidPenalty(
+                        hand: hands[playerIndex],
+                        bid: bids[playerIndex],
+                        cardsInRound: cardsInRound,
+                        trump: trump,
+                        emphasisMultiplier: (blockNumber == GameBlock.first.rawValue ||
+                            blockNumber == GameBlock.third.rawValue) ? 1.0 : 0.55
+                    )
                 }
 
                 dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
@@ -1586,7 +1826,12 @@ extension BotTuning {
             }
         }
 
-        return totalScores
+        return SimulatedGameOutcome(
+            totalScores: totalScores,
+            underbidLosses: underbidLosses,
+            trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
+            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses
+        )
     }
 
     private static func resolvePreDealBlindContext(
@@ -1638,6 +1883,128 @@ extension BotTuning {
             lockedBids: lockedBids,
             blindSelections: blindSelections
         )
+    }
+
+    /// Потери очков из-за недозаказа: сколько очков не добрал игрок,
+    /// если фактические взятки были бы заказаны точно.
+    private static func underbidLoss(
+        cardsInRound: Int,
+        bid: Int,
+        tricksTaken: Int,
+        isBlind: Bool
+    ) -> Double {
+        guard tricksTaken > bid else { return 0.0 }
+        let idealBid = min(max(0, tricksTaken), max(0, cardsInRound))
+        let idealScore = ScoreCalculator.calculateRoundScore(
+            cardsInRound: cardsInRound,
+            bid: idealBid,
+            tricksTaken: tricksTaken,
+            isBlind: isBlind
+        )
+        let actualScore = ScoreCalculator.calculateRoundScore(
+            cardsInRound: cardsInRound,
+            bid: bid,
+            tricksTaken: tricksTaken,
+            isBlind: isBlind
+        )
+        return Double(max(0, idealScore - actualScore))
+    }
+
+    /// Жесткий штраф за заказ ниже количества джокеров на руке.
+    /// Каждый джокер в большинстве сценариев является контролируемым ресурсом взятки,
+    /// поэтому такое занижение рассматривается как потеря потенциальных очков.
+    private static func jokerBidFloorUnderbidPenalty(
+        hand: [Card],
+        bid: Int
+    ) -> Double {
+        let jokerCount = hand.reduce(0) { partial, card in
+            partial + (card.isJoker ? 1 : 0)
+        }
+        let deficit = max(0, jokerCount - max(0, bid))
+        guard deficit > 0 else { return 0.0 }
+        let penaltyPerMissingTrick = 10_000.0
+        var penalty = Double(deficit) * penaltyPerMissingTrick
+
+        // Отдельно усиливаем штраф при двух джокерах:
+        // такие руки должны заметно поднимать заказ.
+        if jokerCount >= 2 {
+            penalty += Double(deficit) * 25_000.0
+        }
+
+        return penalty
+    }
+
+    /// Дополнительный штраф за недозаказ в руках с высокой плотностью козырей.
+    private static func trumpDensityUnderbidPenalty(
+        hand: [Card],
+        bid: Int,
+        cardsInRound: Int,
+        trump: Suit?
+    ) -> Double {
+        guard let trump else { return 0.0 }
+        guard cardsInRound > 0 else { return 0.0 }
+
+        let trumpCount = hand.reduce(0) { partial, card in
+            partial + ((card.suit == trump) ? 1 : 0)
+        }
+        let jokerCount = hand.reduce(0) { partial, card in
+            partial + (card.isJoker ? 1 : 0)
+        }
+        let effectiveControl = Double(trumpCount) + Double(jokerCount) * 0.85
+        let trumpDensity = effectiveControl / Double(cardsInRound)
+        guard trumpDensity >= 0.45 else { return 0.0 }
+
+        let suggestedFloor = min(
+            cardsInRound,
+            max(1, Int((effectiveControl * 0.75).rounded(.down)))
+        )
+        let deficit = max(0, suggestedFloor - max(0, bid))
+        guard deficit > 0 else { return 0.0 }
+
+        let densityMultiplier = 1.0 + max(0.0, trumpDensity - 0.45) * 2.5
+        return Double(deficit) * 2_400.0 * densityMultiplier
+    }
+
+    /// Штраф за недозаказ в no-trump руках контроля:
+    /// много старших карт и/или длина масти, особенно с джокером.
+    private static func noTrumpControlUnderbidPenalty(
+        hand: [Card],
+        bid: Int,
+        cardsInRound: Int,
+        trump: Suit?,
+        emphasisMultiplier: Double
+    ) -> Double {
+        guard trump == nil else { return 0.0 }
+        guard cardsInRound > 0 else { return 0.0 }
+
+        let regularCards = hand.compactMap { card -> (suit: Suit, rank: Rank)? in
+            guard case .regular(let suit, let rank) = card else { return nil }
+            return (suit, rank)
+        }
+        let suitCounts = Dictionary(grouping: regularCards, by: \.suit).mapValues(\.count)
+        let longestSuit = suitCounts.values.max() ?? 0
+        let highCards = regularCards.reduce(0) { partial, card in
+            partial + (card.rank.rawValue >= Rank.queen.rawValue ? 1 : 0)
+        }
+        let jokerCount = hand.reduce(0) { partial, card in
+            partial + (card.isJoker ? 1 : 0)
+        }
+
+        let hasControlPattern = highCards >= 4 || (jokerCount >= 1 && (highCards >= 3 || longestSuit >= 4))
+        guard hasControlPattern else { return 0.0 }
+
+        let controlScore = Double(highCards) * 0.70 +
+            Double(max(0, longestSuit - 2)) * 1.00 +
+            Double(jokerCount) * 1.20
+        let suggestedFloor = min(
+            cardsInRound,
+            max(1, Int((controlScore * 0.42).rounded()))
+        )
+        let deficit = max(0, suggestedFloor - max(0, bid))
+        guard deficit > 0 else { return 0.0 }
+
+        let jokerMultiplier = jokerCount > 0 ? 1.35 : 1.0
+        return Double(deficit) * 1_900.0 * jokerMultiplier * max(0.0, emphasisMultiplier)
     }
 
     private static func finalizeBlockScores(
@@ -1917,6 +2284,72 @@ extension BotTuning {
         return (legalCard, decision)
     }
 
+    private struct FullMatchRoundDeal {
+        let hands: [[Card]]
+        let trump: Suit?
+    }
+
+    private static func dealRoundForFullMatch(
+        cardsPerPlayer: Int,
+        playerCount: Int,
+        dealer: Int,
+        blockNumber: Int,
+        trumpServices: [BotTrumpSelectionService],
+        using rng: inout SelfPlayRandomGenerator
+    ) -> FullMatchRoundDeal {
+        var deckCards = Deck().cards
+        deckCards.shuffle(using: &rng)
+        let startingPlayer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+
+        if blockNumber == GameBlock.first.rawValue || blockNumber == GameBlock.third.rawValue {
+            let dealResult = dealHandsFromDeckCards(
+                cardsPerPlayer: cardsPerPlayer,
+                playerCount: playerCount,
+                startingPlayer: startingPlayer,
+                deckCards: deckCards,
+                startingDeckIndex: 0
+            )
+            let topDeckCard = dealResult.nextDeckIndex < deckCards.count
+                ? deckCards[dealResult.nextDeckIndex]
+                : nil
+            return FullMatchRoundDeal(
+                hands: sortedHands(dealResult.hands),
+                trump: trumpSuit(from: topDeckCard)
+            )
+        }
+
+        let cardsBeforeChoice = min(cardsPerPlayer, max(1, cardsPerPlayer / 3))
+        let initialDeal = dealHandsFromDeckCards(
+            cardsPerPlayer: cardsBeforeChoice,
+            playerCount: playerCount,
+            startingPlayer: startingPlayer,
+            deckCards: deckCards,
+            startingDeckIndex: 0
+        )
+        let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+        let trump = trumpServices[trumpChooser].selectTrump(from: initialDeal.hands[trumpChooser])
+
+        let remainingCards = max(0, cardsPerPlayer - cardsBeforeChoice)
+        var fullHands = initialDeal.hands
+        if remainingCards > 0 {
+            let remainingDeal = dealHandsFromDeckCards(
+                cardsPerPlayer: remainingCards,
+                playerCount: playerCount,
+                startingPlayer: startingPlayer,
+                deckCards: deckCards,
+                startingDeckIndex: initialDeal.nextDeckIndex
+            )
+            for index in 0..<playerCount {
+                fullHands[index].append(contentsOf: remainingDeal.hands[index])
+            }
+        }
+
+        return FullMatchRoundDeal(
+            hands: sortedHands(fullHands),
+            trump: trump
+        )
+    }
+
     private static func dealHands(
         cardsPerPlayer: Int,
         playerCount: Int,
@@ -1926,9 +2359,26 @@ extension BotTuning {
         var deckCards = Deck().cards
         deckCards.shuffle(using: &rng)
 
-        var hands = Array(repeating: [Card](), count: playerCount)
         let startingPlayer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
-        var deckIndex = 0
+        let dealResult = dealHandsFromDeckCards(
+            cardsPerPlayer: cardsPerPlayer,
+            playerCount: playerCount,
+            startingPlayer: startingPlayer,
+            deckCards: deckCards,
+            startingDeckIndex: 0
+        )
+        return sortedHands(dealResult.hands)
+    }
+
+    private static func dealHandsFromDeckCards(
+        cardsPerPlayer: Int,
+        playerCount: Int,
+        startingPlayer: Int,
+        deckCards: [Card],
+        startingDeckIndex: Int
+    ) -> (hands: [[Card]], nextDeckIndex: Int) {
+        var hands = Array(repeating: [Card](), count: playerCount)
+        var deckIndex = max(0, startingDeckIndex)
 
         for _ in 0..<cardsPerPlayer {
             for offset in 0..<playerCount where deckIndex < deckCards.count {
@@ -1938,11 +2388,19 @@ extension BotTuning {
             }
         }
 
-        for index in hands.indices {
-            hands[index].sort()
-        }
+        return (hands: hands, nextDeckIndex: deckIndex)
+    }
 
-        return hands
+    private static func trumpSuit(from trumpCard: Card?) -> Suit? {
+        guard let trumpCard else { return nil }
+        guard case .regular(let suit, _) = trumpCard else { return nil }
+        return suit
+    }
+
+    private static func sortedHands(_ hands: [[Card]]) -> [[Card]] {
+        return hands.map { hand in
+            hand.sorted()
+        }
     }
 
     private static func allowedBids(
@@ -2132,6 +2590,22 @@ extension BotTuning {
             expectedHighRankBonus: clamp(
                 baseBidding.expectedHighRankBonus * genome.biddingHighRankBonusScale,
                 to: 0.02...1.20
+            ),
+            expectedLongSuitBonusPerCard: clamp(
+                baseBidding.expectedLongSuitBonusPerCard * genome.biddingLongSuitBonusScale,
+                to: 0.02...0.95
+            ),
+            expectedTrumpDensityBonus: clamp(
+                baseBidding.expectedTrumpDensityBonus * genome.biddingTrumpDensityBonusScale,
+                to: 0.05...1.80
+            ),
+            expectedNoTrumpHighCardBonus: clamp(
+                baseBidding.expectedNoTrumpHighCardBonus * genome.biddingNoTrumpHighCardBonusScale,
+                to: 0.02...1.20
+            ),
+            expectedNoTrumpJokerSynergy: clamp(
+                baseBidding.expectedNoTrumpJokerSynergy * genome.biddingNoTrumpJokerSynergyScale,
+                to: 0.05...2.20
             ),
 
             blindDesperateBehindThreshold: baseBidding.blindDesperateBehindThreshold,

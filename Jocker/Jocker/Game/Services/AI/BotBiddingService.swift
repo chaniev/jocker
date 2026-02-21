@@ -114,6 +114,18 @@ final class BotBiddingService {
         guard cardsInRound > 0 else { return 0 }
         guard !hand.isEmpty else { return 0 }
         let bidding = tuning.bidding
+        let regularCards = hand.compactMap { card -> (suit: Suit, rank: Rank)? in
+            guard case .regular(let suit, let rank) = card else { return nil }
+            return (suit, rank)
+        }
+        let suitCounts = Dictionary(grouping: regularCards, by: \.suit).mapValues(\.count)
+        let jokerCount = hand.reduce(0) { partial, card in
+            partial + (card.isJoker ? 1 : 0)
+        }
+        let highCardCount = regularCards.reduce(0) { partial, card in
+            partial + (card.rank.rawValue >= Rank.queen.rawValue ? 1 : 0)
+        }
+        let longestSuit = suitCounts.values.max() ?? 0
 
         var power = 0.0
 
@@ -135,6 +147,23 @@ final class BotBiddingService {
             }
 
             power += value
+        }
+
+        if longestSuit >= 3 {
+            power += Double(longestSuit - 2) * bidding.expectedLongSuitBonusPerCard
+        }
+
+        if let trump {
+            let trumpCount = suitCounts[trump] ?? 0
+            let trumpDensity = Double(trumpCount) / Double(max(1, cardsInRound))
+            power += Double(trumpCount) * trumpDensity * bidding.expectedTrumpDensityBonus
+        } else {
+            power += Double(highCardCount) * bidding.expectedNoTrumpHighCardBonus
+            if jokerCount > 0 {
+                let controlSupport = Double(highCardCount) * 0.35 +
+                    Double(max(0, longestSuit - 2)) * 0.65
+                power += Double(jokerCount) * controlSupport * bidding.expectedNoTrumpJokerSynergy
+            }
         }
 
         let rounded = Int(power.rounded())

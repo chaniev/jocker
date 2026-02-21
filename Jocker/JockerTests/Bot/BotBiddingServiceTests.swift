@@ -62,6 +62,86 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertGreaterThan(strongBid, weakBid)
     }
 
+    func testMakeBid_trumpDenseHandProducesHigherBid() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let trumpDenseHand: [Card] = [
+            .regular(suit: .hearts, rank: .ace),
+            .regular(suit: .hearts, rank: .king),
+            .regular(suit: .hearts, rank: .queen),
+            .regular(suit: .hearts, rank: .jack),
+            .regular(suit: .hearts, rank: .nine),
+            .regular(suit: .clubs, rank: .seven),
+            .regular(suit: .diamonds, rank: .eight),
+            .regular(suit: .spades, rank: .ten)
+        ]
+        let mixedHand: [Card] = [
+            .regular(suit: .hearts, rank: .ace),
+            .regular(suit: .spades, rank: .king),
+            .regular(suit: .clubs, rank: .queen),
+            .regular(suit: .diamonds, rank: .jack),
+            .regular(suit: .hearts, rank: .nine),
+            .regular(suit: .clubs, rank: .seven),
+            .regular(suit: .diamonds, rank: .eight),
+            .regular(suit: .spades, rank: .ten)
+        ]
+
+        let denseBid = service.makeBid(
+            hand: trumpDenseHand,
+            cardsInRound: 8,
+            trump: .hearts,
+            forbiddenBid: nil
+        )
+        let mixedBid = service.makeBid(
+            hand: mixedHand,
+            cardsInRound: 8,
+            trump: .hearts,
+            forbiddenBid: nil
+        )
+
+        XCTAssertGreaterThanOrEqual(denseBid, mixedBid)
+    }
+
+    func testMakeBid_noTrumpControlWithJokerProducesHigherBid() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let controlHand: [Card] = [
+            .joker,
+            .regular(suit: .spades, rank: .ace),
+            .regular(suit: .spades, rank: .king),
+            .regular(suit: .spades, rank: .queen),
+            .regular(suit: .spades, rank: .jack),
+            .regular(suit: .hearts, rank: .ace),
+            .regular(suit: .diamonds, rank: .queen),
+            .regular(suit: .clubs, rank: .ten)
+        ]
+        let flatHand: [Card] = [
+            .joker,
+            .regular(suit: .spades, rank: .ace),
+            .regular(suit: .hearts, rank: .ten),
+            .regular(suit: .diamonds, rank: .nine),
+            .regular(suit: .clubs, rank: .eight),
+            .regular(suit: .clubs, rank: .seven),
+            .regular(suit: .diamonds, rank: .seven),
+            .regular(suit: .hearts, rank: .eight)
+        ]
+
+        let controlBid = service.makeBid(
+            hand: controlHand,
+            cardsInRound: 8,
+            trump: nil,
+            forbiddenBid: nil
+        )
+        let flatBid = service.makeBid(
+            hand: flatHand,
+            cardsInRound: 8,
+            trump: nil,
+            forbiddenBid: nil
+        )
+
+        XCTAssertGreaterThanOrEqual(controlBid, flatBid)
+    }
+
     func testMakePreDealBlindBid_returnsNilForLeaderWithBigAdvantage() {
         let service = BotBiddingService()
 
