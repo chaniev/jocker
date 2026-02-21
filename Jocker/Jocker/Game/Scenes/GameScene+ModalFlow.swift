@@ -407,7 +407,8 @@ extension GameScene {
 
         let historyViewController = DealHistoryViewController(
             dealHistory: dealHistory,
-            playerNames: currentPlayerNames
+            playerNames: currentPlayerNames,
+            playerControlTypes: playerControlTypes
         )
         historyViewController.modalPresentationStyle = .fullScreen
         historyViewController.modalTransitionStyle = .crossDissolve

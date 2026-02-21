@@ -11,17 +11,20 @@ import Foundation
 struct DealHistory: Equatable {
     let key: DealHistoryKey
     let trump: Suit?
+    let initialHands: [[Card]]
     let tricks: [DealTrickHistory]
     let trainingSamples: [DealTrainingMoveSample]
 
     init(
         key: DealHistoryKey,
         trump: Suit?,
+        initialHands: [[Card]] = [],
         tricks: [DealTrickHistory],
         trainingSamples: [DealTrainingMoveSample] = []
     ) {
         self.key = key
         self.trump = trump
+        self.initialHands = initialHands
         self.tricks = tricks
         self.trainingSamples = trainingSamples
     }

@@ -12,6 +12,7 @@ final class DealHistoryExportService {
     enum ExportReason {
         case blockCompleted(blockIndex: Int)
         case gameCompleted
+        case deal(blockIndex: Int, roundIndex: Int)
 
         fileprivate var identifier: String {
             switch self {
@@ -19,6 +20,8 @@ final class DealHistoryExportService {
                 return "block_\(max(0, blockIndex))"
             case .gameCompleted:
                 return "game_final"
+            case .deal(let blockIndex, let roundIndex):
+                return "deal_b\(max(0, blockIndex))_r\(max(0, roundIndex))"
             }
         }
     }
@@ -171,6 +174,13 @@ final class DealHistoryExportService {
             blockIndex: history.key.blockIndex,
             roundIndex: history.key.roundIndex,
             trump: suitIdentifier(history.trump),
+            initialHands: history.initialHands.enumerated().map { item in
+                let (playerIndex, hand) = item
+                return PlayerHandPayload(
+                    playerIndex: playerIndex,
+                    cards: hand.map(mapCardPayload)
+                )
+            },
             tricks: history.tricks.map { trick in
                 TrickPayload(
                     winnerPlayerIndex: trick.winnerPlayerIndex,
@@ -287,7 +297,13 @@ private struct DealPayload: Encodable {
     let blockIndex: Int
     let roundIndex: Int
     let trump: String?
+    let initialHands: [PlayerHandPayload]
     let tricks: [TrickPayload]
+}
+
+private struct PlayerHandPayload: Encodable {
+    let playerIndex: Int
+    let cards: [CardPayload]
 }
 
 private struct TrickPayload: Encodable {

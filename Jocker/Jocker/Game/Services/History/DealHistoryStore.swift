@@ -28,6 +28,7 @@ final class DealHistoryStore {
 
     private struct MutableDealHistory {
         var trump: Suit?
+        var initialHands: [[Card]]
         var tricks: [DealTrickHistory]
         var trainingSamples: [DealTrainingMoveSample]
         var pendingTrickMoveSamples: [PendingTrainingMoveSample]
@@ -40,6 +41,7 @@ final class DealHistoryStore {
         let key = DealHistoryKey(blockIndex: blockIndex, roundIndex: roundIndex)
         historiesByDealKey[key] = MutableDealHistory(
             trump: nil,
+            initialHands: [],
             tricks: [],
             trainingSamples: [],
             pendingTrickMoveSamples: []
@@ -51,11 +53,30 @@ final class DealHistoryStore {
         let key = DealHistoryKey(blockIndex: blockIndex, roundIndex: roundIndex)
         var history = historiesByDealKey[key] ?? MutableDealHistory(
             trump: nil,
+            initialHands: [],
             tricks: [],
             trainingSamples: [],
             pendingTrickMoveSamples: []
         )
         history.trump = trump
+        historiesByDealKey[key] = history
+    }
+
+    func setInitialHands(
+        _ hands: [[Card]],
+        blockIndex: Int,
+        roundIndex: Int
+    ) {
+        guard blockIndex >= 0, roundIndex >= 0 else { return }
+        let key = DealHistoryKey(blockIndex: blockIndex, roundIndex: roundIndex)
+        var history = historiesByDealKey[key] ?? MutableDealHistory(
+            trump: nil,
+            initialHands: [],
+            tricks: [],
+            trainingSamples: [],
+            pendingTrickMoveSamples: []
+        )
+        history.initialHands = hands
         historiesByDealKey[key] = history
     }
 
@@ -85,6 +106,7 @@ final class DealHistoryStore {
         let key = DealHistoryKey(blockIndex: blockIndex, roundIndex: roundIndex)
         var history = historiesByDealKey[key] ?? MutableDealHistory(
             trump: nil,
+            initialHands: [],
             tricks: [],
             trainingSamples: [],
             pendingTrickMoveSamples: []
@@ -132,6 +154,7 @@ final class DealHistoryStore {
         let key = DealHistoryKey(blockIndex: blockIndex, roundIndex: roundIndex)
         var history = historiesByDealKey[key] ?? MutableDealHistory(
             trump: nil,
+            initialHands: [],
             tricks: [],
             trainingSamples: [],
             pendingTrickMoveSamples: []
@@ -187,6 +210,7 @@ final class DealHistoryStore {
         return DealHistory(
             key: key,
             trump: history.trump,
+            initialHands: history.initialHands,
             tricks: history.tricks,
             trainingSamples: history.trainingSamples
         )

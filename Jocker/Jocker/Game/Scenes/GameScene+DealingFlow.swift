@@ -97,6 +97,13 @@ extension GameScene {
                 cardsPerPlayer: cardsPerPlayer,
                 startingPlayerIndex: firstPlayerToDeal
             )
+            let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+            let roundIndex = gameState.currentRoundInBlock
+            dealHistoryStore.setInitialHands(
+                dealResult.hands,
+                blockIndex: blockIndex,
+                roundIndex: roundIndex
+            )
 
             coordinator.runDealAnimation(
                 on: self,
@@ -252,6 +259,18 @@ extension GameScene {
             playerCount: playerCount,
             cardsPerPlayer: remainingCardsPerPlayer,
             startingPlayerIndex: firstPlayerToDeal
+        )
+        let combinedHands = (0..<playerCount).map { index in
+            let initialHand = initialDeal.hands.indices.contains(index) ? initialDeal.hands[index] : []
+            let remainingHand = remainingDeal.hands.indices.contains(index) ? remainingDeal.hands[index] : []
+            return initialHand + remainingHand
+        }
+        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+        let roundIndex = gameState.currentRoundInBlock
+        dealHistoryStore.setInitialHands(
+            combinedHands,
+            blockIndex: blockIndex,
+            roundIndex: roundIndex
         )
 
         isRunningTrumpSelectionFlow = true

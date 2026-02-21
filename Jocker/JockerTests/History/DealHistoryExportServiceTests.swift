@@ -47,6 +47,10 @@ final class DealHistoryExportServiceTests: XCTestCase {
         let history = DealHistory(
             key: DealHistoryKey(blockIndex: 0, roundIndex: 0),
             trump: .hearts,
+            initialHands: [
+                [.regular(suit: .hearts, rank: .ace), .joker],
+                [.regular(suit: .clubs, rank: .six)]
+            ],
             tricks: [DealTrickHistory(moves: [move], winnerPlayerIndex: 0)],
             trainingSamples: [sample]
         )
@@ -78,7 +82,15 @@ final class DealHistoryExportServiceTests: XCTestCase {
         XCTAssertEqual(payload["schemaVersion"] as? Int, 1)
         XCTAssertEqual(payload["exportReason"] as? String, "block_0")
         XCTAssertEqual(payload["playerCount"] as? Int, 4)
-        XCTAssertEqual((payload["deals"] as? [[String: Any]])?.count, 1)
+        guard let deals = payload["deals"] as? [[String: Any]], let firstDeal = deals.first else {
+            XCTFail("Expected deals payload")
+            return
+        }
+        XCTAssertEqual(deals.count, 1)
+        let initialHands = firstDeal["initialHands"] as? [[String: Any]]
+        XCTAssertEqual(initialHands?.count, 2)
+        XCTAssertEqual(initialHands?.first?["playerIndex"] as? Int, 0)
+        XCTAssertEqual((initialHands?.first?["cards"] as? [[String: Any]])?.count, 2)
         XCTAssertEqual((payload["trainingSamples"] as? [[String: Any]])?.count, 1)
     }
 

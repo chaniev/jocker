@@ -105,7 +105,8 @@ class GameViewController: UIViewController {
 
         let historyViewController = DealHistoryViewController(
             dealHistory: dealHistory,
-            playerNames: scene.currentPlayerNames
+            playerNames: scene.currentPlayerNames,
+            playerControlTypes: scene.playerControlTypes
         )
         historyViewController.modalPresentationStyle = .fullScreen
         historyViewController.modalTransitionStyle = .crossDissolve

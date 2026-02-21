@@ -13,6 +13,15 @@ final class DealHistoryStoreTests: XCTestCase {
         let store = DealHistoryStore()
         store.startDeal(blockIndex: 1, roundIndex: 2)
         store.setTrump(.hearts, blockIndex: 1, roundIndex: 2)
+        store.setInitialHands(
+            [
+                [.regular(suit: .spades, rank: .ace)],
+                [.regular(suit: .hearts, rank: .six)],
+                [.joker]
+            ],
+            blockIndex: 1,
+            roundIndex: 2
+        )
 
         store.appendTrick(
             blockIndex: 1,
@@ -33,6 +42,9 @@ final class DealHistoryStoreTests: XCTestCase {
         XCTAssertEqual(history?.tricks.first?.moves.count, 3)
         XCTAssertEqual(history?.tricks.first?.moves.first?.playerIndex, 0)
         XCTAssertEqual(history?.tricks.first?.moves.first?.card, .regular(suit: .spades, rank: .ace))
+        XCTAssertEqual(history?.initialHands.count, 3)
+        XCTAssertEqual(history?.initialHands[0], [.regular(suit: .spades, rank: .ace)])
+        XCTAssertEqual(history?.initialHands[2], [.joker])
     }
 
     func testHistory_whenJokerPlayed_preservesJokerContext() {
