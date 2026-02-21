@@ -60,6 +60,12 @@ usage() {
   --fitness-notrump-control-underbid-weight <double>
                                      Вес компоненты недозаказа в no-trump контрольных
                                      руках (старшие/длинная масть/джокер) (по умолчанию: 0.70).
+  --fitness-premium-assist-weight <double>
+                                     Вес компоненты штрафа за "подаренные" соперникам
+                                     премии (по умолчанию: 0.55).
+  --fitness-premium-penalty-target-weight <double>
+                                     Вес компоненты штрафа за получение штрафа как цель
+                                     чужой премии (по умолчанию: 1.10).
   --score-diff-normalization <double>
                                      Делитель для компоненты разницы очков;
                                      больше значение = меньше вклад scoreDiff
@@ -74,6 +80,12 @@ usage() {
   --notrump-control-underbid-normalization <double>
                                      Делитель для компоненты недозаказа
                                      в no-trump контрольных руках (по умолчанию: 2200).
+  --premium-assist-normalization <double>
+                                     Делитель для компоненты "подаренных" премий
+                                     соперникам (по умолчанию: 1800).
+  --premium-penalty-target-normalization <double>
+                                     Делитель для компоненты штрафа как цели
+                                     чужой премии (по умолчанию: 1600).
   --show-progress <true|false>       Показывать live-прогресс обучения
                                      (по умолчанию: true).
   --progress-candidate-step <int>    Частота прогресса по кандидатам внутри поколения:
@@ -154,10 +166,14 @@ fitness_score_diff_weight="1.0"
 fitness_underbid_loss_weight="0.85"
 fitness_trump_density_underbid_weight="0.60"
 fitness_notrump_control_underbid_weight="0.70"
+fitness_premium_assist_weight="0.55"
+fitness_premium_penalty_target_weight="1.10"
 score_diff_normalization="450"
 underbid_loss_normalization="6000"
 trump_density_underbid_normalization="2800"
 notrump_control_underbid_normalization="2200"
+premium_assist_normalization="1800"
+premium_penalty_target_normalization="1600"
 show_progress="true"
 progress_candidate_step="1"
 output_path=""
@@ -252,6 +268,14 @@ while (($# > 0)); do
       fitness_notrump_control_underbid_weight="${2:-}"
       shift 2
       ;;
+    --fitness-premium-assist-weight)
+      fitness_premium_assist_weight="${2:-}"
+      shift 2
+      ;;
+    --fitness-premium-penalty-target-weight)
+      fitness_premium_penalty_target_weight="${2:-}"
+      shift 2
+      ;;
     --score-diff-normalization)
       score_diff_normalization="${2:-}"
       shift 2
@@ -266,6 +290,14 @@ while (($# > 0)); do
       ;;
     --notrump-control-underbid-normalization)
       notrump_control_underbid_normalization="${2:-}"
+      shift 2
+      ;;
+    --premium-assist-normalization)
+      premium_assist_normalization="${2:-}"
+      shift 2
+      ;;
+    --premium-penalty-target-normalization)
+      premium_penalty_target_normalization="${2:-}"
       shift 2
       ;;
     --show-progress)
@@ -322,10 +354,14 @@ require_double "$fitness_score_diff_weight" "--fitness-score-diff-weight"
 require_double "$fitness_underbid_loss_weight" "--fitness-underbid-loss-weight"
 require_double "$fitness_trump_density_underbid_weight" "--fitness-trump-density-underbid-weight"
 require_double "$fitness_notrump_control_underbid_weight" "--fitness-notrump-control-underbid-weight"
+require_double "$fitness_premium_assist_weight" "--fitness-premium-assist-weight"
+require_double "$fitness_premium_penalty_target_weight" "--fitness-premium-penalty-target-weight"
 require_double "$score_diff_normalization" "--score-diff-normalization"
 require_double "$underbid_loss_normalization" "--underbid-loss-normalization"
 require_double "$trump_density_underbid_normalization" "--trump-density-underbid-normalization"
 require_double "$notrump_control_underbid_normalization" "--notrump-control-underbid-normalization"
+require_double "$premium_assist_normalization" "--premium-assist-normalization"
+require_double "$premium_penalty_target_normalization" "--premium-penalty-target-normalization"
 require_bool "$show_progress" "--show-progress"
 require_int "$progress_candidate_step" "--progress-candidate-step"
 if [[ "$progress_candidate_step" -lt 1 ]]; then
@@ -489,10 +525,14 @@ let config = BotTuning.SelfPlayEvolutionConfig(
     fitnessUnderbidLossWeight: $fitness_underbid_loss_weight,
     fitnessTrumpDensityUnderbidWeight: $fitness_trump_density_underbid_weight,
     fitnessNoTrumpControlUnderbidWeight: $fitness_notrump_control_underbid_weight,
+    fitnessPremiumAssistWeight: $fitness_premium_assist_weight,
+    fitnessPremiumPenaltyTargetWeight: $fitness_premium_penalty_target_weight,
     scoreDiffNormalization: $score_diff_normalization,
     underbidLossNormalization: $underbid_loss_normalization,
     trumpDensityUnderbidNormalization: $trump_density_underbid_normalization,
-    noTrumpControlUnderbidNormalization: $notrump_control_underbid_normalization
+    noTrumpControlUnderbidNormalization: $notrump_control_underbid_normalization,
+    premiumAssistNormalization: $premium_assist_normalization,
+    premiumPenaltyTargetNormalization: $premium_penalty_target_normalization
 )
 
 let seed: UInt64 = $seed
@@ -615,10 +655,14 @@ print("fitnessScoreDiffWeight=\\(fmt(config.fitnessScoreDiffWeight))")
 print("fitnessUnderbidLossWeight=\\(fmt(config.fitnessUnderbidLossWeight))")
 print("fitnessTrumpDensityUnderbidWeight=\\(fmt(config.fitnessTrumpDensityUnderbidWeight))")
 print("fitnessNoTrumpControlUnderbidWeight=\\(fmt(config.fitnessNoTrumpControlUnderbidWeight))")
+print("fitnessPremiumAssistWeight=\\(fmt(config.fitnessPremiumAssistWeight))")
+print("fitnessPremiumPenaltyTargetWeight=\\(fmt(config.fitnessPremiumPenaltyTargetWeight))")
 print("scoreDiffNormalization=\\(fmt(config.scoreDiffNormalization))")
 print("underbidLossNormalization=\\(fmt(config.underbidLossNormalization))")
 print("trumpDensityUnderbidNormalization=\\(fmt(config.trumpDensityUnderbidNormalization))")
 print("noTrumpControlUnderbidNormalization=\\(fmt(config.noTrumpControlUnderbidNormalization))")
+print("premiumAssistNormalization=\\(fmt(config.premiumAssistNormalization))")
+print("premiumPenaltyTargetNormalization=\\(fmt(config.premiumPenaltyTargetNormalization))")
 print("showProgress=\\(showProgress)")
 print("progressCandidateStep=\\(progressCandidateStep)")
 if seedRuns.count > 1 {
@@ -630,6 +674,8 @@ if seedRuns.count > 1 {
     print("ensembleAverageBestUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageUnderbidLoss })))")
     print("ensembleAverageBestTrumpDensityUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageTrumpDensityUnderbidLoss })))")
     print("ensembleAverageBestNoTrumpControlUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageNoTrumpControlUnderbidLoss })))")
+    print("ensembleAverageBestPremiumAssistLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAveragePremiumAssistLoss })))")
+    print("ensembleAverageBestPremiumPenaltyTargetLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAveragePremiumPenaltyTargetLoss })))")
 }
 print("selectedSeed=\\(selectedRun.seed)")
 print("baselineFitness=\\(fmt(selectedRun.result.baselineFitness))")
@@ -645,6 +691,10 @@ print("baselineAverageTrumpDensityUnderbidLoss=\\(fmt(selectedRun.result.baselin
 print("bestAverageTrumpDensityUnderbidLoss=\\(fmt(selectedRun.result.bestAverageTrumpDensityUnderbidLoss))")
 print("baselineAverageNoTrumpControlUnderbidLoss=\\(fmt(selectedRun.result.baselineAverageNoTrumpControlUnderbidLoss))")
 print("bestAverageNoTrumpControlUnderbidLoss=\\(fmt(selectedRun.result.bestAverageNoTrumpControlUnderbidLoss))")
+print("baselineAveragePremiumAssistLoss=\\(fmt(selectedRun.result.baselineAveragePremiumAssistLoss))")
+print("bestAveragePremiumAssistLoss=\\(fmt(selectedRun.result.bestAveragePremiumAssistLoss))")
+print("baselineAveragePremiumPenaltyTargetLoss=\\(fmt(selectedRun.result.baselineAveragePremiumPenaltyTargetLoss))")
+print("bestAveragePremiumPenaltyTargetLoss=\\(fmt(selectedRun.result.bestAveragePremiumPenaltyTargetLoss))")
 print("generationBestFitness=[\\(selectedRun.result.generationBestFitness.map(fmt).joined(separator: ", "))]")
 print("")
 print("=== Suggested Tuned Values ===")

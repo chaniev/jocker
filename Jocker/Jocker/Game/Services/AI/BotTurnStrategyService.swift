@@ -292,6 +292,24 @@ final class BotTurnStrategyService {
         let strategy = tuning.turnStrategy
         var utility = projectedScore
         let isLeadJoker = move.card.isJoker && trickNode.playedCards.isEmpty
+        let isNonFinalLeadWishJoker: Bool
+        if isLeadJoker,
+           move.decision.style == .faceUp,
+           tricksRemainingIncludingCurrent > 1,
+           case .some(.wish) = move.decision.leadDeclaration {
+            isNonFinalLeadWishJoker = true
+        } else {
+            isNonFinalLeadWishJoker = false
+        }
+
+        if isNonFinalLeadWishJoker {
+            // "wish" без заказа масти в ранних взятках ограничивает контроль стола.
+            // В self-play и боевой логике смещаем выбор к "above"/"takes".
+            let tricksAfterCurrent = max(1, tricksRemainingIncludingCurrent - 1)
+            let basePenalty = 24.0 + Double(tricksAfterCurrent) * 6.0
+            let chaseMultiplier = shouldChaseTrick ? (1.0 + chasePressure * 0.25) : 1.0
+            utility -= basePenalty * chaseMultiplier
+        }
 
         if shouldChaseTrick {
             let conservatism = max(0.0, 1.0 - chasePressure)
@@ -677,6 +695,10 @@ extension BotTuning {
         let fitnessTrumpDensityUnderbidWeight: Double
         /// Вес компоненты минимизации недозаказа в no-trump контрольных руках.
         let fitnessNoTrumpControlUnderbidWeight: Double
+        /// Вес компоненты штрафа за "подаренные" соперникам премии.
+        let fitnessPremiumAssistWeight: Double
+        /// Вес компоненты штрафа за получение штрафа как цель чужой премии.
+        let fitnessPremiumPenaltyTargetWeight: Double
         /// Нормализация score-diff компоненты (чем больше, тем слабее вклад).
         let scoreDiffNormalization: Double
         /// Нормализация underbid-loss компоненты (чем больше, тем слабее вклад).
@@ -685,6 +707,10 @@ extension BotTuning {
         let trumpDensityUnderbidNormalization: Double
         /// Нормализация компоненты недозаказа в no-trump контрольных руках.
         let noTrumpControlUnderbidNormalization: Double
+        /// Нормализация компоненты "подаренных" премий соперникам.
+        let premiumAssistNormalization: Double
+        /// Нормализация компоненты штрафа как цели чужой премии.
+        let premiumPenaltyTargetNormalization: Double
 
         init(
             populationSize: Int = 16,
@@ -704,10 +730,14 @@ extension BotTuning {
             fitnessUnderbidLossWeight: Double = 0.85,
             fitnessTrumpDensityUnderbidWeight: Double = 0.60,
             fitnessNoTrumpControlUnderbidWeight: Double = 0.70,
+            fitnessPremiumAssistWeight: Double = 0.55,
+            fitnessPremiumPenaltyTargetWeight: Double = 1.10,
             scoreDiffNormalization: Double = 450.0,
             underbidLossNormalization: Double = 6000.0,
             trumpDensityUnderbidNormalization: Double = 2800.0,
-            noTrumpControlUnderbidNormalization: Double = 2200.0
+            noTrumpControlUnderbidNormalization: Double = 2200.0,
+            premiumAssistNormalization: Double = 1800.0,
+            premiumPenaltyTargetNormalization: Double = 1600.0
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -741,10 +771,14 @@ extension BotTuning {
             self.fitnessUnderbidLossWeight = max(0.0, fitnessUnderbidLossWeight)
             self.fitnessTrumpDensityUnderbidWeight = max(0.0, fitnessTrumpDensityUnderbidWeight)
             self.fitnessNoTrumpControlUnderbidWeight = max(0.0, fitnessNoTrumpControlUnderbidWeight)
+            self.fitnessPremiumAssistWeight = max(0.0, fitnessPremiumAssistWeight)
+            self.fitnessPremiumPenaltyTargetWeight = max(0.0, fitnessPremiumPenaltyTargetWeight)
             self.scoreDiffNormalization = max(1.0, scoreDiffNormalization)
             self.underbidLossNormalization = max(1.0, underbidLossNormalization)
             self.trumpDensityUnderbidNormalization = max(1.0, trumpDensityUnderbidNormalization)
             self.noTrumpControlUnderbidNormalization = max(1.0, noTrumpControlUnderbidNormalization)
+            self.premiumAssistNormalization = max(1.0, premiumAssistNormalization)
+            self.premiumPenaltyTargetNormalization = max(1.0, premiumPenaltyTargetNormalization)
         }
 
         private static func clamp(
@@ -771,6 +805,10 @@ extension BotTuning {
         let bestAverageTrumpDensityUnderbidLoss: Double
         let baselineAverageNoTrumpControlUnderbidLoss: Double
         let bestAverageNoTrumpControlUnderbidLoss: Double
+        let baselineAveragePremiumAssistLoss: Double
+        let bestAveragePremiumAssistLoss: Double
+        let baselineAveragePremiumPenaltyTargetLoss: Double
+        let bestAveragePremiumPenaltyTargetLoss: Double
 
         var improvement: Double {
             return bestFitness - baselineFitness
@@ -895,10 +933,14 @@ extension BotTuning {
             fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
             fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
             fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
+            fitnessPremiumAssistWeight: config.fitnessPremiumAssistWeight,
+            fitnessPremiumPenaltyTargetWeight: config.fitnessPremiumPenaltyTargetWeight,
             scoreDiffNormalization: config.scoreDiffNormalization,
             underbidLossNormalization: config.underbidLossNormalization,
             trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
-            noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
+            noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization,
+            premiumAssistNormalization: config.premiumAssistNormalization,
+            premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization
         )
         completedWorkUnits += 1
         notifyProgress(
@@ -941,10 +983,14 @@ extension BotTuning {
                     fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
                     fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
                     fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
+                    fitnessPremiumAssistWeight: config.fitnessPremiumAssistWeight,
+                    fitnessPremiumPenaltyTargetWeight: config.fitnessPremiumPenaltyTargetWeight,
                     scoreDiffNormalization: config.scoreDiffNormalization,
                     underbidLossNormalization: config.underbidLossNormalization,
                     trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
-                    noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization
+                    noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization,
+                    premiumAssistNormalization: config.premiumAssistNormalization,
+                    premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization
                 )
                 scoredPopulation.append(
                     ScoredGenome(
@@ -1036,7 +1082,11 @@ extension BotTuning {
             baselineAverageTrumpDensityUnderbidLoss: baselineBreakdown.averageTrumpDensityUnderbidLoss,
             bestAverageTrumpDensityUnderbidLoss: bestBreakdown.averageTrumpDensityUnderbidLoss,
             baselineAverageNoTrumpControlUnderbidLoss: baselineBreakdown.averageNoTrumpControlUnderbidLoss,
-            bestAverageNoTrumpControlUnderbidLoss: bestBreakdown.averageNoTrumpControlUnderbidLoss
+            bestAverageNoTrumpControlUnderbidLoss: bestBreakdown.averageNoTrumpControlUnderbidLoss,
+            baselineAveragePremiumAssistLoss: baselineBreakdown.averagePremiumAssistLoss,
+            bestAveragePremiumAssistLoss: bestBreakdown.averagePremiumAssistLoss,
+            baselineAveragePremiumPenaltyTargetLoss: baselineBreakdown.averagePremiumPenaltyTargetLoss,
+            bestAveragePremiumPenaltyTargetLoss: bestBreakdown.averagePremiumPenaltyTargetLoss
         )
     }
 
@@ -1052,6 +1102,8 @@ extension BotTuning {
         let averageUnderbidLoss: Double
         let averageTrumpDensityUnderbidLoss: Double
         let averageNoTrumpControlUnderbidLoss: Double
+        let averagePremiumAssistLoss: Double
+        let averagePremiumPenaltyTargetLoss: Double
 
         static let zero = FitnessBreakdown(
             fitness: 0.0,
@@ -1059,7 +1111,9 @@ extension BotTuning {
             averageScoreDiff: 0.0,
             averageUnderbidLoss: 0.0,
             averageTrumpDensityUnderbidLoss: 0.0,
-            averageNoTrumpControlUnderbidLoss: 0.0
+            averageNoTrumpControlUnderbidLoss: 0.0,
+            averagePremiumAssistLoss: 0.0,
+            averagePremiumPenaltyTargetLoss: 0.0
         )
     }
 
@@ -1172,6 +1226,8 @@ extension BotTuning {
         let underbidLosses: [Double]
         let trumpDensityUnderbidLosses: [Double]
         let noTrumpControlUnderbidLosses: [Double]
+        let premiumAssistLosses: [Double]
+        let premiumPenaltyTargetLosses: [Double]
     }
 
     private static func randomGenome(
@@ -1616,10 +1672,14 @@ extension BotTuning {
         fitnessUnderbidLossWeight: Double,
         fitnessTrumpDensityUnderbidWeight: Double,
         fitnessNoTrumpControlUnderbidWeight: Double,
+        fitnessPremiumAssistWeight: Double,
+        fitnessPremiumPenaltyTargetWeight: Double,
         scoreDiffNormalization: Double,
         underbidLossNormalization: Double,
         trumpDensityUnderbidNormalization: Double,
-        noTrumpControlUnderbidNormalization: Double
+        noTrumpControlUnderbidNormalization: Double,
+        premiumAssistNormalization: Double,
+        premiumPenaltyTargetNormalization: Double
     ) -> FitnessBreakdown {
         guard !evaluationSeeds.isEmpty else { return .zero }
 
@@ -1633,6 +1693,8 @@ extension BotTuning {
         var totalCandidateUnderbidLoss = 0.0
         var totalCandidateTrumpDensityUnderbidLoss = 0.0
         var totalCandidateNoTrumpControlUnderbidLoss = 0.0
+        var totalCandidatePremiumAssistLoss = 0.0
+        var totalCandidatePremiumPenaltyTargetLoss = 0.0
         var simulationsCount = 0
 
         for evaluationSeed in evaluationSeeds {
@@ -1662,6 +1724,12 @@ extension BotTuning {
                 let candidateNoTrumpControlUnderbidLoss = gameOutcome.noTrumpControlUnderbidLosses.indices.contains(candidateSeat)
                     ? gameOutcome.noTrumpControlUnderbidLosses[candidateSeat]
                     : 0.0
+                let candidatePremiumAssistLoss = gameOutcome.premiumAssistLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.premiumAssistLosses[candidateSeat]
+                    : 0.0
+                let candidatePremiumPenaltyTargetLoss = gameOutcome.premiumPenaltyTargetLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.premiumPenaltyTargetLosses[candidateSeat]
+                    : 0.0
 
                 let maxScore = totalScores.max() ?? candidateScore
                 let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
@@ -1672,6 +1740,8 @@ extension BotTuning {
                 totalCandidateUnderbidLoss += candidateUnderbidLoss
                 totalCandidateTrumpDensityUnderbidLoss += candidateTrumpDensityUnderbidLoss
                 totalCandidateNoTrumpControlUnderbidLoss += candidateNoTrumpControlUnderbidLoss
+                totalCandidatePremiumAssistLoss += candidatePremiumAssistLoss
+                totalCandidatePremiumPenaltyTargetLoss += candidatePremiumPenaltyTargetLoss
                 simulationsCount += 1
             }
         }
@@ -1683,11 +1753,15 @@ extension BotTuning {
         let averageUnderbidLoss = totalCandidateUnderbidLoss / Double(simulationsCount)
         let averageTrumpDensityUnderbidLoss = totalCandidateTrumpDensityUnderbidLoss / Double(simulationsCount)
         let averageNoTrumpControlUnderbidLoss = totalCandidateNoTrumpControlUnderbidLoss / Double(simulationsCount)
+        let averagePremiumAssistLoss = totalCandidatePremiumAssistLoss / Double(simulationsCount)
+        let averagePremiumPenaltyTargetLoss = totalCandidatePremiumPenaltyTargetLoss / Double(simulationsCount)
         let fitness = averageWinRate * fitnessWinRateWeight +
             (averageScoreDiff / scoreDiffNormalization) * fitnessScoreDiffWeight +
             -(averageUnderbidLoss / underbidLossNormalization) * fitnessUnderbidLossWeight +
             -(averageTrumpDensityUnderbidLoss / trumpDensityUnderbidNormalization) * fitnessTrumpDensityUnderbidWeight +
-            -(averageNoTrumpControlUnderbidLoss / noTrumpControlUnderbidNormalization) * fitnessNoTrumpControlUnderbidWeight
+            -(averageNoTrumpControlUnderbidLoss / noTrumpControlUnderbidNormalization) * fitnessNoTrumpControlUnderbidWeight +
+            -(averagePremiumAssistLoss / premiumAssistNormalization) * fitnessPremiumAssistWeight +
+            -(averagePremiumPenaltyTargetLoss / premiumPenaltyTargetNormalization) * fitnessPremiumPenaltyTargetWeight
 
         return FitnessBreakdown(
             fitness: fitness,
@@ -1695,7 +1769,9 @@ extension BotTuning {
             averageScoreDiff: averageScoreDiff,
             averageUnderbidLoss: averageUnderbidLoss,
             averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
-            averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss
+            averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
+            averagePremiumAssistLoss: averagePremiumAssistLoss,
+            averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
         )
     }
 
@@ -1738,6 +1814,8 @@ extension BotTuning {
         var underbidLosses = Array(repeating: 0.0, count: playerCount)
         var trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
         var noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
+        let premiumAssistLosses = Array(repeating: 0.0, count: playerCount)
+        let premiumPenaltyTargetLosses = Array(repeating: 0.0, count: playerCount)
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for _ in 0..<rounds {
@@ -1759,7 +1837,7 @@ extension BotTuning {
                 biddingServices: biddingServices
             )
             let bids = biddingOutcome.bids
-            let tricksTaken = playRound(
+            let playOutcome = playRound(
                 hands: hands,
                 bids: bids,
                 dealer: dealer,
@@ -1767,6 +1845,7 @@ extension BotTuning {
                 trump: trump,
                 turnServices: turnServices
             )
+            let tricksTaken = playOutcome.tricksTaken
 
             for playerIndex in 0..<playerCount {
                 let roundScore = ScoreCalculator.calculateRoundScore(
@@ -1793,6 +1872,10 @@ extension BotTuning {
                     cardsInRound: cardsInRound,
                     maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
                 )
+                underbidLosses[playerIndex] += nonFinalLeadWishWithoutAbovePenalty(
+                    nonFinalLeadWishCount: playOutcome.nonFinalLeadWishCounts[playerIndex],
+                    cardsInRound: cardsInRound
+                )
                 trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
                     hand: hands[playerIndex],
                     bid: bids[playerIndex],
@@ -1815,7 +1898,9 @@ extension BotTuning {
             totalScores: totalScores,
             underbidLosses: underbidLosses,
             trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
-            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses
+            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
+            premiumAssistLosses: premiumAssistLosses,
+            premiumPenaltyTargetLosses: premiumPenaltyTargetLosses
         )
     }
 
@@ -1836,6 +1921,8 @@ extension BotTuning {
         var underbidLosses = Array(repeating: 0.0, count: playerCount)
         var trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
         var noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
+        var premiumAssistLosses = Array(repeating: 0.0, count: playerCount)
+        var premiumPenaltyTargetLosses = Array(repeating: 0.0, count: playerCount)
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for (blockIndex, dealsInBlock) in blockDeals.enumerated() {
@@ -1885,7 +1972,7 @@ extension BotTuning {
                     blindSelections: blindContext.blindSelections
                 )
                 let bids = biddingOutcome.bids
-                let tricksTaken = playRound(
+                let playOutcome = playRound(
                     hands: hands,
                     bids: bids,
                     dealer: dealer,
@@ -1893,6 +1980,7 @@ extension BotTuning {
                     trump: trump,
                     turnServices: turnServices
                 )
+                let tricksTaken = playOutcome.tricksTaken
 
                 for playerIndex in 0..<playerCount {
                     let isBlind = blindContext.blindSelections.indices.contains(playerIndex)
@@ -1923,6 +2011,10 @@ extension BotTuning {
                         cardsInRound: cardsInRound,
                         maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
                     )
+                    underbidLosses[playerIndex] += nonFinalLeadWishWithoutAbovePenalty(
+                        nonFinalLeadWishCount: playOutcome.nonFinalLeadWishCounts[playerIndex],
+                        cardsInRound: cardsInRound
+                    )
                     trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
                         hand: hands[playerIndex],
                         bid: bids[playerIndex],
@@ -1942,13 +2034,19 @@ extension BotTuning {
                 dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
             }
 
-            let finalizedBlockScores = finalizeBlockScores(
+            let finalizedBlockOutcome = finalizeBlockScores(
                 blockRoundResults: blockRoundResults,
                 blockNumber: blockNumber,
                 playerCount: playerCount
             )
+            accumulatePremiumSupportLosses(
+                premiumAssistLosses: &premiumAssistLosses,
+                premiumPenaltyTargetLosses: &premiumPenaltyTargetLosses,
+                blockOutcome: finalizedBlockOutcome,
+                playerCount: playerCount
+            )
             for playerIndex in 0..<playerCount {
-                totalScores[playerIndex] += finalizedBlockScores[playerIndex]
+                totalScores[playerIndex] += finalizedBlockOutcome.finalScores[playerIndex]
             }
         }
 
@@ -1956,7 +2054,9 @@ extension BotTuning {
             totalScores: totalScores,
             underbidLosses: underbidLosses,
             trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
-            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses
+            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
+            premiumAssistLosses: premiumAssistLosses,
+            premiumPenaltyTargetLosses: premiumPenaltyTargetLosses
         )
     }
 
@@ -2087,6 +2187,17 @@ extension BotTuning {
         return Double(deficit) * penaltyPerMissingTrick + certaintyBonus
     }
 
+    /// Штраф за ранний заход джокером в режиме "wish":
+    /// без заказа масти бот хуже контролирует последующие взятки.
+    private static func nonFinalLeadWishWithoutAbovePenalty(
+        nonFinalLeadWishCount: Int,
+        cardsInRound: Int
+    ) -> Double {
+        guard nonFinalLeadWishCount > 0 else { return 0.0 }
+        let depthMultiplier = cardsInRound >= 5 ? 1.20 : 1.0
+        return Double(nonFinalLeadWishCount) * 2_400.0 * depthMultiplier
+    }
+
     /// Дополнительный штраф за недозаказ в руках с высокой плотностью козырей.
     private static func trumpDensityUnderbidPenalty(
         hand: [Card],
@@ -2160,12 +2271,28 @@ extension BotTuning {
         return Double(deficit) * 1_900.0 * jokerMultiplier * max(0.0, emphasisMultiplier)
     }
 
+    private struct BlockFinalizationOutcome {
+        let finalScores: [Int]
+        let allPremiumPlayers: [Int]
+        let premiumBonuses: [Int]
+        let zeroPremiumBonuses: [Int]
+        let premiumPenalties: [Int]
+    }
+
     private static func finalizeBlockScores(
         blockRoundResults: [[RoundResult]],
         blockNumber: Int,
         playerCount: Int
-    ) -> [Int] {
-        guard playerCount > 0 else { return [] }
+    ) -> BlockFinalizationOutcome {
+        guard playerCount > 0 else {
+            return BlockFinalizationOutcome(
+                finalScores: [],
+                allPremiumPlayers: [],
+                premiumBonuses: [],
+                zeroPremiumBonuses: [],
+                premiumPenalties: []
+            )
+        }
 
         let allPremiumPlayers = (0..<playerCount).filter { playerIndex in
             let results = blockRoundResults.indices.contains(playerIndex)
@@ -2236,8 +2363,57 @@ extension BotTuning {
             return roundsWithPremiums[playerIndex].reduce(0) { $0 + $1.score }
         }
 
-        return (0..<playerCount).map { playerIndex in
+        let finalScores = (0..<playerCount).map { playerIndex in
             baseBlockScores[playerIndex] - premiumPenalties[playerIndex]
+        }
+
+        return BlockFinalizationOutcome(
+            finalScores: finalScores,
+            allPremiumPlayers: allPremiumPlayers,
+            premiumBonuses: premiumBonuses,
+            zeroPremiumBonuses: zeroPremiumBonuses,
+            premiumPenalties: premiumPenalties
+        )
+    }
+
+    private static func accumulatePremiumSupportLosses(
+        premiumAssistLosses: inout [Double],
+        premiumPenaltyTargetLosses: inout [Double],
+        blockOutcome: BlockFinalizationOutcome,
+        playerCount: Int
+    ) {
+        guard playerCount > 0 else { return }
+        guard !blockOutcome.allPremiumPlayers.isEmpty else { return }
+
+        let premiumPlayersSet = Set(blockOutcome.allPremiumPlayers)
+        let premiumGains = (0..<playerCount).map { playerIndex in
+            let regularBonus = blockOutcome.premiumBonuses.indices.contains(playerIndex)
+                ? blockOutcome.premiumBonuses[playerIndex]
+                : 0
+            let zeroBonus = blockOutcome.zeroPremiumBonuses.indices.contains(playerIndex)
+                ? blockOutcome.zeroPremiumBonuses[playerIndex]
+                : 0
+            return regularBonus + zeroBonus
+        }
+
+        for playerIndex in 0..<playerCount {
+            let penalty = blockOutcome.premiumPenalties.indices.contains(playerIndex)
+                ? blockOutcome.premiumPenalties[playerIndex]
+                : 0
+            premiumPenaltyTargetLosses[playerIndex] += Double(max(0, penalty))
+
+            // Если игрок сам не взял премию, но соперники взяли,
+            // считаем это "подарком премии" и штрафуем в self-play.
+            guard !premiumPlayersSet.contains(playerIndex) else { continue }
+            let opponentPremiumPlayers = blockOutcome.allPremiumPlayers.filter { $0 != playerIndex }
+            guard !opponentPremiumPlayers.isEmpty else { continue }
+
+            let opponentsPremiumGain = opponentPremiumPlayers.reduce(0) { partial, opponentIndex in
+                partial + (premiumGains.indices.contains(opponentIndex) ? premiumGains[opponentIndex] : 0)
+            }
+            let structureLoss = Double(opponentPremiumPlayers.count) * 120.0
+            let gainLoss = Double(max(0, opponentsPremiumGain)) * 0.45
+            premiumAssistLosses[playerIndex] += structureLoss + gainLoss
         }
     }
 
@@ -2350,13 +2526,14 @@ extension BotTuning {
         cardsInRound: Int,
         trump: Suit?,
         turnServices: [BotTurnStrategyService]
-    ) -> [Int] {
+    ) -> RoundPlayOutcome {
         let playerCount = hands.count
         var tricksTaken = Array(repeating: 0, count: playerCount)
+        var nonFinalLeadWishCounts = Array(repeating: 0, count: playerCount)
         var mutableHands = hands
         var trickLeader = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
 
-        for _ in 0..<cardsInRound {
+        for trickIndex in 0..<cardsInRound {
             let trickNode = TrickNode(rendersCards: false)
 
             for offset in 0..<playerCount {
@@ -2386,6 +2563,15 @@ extension BotTuning {
                     move = fallbackMove
                 } else {
                     continue
+                }
+
+                if isNonFinalLeadWishJokerMove(
+                    move: move,
+                    trickNode: trickNode,
+                    trickIndex: trickIndex,
+                    cardsInRound: cardsInRound
+                ) {
+                    nonFinalLeadWishCounts[player] += 1
                 }
 
                 if let removeIndex = mutableHands[player].firstIndex(of: move.card) {
@@ -2424,7 +2610,29 @@ extension BotTuning {
             trickLeader = winner
         }
 
-        return tricksTaken
+        return RoundPlayOutcome(
+            tricksTaken: tricksTaken,
+            nonFinalLeadWishCounts: nonFinalLeadWishCounts
+        )
+    }
+
+    private struct RoundPlayOutcome {
+        let tricksTaken: [Int]
+        let nonFinalLeadWishCounts: [Int]
+    }
+
+    private static func isNonFinalLeadWishJokerMove(
+        move: (card: Card, decision: JokerPlayDecision),
+        trickNode: TrickNode,
+        trickIndex: Int,
+        cardsInRound: Int
+    ) -> Bool {
+        guard move.card.isJoker else { return false }
+        guard move.decision.style == .faceUp else { return false }
+        guard trickNode.playedCards.isEmpty else { return false }
+        guard trickIndex < cardsInRound - 1 else { return false }
+        guard case .some(.wish) = move.decision.leadDeclaration else { return false }
+        return true
     }
 
     private static func fallbackMove(

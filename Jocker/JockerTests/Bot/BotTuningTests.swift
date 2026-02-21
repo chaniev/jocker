@@ -180,6 +180,10 @@ final class BotTuningTests: XCTestCase {
         XCTAssertTrue(result.bestAverageTrumpDensityUnderbidLoss.isFinite)
         XCTAssertTrue(result.baselineAverageNoTrumpControlUnderbidLoss.isFinite)
         XCTAssertTrue(result.bestAverageNoTrumpControlUnderbidLoss.isFinite)
+        XCTAssertTrue(result.baselineAveragePremiumAssistLoss.isFinite)
+        XCTAssertTrue(result.bestAveragePremiumAssistLoss.isFinite)
+        XCTAssertTrue(result.baselineAveragePremiumPenaltyTargetLoss.isFinite)
+        XCTAssertTrue(result.bestAveragePremiumPenaltyTargetLoss.isFinite)
     }
 
     func testSelfPlayEvolution_fullMatchAndSeatRotation_reportsFitnessComponents() {
@@ -223,5 +227,9 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.bestAverageTrumpDensityUnderbidLoss, 0.0)
         XCTAssertGreaterThanOrEqual(result.baselineAverageNoTrumpControlUnderbidLoss, 0.0)
         XCTAssertGreaterThanOrEqual(result.bestAverageNoTrumpControlUnderbidLoss, 0.0)
+        XCTAssertGreaterThanOrEqual(result.baselineAveragePremiumAssistLoss, 0.0)
+        XCTAssertGreaterThanOrEqual(result.bestAveragePremiumAssistLoss, 0.0)
+        XCTAssertGreaterThanOrEqual(result.baselineAveragePremiumPenaltyTargetLoss, 0.0)
+        XCTAssertGreaterThanOrEqual(result.bestAveragePremiumPenaltyTargetLoss, 0.0)
     }
 }
