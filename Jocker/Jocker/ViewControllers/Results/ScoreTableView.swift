@@ -39,6 +39,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let thinGridLayer = CAShapeLayer()
     private let thickGridLayer = CAShapeLayer()
     private let premiumLossLayer = CAShapeLayer()
+    private var premiumTrophyLabels: [UILabel] = []
 
     private var leftColumnWidth: CGFloat = 36
     private var trickColumnWidth: CGFloat = 44
@@ -332,14 +333,13 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private func applyScoreDataIfNeeded() {
         guard let scoreManager = scoreManager else {
             premiumLossLayer.path = nil
+            clearPremiumTrophyLabels()
             return
         }
 
         let completedBlocks = scoreManager.completedBlocks
         let currentBlockResults = scoreManager.currentBlockRoundResults
         let currentBlockScores = scoreManager.currentBlockBaseScores
-
-        updateHeaderPremiumIndicators(completedBlocks: completedBlocks)
 
         for (rowIndex, mapping) in layout.rowMappings.enumerated() {
             switch mapping.kind {
@@ -406,22 +406,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     private func targetSummaryRowIndex(blockIndex: Int) -> Int? {
         return summaryRowsForBlock(blockIndex).max()
-    }
-
-    private func updateHeaderPremiumIndicators(completedBlocks: [BlockResult]) {
-        let latestPremiumPlayers = latestPremiumPlayerIndices(in: completedBlocks)
-
-        for displayIndex in 0..<playerCount {
-            let playerIndex = playerDisplayOrder[displayIndex]
-            let baseName = displayName(for: playerIndex)
-            let hasPremium = latestPremiumPlayers.contains(playerIndex)
-            headerLabels[displayIndex].text = hasPremium ? "\(baseName) 🏆" : baseName
-        }
-    }
-
-    private func latestPremiumPlayerIndices(in completedBlocks: [BlockResult]) -> Set<Int> {
-        guard let latestBlock = completedBlocks.last else { return [] }
-        return Set(latestBlock.premiumPlayerIndices + latestBlock.zeroPremiumPlayerIndices)
     }
 
     private func applyDealRow(
@@ -590,6 +574,8 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         completedBlocks: [BlockResult],
         currentBlockResults: [[RoundResult]]
     ) {
+        clearPremiumTrophyLabels()
+
         let path = UIBezierPath()
         let maxBlockIndex = layout.rowMappings.map(\.blockIndex).max() ?? -1
         guard maxBlockIndex >= 0 else {
@@ -618,17 +604,31 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
                 continue
             }
 
+            let premiumPlayers: Set<Int>
+            if blockIndex < completedBlocks.count {
+                let block = completedBlocks[blockIndex]
+                premiumPlayers = Set(block.premiumPlayerIndices + block.zeroPremiumPlayerIndices)
+            } else {
+                premiumPlayers = []
+            }
+
             for displayIndex in 0..<playerCount {
                 let playerIndex = playerDisplayOrder[displayIndex]
                 guard playerIndex < roundResultsByPlayer.count else { continue }
-                let playerRoundResults = roundResultsByPlayer[playerIndex]
-                guard hasLostPremium(in: playerRoundResults) else { continue }
                 let baseX = leftColumnWidth + CGFloat(displayIndex) * (trickColumnWidth + pointsColumnWidth)
 
                 let topY = headerHeight + CGFloat(topRowIndex) * rowHeight
                 let height = CGFloat(bottomRowIndex - topRowIndex + 1) * rowHeight
                 let markRect = CGRect(x: baseX, y: topY, width: trickColumnWidth, height: height).insetBy(dx: 3, dy: 3)
                 guard markRect.width > 2, markRect.height > 2 else { continue }
+
+                if premiumPlayers.contains(playerIndex) {
+                    addPremiumTrophyMark(in: markRect)
+                    continue
+                }
+
+                let playerRoundResults = roundResultsByPlayer[playerIndex]
+                guard hasLostPremium(in: playerRoundResults) else { continue }
 
                 path.move(to: CGPoint(x: markRect.minX, y: markRect.minY))
                 path.addLine(to: CGPoint(x: markRect.maxX, y: markRect.maxY))
@@ -642,6 +642,23 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     private func hasLostPremium(in roundResults: [RoundResult]) -> Bool {
         return roundResults.contains(where: { $0.bid != $0.tricksTaken })
+    }
+
+    private func addPremiumTrophyMark(in rect: CGRect) {
+        let label = UILabel(frame: rect)
+        label.backgroundColor = .clear
+        label.textAlignment = .center
+        label.text = "🏆"
+        label.font = UIFont.systemFont(ofSize: min(max(rect.height * 0.72, 17), 28))
+        contentView.addSubview(label)
+        premiumTrophyLabels.append(label)
+    }
+
+    private func clearPremiumTrophyLabels() {
+        for label in premiumTrophyLabels {
+            label.removeFromSuperview()
+        }
+        premiumTrophyLabels.removeAll()
     }
 
     private func summaryRowsForBlock(_ blockIndex: Int) -> [Int] {
