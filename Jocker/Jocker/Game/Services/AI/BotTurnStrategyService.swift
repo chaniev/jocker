@@ -2699,7 +2699,10 @@ extension BotTuning {
             startingDeckIndex: 0
         )
         let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
-        let trump = trumpServices[trumpChooser].selectTrump(from: initialDeal.hands[trumpChooser])
+        let trump = trumpServices[trumpChooser].selectTrump(
+            from: initialDeal.hands[trumpChooser],
+            isPlayerChosenTrumpStage: true
+        )
 
         let remainingCards = max(0, cardsPerPlayer - cardsBeforeChoice)
         var fullHands = initialDeal.hands

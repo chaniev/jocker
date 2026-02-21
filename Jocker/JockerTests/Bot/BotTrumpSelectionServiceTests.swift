@@ -45,4 +45,36 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
 
         XCTAssertNil(trump)
     }
+
+    func testSelectTrump_playerChoiceStageBonus_prefersTwoOfThreeSameSuit() {
+        let service = BotTrumpSelectionService()
+        let hand: [Card] = [
+            .regular(suit: .hearts, rank: .seven),
+            .regular(suit: .hearts, rank: .eight),
+            .regular(suit: .clubs, rank: .seven)
+        ]
+
+        let trump = service.selectTrump(
+            from: hand,
+            isPlayerChosenTrumpStage: true
+        )
+
+        XCTAssertEqual(trump, .hearts)
+    }
+
+    func testSelectTrump_withoutPlayerChoiceStageBonus_sameHandReturnsNil() {
+        let service = BotTrumpSelectionService()
+        let hand: [Card] = [
+            .regular(suit: .hearts, rank: .seven),
+            .regular(suit: .hearts, rank: .eight),
+            .regular(suit: .clubs, rank: .seven)
+        ]
+
+        let trump = service.selectTrump(
+            from: hand,
+            isPlayerChosenTrumpStage: false
+        )
+
+        XCTAssertNil(trump)
+    }
 }
