@@ -14,6 +14,7 @@ This document is the source of truth for repository structure and file placement
 │       └── ios-tests.yml
 ├── Makefile
 ├── FOLDER_STRUCTURE_SPEC.md
+├── BOT_AI_IMPROVEMENT_PLAN.md
 ├── CARDS_DOCUMENTATION.md
 ├── README.md
 ├── README_CARDS.md
@@ -53,10 +54,13 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: bot move strategy for runtime turns (target bid tracking, card selection priority, and joker mode declaration).
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that ranks legal card/joker candidates using round projections and card/trick heuristics.
+- `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`: low-level runtime card/trick heuristics for bot turns (joker decision variants, threat scoring, unseen-card modeling, and immediate trick-win probability).
+- `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`: runtime round projection helper for bot turns (bid normalization, future trick estimates, expected round score, and remaining-hand projection).
 - `Jocker/Jocker/Game/Services/AI/BotTuning+SelfPlayEvolution.swift`: thin `BotTuning` adapter over self-play evolution/head-to-head APIs (typealiases + forwarding methods).
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine.swift`: self-play evolution/simulation engine and fitness evaluation internals for tuning `BotTuning` coefficients.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training.
+- `BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
 - `.github/workflows/ios-tests.yml`: GitHub Actions CI workflow that runs Xcode tests on macOS for every `push` and uploads test run artifacts from `.derivedData/test-runs`.
 - `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
 - `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
@@ -143,8 +147,10 @@ Jocker/Jocker/
 │   └── Services/
 │       ├── AI/
 │       │   ├── BotBiddingService.swift
+│       │   ├── BotTurnCardHeuristicsService.swift
 │       │   ├── BotSelfPlayEvolutionEngine.swift
 │       │   ├── BotTuning+SelfPlayEvolution.swift
+│       │   ├── BotTurnRoundProjectionService.swift
 │       │   ├── BotTrumpSelectionService.swift
 │       │   └── BotTurnStrategyService.swift
 │       ├── Flow/
