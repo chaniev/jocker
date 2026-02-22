@@ -72,6 +72,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private var pointsColumnWidth: CGFloat = 64
     private let headerHeight: CGFloat = 28
     private let rowHeight: CGFloat = 24
+    private let pointsLabelTrailingInset: CGFloat = 4
 
     // Лейблы создаются один раз при инициализации
     private var headerLabels: [UILabel] = []
@@ -321,30 +322,32 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     /// Пересчитываем frame лейблов при изменении размеров без пересоздания
     private func repositionLabels() {
+        let frameResolver = ScoreTableLabelFrameResolver(
+            leftColumnWidth: leftColumnWidth,
+            trickColumnWidth: trickColumnWidth,
+            pointsColumnWidth: pointsColumnWidth,
+            headerHeight: headerHeight,
+            rowHeight: rowHeight,
+            pointsLabelTrailingInset: pointsLabelTrailingInset
+        )
+
         // Заголовки
         for (playerIndex, headerLabel) in headerLabels.enumerated() {
-            headerLabel.frame = CGRect(
-                x: leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth),
-                y: 0,
-                width: trickColumnWidth + pointsColumnWidth,
-                height: headerHeight
-            )
+            headerLabel.frame = frameResolver.headerFrame(displayIndex: playerIndex)
         }
 
         // Строки
         for rowIndex in 0..<layout.rows.count {
-            let rowY = headerHeight + CGFloat(rowIndex) * rowHeight
-
-            cardsLabels[rowIndex].frame = CGRect(x: 0, y: rowY, width: leftColumnWidth, height: rowHeight)
+            cardsLabels[rowIndex].frame = frameResolver.cardsLabelFrame(rowIndex: rowIndex)
 
             for playerIndex in 0..<playerCount {
-                let baseX = leftColumnWidth + CGFloat(playerIndex) * (trickColumnWidth + pointsColumnWidth)
-
-                tricksLabels[rowIndex][playerIndex].frame = CGRect(
-                    x: baseX, y: rowY, width: trickColumnWidth, height: rowHeight
+                tricksLabels[rowIndex][playerIndex].frame = frameResolver.tricksLabelFrame(
+                    rowIndex: rowIndex,
+                    displayIndex: playerIndex
                 )
-                pointsLabels[rowIndex][playerIndex].frame = CGRect(
-                    x: baseX + trickColumnWidth, y: rowY, width: pointsColumnWidth - 4, height: rowHeight
+                pointsLabels[rowIndex][playerIndex].frame = frameResolver.pointsLabelFrame(
+                    rowIndex: rowIndex,
+                    displayIndex: playerIndex
                 )
             }
         }
