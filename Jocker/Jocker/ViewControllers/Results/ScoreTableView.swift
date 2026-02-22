@@ -47,6 +47,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let snapshotBuilder: ScoreTableRenderSnapshotBuilder
     private let inProgressRoundSnapshotProvider: ScoreTableInProgressRoundSnapshotProvider
     private let rowNavigationResolver: ScoreTableRowNavigationResolver
+    private let scrollOffsetResolver: ScoreTableScrollOffsetResolver
     private let rowTextRenderer: ScoreTableRowTextRenderer
     private var scoreDataSnapshot: ScoreDataSnapshot?
     private var scoreDecorationsSnapshot: ScoreDecorationsSnapshot = .empty
@@ -112,6 +113,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         self.rowNavigationResolver = ScoreTableRowNavigationResolver(
             rowMappings: self.layout.rowMappings
         )
+        self.scrollOffsetResolver = ScoreTableScrollOffsetResolver(
+            headerHeight: self.headerHeight,
+            rowHeight: self.rowHeight
+        )
         self.rowTextRenderer = ScoreTableRowTextRenderer(
             playerCount: playerCount,
             playerDisplayOrder: self.playerDisplayOrder,
@@ -176,11 +181,11 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     }
 
     private func scrollToRow(_ rowIndex: Int, animated: Bool) {
-        let rowTop = headerHeight + CGFloat(rowIndex) * rowHeight
-        let visibleHeight = max(scrollView.bounds.height, 1)
-        let maxOffsetY = max(0, scrollView.contentSize.height - visibleHeight)
-        let centeredOffsetY = rowTop - (visibleHeight - rowHeight) / 2
-        let targetOffsetY = min(max(0, centeredOffsetY), maxOffsetY)
+        let targetOffsetY = scrollOffsetResolver.targetOffsetY(
+            forRowIndex: rowIndex,
+            visibleHeight: scrollView.bounds.height,
+            contentHeight: scrollView.contentSize.height
+        )
 
         scrollView.setContentOffset(
             CGPoint(x: scrollView.contentOffset.x, y: targetOffsetY),

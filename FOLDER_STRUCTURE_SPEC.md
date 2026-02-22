@@ -93,6 +93,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowNavigationResolver.swift`: pure row navigation helper for `ScoreTableView` that resolves scroll targets for deal rows and block summary rows from static row mappings.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableScrollOffsetResolver.swift`: pure scroll-offset calculator for `ScoreTableView` that centers target rows and clamps vertical offsets to scroll bounds.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays and summary score formatting.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared modal UI building blocks for bid-related selectors (container, labels, scroll grid, and bid-button rows).
@@ -220,6 +221,7 @@ Jocker/Jocker/
 │   │   ├── ScoreTableInProgressRoundSnapshotProvider.swift
 │   │   ├── ScoreTableRenderSnapshotBuilder.swift
 │   │   ├── ScoreTableRowNavigationResolver.swift
+│   │   ├── ScoreTableScrollOffsetResolver.swift
 │   │   ├── ScoreTableRowTextRenderer.swift
 │   │   ├── ScoreTableView.swift
 │   │   └── ScoreTableViewController.swift
@@ -258,6 +260,7 @@ Jocker/JockerTests/
 ├── Results/
 │   ├── GameResultsPresentationIntegrationTests.swift
 │   ├── ScoreTableInProgressRoundSnapshotProviderTests.swift
+│   ├── ScoreTableRowNavigationResolverTests.swift
 │   ├── ScoreTableRenderSnapshotBuilderTests.swift
 │   └── ScoreTableRowTextRendererTests.swift
 ├── Rules/

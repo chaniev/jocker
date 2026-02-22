@@ -96,6 +96,8 @@
 		D4CC00012F800B010037CA75 /* ScoreTableInProgressRoundSnapshotProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CC00022F800B010037CA75 /* ScoreTableInProgressRoundSnapshotProviderTests.swift */; };
 		D4CD00012F800C010037CA75 /* ScoreTableRowNavigationResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CD00022F800C010037CA75 /* ScoreTableRowNavigationResolver.swift */; };
 		D4CE00012F800D010037CA75 /* ScoreTableRowTextRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CE00022F800D010037CA75 /* ScoreTableRowTextRendererTests.swift */; };
+		D4CF00012F800E010037CA75 /* ScoreTableScrollOffsetResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CF00022F800E010037CA75 /* ScoreTableScrollOffsetResolver.swift */; };
+		D4D000012F800F010037CA75 /* ScoreTableRowNavigationResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D000022F800F010037CA75 /* ScoreTableRowNavigationResolverTests.swift */; };
 		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
 		D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
 		D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
@@ -241,6 +243,8 @@
 		D4CC00022F800B010037CA75 /* ScoreTableInProgressRoundSnapshotProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableInProgressRoundSnapshotProviderTests.swift; sourceTree = "<group>"; };
 		D4CD00022F800C010037CA75 /* ScoreTableRowNavigationResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRowNavigationResolver.swift; sourceTree = "<group>"; };
 		D4CE00022F800D010037CA75 /* ScoreTableRowTextRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRowTextRendererTests.swift; sourceTree = "<group>"; };
+		D4CF00022F800E010037CA75 /* ScoreTableScrollOffsetResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableScrollOffsetResolver.swift; sourceTree = "<group>"; };
+		D4D000022F800F010037CA75 /* ScoreTableRowNavigationResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRowNavigationResolverTests.swift; sourceTree = "<group>"; };
 		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
 		D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
 		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
@@ -590,6 +594,7 @@
 				D4CA00022F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift */,
 				D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */,
 				D4CD00022F800C010037CA75 /* ScoreTableRowNavigationResolver.swift */,
+				D4CF00022F800E010037CA75 /* ScoreTableScrollOffsetResolver.swift */,
 				D4CB00022F800A010037CA75 /* ScoreTableRowTextRenderer.swift */,
 				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
 				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
@@ -701,6 +706,7 @@
 			children = (
 				B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */,
 				D4CC00022F800B010037CA75 /* ScoreTableInProgressRoundSnapshotProviderTests.swift */,
+				D4D000022F800F010037CA75 /* ScoreTableRowNavigationResolverTests.swift */,
 				D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */,
 				D4CE00022F800D010037CA75 /* ScoreTableRowTextRendererTests.swift */,
 			);
@@ -891,6 +897,7 @@
 				D4CA00012F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift in Sources */,
 				D4C700012F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift in Sources */,
 				D4CD00012F800C010037CA75 /* ScoreTableRowNavigationResolver.swift in Sources */,
+				D4CF00012F800E010037CA75 /* ScoreTableScrollOffsetResolver.swift in Sources */,
 				D4CB00012F800A010037CA75 /* ScoreTableRowTextRenderer.swift in Sources */,
 				B10000162F7500010037CA75 /* GameStatisticsViewController.swift in Sources */,
 				B10000182F7500010037CA75 /* GameStatisticsTableView.swift in Sources */,
@@ -974,6 +981,7 @@
 				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
 				B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */,
 				D4CC00012F800B010037CA75 /* ScoreTableInProgressRoundSnapshotProviderTests.swift in Sources */,
+				D4D000012F800F010037CA75 /* ScoreTableRowNavigationResolverTests.swift in Sources */,
 				D4C800012F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift in Sources */,
 				D4CE00012F800D010037CA75 /* ScoreTableRowTextRendererTests.swift in Sources */,
 				D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */,
