@@ -49,6 +49,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let rowNavigationResolver: ScoreTableRowNavigationResolver
     private let scrollOffsetResolver: ScoreTableScrollOffsetResolver
     private let tapTargetResolver: ScoreTableTapTargetResolver
+    private let rowPresentationResolver: ScoreTableRowPresentationResolver
     private let rowTextRenderer: ScoreTableRowTextRenderer
     private var scoreDataSnapshot: ScoreDataSnapshot?
     private var scoreDecorationsSnapshot: ScoreDecorationsSnapshot = .empty
@@ -123,6 +124,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             headerHeight: self.headerHeight,
             rowHeight: self.rowHeight
         )
+        self.rowPresentationResolver = ScoreTableRowPresentationResolver()
         self.rowTextRenderer = ScoreTableRowTextRenderer(
             playerCount: playerCount,
             playerDisplayOrder: self.playerDisplayOrder,
@@ -285,17 +287,13 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         pointsLabels = Array(repeating: [], count: layout.rows.count)
 
         for (rowIndex, rowKind) in layout.rows.enumerated() {
-            let isSummary = rowKind == .subtotal || rowKind == .cumulative
+            let pointsLabelStyle = rowPresentationResolver.pointsLabelStyle(for: rowKind)
 
             let cardsLabel = UILabel()
             cardsLabel.font = cellFont
             cardsLabel.textAlignment = .center
             cardsLabel.textColor = textSecondaryColor
-            if case let .deal(cards) = rowKind {
-                cardsLabel.text = "\(cards)"
-            } else {
-                cardsLabel.text = ""
-            }
+            cardsLabel.text = rowPresentationResolver.cardsLabelText(for: rowKind)
             contentView.addSubview(cardsLabel)
             cardsLabels.append(cardsLabel)
 
@@ -309,7 +307,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
                 tricksLabels[rowIndex].append(tricksLabel)
 
                 let pointsLabel = UILabel()
-                pointsLabel.font = isSummary ? summaryFont : cellFont
+                pointsLabel.font = pointsLabelStyle == .summary ? summaryFont : cellFont
                 pointsLabel.textAlignment = .right
                 pointsLabel.textColor = textPrimaryColor
                 pointsLabel.text = ""
@@ -425,19 +423,12 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     private func clearAllScoreLabels() {
         for rowIndex in 0..<layout.rows.count {
-            cardsLabels[rowIndex].text = cardsLabelText(for: layout.rows[rowIndex])
+            cardsLabels[rowIndex].text = rowPresentationResolver.cardsLabelText(for: layout.rows[rowIndex])
             for displayIndex in 0..<playerCount {
                 tricksLabels[rowIndex][displayIndex].text = ""
                 pointsLabels[rowIndex][displayIndex].text = ""
             }
         }
-    }
-
-    private func cardsLabelText(for rowKind: RowKind) -> String {
-        if case let .deal(cards) = rowKind {
-            return "\(cards)"
-        }
-        return ""
     }
 
     private func clearPremiumDecorations() {

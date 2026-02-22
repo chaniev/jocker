@@ -93,6 +93,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowNavigationResolver.swift`: pure row navigation helper for `ScoreTableView` that resolves scroll targets for deal rows and block summary rows from static row mappings.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableRowPresentationResolver.swift`: pure row presentation helper for `ScoreTableView` that defines cards-column text and row-level points label style (`regular` vs `summary`).
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableScrollOffsetResolver.swift`: pure scroll-offset calculator for `ScoreTableView` that centers target rows and clamps vertical offsets to scroll bounds.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift`: pure tap hit-testing helper for `ScoreTableView` that maps tap coordinates to a deal row target (`blockIndex`, `roundIndex`) using static row mappings.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays and summary score formatting.
@@ -222,6 +223,7 @@ Jocker/Jocker/
 │   │   ├── ScoreTableInProgressRoundSnapshotProvider.swift
 │   │   ├── ScoreTableRenderSnapshotBuilder.swift
 │   │   ├── ScoreTableRowNavigationResolver.swift
+│   │   ├── ScoreTableRowPresentationResolver.swift
 │   │   ├── ScoreTableScrollOffsetResolver.swift
 │   │   ├── ScoreTableTapTargetResolver.swift
 │   │   ├── ScoreTableRowTextRenderer.swift
@@ -265,6 +267,7 @@ Jocker/JockerTests/
 │   ├── ScoreTableRowNavigationResolverTests.swift
 │   ├── ScoreTableRenderSnapshotBuilderTests.swift
 │   ├── ScoreTableScrollOffsetResolverTests.swift
+│   ├── ScoreTableTapTargetResolverTests.swift
 │   └── ScoreTableRowTextRendererTests.swift
 ├── Rules/
 │   ├── BiddingRulesTests.swift
