@@ -219,23 +219,32 @@ enum BotSelfPlayEvolutionEngine {
         progress: ((SelfPlayEvolutionProgress) -> Void)? = nil
     ) -> SelfPlayEvolutionResult {
         let playerCount = min(4, max(3, config.playerCount))
-        let deckLimit = max(1, Deck().cards.count / playerCount)
-        let lowerCards = min(max(1, config.cardsPerRoundRange.lowerBound), deckLimit)
-        let upperCards = min(max(lowerCards, config.cardsPerRoundRange.upperBound), deckLimit)
-        let cardsRange = lowerCards...upperCards
+        let cardsRange = normalizedCardsPerRoundRange(
+            from: config.cardsPerRoundRange,
+            playerCount: playerCount
+        )
         let populationSize = max(config.populationSize, config.eliteCount)
         let eliteCount = min(max(1, config.eliteCount), populationSize)
         let selectionPoolSize = min(
             populationSize,
             max(2, Int((Double(populationSize) * config.selectionPoolRatio).rounded(.up)))
         )
+        let fitnessScoring = FitnessScoringConfig(config: config)
 
         var rng = SelfPlayRandomGenerator(seed: seed)
-        var evaluationSeeds: [UInt64] = []
-        evaluationSeeds.reserveCapacity(config.gamesPerCandidate)
-        for _ in 0..<config.gamesPerCandidate {
-            evaluationSeeds.append(rng.next())
-        }
+        let evaluationSeeds = makeEvaluationSeeds(
+            count: config.gamesPerCandidate,
+            using: &rng
+        )
+        let baselineEvaluationContext = FitnessEvaluationContext(
+            playerCount: playerCount,
+            roundsPerGame: config.roundsPerGame,
+            cardsPerRoundRange: cardsRange,
+            evaluationSeeds: evaluationSeeds,
+            useFullMatchRules: config.useFullMatchRules,
+            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+            fitnessScoring: fitnessScoring
+        )
 
         var population: [EvolutionGenome] = [.identity]
         while population.count < populationSize {
@@ -293,25 +302,7 @@ enum BotSelfPlayEvolutionEngine {
         let baselineBreakdown = evaluateGenome(
             .identity,
             baseTuning: baseTuning,
-            playerCount: playerCount,
-            roundsPerGame: config.roundsPerGame,
-            cardsPerRoundRange: cardsRange,
-            evaluationSeeds: evaluationSeeds,
-            useFullMatchRules: config.useFullMatchRules,
-            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
-            fitnessWinRateWeight: config.fitnessWinRateWeight,
-            fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
-            fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
-            fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
-            fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
-            fitnessPremiumAssistWeight: config.fitnessPremiumAssistWeight,
-            fitnessPremiumPenaltyTargetWeight: config.fitnessPremiumPenaltyTargetWeight,
-            scoreDiffNormalization: config.scoreDiffNormalization,
-            underbidLossNormalization: config.underbidLossNormalization,
-            trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
-            noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization,
-            premiumAssistNormalization: config.premiumAssistNormalization,
-            premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization
+            context: baselineEvaluationContext
         )
         completedWorkUnits += 1
         notifyProgress(
@@ -337,6 +328,7 @@ enum BotSelfPlayEvolutionEngine {
             )
             let generationSeedMask = UInt64(generation + 1) &* 0x9E37_79B9_7F4A_7C15
             let generationSeeds = evaluationSeeds.map { $0 ^ generationSeedMask }
+            let generationEvaluationContext = baselineEvaluationContext.withEvaluationSeeds(generationSeeds)
 
             var scoredPopulation: [ScoredGenome] = []
             scoredPopulation.reserveCapacity(populationSize)
@@ -346,25 +338,7 @@ enum BotSelfPlayEvolutionEngine {
                 let breakdown = evaluateGenome(
                     genome,
                     baseTuning: baseTuning,
-                    playerCount: playerCount,
-                    roundsPerGame: config.roundsPerGame,
-                    cardsPerRoundRange: cardsRange,
-                    evaluationSeeds: generationSeeds,
-                    useFullMatchRules: config.useFullMatchRules,
-                    rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
-                    fitnessWinRateWeight: config.fitnessWinRateWeight,
-                    fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
-                    fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
-                    fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
-                    fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
-                    fitnessPremiumAssistWeight: config.fitnessPremiumAssistWeight,
-                    fitnessPremiumPenaltyTargetWeight: config.fitnessPremiumPenaltyTargetWeight,
-                    scoreDiffNormalization: config.scoreDiffNormalization,
-                    underbidLossNormalization: config.underbidLossNormalization,
-                    trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
-                    noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization,
-                    premiumAssistNormalization: config.premiumAssistNormalization,
-                    premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization
+                    context: generationEvaluationContext
                 )
                 scoredPopulation.append(
                     ScoredGenome(
@@ -506,6 +480,274 @@ enum BotSelfPlayEvolutionEngine {
         )
     }
 
+    private struct FitnessScoringConfig {
+        let winRateWeight: Double
+        let scoreDiffWeight: Double
+        let underbidLossWeight: Double
+        let trumpDensityUnderbidWeight: Double
+        let noTrumpControlUnderbidWeight: Double
+        let premiumAssistWeight: Double
+        let premiumPenaltyTargetWeight: Double
+        let scoreDiffNormalization: Double
+        let underbidLossNormalization: Double
+        let trumpDensityUnderbidNormalization: Double
+        let noTrumpControlUnderbidNormalization: Double
+        let premiumAssistNormalization: Double
+        let premiumPenaltyTargetNormalization: Double
+
+        init(config: SelfPlayEvolutionConfig) {
+            self.winRateWeight = config.fitnessWinRateWeight
+            self.scoreDiffWeight = config.fitnessScoreDiffWeight
+            self.underbidLossWeight = config.fitnessUnderbidLossWeight
+            self.trumpDensityUnderbidWeight = config.fitnessTrumpDensityUnderbidWeight
+            self.noTrumpControlUnderbidWeight = config.fitnessNoTrumpControlUnderbidWeight
+            self.premiumAssistWeight = config.fitnessPremiumAssistWeight
+            self.premiumPenaltyTargetWeight = config.fitnessPremiumPenaltyTargetWeight
+            self.scoreDiffNormalization = config.scoreDiffNormalization
+            self.underbidLossNormalization = config.underbidLossNormalization
+            self.trumpDensityUnderbidNormalization = config.trumpDensityUnderbidNormalization
+            self.noTrumpControlUnderbidNormalization = config.noTrumpControlUnderbidNormalization
+            self.premiumAssistNormalization = config.premiumAssistNormalization
+            self.premiumPenaltyTargetNormalization = config.premiumPenaltyTargetNormalization
+        }
+
+        func fitness(
+            winRate: Double,
+            averageScoreDiff: Double,
+            averageUnderbidLoss: Double,
+            averageTrumpDensityUnderbidLoss: Double,
+            averageNoTrumpControlUnderbidLoss: Double,
+            averagePremiumAssistLoss: Double,
+            averagePremiumPenaltyTargetLoss: Double
+        ) -> Double {
+            return winRate * winRateWeight +
+                (averageScoreDiff / scoreDiffNormalization) * scoreDiffWeight +
+                -(averageUnderbidLoss / underbidLossNormalization) * underbidLossWeight +
+                -(averageTrumpDensityUnderbidLoss / trumpDensityUnderbidNormalization) * trumpDensityUnderbidWeight +
+                -(averageNoTrumpControlUnderbidLoss / noTrumpControlUnderbidNormalization) * noTrumpControlUnderbidWeight +
+                -(averagePremiumAssistLoss / premiumAssistNormalization) * premiumAssistWeight +
+                -(averagePremiumPenaltyTargetLoss / premiumPenaltyTargetNormalization) * premiumPenaltyTargetWeight
+        }
+    }
+
+    private struct FitnessEvaluationContext {
+        let playerCount: Int
+        let roundsPerGame: Int
+        let cardsPerRoundRange: ClosedRange<Int>
+        let evaluationSeeds: [UInt64]
+        let useFullMatchRules: Bool
+        let rotateCandidateAcrossSeats: Bool
+        let fitnessScoring: FitnessScoringConfig
+
+        func withEvaluationSeeds(_ evaluationSeeds: [UInt64]) -> FitnessEvaluationContext {
+            return FitnessEvaluationContext(
+                playerCount: playerCount,
+                roundsPerGame: roundsPerGame,
+                cardsPerRoundRange: cardsPerRoundRange,
+                evaluationSeeds: evaluationSeeds,
+                useFullMatchRules: useFullMatchRules,
+                rotateCandidateAcrossSeats: rotateCandidateAcrossSeats,
+                fitnessScoring: fitnessScoring
+            )
+        }
+    }
+
+    private struct CandidateSeatMetrics {
+        let winShare: Double
+        let scoreDiff: Double
+        let underbidLoss: Double
+        let trumpDensityUnderbidLoss: Double
+        let noTrumpControlUnderbidLoss: Double
+        let premiumAssistLoss: Double
+        let premiumPenaltyTargetLoss: Double
+    }
+
+    private struct FitnessAccumulator {
+        private var totalWinRate = 0.0
+        private var totalScoreDiff = 0.0
+        private var totalUnderbidLoss = 0.0
+        private var totalTrumpDensityUnderbidLoss = 0.0
+        private var totalNoTrumpControlUnderbidLoss = 0.0
+        private var totalPremiumAssistLoss = 0.0
+        private var totalPremiumPenaltyTargetLoss = 0.0
+        private var samplesCount = 0
+
+        mutating func append(_ metrics: CandidateSeatMetrics) {
+            totalWinRate += metrics.winShare
+            totalScoreDiff += metrics.scoreDiff
+            totalUnderbidLoss += metrics.underbidLoss
+            totalTrumpDensityUnderbidLoss += metrics.trumpDensityUnderbidLoss
+            totalNoTrumpControlUnderbidLoss += metrics.noTrumpControlUnderbidLoss
+            totalPremiumAssistLoss += metrics.premiumAssistLoss
+            totalPremiumPenaltyTargetLoss += metrics.premiumPenaltyTargetLoss
+            samplesCount += 1
+        }
+
+        func makeBreakdown(fitnessScoring: FitnessScoringConfig) -> FitnessBreakdown {
+            guard samplesCount > 0 else { return .zero }
+
+            let denominator = Double(samplesCount)
+            let averageWinRate = totalWinRate / denominator
+            let averageScoreDiff = totalScoreDiff / denominator
+            let averageUnderbidLoss = totalUnderbidLoss / denominator
+            let averageTrumpDensityUnderbidLoss = totalTrumpDensityUnderbidLoss / denominator
+            let averageNoTrumpControlUnderbidLoss = totalNoTrumpControlUnderbidLoss / denominator
+            let averagePremiumAssistLoss = totalPremiumAssistLoss / denominator
+            let averagePremiumPenaltyTargetLoss = totalPremiumPenaltyTargetLoss / denominator
+            let fitness = fitnessScoring.fitness(
+                winRate: averageWinRate,
+                averageScoreDiff: averageScoreDiff,
+                averageUnderbidLoss: averageUnderbidLoss,
+                averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
+                averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
+                averagePremiumAssistLoss: averagePremiumAssistLoss,
+                averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+            )
+
+            return FitnessBreakdown(
+                fitness: fitness,
+                winRate: averageWinRate,
+                averageScoreDiff: averageScoreDiff,
+                averageUnderbidLoss: averageUnderbidLoss,
+                averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
+                averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
+                averagePremiumAssistLoss: averagePremiumAssistLoss,
+                averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+            )
+        }
+    }
+
+    private static func normalizedCardsPerRoundRange(
+        from range: ClosedRange<Int>,
+        playerCount: Int
+    ) -> ClosedRange<Int> {
+        let deckLimit = max(1, Deck().cards.count / max(1, playerCount))
+        let lowerCards = min(max(1, range.lowerBound), deckLimit)
+        let upperCards = min(max(lowerCards, range.upperBound), deckLimit)
+        return lowerCards...upperCards
+    }
+
+    private static func makeEvaluationSeeds(
+        count: Int,
+        using rng: inout SelfPlayRandomGenerator
+    ) -> [UInt64] {
+        var seeds: [UInt64] = []
+        seeds.reserveCapacity(max(0, count))
+        for _ in 0..<max(0, count) {
+            seeds.append(rng.next())
+        }
+        return seeds
+    }
+
+    private static func candidateSeatIndices(
+        playerCount: Int,
+        rotateCandidateAcrossSeats: Bool
+    ) -> [Int] {
+        guard playerCount > 0 else { return [] }
+        if rotateCandidateAcrossSeats {
+            return Array(0..<playerCount)
+        }
+        return [0]
+    }
+
+    private static func doubleMetricValue(
+        _ values: [Double],
+        at index: Int
+    ) -> Double {
+        guard values.indices.contains(index) else { return 0.0 }
+        return values[index]
+    }
+
+    private static func candidateSeatMetrics(
+        from gameOutcome: SimulatedGameOutcome,
+        candidateSeat: Int,
+        playerCount: Int
+    ) -> CandidateSeatMetrics? {
+        let totalScores = gameOutcome.totalScores
+        guard totalScores.indices.contains(candidateSeat) else { return nil }
+
+        let candidateScore = totalScores[candidateSeat]
+        let opponentsTotal = totalScores.reduce(0, +) - candidateScore
+        let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
+        let maxScore = totalScores.max() ?? candidateScore
+        let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
+        let winShare = candidateScore == maxScore ? 1.0 / Double(winnersCount) : 0.0
+
+        return CandidateSeatMetrics(
+            winShare: winShare,
+            scoreDiff: Double(candidateScore) - opponentsAverage,
+            underbidLoss: doubleMetricValue(gameOutcome.underbidLosses, at: candidateSeat),
+            trumpDensityUnderbidLoss: doubleMetricValue(
+                gameOutcome.trumpDensityUnderbidLosses,
+                at: candidateSeat
+            ),
+            noTrumpControlUnderbidLoss: doubleMetricValue(
+                gameOutcome.noTrumpControlUnderbidLosses,
+                at: candidateSeat
+            ),
+            premiumAssistLoss: doubleMetricValue(gameOutcome.premiumAssistLosses, at: candidateSeat),
+            premiumPenaltyTargetLoss: doubleMetricValue(
+                gameOutcome.premiumPenaltyTargetLosses,
+                at: candidateSeat
+            )
+        )
+    }
+
+    private static func evaluateCandidateTuning(
+        candidateTuning: BotTuning,
+        opponentTuning: BotTuning,
+        context: FitnessEvaluationContext
+    ) -> FitnessBreakdown {
+        guard !context.evaluationSeeds.isEmpty else { return .zero }
+
+        let candidateSeats = candidateSeatIndices(
+            playerCount: context.playerCount,
+            rotateCandidateAcrossSeats: context.rotateCandidateAcrossSeats
+        )
+        var accumulator = FitnessAccumulator()
+
+        for evaluationSeed in context.evaluationSeeds {
+            for candidateSeat in candidateSeats {
+                var tuningsBySeat = Array(repeating: opponentTuning, count: context.playerCount)
+                tuningsBySeat[candidateSeat] = candidateTuning
+
+                let gameOutcome = simulateGame(
+                    tuningsBySeat: tuningsBySeat,
+                    rounds: context.roundsPerGame,
+                    cardsPerRoundRange: context.cardsPerRoundRange,
+                    seed: evaluationSeed,
+                    useFullMatchRules: context.useFullMatchRules
+                )
+
+                guard let metrics = candidateSeatMetrics(
+                    from: gameOutcome,
+                    candidateSeat: candidateSeat,
+                    playerCount: context.playerCount
+                ) else {
+                    continue
+                }
+                accumulator.append(metrics)
+            }
+        }
+
+        return accumulator.makeBreakdown(fitnessScoring: context.fitnessScoring)
+    }
+
+    private static func headToHeadValidationResult(
+        from breakdown: FitnessBreakdown
+    ) -> SelfPlayHeadToHeadValidationResult {
+        return SelfPlayHeadToHeadValidationResult(
+            fitness: breakdown.fitness,
+            winRate: breakdown.winRate,
+            averageScoreDiff: breakdown.averageScoreDiff,
+            averageUnderbidLoss: breakdown.averageUnderbidLoss,
+            averageTrumpDensityUnderbidLoss: breakdown.averageTrumpDensityUnderbidLoss,
+            averageNoTrumpControlUnderbidLoss: breakdown.averageNoTrumpControlUnderbidLoss,
+            averagePremiumAssistLoss: breakdown.averagePremiumAssistLoss,
+            averagePremiumPenaltyTargetLoss: breakdown.averagePremiumPenaltyTargetLoss
+        )
+    }
+
     private struct EvolutionGenome {
         var chaseWinProbabilityScale: Double
         var chaseThreatPenaltyScale: Double
@@ -635,6 +877,145 @@ enum BotSelfPlayEvolutionEngine {
         let noTrumpControlUnderbidLosses: [Double]
         let premiumAssistLosses: [Double]
         let premiumPenaltyTargetLosses: [Double]
+    }
+
+    private struct SeatServiceBundle {
+        let turnServices: [BotTurnStrategyService]
+        let biddingServices: [BotBiddingService]
+        let trumpServices: [BotTrumpSelectionService]
+    }
+
+    private struct SimulationMetricsAccumulator {
+        private(set) var totalScores: [Int]
+        private(set) var underbidLosses: [Double]
+        private(set) var trumpDensityUnderbidLosses: [Double]
+        private(set) var noTrumpControlUnderbidLosses: [Double]
+        private(set) var premiumAssistLosses: [Double]
+        private(set) var premiumPenaltyTargetLosses: [Double]
+
+        init(playerCount: Int) {
+            self.totalScores = Array(repeating: 0, count: playerCount)
+            self.underbidLosses = Array(repeating: 0.0, count: playerCount)
+            self.trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
+            self.noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
+            self.premiumAssistLosses = Array(repeating: 0.0, count: playerCount)
+            self.premiumPenaltyTargetLosses = Array(repeating: 0.0, count: playerCount)
+        }
+
+        mutating func evaluateRound(
+            hands: [[Card]],
+            biddingOutcome: BiddingRoundOutcome,
+            playOutcome: RoundPlayOutcome,
+            cardsInRound: Int,
+            trump: Suit?,
+            blindSelections: [Bool]?,
+            noTrumpControlEmphasisMultiplier: Double
+        ) -> [RoundResult] {
+            let playerCount = hands.count
+            var roundResults: [RoundResult] = []
+            roundResults.reserveCapacity(playerCount)
+
+            for playerIndex in 0..<playerCount {
+                let isBlind: Bool
+                if let blindSelections, blindSelections.indices.contains(playerIndex) {
+                    isBlind = blindSelections[playerIndex]
+                } else {
+                    isBlind = false
+                }
+
+                let roundResult = RoundResult(
+                    cardsInRound: cardsInRound,
+                    bid: biddingOutcome.bids[playerIndex],
+                    tricksTaken: playOutcome.tricksTaken[playerIndex],
+                    isBlind: isBlind
+                )
+                roundResults.append(roundResult)
+
+                underbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.underbidLoss(
+                    cardsInRound: cardsInRound,
+                    bid: biddingOutcome.bids[playerIndex],
+                    tricksTaken: playOutcome.tricksTaken[playerIndex],
+                    isBlind: isBlind
+                )
+                underbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.jokerBidFloorUnderbidPenalty(
+                    hand: hands[playerIndex],
+                    bid: biddingOutcome.bids[playerIndex],
+                    maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
+                )
+                underbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.jokerAllInEdgeMaxBidPenalty(
+                    hand: hands[playerIndex],
+                    bid: biddingOutcome.bids[playerIndex],
+                    cardsInRound: cardsInRound,
+                    maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
+                )
+                underbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.nonFinalLeadWishWithoutAbovePenalty(
+                    nonFinalLeadWishCount: playOutcome.nonFinalLeadWishCounts[playerIndex],
+                    cardsInRound: cardsInRound
+                )
+                trumpDensityUnderbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.trumpDensityUnderbidPenalty(
+                    hand: hands[playerIndex],
+                    bid: biddingOutcome.bids[playerIndex],
+                    cardsInRound: cardsInRound,
+                    trump: trump
+                )
+                noTrumpControlUnderbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.noTrumpControlUnderbidPenalty(
+                    hand: hands[playerIndex],
+                    bid: biddingOutcome.bids[playerIndex],
+                    cardsInRound: cardsInRound,
+                    trump: trump,
+                    emphasisMultiplier: noTrumpControlEmphasisMultiplier
+                )
+            }
+
+            return roundResults
+        }
+
+        mutating func addRoundScores(_ roundResults: [RoundResult]) {
+            for (playerIndex, roundResult) in roundResults.enumerated() {
+                guard totalScores.indices.contains(playerIndex) else { continue }
+                totalScores[playerIndex] += roundResult.score
+            }
+        }
+
+        mutating func addFinalScores(_ finalScores: [Int]) {
+            for (playerIndex, score) in finalScores.enumerated() {
+                guard totalScores.indices.contains(playerIndex) else { continue }
+                totalScores[playerIndex] += score
+            }
+        }
+
+        mutating func accumulatePremiumSupportLosses(
+            blockOutcome: PremiumRules.BlockFinalizationOutcome,
+            playerCount: Int
+        ) {
+            BotSelfPlayEvolutionEngine.accumulatePremiumSupportLosses(
+                premiumAssistLosses: &premiumAssistLosses,
+                premiumPenaltyTargetLosses: &premiumPenaltyTargetLosses,
+                blockOutcome: blockOutcome,
+                playerCount: playerCount
+            )
+        }
+
+        func makeOutcome() -> SimulatedGameOutcome {
+            return SimulatedGameOutcome(
+                totalScores: totalScores,
+                underbidLosses: underbidLosses,
+                trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
+                noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
+                premiumAssistLosses: premiumAssistLosses,
+                premiumPenaltyTargetLosses: premiumPenaltyTargetLosses
+            )
+        }
+    }
+
+    private static func makeSeatServices(
+        for tuningsBySeat: [BotTuning]
+    ) -> SeatServiceBundle {
+        return SeatServiceBundle(
+            turnServices: tuningsBySeat.map { BotTurnStrategyService(tuning: $0) },
+            biddingServices: tuningsBySeat.map { BotBiddingService(tuning: $0) },
+            trumpServices: tuningsBySeat.map { BotTrumpSelectionService(tuning: $0) }
+        )
     }
 
     private static func randomGenome(
@@ -1182,117 +1563,13 @@ enum BotSelfPlayEvolutionEngine {
     private static func evaluateGenome(
         _ genome: EvolutionGenome,
         baseTuning: BotTuning,
-        playerCount: Int,
-        roundsPerGame: Int,
-        cardsPerRoundRange: ClosedRange<Int>,
-        evaluationSeeds: [UInt64],
-        useFullMatchRules: Bool,
-        rotateCandidateAcrossSeats: Bool,
-        fitnessWinRateWeight: Double,
-        fitnessScoreDiffWeight: Double,
-        fitnessUnderbidLossWeight: Double,
-        fitnessTrumpDensityUnderbidWeight: Double,
-        fitnessNoTrumpControlUnderbidWeight: Double,
-        fitnessPremiumAssistWeight: Double,
-        fitnessPremiumPenaltyTargetWeight: Double,
-        scoreDiffNormalization: Double,
-        underbidLossNormalization: Double,
-        trumpDensityUnderbidNormalization: Double,
-        noTrumpControlUnderbidNormalization: Double,
-        premiumAssistNormalization: Double,
-        premiumPenaltyTargetNormalization: Double
+        context: FitnessEvaluationContext
     ) -> FitnessBreakdown {
-        guard !evaluationSeeds.isEmpty else { return .zero }
-
         let candidateTuning = tuning(byApplying: genome, to: baseTuning)
-        let candidateSeats: [Int] = rotateCandidateAcrossSeats
-            ? Array(0..<playerCount)
-            : [0]
-
-        var totalWinRate = 0.0
-        var totalScoreDiff = 0.0
-        var totalCandidateUnderbidLoss = 0.0
-        var totalCandidateTrumpDensityUnderbidLoss = 0.0
-        var totalCandidateNoTrumpControlUnderbidLoss = 0.0
-        var totalCandidatePremiumAssistLoss = 0.0
-        var totalCandidatePremiumPenaltyTargetLoss = 0.0
-        var simulationsCount = 0
-
-        for evaluationSeed in evaluationSeeds {
-            for candidateSeat in candidateSeats {
-                var tuningsBySeat = Array(repeating: baseTuning, count: playerCount)
-                tuningsBySeat[candidateSeat] = candidateTuning
-
-                let gameOutcome = simulateGame(
-                    tuningsBySeat: tuningsBySeat,
-                    rounds: roundsPerGame,
-                    cardsPerRoundRange: cardsPerRoundRange,
-                    seed: evaluationSeed,
-                    useFullMatchRules: useFullMatchRules
-                )
-
-                let totalScores = gameOutcome.totalScores
-                guard totalScores.indices.contains(candidateSeat) else { continue }
-                let candidateScore = totalScores[candidateSeat]
-                let opponentsTotal = totalScores.reduce(0, +) - candidateScore
-                let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
-                let candidateUnderbidLoss = gameOutcome.underbidLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.underbidLosses[candidateSeat]
-                    : 0.0
-                let candidateTrumpDensityUnderbidLoss = gameOutcome.trumpDensityUnderbidLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.trumpDensityUnderbidLosses[candidateSeat]
-                    : 0.0
-                let candidateNoTrumpControlUnderbidLoss = gameOutcome.noTrumpControlUnderbidLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.noTrumpControlUnderbidLosses[candidateSeat]
-                    : 0.0
-                let candidatePremiumAssistLoss = gameOutcome.premiumAssistLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.premiumAssistLosses[candidateSeat]
-                    : 0.0
-                let candidatePremiumPenaltyTargetLoss = gameOutcome.premiumPenaltyTargetLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.premiumPenaltyTargetLosses[candidateSeat]
-                    : 0.0
-
-                let maxScore = totalScores.max() ?? candidateScore
-                let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
-                let winShare = candidateScore == maxScore ? 1.0 / Double(winnersCount) : 0.0
-
-                totalWinRate += winShare
-                totalScoreDiff += Double(candidateScore) - opponentsAverage
-                totalCandidateUnderbidLoss += candidateUnderbidLoss
-                totalCandidateTrumpDensityUnderbidLoss += candidateTrumpDensityUnderbidLoss
-                totalCandidateNoTrumpControlUnderbidLoss += candidateNoTrumpControlUnderbidLoss
-                totalCandidatePremiumAssistLoss += candidatePremiumAssistLoss
-                totalCandidatePremiumPenaltyTargetLoss += candidatePremiumPenaltyTargetLoss
-                simulationsCount += 1
-            }
-        }
-
-        guard simulationsCount > 0 else { return .zero }
-
-        let averageWinRate = totalWinRate / Double(simulationsCount)
-        let averageScoreDiff = totalScoreDiff / Double(simulationsCount)
-        let averageUnderbidLoss = totalCandidateUnderbidLoss / Double(simulationsCount)
-        let averageTrumpDensityUnderbidLoss = totalCandidateTrumpDensityUnderbidLoss / Double(simulationsCount)
-        let averageNoTrumpControlUnderbidLoss = totalCandidateNoTrumpControlUnderbidLoss / Double(simulationsCount)
-        let averagePremiumAssistLoss = totalCandidatePremiumAssistLoss / Double(simulationsCount)
-        let averagePremiumPenaltyTargetLoss = totalCandidatePremiumPenaltyTargetLoss / Double(simulationsCount)
-        let fitness = averageWinRate * fitnessWinRateWeight +
-            (averageScoreDiff / scoreDiffNormalization) * fitnessScoreDiffWeight +
-            -(averageUnderbidLoss / underbidLossNormalization) * fitnessUnderbidLossWeight +
-            -(averageTrumpDensityUnderbidLoss / trumpDensityUnderbidNormalization) * fitnessTrumpDensityUnderbidWeight +
-            -(averageNoTrumpControlUnderbidLoss / noTrumpControlUnderbidNormalization) * fitnessNoTrumpControlUnderbidWeight +
-            -(averagePremiumAssistLoss / premiumAssistNormalization) * fitnessPremiumAssistWeight +
-            -(averagePremiumPenaltyTargetLoss / premiumPenaltyTargetNormalization) * fitnessPremiumPenaltyTargetWeight
-
-        return FitnessBreakdown(
-            fitness: fitness,
-            winRate: averageWinRate,
-            averageScoreDiff: averageScoreDiff,
-            averageUnderbidLoss: averageUnderbidLoss,
-            averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
-            averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
-            averagePremiumAssistLoss: averagePremiumAssistLoss,
-            averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+        return evaluateCandidateTuning(
+            candidateTuning: candidateTuning,
+            opponentTuning: baseTuning,
+            context: context
         )
     }
 
@@ -1305,118 +1582,32 @@ enum BotSelfPlayEvolutionEngine {
         seed: UInt64 = 0x5EED
     ) -> SelfPlayHeadToHeadValidationResult {
         let playerCount = min(4, max(3, config.playerCount))
-        let deckLimit = max(1, Deck().cards.count / playerCount)
-        let lowerCards = min(max(1, config.cardsPerRoundRange.lowerBound), deckLimit)
-        let upperCards = min(max(lowerCards, config.cardsPerRoundRange.upperBound), deckLimit)
-        let cardsRange = lowerCards...upperCards
+        let cardsRange = normalizedCardsPerRoundRange(
+            from: config.cardsPerRoundRange,
+            playerCount: playerCount
+        )
+        let fitnessScoring = FitnessScoringConfig(config: config)
 
         var rng = SelfPlayRandomGenerator(seed: seed)
-        var evaluationSeeds: [UInt64] = []
-        evaluationSeeds.reserveCapacity(config.gamesPerCandidate)
-        for _ in 0..<config.gamesPerCandidate {
-            evaluationSeeds.append(rng.next())
-        }
-
-        let candidateSeats: [Int] = config.rotateCandidateAcrossSeats
-            ? Array(0..<playerCount)
-            : [0]
-
-        var totalWinRate = 0.0
-        var totalScoreDiff = 0.0
-        var totalCandidateUnderbidLoss = 0.0
-        var totalCandidateTrumpDensityUnderbidLoss = 0.0
-        var totalCandidateNoTrumpControlUnderbidLoss = 0.0
-        var totalCandidatePremiumAssistLoss = 0.0
-        var totalCandidatePremiumPenaltyTargetLoss = 0.0
-        var simulationsCount = 0
-
-        for evaluationSeed in evaluationSeeds {
-            for candidateSeat in candidateSeats {
-                var tuningsBySeat = Array(repeating: opponentTuning, count: playerCount)
-                tuningsBySeat[candidateSeat] = candidateTuning
-
-                let gameOutcome = simulateGame(
-                    tuningsBySeat: tuningsBySeat,
-                    rounds: config.roundsPerGame,
-                    cardsPerRoundRange: cardsRange,
-                    seed: evaluationSeed,
-                    useFullMatchRules: config.useFullMatchRules
-                )
-
-                let totalScores = gameOutcome.totalScores
-                guard totalScores.indices.contains(candidateSeat) else { continue }
-                let candidateScore = totalScores[candidateSeat]
-                let opponentsTotal = totalScores.reduce(0, +) - candidateScore
-                let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
-                let candidateUnderbidLoss = gameOutcome.underbidLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.underbidLosses[candidateSeat]
-                    : 0.0
-                let candidateTrumpDensityUnderbidLoss = gameOutcome.trumpDensityUnderbidLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.trumpDensityUnderbidLosses[candidateSeat]
-                    : 0.0
-                let candidateNoTrumpControlUnderbidLoss = gameOutcome.noTrumpControlUnderbidLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.noTrumpControlUnderbidLosses[candidateSeat]
-                    : 0.0
-                let candidatePremiumAssistLoss = gameOutcome.premiumAssistLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.premiumAssistLosses[candidateSeat]
-                    : 0.0
-                let candidatePremiumPenaltyTargetLoss = gameOutcome.premiumPenaltyTargetLosses.indices.contains(candidateSeat)
-                    ? gameOutcome.premiumPenaltyTargetLosses[candidateSeat]
-                    : 0.0
-
-                let maxScore = totalScores.max() ?? candidateScore
-                let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
-                let winShare = candidateScore == maxScore ? 1.0 / Double(winnersCount) : 0.0
-
-                totalWinRate += winShare
-                totalScoreDiff += Double(candidateScore) - opponentsAverage
-                totalCandidateUnderbidLoss += candidateUnderbidLoss
-                totalCandidateTrumpDensityUnderbidLoss += candidateTrumpDensityUnderbidLoss
-                totalCandidateNoTrumpControlUnderbidLoss += candidateNoTrumpControlUnderbidLoss
-                totalCandidatePremiumAssistLoss += candidatePremiumAssistLoss
-                totalCandidatePremiumPenaltyTargetLoss += candidatePremiumPenaltyTargetLoss
-                simulationsCount += 1
-            }
-        }
-
-        guard simulationsCount > 0 else {
-            return SelfPlayHeadToHeadValidationResult(
-                fitness: 0.0,
-                winRate: 0.0,
-                averageScoreDiff: 0.0,
-                averageUnderbidLoss: 0.0,
-                averageTrumpDensityUnderbidLoss: 0.0,
-                averageNoTrumpControlUnderbidLoss: 0.0,
-                averagePremiumAssistLoss: 0.0,
-                averagePremiumPenaltyTargetLoss: 0.0
-            )
-        }
-
-        let averageWinRate = totalWinRate / Double(simulationsCount)
-        let averageScoreDiff = totalScoreDiff / Double(simulationsCount)
-        let averageUnderbidLoss = totalCandidateUnderbidLoss / Double(simulationsCount)
-        let averageTrumpDensityUnderbidLoss = totalCandidateTrumpDensityUnderbidLoss / Double(simulationsCount)
-        let averageNoTrumpControlUnderbidLoss = totalCandidateNoTrumpControlUnderbidLoss / Double(simulationsCount)
-        let averagePremiumAssistLoss = totalCandidatePremiumAssistLoss / Double(simulationsCount)
-        let averagePremiumPenaltyTargetLoss = totalCandidatePremiumPenaltyTargetLoss / Double(simulationsCount)
-        let fitness = averageWinRate * config.fitnessWinRateWeight +
-            (averageScoreDiff / config.scoreDiffNormalization) * config.fitnessScoreDiffWeight +
-            -(averageUnderbidLoss / config.underbidLossNormalization) * config.fitnessUnderbidLossWeight +
-            -(averageTrumpDensityUnderbidLoss / config.trumpDensityUnderbidNormalization) * config.fitnessTrumpDensityUnderbidWeight +
-            -(averageNoTrumpControlUnderbidLoss / config.noTrumpControlUnderbidNormalization) * config.fitnessNoTrumpControlUnderbidWeight +
-            -(averagePremiumAssistLoss / config.premiumAssistNormalization) * config.fitnessPremiumAssistWeight +
-            -(averagePremiumPenaltyTargetLoss / config.premiumPenaltyTargetNormalization) * config.fitnessPremiumPenaltyTargetWeight
-
-        return SelfPlayHeadToHeadValidationResult(
-            fitness: fitness,
-            winRate: averageWinRate,
-            averageScoreDiff: averageScoreDiff,
-            averageUnderbidLoss: averageUnderbidLoss,
-            averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
-            averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
-            averagePremiumAssistLoss: averagePremiumAssistLoss,
-            averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+        let evaluationSeeds = makeEvaluationSeeds(
+            count: config.gamesPerCandidate,
+            using: &rng
         )
+        let evaluationContext = FitnessEvaluationContext(
+            playerCount: playerCount,
+            roundsPerGame: config.roundsPerGame,
+            cardsPerRoundRange: cardsRange,
+            evaluationSeeds: evaluationSeeds,
+            useFullMatchRules: config.useFullMatchRules,
+            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+            fitnessScoring: fitnessScoring
+        )
+        let breakdown = evaluateCandidateTuning(
+            candidateTuning: candidateTuning,
+            opponentTuning: opponentTuning,
+            context: evaluationContext
+        )
+        return headToHeadValidationResult(from: breakdown)
     }
 
     struct DebugPreDealBlindContext {
@@ -1520,16 +1711,8 @@ enum BotSelfPlayEvolutionEngine {
         let playerCount = tuningsBySeat.count
         var rng = SelfPlayRandomGenerator(seed: seed)
 
-        let turnServices = tuningsBySeat.map { BotTurnStrategyService(tuning: $0) }
-        let biddingServices = tuningsBySeat.map { BotBiddingService(tuning: $0) }
-        let trumpServices = tuningsBySeat.map { BotTrumpSelectionService(tuning: $0) }
-
-        var totalScores = Array(repeating: 0, count: playerCount)
-        var underbidLosses = Array(repeating: 0.0, count: playerCount)
-        var trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
-        var noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
-        let premiumAssistLosses = Array(repeating: 0.0, count: playerCount)
-        let premiumPenaltyTargetLosses = Array(repeating: 0.0, count: playerCount)
+        let services = makeSeatServices(for: tuningsBySeat)
+        var metrics = SimulationMetricsAccumulator(playerCount: playerCount)
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for _ in 0..<rounds {
@@ -1542,80 +1725,26 @@ enum BotSelfPlayEvolutionEngine {
             )
 
             let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
-            let trump = trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
-            let biddingOutcome = makeBids(
-                hands: hands,
-                dealer: dealer,
-                cardsInRound: cardsInRound,
-                trump: trump,
-                biddingServices: biddingServices
-            )
-            let bids = biddingOutcome.bids
-            let playOutcome = playRound(
-                hands: hands,
-                bids: bids,
-                dealer: dealer,
-                cardsInRound: cardsInRound,
-                trump: trump,
-                turnServices: turnServices
-            )
-            let tricksTaken = playOutcome.tricksTaken
-
-            for playerIndex in 0..<playerCount {
-                let roundScore = ScoreCalculator.calculateRoundScore(
-                    cardsInRound: cardsInRound,
-                    bid: bids[playerIndex],
-                    tricksTaken: tricksTaken[playerIndex],
-                    isBlind: false
-                )
-                totalScores[playerIndex] += roundScore
-                underbidLosses[playerIndex] += underbidLoss(
-                    cardsInRound: cardsInRound,
-                    bid: bids[playerIndex],
-                    tricksTaken: tricksTaken[playerIndex],
-                    isBlind: false
-                )
-                underbidLosses[playerIndex] += jokerBidFloorUnderbidPenalty(
-                    hand: hands[playerIndex],
-                    bid: bids[playerIndex],
-                    maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
-                )
-                underbidLosses[playerIndex] += jokerAllInEdgeMaxBidPenalty(
-                    hand: hands[playerIndex],
-                    bid: bids[playerIndex],
-                    cardsInRound: cardsInRound,
-                    maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
-                )
-                underbidLosses[playerIndex] += nonFinalLeadWishWithoutAbovePenalty(
-                    nonFinalLeadWishCount: playOutcome.nonFinalLeadWishCounts[playerIndex],
-                    cardsInRound: cardsInRound
-                )
-                trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
-                    hand: hands[playerIndex],
-                    bid: bids[playerIndex],
-                    cardsInRound: cardsInRound,
-                    trump: trump
-                )
-                noTrumpControlUnderbidLosses[playerIndex] += noTrumpControlUnderbidPenalty(
-                    hand: hands[playerIndex],
-                    bid: bids[playerIndex],
+            let trump = services.trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
+            let roundSimulation = simulateScoredRound(
+                RoundSimulationInput(
+                    hands: hands,
+                    dealer: dealer,
                     cardsInRound: cardsInRound,
                     trump: trump,
-                    emphasisMultiplier: 0.75
-                )
-            }
+                    preLockedBids: nil,
+                    blindSelections: nil,
+                    noTrumpControlEmphasisMultiplier: 0.75
+                ),
+                services: services,
+                metrics: &metrics
+            )
+            metrics.addRoundScores(roundSimulation.roundResults)
 
             dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
         }
 
-        return SimulatedGameOutcome(
-            totalScores: totalScores,
-            underbidLosses: underbidLosses,
-            trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
-            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
-            premiumAssistLosses: premiumAssistLosses,
-            premiumPenaltyTargetLosses: premiumPenaltyTargetLosses
-        )
+        return metrics.makeOutcome()
     }
 
     private static func simulateFullMatch(
@@ -1625,18 +1754,11 @@ enum BotSelfPlayEvolutionEngine {
         let playerCount = tuningsBySeat.count
         var rng = SelfPlayRandomGenerator(seed: seed)
 
-        let turnServices = tuningsBySeat.map { BotTurnStrategyService(tuning: $0) }
-        let biddingServices = tuningsBySeat.map { BotBiddingService(tuning: $0) }
-        let trumpServices = tuningsBySeat.map { BotTrumpSelectionService(tuning: $0) }
+        let services = makeSeatServices(for: tuningsBySeat)
 
         let blockDeals = GameConstants.allBlockDeals(playerCount: playerCount)
 
-        var totalScores = Array(repeating: 0, count: playerCount)
-        var underbidLosses = Array(repeating: 0.0, count: playerCount)
-        var trumpDensityUnderbidLosses = Array(repeating: 0.0, count: playerCount)
-        var noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
-        var premiumAssistLosses = Array(repeating: 0.0, count: playerCount)
-        var premiumPenaltyTargetLosses = Array(repeating: 0.0, count: playerCount)
+        var metrics = SimulationMetricsAccumulator(playerCount: playerCount)
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for (blockIndex, dealsInBlock) in blockDeals.enumerated() {
@@ -1650,14 +1772,14 @@ enum BotSelfPlayEvolutionEngine {
                     playerCount: playerCount,
                     dealer: dealer,
                     blockNumber: blockNumber,
-                    trumpServices: trumpServices,
+                    trumpServices: services.trumpServices,
                     using: &rng
                 )
                 let hands = roundDeal.hands
                 let trump = roundDeal.trump
 
                 let totalsIncludingCurrentBlock = (0..<playerCount).map { index in
-                    totalScores[index] + blockBaseScores[index]
+                    metrics.totalScores[index] + blockBaseScores[index]
                 }
 
                 let blindContext: PreDealBlindContext
@@ -1666,7 +1788,7 @@ enum BotSelfPlayEvolutionEngine {
                         dealer: dealer,
                         cardsInRound: cardsInRound,
                         playerCount: playerCount,
-                        biddingServices: biddingServices,
+                        biddingServices: services.biddingServices,
                         totalScoresIncludingCurrentBlock: totalsIncludingCurrentBlock
                     )
                 } else {
@@ -1676,74 +1798,29 @@ enum BotSelfPlayEvolutionEngine {
                     )
                 }
 
-                let biddingOutcome = makeBids(
-                    hands: hands,
-                    dealer: dealer,
-                    cardsInRound: cardsInRound,
-                    trump: trump,
-                    biddingServices: biddingServices,
-                    preLockedBids: blindContext.lockedBids,
-                    blindSelections: blindContext.blindSelections
-                )
-                let bids = biddingOutcome.bids
-                let playOutcome = playRound(
-                    hands: hands,
-                    bids: bids,
-                    dealer: dealer,
-                    cardsInRound: cardsInRound,
-                    trump: trump,
-                    turnServices: turnServices
-                )
-                let tricksTaken = playOutcome.tricksTaken
-
-                for playerIndex in 0..<playerCount {
-                    let isBlind = blindContext.blindSelections.indices.contains(playerIndex)
-                        ? blindContext.blindSelections[playerIndex]
-                        : false
-                    let roundResult = RoundResult(
-                        cardsInRound: cardsInRound,
-                        bid: bids[playerIndex],
-                        tricksTaken: tricksTaken[playerIndex],
-                        isBlind: isBlind
-                    )
-                    blockRoundResults[playerIndex].append(roundResult)
-                    blockBaseScores[playerIndex] += roundResult.score
-                    underbidLosses[playerIndex] += underbidLoss(
-                        cardsInRound: cardsInRound,
-                        bid: bids[playerIndex],
-                        tricksTaken: tricksTaken[playerIndex],
-                        isBlind: isBlind
-                    )
-                    underbidLosses[playerIndex] += jokerBidFloorUnderbidPenalty(
-                        hand: hands[playerIndex],
-                        bid: bids[playerIndex],
-                        maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
-                    )
-                    underbidLosses[playerIndex] += jokerAllInEdgeMaxBidPenalty(
-                        hand: hands[playerIndex],
-                        bid: bids[playerIndex],
-                        cardsInRound: cardsInRound,
-                        maxAllowedBid: biddingOutcome.maxAllowedBids[playerIndex]
-                    )
-                    underbidLosses[playerIndex] += nonFinalLeadWishWithoutAbovePenalty(
-                        nonFinalLeadWishCount: playOutcome.nonFinalLeadWishCounts[playerIndex],
-                        cardsInRound: cardsInRound
-                    )
-                    trumpDensityUnderbidLosses[playerIndex] += trumpDensityUnderbidPenalty(
-                        hand: hands[playerIndex],
-                        bid: bids[playerIndex],
-                        cardsInRound: cardsInRound,
-                        trump: trump
-                    )
-                    noTrumpControlUnderbidLosses[playerIndex] += noTrumpControlUnderbidPenalty(
-                        hand: hands[playerIndex],
-                        bid: bids[playerIndex],
+                let noTrumpControlEmphasisMultiplier =
+                    (blockNumber == GameBlock.first.rawValue ||
+                     blockNumber == GameBlock.third.rawValue) ? 1.0 : 0.55
+                let roundSimulation = simulateScoredRound(
+                    RoundSimulationInput(
+                        hands: hands,
+                        dealer: dealer,
                         cardsInRound: cardsInRound,
                         trump: trump,
-                        emphasisMultiplier: (blockNumber == GameBlock.first.rawValue ||
-                            blockNumber == GameBlock.third.rawValue) ? 1.0 : 0.55
-                    )
-                }
+                        preLockedBids: blindContext.lockedBids,
+                        blindSelections: blindContext.blindSelections,
+                        noTrumpControlEmphasisMultiplier: noTrumpControlEmphasisMultiplier
+                    ),
+                    services: services,
+                    metrics: &metrics
+                )
+                let roundResults = roundSimulation.roundResults
+
+                appendRoundResultsToBlock(
+                    roundResults,
+                    blockRoundResults: &blockRoundResults,
+                    blockBaseScores: &blockBaseScores
+                )
 
                 dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
             }
@@ -1753,25 +1830,28 @@ enum BotSelfPlayEvolutionEngine {
                 blockNumber: blockNumber,
                 playerCount: playerCount
             )
-            accumulatePremiumSupportLosses(
-                premiumAssistLosses: &premiumAssistLosses,
-                premiumPenaltyTargetLosses: &premiumPenaltyTargetLosses,
+            metrics.accumulatePremiumSupportLosses(
                 blockOutcome: finalizedBlockOutcome,
                 playerCount: playerCount
             )
-            for playerIndex in 0..<playerCount {
-                totalScores[playerIndex] += finalizedBlockOutcome.finalScores[playerIndex]
-            }
+            metrics.addFinalScores(finalizedBlockOutcome.finalScores)
         }
 
-        return SimulatedGameOutcome(
-            totalScores: totalScores,
-            underbidLosses: underbidLosses,
-            trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
-            noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
-            premiumAssistLosses: premiumAssistLosses,
-            premiumPenaltyTargetLosses: premiumPenaltyTargetLosses
-        )
+        return metrics.makeOutcome()
+    }
+
+    private static func appendRoundResultsToBlock(
+        _ roundResults: [RoundResult],
+        blockRoundResults: inout [[RoundResult]],
+        blockBaseScores: inout [Int]
+    ) {
+        for (playerIndex, roundResult) in roundResults.enumerated() {
+            guard blockRoundResults.indices.contains(playerIndex) else { continue }
+            blockRoundResults[playerIndex].append(roundResult)
+            if blockBaseScores.indices.contains(playerIndex) {
+                blockBaseScores[playerIndex] += roundResult.score
+            }
+        }
     }
 
     private static func resolvePreDealBlindContext(
@@ -2216,6 +2296,60 @@ enum BotSelfPlayEvolutionEngine {
     private struct RoundPlayOutcome {
         let tricksTaken: [Int]
         let nonFinalLeadWishCounts: [Int]
+    }
+
+    private struct RoundSimulationInput {
+        let hands: [[Card]]
+        let dealer: Int
+        let cardsInRound: Int
+        let trump: Suit?
+        let preLockedBids: [Int]?
+        let blindSelections: [Bool]?
+        let noTrumpControlEmphasisMultiplier: Double
+    }
+
+    private struct RoundSimulationOutputs {
+        let biddingOutcome: BiddingRoundOutcome
+        let playOutcome: RoundPlayOutcome
+        let roundResults: [RoundResult]
+    }
+
+    private static func simulateScoredRound(
+        _ input: RoundSimulationInput,
+        services: SeatServiceBundle,
+        metrics: inout SimulationMetricsAccumulator
+    ) -> RoundSimulationOutputs {
+        let biddingOutcome = makeBids(
+            hands: input.hands,
+            dealer: input.dealer,
+            cardsInRound: input.cardsInRound,
+            trump: input.trump,
+            biddingServices: services.biddingServices,
+            preLockedBids: input.preLockedBids,
+            blindSelections: input.blindSelections
+        )
+        let playOutcome = playRound(
+            hands: input.hands,
+            bids: biddingOutcome.bids,
+            dealer: input.dealer,
+            cardsInRound: input.cardsInRound,
+            trump: input.trump,
+            turnServices: services.turnServices
+        )
+        let roundResults = metrics.evaluateRound(
+            hands: input.hands,
+            biddingOutcome: biddingOutcome,
+            playOutcome: playOutcome,
+            cardsInRound: input.cardsInRound,
+            trump: input.trump,
+            blindSelections: input.blindSelections,
+            noTrumpControlEmphasisMultiplier: input.noTrumpControlEmphasisMultiplier
+        )
+        return RoundSimulationOutputs(
+            biddingOutcome: biddingOutcome,
+            playOutcome: playOutcome,
+            roundResults: roundResults
+        )
     }
 
     private static func isNonFinalLeadWishJokerMove(
