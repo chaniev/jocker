@@ -54,7 +54,8 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that ranks legal card/joker candidates using round projections and card/trick heuristics.
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that resolves legal cards, round context, and fallback move selection.
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`: runtime evaluator loop for bot turns (candidate enumeration, heuristic scoring, round projections, and best-move selection).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking helper for bot turns (utility calculation and deterministic tie-break policy).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`: low-level runtime card/trick heuristics for bot turns (joker decision variants, threat scoring, unseen-card modeling, and immediate trick-win probability).
 - `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`: runtime round projection helper for bot turns (bid normalization, future trick estimates, expected round score, and remaining-hand projection).
@@ -148,6 +149,7 @@ Jocker/Jocker/
 │   └── Services/
 │       ├── AI/
 │       │   ├── BotBiddingService.swift
+│       │   ├── BotTurnCandidateEvaluatorService.swift
 │       │   ├── BotTurnCandidateRankingService.swift
 │       │   ├── BotTurnCardHeuristicsService.swift
 │       │   ├── BotSelfPlayEvolutionEngine.swift
@@ -255,6 +257,7 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── Bot/
 │   ├── BotBiddingServiceTests.swift
+│   ├── BotTurnCandidateRankingServiceTests.swift
 │   ├── BotTurnCardHeuristicsServiceTests.swift
 │   ├── BotSelfPlayEvolutionEngineTests.swift
 │   ├── BotTrumpSelectionServiceTests.swift
