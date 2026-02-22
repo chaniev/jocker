@@ -94,28 +94,39 @@ struct BotTurnCardHeuristicsService {
         card: Card,
         decision: JokerPlayDecision,
         trump: Suit?,
-        trick: TrickSnapshot
+        trick: TrickSnapshot,
+        cardsRemainingInHandBeforeMove: Int? = nil,
+        cardsInRound: Int? = nil
     ) -> Double {
         let strategy = tuning.turnStrategy
+        let phaseMultiplier = threatPhaseMultiplier(
+            for: card,
+            trump: trump,
+            cardsRemainingInHandBeforeMove: cardsRemainingInHandBeforeMove,
+            cardsInRound: cardsInRound
+        )
         if card.isJoker {
             if decision.style == .faceDown {
-                return trick.playedCards.isEmpty
+                let baseThreat = trick.playedCards.isEmpty
                     ? strategy.threatFaceDownLeadJoker
                     : strategy.threatFaceDownNonLeadJoker
+                return baseThreat * phaseMultiplier
             }
 
             if trick.playedCards.isEmpty {
+                let baseThreat: Double
                 switch decision.leadDeclaration {
                 case .takes:
-                    return strategy.threatLeadTakesJoker
+                    baseThreat = strategy.threatLeadTakesJoker
                 case .above:
-                    return strategy.threatLeadAboveJoker
+                    baseThreat = strategy.threatLeadAboveJoker
                 case .wish, .none:
-                    return strategy.threatLeadWishJoker
+                    baseThreat = strategy.threatLeadWishJoker
                 }
+                return baseThreat * phaseMultiplier
             }
 
-            return strategy.threatNonLeadFaceUpJoker
+            return strategy.threatNonLeadFaceUpJoker * phaseMultiplier
         }
 
         guard case .regular(let suit, let rank) = card else { return 0.0 }
@@ -126,20 +137,24 @@ struct BotTurnCardHeuristicsService {
         if rank.rawValue >= Rank.queen.rawValue {
             threat += strategy.threatHighRankBonus
         }
-        return threat
+        return threat * phaseMultiplier
     }
 
     func cardThreat(
         card: Card,
         decision: JokerPlayDecision,
         trump: Suit?,
-        trickNode: TrickNode
+        trickNode: TrickNode,
+        cardsRemainingInHandBeforeMove: Int? = nil,
+        cardsInRound: Int? = nil
     ) -> Double {
         return cardThreat(
             card: card,
             decision: decision,
             trump: trump,
-            trick: TrickSnapshot(trickNode: trickNode)
+            trick: TrickSnapshot(trickNode: trickNode),
+            cardsRemainingInHandBeforeMove: cardsRemainingInHandBeforeMove,
+            cardsInRound: cardsInRound
         )
     }
 
@@ -326,5 +341,51 @@ struct BotTurnCardHeuristicsService {
         case .wish, .none:
             return nil
         }
+    }
+
+    private func threatPhaseMultiplier(
+        for card: Card,
+        trump: Suit?,
+        cardsRemainingInHandBeforeMove: Int?,
+        cardsInRound: Int?
+    ) -> Double {
+        guard let cardsInRound,
+              cardsInRound > 1,
+              let cardsRemainingInHandBeforeMove else {
+            return 1.0
+        }
+
+        let clampedCardsInRound = max(1, cardsInRound)
+        let clampedHandSize = min(max(1, cardsRemainingInHandBeforeMove), clampedCardsInRound)
+        let completedTricks = max(0, clampedCardsInRound - clampedHandSize)
+        let phaseProgress = Double(completedTricks) / Double(max(1, clampedCardsInRound - 1))
+
+        let resourceWeight: Double
+        if card.isJoker {
+            resourceWeight = 1.0
+        } else if let suit = card.suit, suit == trump {
+            resourceWeight = 0.8
+        } else if let rank = card.rank, rank.rawValue >= Rank.queen.rawValue {
+            resourceWeight = 0.65
+        } else if let rank = card.rank, rank.rawValue >= Rank.jack.rawValue {
+            resourceWeight = 0.35
+        } else {
+            resourceWeight = 0.15
+        }
+
+        // Early in the hand, preserve high-value resources longer.
+        let earlyPreservationBonus = 0.28 * resourceWeight
+        // Late in the hand, convert resources into result instead of over-preserving.
+        let lateConversionDiscount = 0.38 * resourceWeight
+
+        var multiplier = 1.0 +
+            (1.0 - phaseProgress) * earlyPreservationBonus -
+            phaseProgress * lateConversionDiscount
+
+        if clampedHandSize == 1 {
+            multiplier -= 0.05 * resourceWeight
+        }
+
+        return min(1.35, max(0.55, multiplier))
     }
 }

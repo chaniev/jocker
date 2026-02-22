@@ -34,7 +34,9 @@ final class GameTurnService {
         bid: Int?,
         tricksTaken: Int?,
         cardsInRound: Int? = nil,
-        playerCount: Int? = nil
+        playerCount: Int? = nil,
+        isBlind: Bool = false,
+        matchContext: BotMatchContext? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         return automaticTurnDecision(
             context: .init(
@@ -44,7 +46,9 @@ final class GameTurnService {
                 bid: bid,
                 tricksTaken: tricksTaken,
                 cardsInRound: cardsInRound,
-                playerCount: playerCount
+                playerCount: playerCount,
+                isBlind: isBlind,
+                matchContext: matchContext
             )
         )
     }

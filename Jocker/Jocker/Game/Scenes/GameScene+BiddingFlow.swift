@@ -86,7 +86,8 @@ extension GameScene {
             hand: players[playerIndex].hand.cards,
             cardsInRound: gameState.currentCardsPerPlayer,
             trump: currentTrump,
-            forbiddenBid: forbidden
+            forbiddenBid: forbidden,
+            matchContext: botMatchContext(for: playerIndex)
         )
         let bid = allowedBids.contains(candidateBid) ? candidateBid : fallbackBid
         pendingBids[playerIndex] = bid

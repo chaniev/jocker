@@ -17,6 +17,30 @@ final class BotTurnStrategyService {
         let tricksTaken: Int?
         let cardsInRound: Int?
         let playerCount: Int?
+        let isBlind: Bool
+        let matchContext: BotMatchContext?
+
+        init(
+            handCards: [Card],
+            trickNode: TrickNode,
+            trump: Suit?,
+            bid: Int?,
+            tricksTaken: Int?,
+            cardsInRound: Int?,
+            playerCount: Int?,
+            isBlind: Bool = false,
+            matchContext: BotMatchContext? = nil
+        ) {
+            self.handCards = handCards
+            self.trickNode = trickNode
+            self.trump = trump
+            self.bid = bid
+            self.tricksTaken = tricksTaken
+            self.cardsInRound = cardsInRound
+            self.playerCount = playerCount
+            self.isBlind = isBlind
+            self.matchContext = matchContext
+        }
     }
 
     private struct ResolvedDecisionContext {
@@ -60,7 +84,9 @@ final class BotTurnStrategyService {
         bid: Int?,
         tricksTaken: Int?,
         cardsInRound: Int? = nil,
-        playerCount: Int? = nil
+        playerCount: Int? = nil,
+        isBlind: Bool = false,
+        matchContext: BotMatchContext? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         return makeTurnDecision(
             context: .init(
@@ -70,7 +96,9 @@ final class BotTurnStrategyService {
                 bid: bid,
                 tricksTaken: tricksTaken,
                 cardsInRound: cardsInRound,
-                playerCount: playerCount
+                playerCount: playerCount,
+                isBlind: isBlind,
+                matchContext: matchContext
             )
         )
     }
@@ -89,7 +117,9 @@ final class BotTurnStrategyService {
                 targetBid: resolvedContext.targetBid,
                 currentTricks: resolvedContext.currentTricks,
                 cardsInRound: resolvedContext.resolvedCardsInRound,
-                playerCount: resolvedContext.request.playerCount
+                playerCount: resolvedContext.request.playerCount,
+                isBlind: resolvedContext.request.isBlind,
+                matchContext: resolvedContext.request.matchContext
             )
         ) {
             return bestMove

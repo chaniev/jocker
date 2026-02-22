@@ -115,7 +115,123 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         XCTAssertEqual(move?.jokerDecision.leadDeclaration, .wish)
     }
 
+    func testBestMove_whenForcedLeadJokerEarlyChase_prefersAboveTrumpOverWish() {
+        let move = evaluator.bestMove(
+            context: .init(
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                handCards: [.joker, card(.clubs, .six), card(.diamonds, .seven), card(.hearts, .eight)],
+                trick: .init(playedCards: []),
+                trump: .spades,
+                targetBid: 1,
+                currentTricks: 0,
+                cardsInRound: 8,
+                playerCount: 4,
+                isBlind: false,
+                matchContext: nil
+            )
+        )
+
+        XCTAssertEqual(move?.card, .joker)
+        XCTAssertEqual(move?.jokerDecision.style, .faceUp)
+        XCTAssertEqual(move?.jokerDecision.leadDeclaration, .above(suit: .spades))
+    }
+
+    func testBestMove_whenForcedLeadJokerFinalAllInChase_preservesWishOverAbove() {
+        let move = evaluator.bestMove(
+            context: .init(
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                handCards: [.joker],
+                trick: .init(playedCards: []),
+                trump: .spades,
+                targetBid: 1,
+                currentTricks: 0,
+                cardsInRound: 1,
+                playerCount: 4,
+                isBlind: false,
+                matchContext: nil
+            )
+        )
+
+        XCTAssertEqual(move?.card, .joker)
+        XCTAssertEqual(move?.jokerDecision.style, .faceUp)
+        XCTAssertEqual(move?.jokerDecision.leadDeclaration, .wish)
+    }
+
+    func testBestMove_whenForcedLeadJokerDumping_prefersTakesNonTrumpDeclaration() {
+        let move = evaluator.bestMove(
+            context: .init(
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                handCards: [.joker, card(.clubs, .six), card(.diamonds, .seven), card(.hearts, .eight)],
+                trick: .init(playedCards: []),
+                trump: .spades,
+                targetBid: 0,
+                currentTricks: 0,
+                cardsInRound: 8,
+                playerCount: 4,
+                isBlind: false,
+                matchContext: nil
+            )
+        )
+
+        XCTAssertEqual(move?.card, .joker)
+        XCTAssertEqual(move?.jokerDecision.style, .faceUp)
+        guard case .some(.takes(let suit)) = move?.jokerDecision.leadDeclaration else {
+            XCTFail("Ожидалось объявление takes в dump-сценарии с форсированным lead-joker")
+            return
+        }
+        XCTAssertNotEqual(suit, .spades)
+    }
+
+    func testBestMove_withNeutralMatchContext_preservesDecision() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let hand = [
+            card(.hearts, .ace),
+            card(.hearts, .king)
+        ]
+
+        let baseline = evaluator.bestMove(
+            legalCards: hand,
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .clubs,
+            targetBid: 1,
+            currentTricks: 0,
+            cardsInRound: hand.count,
+            playerCount: 4,
+            isBlind: true
+        )
+        let withMatchContext = evaluator.bestMove(
+            legalCards: hand,
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .clubs,
+            targetBid: 1,
+            currentTricks: 0,
+            cardsInRound: hand.count,
+            playerCount: 4,
+            isBlind: true,
+            matchContext: sampleMatchContext()
+        )
+
+        XCTAssertEqual(withMatchContext?.card, baseline?.card)
+        XCTAssertEqual(withMatchContext?.jokerDecision, baseline?.jokerDecision)
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
+    }
+
+    private func sampleMatchContext() -> BotMatchContext {
+        return BotMatchContext(
+            block: .second,
+            roundIndexInBlock: 1,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 2,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: nil
+        )
     }
 }

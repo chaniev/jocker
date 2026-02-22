@@ -175,6 +175,60 @@ final class BotBiddingServiceTests: XCTestCase {
         }
     }
 
+    func testMakePreDealBlindBid_secondPlaceWithSafeGap_avoidsBlindToProtectPosition() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let blindBid = service.makePreDealBlindBid(
+            playerIndex: 1,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: Array(0...9),
+            canChooseBlind: true,
+            totalScores: [1200, 950, 620, 600] // behind leader: 250, ahead of next: 330 (safe gap)
+        )
+
+        XCTAssertNil(blindBid)
+    }
+
+    func testMakePreDealBlindBid_secondPlaceWithoutSafeGap_canStillChooseCatchUpBlind() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let blindBid = service.makePreDealBlindBid(
+            playerIndex: 1,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: Array(0...9),
+            canChooseBlind: true,
+            totalScores: [1250, 950, 800, 780] // behind leader: 300, ahead of next: 150 (not a safe gap)
+        )
+
+        XCTAssertNotNil(blindBid)
+    }
+
+    func testMakePreDealBlindBid_inSameCatchUpScenario_dealerIsMoreConservativeThanNonDealer() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let nonDealerBlindBid = service.makePreDealBlindBid(
+            playerIndex: 1,
+            dealerIndex: 0,
+            cardsInRound: 4,
+            allowedBlindBids: Array(0...4),
+            canChooseBlind: true,
+            totalScores: [1210, 1000, 980, 960] // behind leader: 210, safe gap отсутствует
+        )
+        let dealerBlindBid = service.makePreDealBlindBid(
+            playerIndex: 1,
+            dealerIndex: 1,
+            cardsInRound: 4,
+            allowedBlindBids: Array(0...4),
+            canChooseBlind: true,
+            totalScores: [1210, 1000, 980, 960]
+        )
+
+        XCTAssertNotNil(nonDealerBlindBid)
+        XCTAssertNil(dealerBlindBid)
+    }
+
     func testMakePreDealBlindBid_whenSlightlyBehind_usesLowerCatchUpBid() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 

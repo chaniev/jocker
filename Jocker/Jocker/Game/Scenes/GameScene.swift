@@ -394,6 +394,92 @@ class GameScene: SKScene {
         return tuning(for: botDifficulty(for: playerIndex)).timing
     }
 
+    func botMatchContext(for playerIndex: Int) -> BotMatchContext? {
+        guard playerCount > 0 else { return nil }
+        guard gameState.players.indices.contains(playerIndex) else { return nil }
+
+        let totalScores = scoreManager.totalScoresIncludingCurrentBlock
+        let normalizedScores: [Int]
+        if totalScores.count == playerCount {
+            normalizedScores = totalScores
+        } else {
+            normalizedScores = Array(totalScores.prefix(playerCount)) +
+                Array(repeating: 0, count: max(0, playerCount - totalScores.count))
+        }
+
+        return BotMatchContext(
+            block: gameState.currentBlock,
+            roundIndexInBlock: gameState.currentRoundInBlock,
+            totalRoundsInBlock: gameState.totalRoundsInBlock,
+            totalScores: normalizedScores,
+            playerIndex: playerIndex,
+            dealerIndex: gameState.currentDealer,
+            playerCount: playerCount,
+            premium: botPremiumSnapshot(for: playerIndex)
+        )
+    }
+
+    private func botPremiumSnapshot(for playerIndex: Int) -> BotMatchContext.PremiumSnapshot? {
+        guard playerIndex >= 0, playerIndex < playerCount else { return nil }
+        guard scoreManager.currentBlockRoundResults.indices.contains(playerIndex) else { return nil }
+
+        let roundResults = scoreManager.currentBlockRoundResults[playerIndex]
+        let totalRounds = max(0, gameState.totalRoundsInBlock)
+        let completedRounds = min(roundResults.count, totalRounds)
+        let remainingRounds = max(0, totalRounds - completedRounds)
+        let consideredResults = Array(roundResults.prefix(completedRounds))
+        let zeroPremiumRelevant = gameState.currentBlock == .first || gameState.currentBlock == .third
+        let leftNeighborIndex = playerCount > 1
+            ? PremiumRules.leftNeighbor(of: playerIndex, playerCount: playerCount)
+            : nil
+
+        let isPremiumCandidateSoFar = consideredResults.allSatisfy(\.bidMatched)
+        let isZeroPremiumCandidateSoFar = zeroPremiumRelevant
+            ? (consideredResults.isEmpty || ScoreCalculator.isZeroPremiumEligible(roundResults: consideredResults))
+            : false
+
+        let allPlayerResults = scoreManager.currentBlockRoundResults
+        let candidateIndices = (0..<playerCount).filter { index in
+            guard allPlayerResults.indices.contains(index) else { return false }
+            let playerResults = Array(allPlayerResults[index].prefix(totalRounds))
+            return playerResults.allSatisfy(\.bidMatched)
+        }
+        let premiumCandidateSet = Set(candidateIndices)
+        let opponentPremiumCandidatesSoFarCount = candidateIndices.filter { $0 != playerIndex }.count
+        let hasAnyCompletedRoundEvidence = allPlayerResults.contains { !$0.isEmpty }
+
+        let threateningPenaltyCandidatesCount: Int
+        if hasAnyCompletedRoundEvidence {
+            threateningPenaltyCandidatesCount = candidateIndices
+                .filter { $0 != playerIndex }
+                .reduce(0) { partial, premiumPlayerIndex in
+                    let target = PremiumRules.findPenaltyTarget(
+                        for: premiumPlayerIndex,
+                        premiumPlayers: premiumCandidateSet,
+                        playerCount: playerCount
+                    )
+                    return partial + (target == playerIndex ? 1 : 0)
+                }
+        } else {
+            threateningPenaltyCandidatesCount = 0
+        }
+        let isPenaltyTargetRiskSoFar = threateningPenaltyCandidatesCount > 0
+        let leftNeighborIsPremiumCandidateSoFar = leftNeighborIndex.map { premiumCandidateSet.contains($0) } ?? false
+
+        return BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: completedRounds,
+            remainingRoundsInBlock: remainingRounds,
+            isPremiumCandidateSoFar: isPremiumCandidateSoFar,
+            isZeroPremiumRelevantInBlock: zeroPremiumRelevant,
+            isZeroPremiumCandidateSoFar: isZeroPremiumCandidateSoFar,
+            leftNeighborIndex: leftNeighborIndex,
+            leftNeighborIsPremiumCandidateSoFar: leftNeighborIsPremiumCandidateSoFar,
+            isPenaltyTargetRiskSoFar: isPenaltyTargetRiskSoFar,
+            premiumCandidatesThreateningPenaltyCount: threateningPenaltyCandidatesCount,
+            opponentPremiumCandidatesSoFarCount: opponentPremiumCandidatesSoFarCount
+        )
+    }
+
     private func tuning(for difficulty: BotDifficulty) -> BotTuning {
         return botTuningsByDifficulty[difficulty] ?? BotTuning(difficulty: difficulty)
     }

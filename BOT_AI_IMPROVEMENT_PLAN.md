@@ -56,10 +56,9 @@
 
 ### Что по-прежнему остается проблемой (по поведению)
 
-- `BotBiddingService.makePreDealBlindBid(...)` все еще использует старую пороговую blind-эвристику.
-- `BotTurnRoundProjectionService.expectedRoundScore(...)` все еще считает `isBlind: false`.
-- `BotTurnCardHeuristicsService.cardThreat(...)` все еще почти статичен и не учитывает фазу.
-- Runtime-решения бота все еще не получают блоковый/премиальный контекст.
+- Premium-aware utility и матчевый контекст пока не влияют на итоговый runtime utility (этапы 4b/4c еще не начаты).
+- `BotTurnCardHeuristicsService.cardThreat(...)` уже стал phase-aware в MVP-варианте, но пока не получает полный threat-context из плана (дефицит/избыток взяток, позиция в взятке, chase/dump, blind).
+- Runtime-решения бота не используют premium/block context по поведению (этап 4a plumbing начат, 4b/4c еще впереди).
 - Нет runtime-адаптации к стилю соперников.
 
 ### Влияние на план
@@ -67,6 +66,63 @@
 - Этапы остаются актуальными по цели, но точки внедрения смещаются в новые сервисы.
 - Этапы 2 и 3 теперь должны меняться преимущественно в `BotTurnRoundProjectionService`, `BotTurnCandidateRankingService`, `BotTurnCandidateEvaluatorService`, `BotTurnCardHeuristicsService`, а не только в `BotTurnStrategyService`.
 - Этап 2.5 теперь про расширение уже существующего `BotTurnDecisionContext`, а не про ввод context-API с нуля.
+
+## Статус выполнения (зафиксировано на 2026-02-22)
+
+- Этап 0 (baseline): частично
+  - добавлен черновик `BOT_AI_TEST_SCENARIOS.md` (есть группы `BLIND/PREMIUM/JOKER/PHASE` и concrete drafts v0);
+  - зафиксированы шаблоны метрик/seed/команд;
+  - baseline-метрики еще не собраны.
+- Этап 1 (Blind fix): выполнен по коду и unit-тестам
+  - `makePreDealBlindBid(...)` переведен на risk-score;
+  - `blindSafeLeadThreshold` влияет на решение;
+  - покрыты сценарии safe-gap / catch-up / dealer-vs-nondealer.
+- Этап 2 (Blind-aware play): выполнен по коду и unit-тестам
+  - `isBlind` протянут в turn decision/evaluator/projection/ranking utility;
+  - добавлены тесты на blind-aware scoring/utility.
+- Этап 2.5 (blind plumbing в flow): выполнен по коду
+  - `GameScene+PlayingFlow` передает `isBlind` в runtime context;
+  - `GameTurnService`/`GameSceneCoordinator` синхронизированы по сигнатурам.
+- Этап 3 (Phase-aware threat): в процессе (MVP реализован)
+  - `cardThreat(...)` стал phase-aware (ранняя/поздняя фаза);
+  - phase-context протянут из `BotTurnCandidateEvaluatorService`;
+  - добавлены phase tests (`Heuristics`) и probe test (`Strategy`, допускает `XCTSkip` до retuning).
+- Этап 4a (базовый контекст блока): начат
+  - добавлен plumbing type `BotMatchContext`;
+  - выполнен runtime/bidding plumbing контекста без изменения поведения (feature plumbing first);
+  - turn-stack plumbing расширен до `BotTurnCandidateRankingService` / `BotTurnRoundProjectionService`;
+  - добавлены behavior-neutral unit-тесты (`projection` / `ranking` / `evaluator`) на прием `matchContext`.
+- Этап 4b (Premium utility): начат (MVP-подшаг)
+  - добавлен score-only `matchCatchUpUtility` в `BotTurnCandidateRankingService` (без premium-candidate/zero-premium логики);
+  - utility учитывает `totalScores` + прогресс блока из `BotMatchContext` только в режиме `chase`;
+  - `BotMatchContext` расширен `premium`-snapshot (completed/remaining rounds, premium-candidate, zero-premium-candidate);
+  - `GameScene.botMatchContext(...)` начал собирать базовые premium-признаки из `ScoreManager.currentBlockRoundResults`;
+  - добавлен MVP `premiumPreserveUtility` в `BotTurnCandidateRankingService` (своя премия / zero-premium, без моделирования соперников), уже с усилением к концу блока (`completed/remaining rounds`);
+  - в utility-контекст добавлен `trickDeltaToBidBeforeMove` (точнее отличаем `exact-bid` от уже сорванного `overbid` внутри текущей раздачи);
+  - `premiumPreserveUtility` учитывает trajectory-edge (`exact-bid` vs `already broken`) для premium/zero-premium защиты;
+  - добавлены runtime probe-тесты/сценарии (`Strategy premium probe`, `PREMIUM-003` draft) для фиксации ожидаемого premium-aware различия решений как цели retuning;
+  - добавлены unit-тесты на направление эффекта (отставание/лидерство) и boundary-тест `GameTurnService` с нейтральным `matchContext`.
+- Этап 4c (Opponent premium / penalty-aware): начат (fallback MVP)
+  - `BotMatchContext.PremiumSnapshot` расширен признаками penalty-risk (`isPenaltyTargetRiskSoFar`, count threatening premium candidates, left-neighbor candidate flag);
+  - `GameScene.botMatchContext(...)` начал вычислять risk стать penalty target по текущим premium-candidates (без моделирования будущих ходов);
+  - добавлен `penaltyAvoidUtility` в `BotTurnCandidateRankingService` (fallback 4c без `premiumDenyUtility`);
+  - начат и расширен упрощенный `premiumDenyUtility` (anti-premium: сосед слева + прочие premium-candidates, с приоритетом соседа слева) в `BotTurnCandidateRankingService`;
+  - `BotMatchContext.PremiumSnapshot` расширен счетчиком `opponentPremiumCandidatesSoFarCount` для generalized anti-premium pressure;
+  - добавлены runtime probe-тесты/сценарии для `4c` (`Strategy penalty-risk probe`, `Strategy anti-premium probe`, `PREMIUM-006/008` drafts) как цель дальнейшего retuning;
+  - добавлен строгий runtime-тест (`Strategy`) на deterministic anti-premium flip в last-seat dump сценарии с усиленным opponent premium pressure;
+  - добавлены unit-тесты на направление penalty-risk эффекта и flow-тест источника premium/penalty snapshot.
+- Этап 5 (Joker logic): начат (fallback MVP `wish` vs `above`)
+  - в `BotTurnCandidateRankingService` выделен helper контекстной оценки объявления ведущего джокера (`wish` vs `above`, `takes` пока без нового scoring);
+  - добавлены unit-тесты на trump-aware `above` (разный приоритет в `chase`/`dump`) и сохранение `wish` в финальном all-in chase.
+  - добавлены strict evaluator-level тесты (forced lead-joker) на `above(trump)` в раннем chase и `wish` в финальном all-in chase;
+  - добавлен runtime `Strategy` probe-сценарий (`above` vs `wish` по срочности добора) как цель retuning.
+  - helper расширен на MVP scoring для `takes` (chase-пенальти / dump controlled-loss бонус, c учётом trump и фазы);
+  - добавлены unit-тесты на `takes(non-trump)` vs `takes(trump)` и `above(trump)` vs `takes(trump)`, а также strict evaluator-тест на выбор `takes(non-trump)` в forced lead-joker dump.
+
+### Ограничение валидации (текущее окружение)
+
+- Полный `xcodebuild test`/`xcodebuild build` в текущем окружении не проходит из-за проблем с `CoreSimulatorService` и отсутствующего runtime/SDK (`iOS 17.2 Platform Not Installed` в `ibtool`).
+- Локально выполнялась синтаксическая проверка измененных Swift-файлов через `swiftc -frontend -parse`.
 
 ## Метрики и baseline (этап 0)
 
@@ -116,7 +172,7 @@
 ### Готовность к завершению Этапа 0
 
 - [ ] Метрики baseline собраны на фиксированном наборе seed.
-- [ ] Создан черновик `BOT_AI_TEST_SCENARIOS.md` с детерминированными кейсами.
+- [x] Создан черновик `BOT_AI_TEST_SCENARIOS.md` с детерминированными кейсами.
 - [ ] Добавлены/обновлены тесты-инструменты для расчета метрик (если нужны).
 - [ ] Есть воспроизводимый способ сравнения `baseline vs candidate`.
 
@@ -355,8 +411,8 @@
 
 - [ ] Этапы 1, 2, 2.5 и 3 завершены и протестированы.
 - [ ] Зафиксирован baseline по premium-метрикам.
-- [ ] Понятно, откуда брать блоковый прогресс и `totalScores` в момент хода.
-- [ ] Есть тестовый контур для проверки plumbing-изменений в flow.
+- [x] Понятно, откуда брать блоковый прогресс и `totalScores` в момент хода.
+- [x] Есть тестовый контур для проверки plumbing-изменений в flow.
 
 ### Файлы (ожидаемо)
 
@@ -622,8 +678,8 @@
 ### Готовность к Этапу 4 (серия 4a-4c)
 
 - [ ] Этапы 1-3 завершены и протестированы.
-- [ ] Есть доступ к `gameState.currentBlock` в момент хода бота.
-- [ ] Есть доступ к данным счета/результатов блока в момент принятия решения.
+- [x] Есть доступ к `gameState.currentBlock` в момент хода бота.
+- [x] Есть доступ к данным счета/результатов блока в момент принятия решения.
 - [ ] Написаны тесты на передачу контекста через flow/coordinator/service.
 - [ ] Зафиксирован baseline по premium-метрикам.
 - [ ] Время принятия решения бота в текущем baseline измерено.

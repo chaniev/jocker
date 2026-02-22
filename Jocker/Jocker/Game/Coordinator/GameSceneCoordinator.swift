@@ -115,7 +115,9 @@ final class GameSceneCoordinator {
         trump: Suit?,
         bid: Int?,
         tricksTaken: Int?,
-        cardsInRound: Int
+        cardsInRound: Int,
+        isBlind: Bool = false,
+        matchContext: BotMatchContext? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         guard players.indices.contains(playerIndex) else { return nil }
         return turnService.automaticTurnDecision(
@@ -125,7 +127,9 @@ final class GameSceneCoordinator {
             bid: bid,
             tricksTaken: tricksTaken,
             cardsInRound: cardsInRound,
-            playerCount: players.count
+            playerCount: players.count,
+            isBlind: isBlind,
+            matchContext: matchContext
         )
     }
 

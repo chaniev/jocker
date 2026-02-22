@@ -94,6 +94,10 @@ extension GameScene {
         let tricksTaken = gameState.players.indices.contains(playerIndex)
             ? gameState.players[playerIndex].tricksTaken
             : nil
+        let isBlindRound = gameState.players.indices.contains(playerIndex)
+            ? gameState.players[playerIndex].isBlindBid
+            : players[playerIndex].isBlindBid
+        let matchContext = botMatchContext(for: playerIndex)
 
         guard let turnDecision = botTurnService(for: playerIndex).automaticTurnDecision(
             context: .init(
@@ -103,7 +107,9 @@ extension GameScene {
                 bid: bid,
                 tricksTaken: tricksTaken,
                 cardsInRound: gameState.currentCardsPerPlayer,
-                playerCount: playerCount
+                playerCount: playerCount,
+                isBlind: isBlindRound,
+                matchContext: matchContext
             )
         ) else {
             return

@@ -19,6 +19,32 @@ struct BotTurnCandidateEvaluatorService {
         let currentTricks: Int
         let cardsInRound: Int
         let playerCount: Int?
+        let isBlind: Bool
+        let matchContext: BotMatchContext?
+
+        init(
+            legalCards: [Card],
+            handCards: [Card],
+            trick: BotTurnCardHeuristicsService.TrickSnapshot,
+            trump: Suit?,
+            targetBid: Int,
+            currentTricks: Int,
+            cardsInRound: Int,
+            playerCount: Int?,
+            isBlind: Bool = false,
+            matchContext: BotMatchContext? = nil
+        ) {
+            self.legalCards = legalCards
+            self.handCards = handCards
+            self.trick = trick
+            self.trump = trump
+            self.targetBid = targetBid
+            self.currentTricks = currentTricks
+            self.cardsInRound = cardsInRound
+            self.playerCount = playerCount
+            self.isBlind = isBlind
+            self.matchContext = matchContext
+        }
     }
 
     private let cardHeuristics: BotTurnCardHeuristicsService
@@ -46,7 +72,9 @@ struct BotTurnCandidateEvaluatorService {
         targetBid: Int,
         currentTricks: Int,
         cardsInRound: Int,
-        playerCount: Int?
+        playerCount: Int?,
+        isBlind: Bool = false,
+        matchContext: BotMatchContext? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         return bestMove(
             context: .init(
@@ -57,7 +85,9 @@ struct BotTurnCandidateEvaluatorService {
                 targetBid: targetBid,
                 currentTricks: currentTricks,
                 cardsInRound: cardsInRound,
-                playerCount: playerCount
+                playerCount: playerCount,
+                isBlind: isBlind,
+                matchContext: matchContext
             )
         )
     }
@@ -114,7 +144,10 @@ struct BotTurnCandidateEvaluatorService {
             hasLosingNonJoker: hasLosingNonJoker,
             tricksNeededToMatchBid: tricksNeededToMatchBid,
             tricksRemainingIncludingCurrent: tricksRemainingIncludingCurrent,
-            chasePressure: chasePressure
+            trickDeltaToBidBeforeMove: context.currentTricks - context.targetBid,
+            chasePressure: chasePressure,
+            isBlindRound: context.isBlind,
+            matchContext: context.matchContext
         )
 
         var best: CandidateEvaluation?
@@ -144,13 +177,17 @@ struct BotTurnCandidateEvaluatorService {
                 let projectedScore = roundProjection.expectedRoundScore(
                     cardsInRound: context.cardsInRound,
                     bid: context.targetBid,
-                    expectedTricks: projectedFinalTricks
+                    expectedTricks: projectedFinalTricks,
+                    isBlind: context.isBlind,
+                    matchContext: context.matchContext
                 )
                 let threat = cardHeuristics.cardThreat(
                     card: card,
                     decision: decision,
                     trump: context.trump,
-                    trick: context.trick
+                    trick: context.trick,
+                    cardsRemainingInHandBeforeMove: context.handCards.count,
+                    cardsInRound: context.cardsInRound
                 )
                 let utility = candidateRanking.moveUtility(
                     projectedScore: projectedScore,

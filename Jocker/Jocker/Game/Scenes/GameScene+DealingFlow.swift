@@ -229,7 +229,8 @@ extension GameScene {
             cardsInRound: gameState.currentCardsPerPlayer,
             allowedBlindBids: allowedBlindBids,
             canChooseBlind: canChooseBlind,
-            totalScores: scoreManager.totalScoresIncludingCurrentBlock
+            totalScores: scoreManager.totalScoresIncludingCurrentBlock,
+            matchContext: botMatchContext(for: playerIndex)
         )
         applySelection(blindBid != nil, blindBid)
     }

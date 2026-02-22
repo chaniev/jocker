@@ -61,6 +61,46 @@ final class BotTurnRoundProjectionServiceTests: XCTestCase {
         XCTAssertEqual(value, expected, accuracy: 0.0001)
     }
 
+    func testExpectedRoundScore_whenBlind_usesBlindScoringFormula() {
+        let regular = service.expectedRoundScore(
+            cardsInRound: 5,
+            bid: 2,
+            expectedTricks: 2.0,
+            isBlind: false
+        )
+        let blind = service.expectedRoundScore(
+            cardsInRound: 5,
+            bid: 2,
+            expectedTricks: 2.0,
+            isBlind: true
+        )
+
+        XCTAssertEqual(
+            blind,
+            Double(ScoreCalculator.calculateRoundScore(cardsInRound: 5, bid: 2, tricksTaken: 2, isBlind: true))
+        )
+        XCTAssertNotEqual(blind, regular)
+        XCTAssertGreaterThan(blind, regular)
+    }
+
+    func testExpectedRoundScore_withMatchContext_preservesBehaviorUntilPremiumLogicEnabled() {
+        let baseline = service.expectedRoundScore(
+            cardsInRound: 5,
+            bid: 2,
+            expectedTricks: 2.25,
+            isBlind: true
+        )
+        let withMatchContext = service.expectedRoundScore(
+            cardsInRound: 5,
+            bid: 2,
+            expectedTricks: 2.25,
+            isBlind: true,
+            matchContext: sampleMatchContext()
+        )
+
+        XCTAssertEqual(withMatchContext, baseline, accuracy: 0.0001)
+    }
+
     func testProjectedFinalTricks_clampsToCardsInRound() {
         let projected = service.projectedFinalTricks(
             currentTricks: 2,
@@ -75,5 +115,18 @@ final class BotTurnRoundProjectionServiceTests: XCTestCase {
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
+    }
+
+    private func sampleMatchContext() -> BotMatchContext {
+        return BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 2,
+            totalRoundsInBlock: 8,
+            totalScores: [120, 95, 88, 77],
+            playerIndex: 1,
+            dealerIndex: 3,
+            playerCount: 4,
+            premium: nil
+        )
     }
 }

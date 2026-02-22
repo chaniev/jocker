@@ -54,8 +54,11 @@ struct BotTurnRoundProjectionService {
     func expectedRoundScore(
         cardsInRound: Int,
         bid: Int,
-        expectedTricks: Double
+        expectedTricks: Double,
+        isBlind: Bool = false,
+        matchContext: BotMatchContext? = nil
     ) -> Double {
+        _ = matchContext // Этап 4a plumbing: контекст будет использоваться в premium-aware projection.
         let boundedExpected = min(Double(cardsInRound), max(0.0, expectedTricks))
         let floorValue = Int(floor(boundedExpected))
         let ceilValue = min(cardsInRound, floorValue + 1)
@@ -66,7 +69,7 @@ struct BotTurnRoundProjectionService {
                     cardsInRound: cardsInRound,
                     bid: bid,
                     tricksTaken: floorValue,
-                    isBlind: false
+                    isBlind: isBlind
                 )
             )
         }
@@ -76,7 +79,7 @@ struct BotTurnRoundProjectionService {
                 cardsInRound: cardsInRound,
                 bid: bid,
                 tricksTaken: floorValue,
-                isBlind: false
+                isBlind: isBlind
             )
         )
         let upperScore = Double(
@@ -84,7 +87,7 @@ struct BotTurnRoundProjectionService {
                 cardsInRound: cardsInRound,
                 bid: bid,
                 tricksTaken: ceilValue,
-                isBlind: false
+                isBlind: isBlind
             )
         )
 

@@ -15,6 +15,7 @@ This document is the source of truth for repository structure and file placement
 ├── Makefile
 ├── FOLDER_STRUCTURE_SPEC.md
 ├── BOT_AI_IMPROVEMENT_PLAN.md
+├── BOT_AI_TEST_SCENARIOS.md
 ├── CARDS_DOCUMENTATION.md
 ├── README.md
 ├── README_CARDS.md
@@ -63,6 +64,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine.swift`: self-play evolution/simulation engine and fitness evaluation internals for tuning `BotTuning` coefficients.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training.
 - `BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
+- `BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `.github/workflows/ios-tests.yml`: GitHub Actions CI workflow that runs Xcode tests on macOS for every `push` and uploads test run artifacts from `.derivedData/test-runs`.
 - `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
 - `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
@@ -93,6 +95,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/Players/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Models/Players/GamePlayersSettings.swift`: normalized snapshot of editable names for 4 player slots and stored bot difficulties for slots 2–4.
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
+- `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
@@ -176,6 +179,7 @@ Jocker/Jocker/
 ├── Models/
 │   ├── Bot/
 │   │   ├── BotDifficulty.swift
+│   │   ├── BotMatchContext.swift
 │   │   └── BotTuning.swift
 │   ├── Cards/
 │   │   ├── Card.swift

@@ -101,6 +101,76 @@ final class BotTurnCardHeuristicsServiceTests: XCTestCase {
         XCTAssertFalse(unseen.contains(.joker), "Both jokers are already known in this setup")
     }
 
+    func testCardThreat_withPhaseContext_highTrumpCardIsMoreThreateningEarlyThanLate() {
+        let trickNode = TrickNode()
+        let card = card(.hearts, .ace)
+
+        let earlyThreat = service.cardThreat(
+            card: card,
+            decision: .defaultNonLead,
+            trump: .hearts,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: 8,
+            cardsInRound: 8
+        )
+        let lateThreat = service.cardThreat(
+            card: card,
+            decision: .defaultNonLead,
+            trump: .hearts,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: 1,
+            cardsInRound: 8
+        )
+
+        XCTAssertGreaterThan(earlyThreat, lateThreat)
+    }
+
+    func testCardThreat_withPhaseContext_leadJokerWishIsMoreThreateningEarlyThanLate() {
+        let trickNode = TrickNode()
+        let decision = JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+
+        let earlyThreat = service.cardThreat(
+            card: .joker,
+            decision: decision,
+            trump: .spades,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: 7,
+            cardsInRound: 8
+        )
+        let lateThreat = service.cardThreat(
+            card: .joker,
+            decision: decision,
+            trump: .spades,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: 1,
+            cardsInRound: 8
+        )
+
+        XCTAssertGreaterThan(earlyThreat, lateThreat)
+    }
+
+    func testCardThreat_withoutPhaseContext_matchesExplicitNilPhaseContext() {
+        let trickNode = TrickNode()
+        let card = card(.clubs, .queen)
+
+        let implicit = service.cardThreat(
+            card: card,
+            decision: .defaultNonLead,
+            trump: .spades,
+            trickNode: trickNode
+        )
+        let explicitNil = service.cardThreat(
+            card: card,
+            decision: .defaultNonLead,
+            trump: .spades,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: nil,
+            cardsInRound: nil
+        )
+
+        XCTAssertEqual(implicit, explicitNil, accuracy: 0.0001)
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
     }

@@ -222,6 +222,117 @@ final class GameScenePlayingFlowTests: XCTestCase {
         XCTAssertTrue(scene.canDealCards)
     }
 
+    func testBotMatchContext_buildsBlockRoundScoreAndRelativeSeatData() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame(initialDealerIndex: 2)
+
+        scene.scoreManager.recordRoundResults([
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 1, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false)
+        ])
+
+        guard let context = scene.botMatchContext(for: 0) else {
+            XCTFail("Ожидался матчевый контекст для валидного игрока")
+            return
+        }
+
+        XCTAssertEqual(context.block, scene.gameState.currentBlock)
+        XCTAssertEqual(context.roundIndexInBlock, scene.gameState.currentRoundInBlock)
+        XCTAssertEqual(context.totalRoundsInBlock, scene.gameState.totalRoundsInBlock)
+        XCTAssertEqual(context.totalScores, scene.scoreManager.totalScoresIncludingCurrentBlock)
+        XCTAssertEqual(context.playerIndex, 0)
+        XCTAssertEqual(context.dealerIndex, scene.gameState.currentDealer)
+        XCTAssertEqual(context.playerCount, scene.playerCount)
+        XCTAssertEqual(context.relativeSeatOffsetFromDealer, 2)
+        XCTAssertGreaterThanOrEqual(context.blockProgressFraction, 0)
+        XCTAssertLessThanOrEqual(context.blockProgressFraction, 1)
+        XCTAssertEqual(context.premium?.completedRoundsInBlock, 1)
+        XCTAssertEqual(context.premium?.remainingRoundsInBlock, scene.gameState.totalRoundsInBlock - 1)
+        XCTAssertEqual(context.premium?.isPremiumCandidateSoFar, true)
+        XCTAssertEqual(context.premium?.isZeroPremiumRelevantInBlock, true)
+        XCTAssertEqual(context.premium?.isZeroPremiumCandidateSoFar, false)
+        XCTAssertEqual(context.premium?.opponentPremiumCandidatesSoFarCount, 3)
+    }
+
+    func testBotMatchContext_buildsPremiumSnapshot_forZeroPremiumCandidateAtBlockStart() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame(initialDealerIndex: 0)
+
+        guard let context = scene.botMatchContext(for: 0) else {
+            XCTFail("Ожидался матчевый контекст")
+            return
+        }
+
+        XCTAssertEqual(context.block, .first)
+        XCTAssertEqual(context.premium?.completedRoundsInBlock, 0)
+        XCTAssertEqual(context.premium?.isPremiumCandidateSoFar, true)
+        XCTAssertEqual(context.premium?.isZeroPremiumRelevantInBlock, true)
+        XCTAssertEqual(context.premium?.isZeroPremiumCandidateSoFar, true)
+    }
+
+    func testBotMatchContext_premiumSnapshot_marksBrokenPremiumAndZeroPremiumCandidates() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame(initialDealerIndex: 0)
+
+        scene.scoreManager.recordRoundResults([
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 0, isBlind: false), // player 0 breaks premium
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false)
+        ])
+
+        guard let context = scene.botMatchContext(for: 0) else {
+            XCTFail("Ожидался матчевый контекст")
+            return
+        }
+
+        XCTAssertEqual(context.premium?.completedRoundsInBlock, 1)
+        XCTAssertEqual(context.premium?.isPremiumCandidateSoFar, false)
+        XCTAssertEqual(context.premium?.isZeroPremiumRelevantInBlock, true)
+        XCTAssertEqual(context.premium?.isZeroPremiumCandidateSoFar, false)
+    }
+
+    func testBotMatchContext_premiumSnapshot_marksPenaltyTargetRiskFromOpponentPremiumCandidate() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame(initialDealerIndex: 0)
+
+        // Делаем premium-кандидатом только игрока 3.
+        // Для игрока 3 левый сосед — игрок 0, значит игрок 0 должен стать penalty-target risk.
+        scene.scoreManager.recordRoundResults([
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 0, isBlind: false), // p0 not candidate
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 0, isBlind: false), // p1 not candidate
+            RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 0, isBlind: false), // p2 not candidate
+            RoundResult(cardsInRound: 1, bid: 0, tricksTaken: 0, isBlind: false)  // p3 candidate
+        ])
+
+        guard let context = scene.botMatchContext(for: 0) else {
+            XCTFail("Ожидался матчевый контекст")
+            return
+        }
+
+        XCTAssertEqual(context.premium?.completedRoundsInBlock, 1)
+        XCTAssertEqual(context.premium?.leftNeighborIndex, 1)
+        XCTAssertEqual(context.premium?.leftNeighborIsPremiumCandidateSoFar, false)
+        XCTAssertEqual(context.premium?.isPenaltyTargetRiskSoFar, true)
+        XCTAssertEqual(context.premium?.premiumCandidatesThreateningPenaltyCount, 1)
+        XCTAssertEqual(context.premium?.opponentPremiumCandidatesSoFarCount, 1)
+    }
+
+    func testBotMatchContext_invalidPlayer_returnsNil() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame()
+
+        XCTAssertNil(scene.botMatchContext(for: -1))
+        XCTAssertNil(scene.botMatchContext(for: 99))
+    }
+
     func testResetTrumpStateIfRoundFinished_whenRoundEnded_clearsCurrentTrumpAndIndicator() {
         let scene = makeSceneInPlayingPhase(playerCount: 4)
         scene.currentTrump = .hearts
