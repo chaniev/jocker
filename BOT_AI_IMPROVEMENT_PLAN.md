@@ -56,9 +56,10 @@
 
 ### Что по-прежнему остается проблемой (по поведению)
 
-- Premium-aware utility и матчевый контекст пока не влияют на итоговый runtime utility (этапы 4b/4c еще не начаты).
+- Premium-aware / penalty-aware utility уже влияет на runtime utility (этапы 4b/4c в MVP/fallback реализованы), но логика пока неполная: без полноценного моделирования соперников и без retuning после архитектурных изменений.
 - `BotTurnCardHeuristicsService.cardThreat(...)` уже стал phase-aware в MVP-варианте, но пока не получает полный threat-context из плана (дефицит/избыток взяток, позиция в взятке, chase/dump, blind).
-- Runtime-решения бота не используют premium/block context по поведению (этап 4a plumbing начат, 4b/4c еще впереди).
+- Runtime-решения бота уже используют block/premium context по поведению (MVP 4b/4c), но часть coverage пока закреплена probe-сценариями (`XCTSkip`) и требует стабилизации коэффициентов.
+- Логика объявлений джокера (`wish/above/takes`) начата в MVP-варианте, но пока без детального моделирования ответов соперников и без полного runtime-покрытия strict-сценариями.
 - Нет runtime-адаптации к стилю соперников.
 
 ### Влияние на план
@@ -111,13 +112,14 @@
   - добавлены runtime probe-тесты/сценарии для `4c` (`Strategy penalty-risk probe`, `Strategy anti-premium probe`, `PREMIUM-006/008` drafts) как цель дальнейшего retuning;
   - добавлен строгий runtime-тест (`Strategy`) на deterministic anti-premium flip в last-seat dump сценарии с усиленным opponent premium pressure;
   - добавлены unit-тесты на направление penalty-risk эффекта и flow-тест источника premium/penalty snapshot.
-- Этап 5 (Joker logic): начат (fallback MVP `wish` vs `above`)
-  - в `BotTurnCandidateRankingService` выделен helper контекстной оценки объявления ведущего джокера (`wish` vs `above`, `takes` пока без нового scoring);
+- Этап 5 (Joker logic): начат (MVP `wish/above/takes`, без сложного моделирования ответов)
+  - в `BotTurnCandidateRankingService` выделен helper контекстной оценки объявления ведущего джокера (`wish/above/takes`);
   - добавлены unit-тесты на trump-aware `above` (разный приоритет в `chase`/`dump`) и сохранение `wish` в финальном all-in chase.
   - добавлены strict evaluator-level тесты (forced lead-joker) на `above(trump)` в раннем chase и `wish` в финальном all-in chase;
   - добавлен runtime `Strategy` probe-сценарий (`above` vs `wish` по срочности добора) как цель retuning.
   - helper расширен на MVP scoring для `takes` (chase-пенальти / dump controlled-loss бонус, c учётом trump и фазы);
   - добавлены unit-тесты на `takes(non-trump)` vs `takes(trump)` и `above(trump)` vs `takes(trump)`, а также strict evaluator-тест на выбор `takes(non-trump)` в forced lead-joker dump.
+  - добавлены сценарные drafts `JOKER-003/004/005` для utility/evaluator/runtime сравнения объявлений.
 
 ### Ограничение валидации (текущее окружение)
 
@@ -687,8 +689,8 @@
 ### Готовность к Этапу 5
 
 - [ ] Этап 3 завершен (phase-aware threat стабилен).
-- [ ] Этап 4b завершен минимум в MVP-виде.
-- [ ] Есть сценарии `JOKER-*` для `wish/above/takes`.
+- [x] Этап 4b завершен минимум в MVP-виде.
+- [x] Есть сценарии `JOKER-*` для `wish/above/takes`.
 - [ ] Зафиксирована baseline-частота раннего `lead wish`.
 
 ### Готовность к Этапу 7
