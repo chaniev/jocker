@@ -322,14 +322,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     /// Пересчитываем frame лейблов при изменении размеров без пересоздания
     private func repositionLabels() {
-        let frameResolver = ScoreTableLabelFrameResolver(
-            leftColumnWidth: leftColumnWidth,
-            trickColumnWidth: trickColumnWidth,
-            pointsColumnWidth: pointsColumnWidth,
-            headerHeight: headerHeight,
-            rowHeight: rowHeight,
-            pointsLabelTrailingInset: pointsLabelTrailingInset
-        )
+        let frameResolver = makeLabelFrameResolver()
 
         // Заголовки
         for (playerIndex, headerLabel) in headerLabels.enumerated() {
@@ -355,13 +348,26 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     private func updatePinnedHeaderPosition() {
         let pinnedY = scrollView.contentOffset.y
+        let frameResolver = makeLabelFrameResolver()
 
         for headerLabel in headerLabels {
-            var frame = headerLabel.frame
-            frame.origin.y = pinnedY
-            headerLabel.frame = frame
+            headerLabel.frame = frameResolver.pinnedHeaderFrame(
+                from: headerLabel.frame,
+                contentOffsetY: pinnedY
+            )
             contentView.bringSubviewToFront(headerLabel)
         }
+    }
+
+    private func makeLabelFrameResolver() -> ScoreTableLabelFrameResolver {
+        return ScoreTableLabelFrameResolver(
+            leftColumnWidth: leftColumnWidth,
+            trickColumnWidth: trickColumnWidth,
+            pointsColumnWidth: pointsColumnWidth,
+            headerHeight: headerHeight,
+            rowHeight: rowHeight,
+            pointsLabelTrailingInset: pointsLabelTrailingInset
+        )
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

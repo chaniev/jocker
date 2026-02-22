@@ -104,6 +104,7 @@
 		D4D400012F8013010037CA75 /* ScoreTableTapTargetResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D400022F8013010037CA75 /* ScoreTableTapTargetResolverTests.swift */; };
 		D4D500012F8014010037CA75 /* ScoreTableLabelFrameResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D500022F8014010037CA75 /* ScoreTableLabelFrameResolver.swift */; };
 		D4D600012F8015010037CA75 /* ScoreTableRowPresentationResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D600022F8015010037CA75 /* ScoreTableRowPresentationResolverTests.swift */; };
+		D4D700012F8016010037CA75 /* ScoreTableLabelFrameResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D700022F8016010037CA75 /* ScoreTableLabelFrameResolverTests.swift */; };
 		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
 		D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
 		D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
@@ -257,6 +258,7 @@
 		D4D400022F8013010037CA75 /* ScoreTableTapTargetResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableTapTargetResolverTests.swift; sourceTree = "<group>"; };
 		D4D500022F8014010037CA75 /* ScoreTableLabelFrameResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableLabelFrameResolver.swift; sourceTree = "<group>"; };
 		D4D600022F8015010037CA75 /* ScoreTableRowPresentationResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRowPresentationResolverTests.swift; sourceTree = "<group>"; };
+		D4D700022F8016010037CA75 /* ScoreTableLabelFrameResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableLabelFrameResolverTests.swift; sourceTree = "<group>"; };
 		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
 		D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
 		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
@@ -725,6 +727,7 @@
 				D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */,
 				D4D200022F8011010037CA75 /* ScoreTableScrollOffsetResolverTests.swift */,
 				D4D400022F8013010037CA75 /* ScoreTableTapTargetResolverTests.swift */,
+				D4D700022F8016010037CA75 /* ScoreTableLabelFrameResolverTests.swift */,
 				D4D600022F8015010037CA75 /* ScoreTableRowPresentationResolverTests.swift */,
 				D4CE00022F800D010037CA75 /* ScoreTableRowTextRendererTests.swift */,
 			);
@@ -1006,6 +1009,7 @@
 				D4C800012F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift in Sources */,
 				D4D200012F8011010037CA75 /* ScoreTableScrollOffsetResolverTests.swift in Sources */,
 				D4D400012F8013010037CA75 /* ScoreTableTapTargetResolverTests.swift in Sources */,
+				D4D700012F8016010037CA75 /* ScoreTableLabelFrameResolverTests.swift in Sources */,
 				D4D600012F8015010037CA75 /* ScoreTableRowPresentationResolverTests.swift in Sources */,
 				D4CE00012F800D010037CA75 /* ScoreTableRowTextRendererTests.swift in Sources */,
 				D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */,

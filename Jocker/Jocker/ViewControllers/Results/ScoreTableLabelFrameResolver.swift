@@ -67,6 +67,15 @@ struct ScoreTableLabelFrameResolver {
         )
     }
 
+    func pinnedHeaderFrame(
+        from baseFrame: CGRect,
+        contentOffsetY: CGFloat
+    ) -> CGRect {
+        var frame = baseFrame
+        frame.origin.y = contentOffsetY
+        return frame
+    }
+
     private func rowY(for rowIndex: Int) -> CGFloat {
         return headerHeight + CGFloat(rowIndex) * rowHeight
     }

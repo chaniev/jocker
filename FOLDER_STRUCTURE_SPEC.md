@@ -92,7 +92,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
-- `Jocker/Jocker/ViewControllers/Results/ScoreTableLabelFrameResolver.swift`: pure frame calculator for `ScoreTableView` labels (header, cards, tricks, points) based on current column widths and row metrics.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableLabelFrameResolver.swift`: pure frame calculator for `ScoreTableView` labels (header, cards, tricks, points) and pinned-header y-adjustment based on current column widths and row metrics.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowNavigationResolver.swift`: pure row navigation helper for `ScoreTableView` that resolves scroll targets for deal rows and block summary rows from static row mappings.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowPresentationResolver.swift`: pure row presentation helper for `ScoreTableView` that defines cards-column text and row-level points label style (`regular` vs `summary`).
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableScrollOffsetResolver.swift`: pure scroll-offset calculator for `ScoreTableView` that centers target rows and clamps vertical offsets to scroll bounds.
@@ -268,6 +268,7 @@ Jocker/JockerTests/
 │   ├── ScoreTableInProgressRoundSnapshotProviderTests.swift
 │   ├── ScoreTableRowNavigationResolverTests.swift
 │   ├── ScoreTableRenderSnapshotBuilderTests.swift
+│   ├── ScoreTableLabelFrameResolverTests.swift
 │   ├── ScoreTableRowPresentationResolverTests.swift
 │   ├── ScoreTableScrollOffsetResolverTests.swift
 │   ├── ScoreTableTapTargetResolverTests.swift
