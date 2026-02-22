@@ -29,6 +29,8 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     private typealias ScoreDataSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDataSnapshot
     private typealias ScoreDecorationsSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDecorationsSnapshot
+    private typealias InProgressRoundSnapshot = ScoreTableInProgressRoundSnapshotProvider.Snapshot
+    private typealias InProgressRoundCell = ScoreTableInProgressRoundSnapshotProvider.Cell
 
     private struct GeometrySignature: Equatable {
         let boundsSize: CGSize
@@ -44,9 +46,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let playerNames: [String]
     private let layout: Layout
     private let snapshotBuilder: ScoreTableRenderSnapshotBuilder
-    private var scoreManager: ScoreManager?
+    private let inProgressRoundSnapshotProvider: ScoreTableInProgressRoundSnapshotProvider
     private var scoreDataSnapshot: ScoreDataSnapshot?
     private var scoreDecorationsSnapshot: ScoreDecorationsSnapshot = .empty
+    private var inProgressRoundSnapshot: InProgressRoundSnapshot = .empty
     private var isScoreRowsDirty = false
     private var isScoreDecorationsDirty = false
     private var lastGeometrySignature: GeometrySignature?
@@ -112,6 +115,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             playerCount: playerCount,
             rowMappings: self.layout.rowMappings
         )
+        self.inProgressRoundSnapshotProvider = ScoreTableInProgressRoundSnapshotProvider(
+            playerCount: playerCount,
+            rowMappings: self.layout.rowMappings
+        )
         super.init(frame: .zero)
         setupView()
         buildLabels()
@@ -137,10 +144,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     }
 
     func update(with scoreManager: ScoreManager) {
-        self.scoreManager = scoreManager
         let snapshot = snapshotBuilder.makeDataSnapshot(from: scoreManager)
         scoreDataSnapshot = snapshot
         scoreDecorationsSnapshot = snapshotBuilder.makeDecorationsSnapshot(from: snapshot)
+        inProgressRoundSnapshot = inProgressRoundSnapshotProvider.makeSnapshot(from: scoreManager)
         isScoreRowsDirty = true
         isScoreDecorationsDirty = true
         setNeedsLayout()
@@ -523,11 +530,9 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
             if
                 isCurrentBlock,
-                let inProgressResult = scoreManager?.inProgressRoundResult(
-                    forBlockIndex: blockIndex,
-                    roundIndex: roundIndex,
-                    playerIndex: playerIndex
-                )
+                let inProgressResult = inProgressRoundSnapshot.roundResultsByCell[
+                    InProgressRoundCell(rowIndex: rowIndex, playerIndex: playerIndex)
+                ]
             {
                 applyRoundResult(
                     inProgressResult,

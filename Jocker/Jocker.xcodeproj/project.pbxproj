@@ -89,6 +89,9 @@
 		D4C700012F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */; };
 		D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */; };
 		D4C800012F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */; };
+		D4C900012F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C900022F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift */; };
+		D4C900032F8008010037CA75 /* GameSceneInteractionTransitionPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C900042F8008010037CA75 /* GameSceneInteractionTransitionPolicyTests.swift */; };
+		D4CA00012F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CA00022F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift */; };
 		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
 		D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
 		D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
@@ -227,6 +230,9 @@
 		D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRenderSnapshotBuilder.swift; sourceTree = "<group>"; };
 		D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionStateTests.swift; sourceTree = "<group>"; };
 		D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRenderSnapshotBuilderTests.swift; sourceTree = "<group>"; };
+		D4C900022F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionTransitionPolicy.swift; sourceTree = "<group>"; };
+		D4C900042F8008010037CA75 /* GameSceneInteractionTransitionPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionTransitionPolicyTests.swift; sourceTree = "<group>"; };
+		D4CA00022F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableInProgressRoundSnapshotProvider.swift; sourceTree = "<group>"; };
 		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
 		D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
 		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
@@ -389,6 +395,7 @@
 				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
 				D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */,
 				D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */,
+				D4C900022F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift */,
 				D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */,
 				D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */,
 				D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */,
@@ -572,6 +579,7 @@
 			children = (
 				A90000162F7700010037CA75 /* DealHistoryViewController.swift */,
 				E10000042F7400010037CA75 /* GameResultsViewController.swift */,
+				D4CA00022F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift */,
 				D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */,
 				AA2000032F2A00010037CA75 /* ScoreTableView.swift */,
 				AA2000012F2A00010037CA75 /* ScoreTableViewController.swift */,
@@ -654,6 +662,7 @@
 				C0DE80032F5400010037CA75 /* AutoPlayFlowTests.swift */,
 				C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */,
 				D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */,
+				D4C900042F8008010037CA75 /* GameSceneInteractionTransitionPolicyTests.swift */,
 				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
 				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 			);
@@ -859,6 +868,7 @@
 				7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
 				D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */,
 				D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */,
+				D4C900012F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift in Sources */,
 				D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */,
 				D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */,
 				D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */,
@@ -866,6 +876,7 @@
 					7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
 					B20000032F7900030037CA75 /* GameParametersViewController.swift in Sources */,
 				E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */,
+				D4CA00012F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift in Sources */,
 				D4C700012F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift in Sources */,
 				B10000162F7500010037CA75 /* GameStatisticsViewController.swift in Sources */,
 				B10000182F7500010037CA75 /* GameStatisticsTableView.swift in Sources */,
@@ -950,6 +961,7 @@
 				B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */,
 				D4C800012F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift in Sources */,
 				D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */,
+				D4C900032F8008010037CA75 /* GameSceneInteractionTransitionPolicyTests.swift in Sources */,
 				D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */,
 				E10000052F7400010037CA75 /* GameFinalPlayerSummaryTests.swift in Sources */,
 				B20000422F7900030037CA75 /* GameStatisticsTableViewTests.swift in Sources */,

@@ -45,6 +45,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, and top-level touch routing).
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionBlockers.swift`: `OptionSet` for centralized interaction-blocking flags used by `GameScene` flow and modal gating.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionState.swift`: explicit high-level interaction state (primary flow + pending modal) derived from blockers, used for safer `GameScene` flow-state reasoning and conflict assertions.
+- `Jocker/Jocker/Game/Scenes/GameSceneInteractionTransitionPolicy.swift`: pure blocker transition policy for setting/clearing high-level flow and pending-modal states while preserving unrelated blocker groups.
 - `Jocker/Jocker/Game/Scenes/GameScene+DealingFlow.swift`: dealing pipeline for each round (deck reset/shuffle, pre-deal blind step, staged dealing, and dealer-left trump choice stage).
 - `Jocker/Jocker/Game/Scenes/GameScene+BiddingFlow.swift`: bidding pipeline (bidding order, human/bot bid progression, dealer forbidden-bid rule, and bidding-to-playing transition).
 - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`: trick-playing pipeline (tap hit-testing, bot autoplay scheduling, card placement, trick resolution, and trick-win registration).
@@ -89,6 +90,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared modal UI building blocks for bid-related selectors (container, labels, scroll grid, and bid-button rows).
@@ -127,6 +129,7 @@ Jocker/Jocker/
 │   │   ├── GameScene.swift
 │   │   ├── GameSceneInteractionBlockers.swift
 │   │   ├── GameSceneInteractionState.swift
+│   │   ├── GameSceneInteractionTransitionPolicy.swift
 │   │   ├── GameScene+DealingFlow.swift
 │   │   ├── GameScene+BiddingFlow.swift
 │   │   ├── GameScene+PlayingFlow.swift
@@ -212,6 +215,7 @@ Jocker/Jocker/
 │   ├── Results/
 │   │   ├── DealHistoryViewController.swift
 │   │   ├── GameResultsViewController.swift
+│   │   ├── ScoreTableInProgressRoundSnapshotProvider.swift
 │   │   ├── ScoreTableRenderSnapshotBuilder.swift
 │   │   ├── ScoreTableView.swift
 │   │   └── ScoreTableViewController.swift
@@ -239,6 +243,7 @@ Jocker/JockerTests/
 │   ├── AutoPlayFlowTests.swift
 │   ├── GameFlowIntegrationTests.swift
 │   ├── GameSceneInteractionStateTests.swift
+│   ├── GameSceneInteractionTransitionPolicyTests.swift
 │   ├── GameScenePlayingFlowTests.swift
 │   └── GameStateTests.swift
 ├── History/

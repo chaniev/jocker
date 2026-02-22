@@ -208,59 +208,35 @@ class GameScene: SKScene {
     }
 
     func setPrimaryInteractionFlow(_ flow: GameSceneInteractionState.PrimaryFlow) {
-        clearInteractionBlockers(.primaryFlowStates)
-        guard let blocker = interactionBlocker(forPrimaryFlow: flow) else { return }
-        setInteractionBlocker(blocker, isActive: true)
+        interactionBlockers = GameSceneInteractionTransitionPolicy.settingPrimaryFlow(
+            flow,
+            from: interactionBlockers
+        )
+        syncInteractionStateFromBlockers()
     }
 
     func clearPrimaryInteractionFlow(_ flow: GameSceneInteractionState.PrimaryFlow) {
-        guard let blocker = interactionBlocker(forPrimaryFlow: flow) else { return }
-        setInteractionBlocker(blocker, isActive: false)
+        interactionBlockers = GameSceneInteractionTransitionPolicy.clearingPrimaryFlow(
+            flow,
+            from: interactionBlockers
+        )
+        syncInteractionStateFromBlockers()
     }
 
     func setPendingInteractionModal(_ modal: GameSceneInteractionState.PendingModal) {
-        clearInteractionBlockers(.pendingModalStates)
-        guard let blocker = interactionBlocker(forPendingModal: modal) else { return }
-        setInteractionBlocker(blocker, isActive: true)
+        interactionBlockers = GameSceneInteractionTransitionPolicy.settingPendingModal(
+            modal,
+            from: interactionBlockers
+        )
+        syncInteractionStateFromBlockers()
     }
 
     func clearPendingInteractionModal(_ modal: GameSceneInteractionState.PendingModal) {
-        guard let blocker = interactionBlocker(forPendingModal: modal) else { return }
-        setInteractionBlocker(blocker, isActive: false)
-    }
-
-    private func interactionBlocker(
-        forPrimaryFlow flow: GameSceneInteractionState.PrimaryFlow
-    ) -> GameSceneInteractionBlockers? {
-        switch flow {
-        case .idle:
-            return nil
-        case .selectingFirstDealer:
-            return .selectingFirstDealer
-        case .bidding:
-            return .runningBiddingFlow
-        case .preDealBlind:
-            return .runningPreDealBlindFlow
-        case .trumpSelection:
-            return .runningTrumpSelectionFlow
-        }
-    }
-
-    private func interactionBlocker(
-        forPendingModal modal: GameSceneInteractionState.PendingModal
-    ) -> GameSceneInteractionBlockers? {
-        switch modal {
-        case .none:
-            return nil
-        case .jokerDecision:
-            return .awaitingJokerDecision
-        case .humanBidChoice:
-            return .awaitingHumanBidChoice
-        case .humanBlindChoice:
-            return .awaitingHumanBlindChoice
-        case .humanTrumpChoice:
-            return .awaitingHumanTrumpChoice
-        }
+        interactionBlockers = GameSceneInteractionTransitionPolicy.clearingPendingModal(
+            modal,
+            from: interactionBlockers
+        )
+        syncInteractionStateFromBlockers()
     }
 
     var scoreTableFirstPlayerIndex: Int {
