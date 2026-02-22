@@ -17,14 +17,7 @@ extension GameScene {
         }
 
         removeAction(forKey: ActionKey.botTurn)
-        isAwaitingHumanBidChoice = false
-        isAwaitingHumanBlindChoice = false
-        isAwaitingHumanTrumpChoice = false
-        isRunningBiddingFlow = false
-        isRunningPreDealBlindFlow = false
-        isRunningTrumpSelectionFlow = false
-        pendingBids.removeAll()
-        pendingBlindSelections.removeAll()
+        resetTransientDealFlowState()
 
         coordinator.cancelPendingTrickResolution(on: self)
 

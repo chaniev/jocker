@@ -157,24 +157,19 @@ extension GameScene {
     }
 
     private func forbiddenDealerBidIfNeeded(for playerIndex: Int, bids: [Int]) -> Int? {
-        guard playerIndex == gameState.currentDealer else { return nil }
-        guard playerCount > 1 else { return nil }
-
-        let totalWithoutDealer = bids.enumerated().reduce(0) { partial, pair in
-            let (index, bid) = pair
-            return partial + ((index == gameState.currentDealer) ? 0 : bid)
-        }
-
-        let forbidden = gameState.currentCardsPerPlayer - totalWithoutDealer
-        guard forbidden >= 0 && forbidden <= gameState.currentCardsPerPlayer else { return nil }
-        return forbidden
+        return BiddingRules.dealerForbiddenBid(
+            forPlayer: playerIndex,
+            dealer: gameState.currentDealer,
+            cardsInRound: gameState.currentCardsPerPlayer,
+            bids: bids,
+            playerCount: playerCount
+        )
     }
 
     func biddingOrder() -> [Int] {
-        guard playerCount > 0 else { return [] }
-        let start = (gameState.currentDealer + 1) % playerCount
-        return (0..<playerCount).map { offset in
-            (start + offset) % playerCount
-        }
+        return BiddingRules.biddingOrder(
+            dealer: gameState.currentDealer,
+            playerCount: playerCount
+        )
     }
 }

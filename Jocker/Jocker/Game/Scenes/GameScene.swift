@@ -112,14 +112,39 @@ class GameScene: SKScene {
     let dealHistoryStore = DealHistoryStore()
     let dealHistoryExportService = DealHistoryExportService()
     let shouldRevealAllPlayersCards = false
-    var isSelectingFirstDealer = false
-    var isAwaitingJokerDecision = false
-    var isAwaitingHumanBidChoice = false
-    var isAwaitingHumanBlindChoice = false
-    var isAwaitingHumanTrumpChoice = false
-    var isRunningBiddingFlow = false
-    var isRunningPreDealBlindFlow = false
-    var isRunningTrumpSelectionFlow = false
+    private var interactionBlockers: GameSceneInteractionBlockers = []
+    var isSelectingFirstDealer: Bool {
+        get { interactionBlockers.contains(.selectingFirstDealer) }
+        set { setInteractionBlocker(.selectingFirstDealer, isActive: newValue) }
+    }
+    var isAwaitingJokerDecision: Bool {
+        get { interactionBlockers.contains(.awaitingJokerDecision) }
+        set { setInteractionBlocker(.awaitingJokerDecision, isActive: newValue) }
+    }
+    var isAwaitingHumanBidChoice: Bool {
+        get { interactionBlockers.contains(.awaitingHumanBidChoice) }
+        set { setInteractionBlocker(.awaitingHumanBidChoice, isActive: newValue) }
+    }
+    var isAwaitingHumanBlindChoice: Bool {
+        get { interactionBlockers.contains(.awaitingHumanBlindChoice) }
+        set { setInteractionBlocker(.awaitingHumanBlindChoice, isActive: newValue) }
+    }
+    var isAwaitingHumanTrumpChoice: Bool {
+        get { interactionBlockers.contains(.awaitingHumanTrumpChoice) }
+        set { setInteractionBlocker(.awaitingHumanTrumpChoice, isActive: newValue) }
+    }
+    var isRunningBiddingFlow: Bool {
+        get { interactionBlockers.contains(.runningBiddingFlow) }
+        set { setInteractionBlocker(.runningBiddingFlow, isActive: newValue) }
+    }
+    var isRunningPreDealBlindFlow: Bool {
+        get { interactionBlockers.contains(.runningPreDealBlindFlow) }
+        set { setInteractionBlocker(.runningPreDealBlindFlow, isActive: newValue) }
+    }
+    var isRunningTrumpSelectionFlow: Bool {
+        get { interactionBlockers.contains(.runningTrumpSelectionFlow) }
+        set { setInteractionBlocker(.runningTrumpSelectionFlow, isActive: newValue) }
+    }
     var pendingBids: [Int] = []
     var pendingBlindSelections: [Bool] = []
     var firstDealerAnnouncementNode: SKNode?
@@ -136,15 +161,34 @@ class GameScene: SKScene {
     }
 
     var isInteractionBlocked: Bool {
-        return coordinator.isInteractionLocked ||
-            isSelectingFirstDealer ||
-            isAwaitingJokerDecision ||
-            isAwaitingHumanBidChoice ||
-            isAwaitingHumanBlindChoice ||
-            isAwaitingHumanTrumpChoice ||
-            isRunningTrumpSelectionFlow ||
-            isRunningPreDealBlindFlow ||
-            isRunningBiddingFlow
+        return coordinator.isInteractionLocked || !interactionBlockers.isEmpty
+    }
+
+    func setInteractionBlocker(
+        _ blocker: GameSceneInteractionBlockers,
+        isActive: Bool
+    ) {
+        if isActive {
+            interactionBlockers.insert(blocker)
+        } else {
+            interactionBlockers.remove(blocker)
+        }
+    }
+
+    func clearInteractionBlockers(_ blockers: GameSceneInteractionBlockers) {
+        interactionBlockers.subtract(blockers)
+    }
+
+    func resetTransientDealFlowState() {
+        clearInteractionBlockers(.dealStartResettable)
+        pendingBids.removeAll()
+        pendingBlindSelections.removeAll()
+    }
+
+    func resetAllInteractionFlowState() {
+        interactionBlockers = []
+        pendingBids.removeAll()
+        pendingBlindSelections.removeAll()
     }
 
     var scoreTableFirstPlayerIndex: Int {
@@ -837,17 +881,7 @@ class GameScene: SKScene {
         exportedBlockIndices.removeAll()
         hasExportedFinalGameHistory = false
         hasDealtAtLeastOnce = false
-        isSelectingFirstDealer = false
-
-        isAwaitingJokerDecision = false
-        isAwaitingHumanBidChoice = false
-        isAwaitingHumanBlindChoice = false
-        isAwaitingHumanTrumpChoice = false
-        isRunningBiddingFlow = false
-        isRunningPreDealBlindFlow = false
-        isRunningTrumpSelectionFlow = false
-        pendingBids.removeAll()
-        pendingBlindSelections.removeAll()
+        resetAllInteractionFlowState()
         updateDealButtonState()
     }
 

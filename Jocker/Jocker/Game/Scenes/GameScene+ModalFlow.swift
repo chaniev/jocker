@@ -156,7 +156,7 @@ extension GameScene {
 
         isAwaitingHumanBlindChoice = true
 
-        let modal = BidSelectionViewController(
+        let modal = PreDealBlindSelectionViewController(
             playerName: playerName,
             allowedBlindBids: normalizedAllowedBlindBids,
             canChooseBlind: canChooseBlind

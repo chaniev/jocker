@@ -178,19 +178,12 @@ class GameState {
     /// дилеру blind доступен только если все остальные игроки уже выбрали blind.
     func canChooseBlindBid(forPlayer playerIndex: Int, blindSelections: [Bool]) -> Bool {
         guard currentBlock == .fourth else { return false }
-        guard playerIndex >= 0 && playerIndex < playerCount else { return false }
-
-        if playerIndex != currentDealer {
-            return true
-        }
-
-        for index in 0..<playerCount where index != currentDealer {
-            guard blindSelections.indices.contains(index), blindSelections[index] else {
-                return false
-            }
-        }
-
-        return true
+        return BiddingRules.canChooseBlindBid(
+            forPlayer: playerIndex,
+            dealer: currentDealer,
+            blindSelections: blindSelections,
+            playerCount: playerCount
+        )
     }
 
     /// Допустимые ставки для игрока в текущем раунде.
@@ -199,29 +192,13 @@ class GameState {
     /// Для дилера исключается единственная ставка, при которой суммарный заказ
     /// всех игроков будет равен количеству розданных карт.
     func allowedBids(forPlayer playerIndex: Int, bids: [Int]) -> [Int] {
-        guard playerCount > 0 else { return [] }
-        guard playerIndex >= 0 && playerIndex < playerCount else { return [] }
-
-        let maxBid = max(0, currentCardsPerPlayer)
-        var allowed = Array(0...maxBid)
-
-        guard playerCount > 1, playerIndex == currentDealer else {
-            return allowed
-        }
-
-        let totalWithoutDealer = (0..<playerCount).reduce(0) { partial, index in
-            guard index != currentDealer else { return partial }
-            let rawBid = bids.indices.contains(index) ? bids[index] : 0
-            let clampedBid = min(max(rawBid, 0), maxBid)
-            return partial + clampedBid
-        }
-
-        let forbiddenBid = currentCardsPerPlayer - totalWithoutDealer
-        if let forbiddenIndex = allowed.firstIndex(of: forbiddenBid) {
-            allowed.remove(at: forbiddenIndex)
-        }
-
-        return allowed
+        return BiddingRules.allowedBids(
+            forPlayer: playerIndex,
+            dealer: currentDealer,
+            cardsInRound: currentCardsPerPlayer,
+            bids: bids,
+            playerCount: playerCount
+        )
     }
     
     /// Разыграть карту

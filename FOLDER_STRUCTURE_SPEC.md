@@ -40,6 +40,7 @@ This document is the source of truth for repository structure and file placement
 ## Key File Responsibilities
 
 - `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, and top-level touch routing).
+- `Jocker/Jocker/Game/Scenes/GameSceneInteractionBlockers.swift`: `OptionSet` for centralized interaction-blocking flags used by `GameScene` flow and modal gating.
 - `Jocker/Jocker/Game/Scenes/GameScene+DealingFlow.swift`: dealing pipeline for each round (deck reset/shuffle, pre-deal blind step, staged dealing, and dealer-left trump choice stage).
 - `Jocker/Jocker/Game/Scenes/GameScene+BiddingFlow.swift`: bidding pipeline (bidding order, human/bot bid progression, dealer forbidden-bid rule, and bidding-to-playing transition).
 - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`: trick-playing pipeline (tap hit-testing, bot autoplay scheduling, card placement, trick resolution, and trick-win registration).
@@ -47,7 +48,9 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: bot move strategy (target bid tracking, card selection priority, joker mode declaration) plus deterministic self-play evolution API for tuning coefficients.
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: bot move strategy for runtime turns (target bid tracking, card selection priority, and joker mode declaration).
+- `Jocker/Jocker/Game/Services/AI/BotTuning+SelfPlayEvolution.swift`: thin `BotTuning` adapter over self-play evolution/head-to-head APIs (typealiases + forwarding methods).
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine.swift`: self-play evolution/simulation engine and fitness evaluation internals for tuning `BotTuning` coefficients.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training.
 - `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
@@ -61,6 +64,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player statistics.
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
 - `Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
+- `Jocker/Jocker/Models/Gameplay/BiddingRules.swift`: pure bidding/blind constraints and bidding order helpers shared by gameplay flow and self-play simulation.
 - `Jocker/Jocker/Models/Gameplay/TrumpSelectionRules.swift`: round-level rules for trump selection mode (automatic vs player-chosen), chooser seat, and staged-deal size.
 - `Jocker/Jocker/Models/Statistics/GameFinalPlayerSummary.swift`: computes final standings payload per player (place, total score, block-by-block scores, premiums per block, total premiums, and fourth-block blind count).
 - `Jocker/Jocker/Models/Statistics/GameStatisticsScope.swift`: statistics tabs (`all games`, `4 players`, `3 players`) and visible seat count per tab.
@@ -76,10 +80,13 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
+- `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
-- `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human bid amount and pre-deal blind choice, built from shared UI factories (container, labels, scroll grid, and bid-button rows).
+- `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared modal UI building blocks for bid-related selectors (container, labels, scroll grid, and bid-button rows).
+- `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human post-deal bid amount with current hand/trump context and bidding summary panel.
+- `Jocker/Jocker/ViewControllers/Bidding/PreDealBlindSelectionViewController.swift`: modal selector of pre-deal blind mode (`open after deal` vs `blind bid`) and blind bid amount list.
 - `Jocker/Jocker/ViewControllers/Bidding/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
 - `Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift`: full-screen settings form for all player names and per-bot difficulty controls.
 - `Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
@@ -111,6 +118,7 @@ Jocker/Jocker/
 │   ├── Scenes/
 │   │   ├── CardDemoScene.swift
 │   │   ├── GameScene.swift
+│   │   ├── GameSceneInteractionBlockers.swift
 │   │   ├── GameScene+DealingFlow.swift
 │   │   ├── GameScene+BiddingFlow.swift
 │   │   ├── GameScene+PlayingFlow.swift
@@ -118,6 +126,8 @@ Jocker/Jocker/
 │   └── Services/
 │       ├── AI/
 │       │   ├── BotBiddingService.swift
+│       │   ├── BotSelfPlayEvolutionEngine.swift
+│       │   ├── BotTuning+SelfPlayEvolution.swift
 │       │   ├── BotTrumpSelectionService.swift
 │       │   └── BotTurnStrategyService.swift
 │       ├── Flow/
@@ -144,6 +154,7 @@ Jocker/Jocker/
 │   │   └── Suit.swift
 │   ├── Gameplay/
 │   │   ├── BlockResult.swift
+│   │   ├── BiddingRules.swift
 │   │   ├── GameBlock.swift
 │   │   ├── GameBlockFormatter.swift
 │   │   ├── GameConstants.swift
@@ -177,11 +188,14 @@ Jocker/Jocker/
 │   └── GameScene.sks
 ├── Scoring/
 │   ├── ScoreCalculator.swift
+│   ├── PremiumRules.swift
 │   └── ScoreManager.swift
 ├── ViewControllers/
 │   ├── Bidding/
+│   │   ├── BidSelectionModalBaseViewController.swift
 │   │   ├── BidSelectionViewController.swift
 │   │   ├── JokerModeSelectionViewController.swift
+│   │   ├── PreDealBlindSelectionViewController.swift
 │   │   └── TrumpSelectionViewController.swift
 │   ├── GameFlow/
 │   │   ├── GameParametersViewController.swift
@@ -208,6 +222,7 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── Bot/
 │   ├── BotBiddingServiceTests.swift
+│   ├── BotSelfPlayEvolutionEngineTests.swift
 │   ├── BotTrumpSelectionServiceTests.swift
 │   ├── BotTuningTests.swift
 │   └── BotTurnStrategyServiceTests.swift
@@ -224,8 +239,10 @@ Jocker/JockerTests/
 ├── Results/
 │   └── GameResultsPresentationIntegrationTests.swift
 ├── Rules/
+│   ├── BiddingRulesTests.swift
 │   └── TrickTakingResolverTests.swift
 ├── Scoring/
+│   ├── PremiumRulesTests.swift
 │   ├── ScoreCalculatorTests.swift
 │   └── ScoreManagerTests.swift
 ├── Statistics/
