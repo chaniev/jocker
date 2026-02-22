@@ -92,6 +92,27 @@ usage() {
                                      1 = печатать после каждого кандидата,
                                      5 = после каждого 5-го и в конце поколения
                                      (по умолчанию: 1).
+  --early-stop-patience <int>        Early stopping: число поколений без значимого
+                                     улучшения best fitness; 0 = выключено
+                                     (по умолчанию: 0).
+  --early-stop-min-improvement <double>
+                                     Минимальный прирост fitness, который считается
+                                     значимым для early stopping (по умолчанию: 0.0).
+  --early-stop-warmup-generations <int>
+                                     Не применять early stopping до указанного числа
+                                     завершённых поколений (по умолчанию: 0).
+  --ab-validate <true|false>         Автоматическая A/B валидация после обучения:
+                                     base preset (A) vs tuned output (B)
+                                     (по умолчанию: true).
+  --ab-validation-seed-list <a,b,c>  Seed-лист для A/B валидации.
+                                     По умолчанию используется training seed / seed-list.
+  --ab-validation-holdout-seed-list <a,b,c>
+                                     Дополнительный holdout seed-лист для A/B валидации
+                                     (по умолчанию: пусто).
+  --ab-validation-games-per-candidate <int>
+                                     Кол-во симуляций на seed для A/B валидации;
+                                     0 = использовать games-per-candidate тренировки
+                                     (по умолчанию: 0).
   --output <path>                   Путь для сохранения полного лога запуска.
   -h, --help                        Показать эту справку.
 
@@ -102,6 +123,8 @@ usage() {
   scripts/train_bot_tuning.sh --show-progress true --progress-candidate-step 2
   scripts/train_bot_tuning.sh --difficulty normal --output .derivedData/bot-train.log
   scripts/train_bot_tuning.sh --games-per-candidate 24 --use-full-match-rules true --rotate-candidate-across-seats true
+  scripts/train_bot_tuning.sh --early-stop-patience 8 --early-stop-min-improvement 0.01
+  scripts/train_bot_tuning.sh --ab-validate true --ab-validation-holdout-seed-list 20260301,20260302
 EOF
 }
 
@@ -176,6 +199,13 @@ premium_assist_normalization="1800"
 premium_penalty_target_normalization="1600"
 show_progress="true"
 progress_candidate_step="1"
+early_stop_patience="0"
+early_stop_min_improvement="0.0"
+early_stop_warmup_generations="0"
+ab_validate="true"
+ab_validation_seed_list=""
+ab_validation_holdout_seed_list=""
+ab_validation_games_per_candidate="0"
 output_path=""
 
 while (($# > 0)); do
@@ -308,6 +338,34 @@ while (($# > 0)); do
       progress_candidate_step="${2:-}"
       shift 2
       ;;
+    --early-stop-patience)
+      early_stop_patience="${2:-}"
+      shift 2
+      ;;
+    --early-stop-min-improvement)
+      early_stop_min_improvement="${2:-}"
+      shift 2
+      ;;
+    --early-stop-warmup-generations)
+      early_stop_warmup_generations="${2:-}"
+      shift 2
+      ;;
+    --ab-validate)
+      ab_validate="${2:-}"
+      shift 2
+      ;;
+    --ab-validation-seed-list)
+      ab_validation_seed_list="${2:-}"
+      shift 2
+      ;;
+    --ab-validation-holdout-seed-list)
+      ab_validation_holdout_seed_list="${2:-}"
+      shift 2
+      ;;
+    --ab-validation-games-per-candidate)
+      ab_validation_games_per_candidate="${2:-}"
+      shift 2
+      ;;
     --output)
       output_path="${2:-}"
       shift 2
@@ -368,6 +426,17 @@ if [[ "$progress_candidate_step" -lt 1 ]]; then
   echo "Invalid value for --progress-candidate-step: $progress_candidate_step (must be >= 1)" >&2
   exit 1
 fi
+require_int "$early_stop_patience" "--early-stop-patience"
+require_double "$early_stop_min_improvement" "--early-stop-min-improvement"
+require_int "$early_stop_warmup_generations" "--early-stop-warmup-generations"
+require_bool "$ab_validate" "--ab-validate"
+if [[ -n "$ab_validation_seed_list" ]]; then
+  require_seed_list "$ab_validation_seed_list" "--ab-validation-seed-list"
+fi
+if [[ -n "$ab_validation_holdout_seed_list" ]]; then
+  require_seed_list "$ab_validation_holdout_seed_list" "--ab-validation-holdout-seed-list"
+fi
+require_int "$ab_validation_games_per_candidate" "--ab-validation-games-per-candidate"
 
 case "$ensemble_method" in
   median|mean) ;;
@@ -565,7 +634,10 @@ let config = BotTuning.SelfPlayEvolutionConfig(
     trumpDensityUnderbidNormalization: $trump_density_underbid_normalization,
     noTrumpControlUnderbidNormalization: $notrump_control_underbid_normalization,
     premiumAssistNormalization: $premium_assist_normalization,
-    premiumPenaltyTargetNormalization: $premium_penalty_target_normalization
+    premiumPenaltyTargetNormalization: $premium_penalty_target_normalization,
+    earlyStoppingPatience: $early_stop_patience,
+    earlyStoppingMinImprovement: $early_stop_min_improvement,
+    earlyStoppingWarmupGenerations: $early_stop_warmup_generations
 )
 
 let seed: UInt64 = $seed
@@ -573,14 +645,204 @@ let seedListRaw = "$seed_list"
 let ensembleMethod = "$ensemble_method"
 let showProgress = $show_progress
 let progressCandidateStep = max(1, $progress_candidate_step)
+let abValidate = $ab_validate
+let abValidationSeedListRaw = "$ab_validation_seed_list"
+let abValidationHoldoutSeedListRaw = "$ab_validation_holdout_seed_list"
+let abValidationGamesPerCandidateOverride = max(0, $ab_validation_games_per_candidate)
 let parsedSeedList: [UInt64] = seedListRaw
     .split(separator: ",")
     .compactMap { UInt64(\$0) }
 let runSeeds: [UInt64] = parsedSeedList.isEmpty ? [seed] : parsedSeedList
+let parsedABValidationSeedList: [UInt64] = abValidationSeedListRaw
+    .split(separator: ",")
+    .compactMap { UInt64(\$0) }
+let parsedABValidationHoldoutSeedList: [UInt64] = abValidationHoldoutSeedListRaw
+    .split(separator: ",")
+    .compactMap { UInt64(\$0) }
+let abValidationPrimarySeeds: [UInt64] = parsedABValidationSeedList.isEmpty ? runSeeds : parsedABValidationSeedList
+let abValidationHoldoutSeeds: [UInt64] = parsedABValidationHoldoutSeedList
+let abValidationGamesPerCandidate = abValidationGamesPerCandidateOverride > 0
+    ? abValidationGamesPerCandidateOverride
+    : config.gamesPerCandidate
+let abValidationConfig = BotTuning.SelfPlayEvolutionConfig(
+    populationSize: config.populationSize,
+    generations: 1,
+    gamesPerCandidate: abValidationGamesPerCandidate,
+    roundsPerGame: config.roundsPerGame,
+    playerCount: config.playerCount,
+    cardsPerRoundRange: config.cardsPerRoundRange,
+    eliteCount: 1,
+    mutationChance: 0.0,
+    mutationMagnitude: 0.0,
+    selectionPoolRatio: 0.5,
+    useFullMatchRules: config.useFullMatchRules,
+    rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+    fitnessWinRateWeight: config.fitnessWinRateWeight,
+    fitnessScoreDiffWeight: config.fitnessScoreDiffWeight,
+    fitnessUnderbidLossWeight: config.fitnessUnderbidLossWeight,
+    fitnessTrumpDensityUnderbidWeight: config.fitnessTrumpDensityUnderbidWeight,
+    fitnessNoTrumpControlUnderbidWeight: config.fitnessNoTrumpControlUnderbidWeight,
+    fitnessPremiumAssistWeight: config.fitnessPremiumAssistWeight,
+    fitnessPremiumPenaltyTargetWeight: config.fitnessPremiumPenaltyTargetWeight,
+    scoreDiffNormalization: config.scoreDiffNormalization,
+    underbidLossNormalization: config.underbidLossNormalization,
+    trumpDensityUnderbidNormalization: config.trumpDensityUnderbidNormalization,
+    noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization,
+    premiumAssistNormalization: config.premiumAssistNormalization,
+    premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization,
+    earlyStoppingPatience: 0,
+    earlyStoppingMinImprovement: 0.0,
+    earlyStoppingWarmupGenerations: 0
+)
 
 struct SeedRun {
     let seed: UInt64
     let result: BotTuning.SelfPlayEvolutionResult
+}
+
+struct ABValidationSeedRun {
+    let seed: UInt64
+    let bVsA: BotTuning.SelfPlayHeadToHeadValidationResult
+    let aVsB: BotTuning.SelfPlayHeadToHeadValidationResult
+}
+
+func logABValidationSet(
+    label: String,
+    seeds: [UInt64],
+    baseTuning: BotTuning,
+    tunedTuning: BotTuning,
+    config: BotTuning.SelfPlayEvolutionConfig
+) {
+    guard !seeds.isEmpty else { return }
+
+    print("=== A/B Validation :: \\(label) ===")
+    print(
+        "gamesPerCandidate=\\(config.gamesPerCandidate) " +
+        "useFullMatchRules=\\(config.useFullMatchRules) " +
+        "rotateCandidateAcrossSeats=\\(config.rotateCandidateAcrossSeats)"
+    )
+    print("A=basePreset B=tunedOutput")
+
+    var runs: [ABValidationSeedRun] = []
+    runs.reserveCapacity(seeds.count)
+
+    for seed in seeds {
+        let bVsA = BotTuning.evaluateHeadToHead(
+            candidateTuning: tunedTuning,
+            opponentTuning: baseTuning,
+            config: config,
+            seed: seed
+        )
+        let aVsB = BotTuning.evaluateHeadToHead(
+            candidateTuning: baseTuning,
+            opponentTuning: tunedTuning,
+            config: config,
+            seed: seed
+        )
+        runs.append(
+            ABValidationSeedRun(
+                seed: seed,
+                bVsA: bVsA,
+                aVsB: aVsB
+            )
+        )
+        print(
+            "seed=\\(seed) " +
+            "fit BvA=\\(fmt(bVsA.fitness)) AvB=\\(fmt(aVsB.fitness)) Badv=\\(fmt(bVsA.fitness - aVsB.fitness)) | " +
+            "wr BvA=\\(fmt(bVsA.winRate)) AvB=\\(fmt(aVsB.winRate)) Badv=\\(fmt(bVsA.winRate - aVsB.winRate)) | " +
+            "scoreDiff BvA=\\(fmt(bVsA.averageScoreDiff)) AvB=\\(fmt(aVsB.averageScoreDiff)) Badv=\\(fmt(bVsA.averageScoreDiff - aVsB.averageScoreDiff))"
+        )
+    }
+
+    let bVaFitnessValues = runs.map { \$0.bVsA.fitness }
+    let aVbFitnessValues = runs.map { \$0.aVsB.fitness }
+    let bVaWinRateValues = runs.map { \$0.bVsA.winRate }
+    let aVbWinRateValues = runs.map { \$0.aVsB.winRate }
+    let bVaScoreDiffValues = runs.map { \$0.bVsA.averageScoreDiff }
+    let aVbScoreDiffValues = runs.map { \$0.aVsB.averageScoreDiff }
+    let bVaUnderbidValues = runs.map { \$0.bVsA.averageUnderbidLoss }
+    let aVbUnderbidValues = runs.map { \$0.aVsB.averageUnderbidLoss }
+    let bVaTrumpDensityValues = runs.map { \$0.bVsA.averageTrumpDensityUnderbidLoss }
+    let aVbTrumpDensityValues = runs.map { \$0.aVsB.averageTrumpDensityUnderbidLoss }
+    let bVaNoTrumpControlValues = runs.map { \$0.bVsA.averageNoTrumpControlUnderbidLoss }
+    let aVbNoTrumpControlValues = runs.map { \$0.aVsB.averageNoTrumpControlUnderbidLoss }
+    let bVaPremiumAssistValues = runs.map { \$0.bVsA.averagePremiumAssistLoss }
+    let aVbPremiumAssistValues = runs.map { \$0.aVsB.averagePremiumAssistLoss }
+    let bVaPremiumPenaltyValues = runs.map { \$0.bVsA.averagePremiumPenaltyTargetLoss }
+    let aVbPremiumPenaltyValues = runs.map { \$0.aVsB.averagePremiumPenaltyTargetLoss }
+    let fitnessDeltaValues = zip(bVaFitnessValues, aVbFitnessValues).map { pair in pair.0 - pair.1 }
+    let winRateDeltaValues = zip(bVaWinRateValues, aVbWinRateValues).map { pair in pair.0 - pair.1 }
+    let scoreDiffDeltaValues = zip(bVaScoreDiffValues, aVbScoreDiffValues).map { pair in pair.0 - pair.1 }
+    let underbidDeltaValues = zip(bVaUnderbidValues, aVbUnderbidValues).map { pair in pair.0 - pair.1 }
+    let trumpDensityDeltaValues = zip(bVaTrumpDensityValues, aVbTrumpDensityValues).map { pair in pair.0 - pair.1 }
+    let noTrumpControlDeltaValues = zip(bVaNoTrumpControlValues, aVbNoTrumpControlValues).map { pair in pair.0 - pair.1 }
+    let premiumAssistDeltaValues = zip(bVaPremiumAssistValues, aVbPremiumAssistValues).map { pair in pair.0 - pair.1 }
+    let premiumPenaltyDeltaValues = zip(bVaPremiumPenaltyValues, aVbPremiumPenaltyValues).map { pair in pair.0 - pair.1 }
+
+    var fitnessBWins = 0
+    var fitnessAWins = 0
+    var fitnessTies = 0
+    var winRateBWins = 0
+    var winRateAWins = 0
+    var winRateTies = 0
+    var scoreDiffBWins = 0
+    var scoreDiffAWins = 0
+    var scoreDiffTies = 0
+    var underbidBWins = 0
+    var underbidAWins = 0
+    var underbidTies = 0
+
+    for run in runs {
+        let fitDelta = run.bVsA.fitness - run.aVsB.fitness
+        if abs(fitDelta) <= 0.000_000_000_001 {
+            fitnessTies += 1
+        } else if fitDelta > 0 {
+            fitnessBWins += 1
+        } else {
+            fitnessAWins += 1
+        }
+
+        let winRateDelta = run.bVsA.winRate - run.aVsB.winRate
+        if abs(winRateDelta) <= 0.000_000_000_001 {
+            winRateTies += 1
+        } else if winRateDelta > 0 {
+            winRateBWins += 1
+        } else {
+            winRateAWins += 1
+        }
+
+        let scoreDiffDelta = run.bVsA.averageScoreDiff - run.aVsB.averageScoreDiff
+        if abs(scoreDiffDelta) <= 0.000_000_000_001 {
+            scoreDiffTies += 1
+        } else if scoreDiffDelta > 0 {
+            scoreDiffBWins += 1
+        } else {
+            scoreDiffAWins += 1
+        }
+
+        let underbidDelta = run.bVsA.averageUnderbidLoss - run.aVsB.averageUnderbidLoss
+        if abs(underbidDelta) <= 0.000_000_000_001 {
+            underbidTies += 1
+        } else if underbidDelta < 0 {
+            underbidBWins += 1
+        } else {
+            underbidAWins += 1
+        }
+    }
+
+    print("summary.mean fitness BvA=\\(fmt(average(bVaFitnessValues))) AvB=\\(fmt(average(aVbFitnessValues))) Badv=\\(fmt(average(fitnessDeltaValues)))")
+    print("summary.mean winRate BvA=\\(fmt(average(bVaWinRateValues))) AvB=\\(fmt(average(aVbWinRateValues))) Badv=\\(fmt(average(winRateDeltaValues)))")
+    print("summary.mean scoreDiff BvA=\\(fmt(average(bVaScoreDiffValues))) AvB=\\(fmt(average(aVbScoreDiffValues))) Badv=\\(fmt(average(scoreDiffDeltaValues)))")
+    print("summary.mean underbidLoss BvA=\\(fmt(average(bVaUnderbidValues))) AvB=\\(fmt(average(aVbUnderbidValues))) Badv=\\(fmt(average(underbidDeltaValues)))")
+    print("summary.mean trumpDensityUnderbidLoss BvA=\\(fmt(average(bVaTrumpDensityValues))) AvB=\\(fmt(average(aVbTrumpDensityValues))) Badv=\\(fmt(average(trumpDensityDeltaValues)))")
+    print("summary.mean noTrumpControlUnderbidLoss BvA=\\(fmt(average(bVaNoTrumpControlValues))) AvB=\\(fmt(average(aVbNoTrumpControlValues))) Badv=\\(fmt(average(noTrumpControlDeltaValues)))")
+    print("summary.mean premiumAssistLoss BvA=\\(fmt(average(bVaPremiumAssistValues))) AvB=\\(fmt(average(aVbPremiumAssistValues))) Badv=\\(fmt(average(premiumAssistDeltaValues)))")
+    print("summary.mean premiumPenaltyTargetLoss BvA=\\(fmt(average(bVaPremiumPenaltyValues))) AvB=\\(fmt(average(aVbPremiumPenaltyValues))) Badv=\\(fmt(average(premiumPenaltyDeltaValues)))")
+    print("winsBySeed fitness B/A/tie=\\(fitnessBWins)/\\(fitnessAWins)/\\(fitnessTies)")
+    print("winsBySeed winRate B/A/tie=\\(winRateBWins)/\\(winRateAWins)/\\(winRateTies)")
+    print("winsBySeed scoreDiff B/A/tie=\\(scoreDiffBWins)/\\(scoreDiffAWins)/\\(scoreDiffTies)")
+    print("winsBySeed underbidLoss(lower better) B/A/tie=\\(underbidBWins)/\\(underbidAWins)/\\(underbidTies)")
+    print("")
 }
 
 func logProgress(
@@ -654,6 +916,14 @@ let seedRuns: [SeedRun] = runSeeds.map { runSeed in
             }
             : nil
     )
+    if showProgress && runResult.stoppedEarly {
+        print(
+            "[progress] seed=\\(runSeed) early-stop " +
+            "completedGenerations=\\(runResult.completedGenerations)/\\(config.generations) " +
+            "bestFitness=\\(fmt(runResult.bestFitness))"
+        )
+        fflush(stdout)
+    }
     return SeedRun(seed: runSeed, result: runResult)
 }
 
@@ -698,9 +968,16 @@ print("premiumAssistNormalization=\\(fmt(config.premiumAssistNormalization))")
 print("premiumPenaltyTargetNormalization=\\(fmt(config.premiumPenaltyTargetNormalization))")
 print("showProgress=\\(showProgress)")
 print("progressCandidateStep=\\(progressCandidateStep)")
+print("earlyStopPatience=\\(config.earlyStoppingPatience)")
+print("earlyStopMinImprovement=\\(fmt(config.earlyStoppingMinImprovement))")
+print("earlyStopWarmupGenerations=\\(config.earlyStoppingWarmupGenerations)")
 if seedRuns.count > 1 {
     let perSeedFitness = seedRuns.map { "\\(\$0.seed):\\(fmt(\$0.result.bestFitness))" }.joined(separator: ", ")
     print("perSeedBestFitness=[\\(perSeedFitness)]")
+    let perSeedCompletedGenerations = seedRuns.map { "\\(\$0.seed):\\(\$0.result.completedGenerations)" }.joined(separator: ", ")
+    print("perSeedCompletedGenerations=[\\(perSeedCompletedGenerations)]")
+    let perSeedStoppedEarly = seedRuns.map { "\\(\$0.seed):\\(\$0.result.stoppedEarly)" }.joined(separator: ", ")
+    print("perSeedStoppedEarly=[\\(perSeedStoppedEarly)]")
     print("ensembleAverageBestFitness=\\(fmt(average(seedRuns.map { \$0.result.bestFitness })))")
     print("ensembleAverageBestWinRate=\\(fmt(average(seedRuns.map { \$0.result.bestWinRate })))")
     print("ensembleAverageBestScoreDiff=\\(fmt(average(seedRuns.map { \$0.result.bestAverageScoreDiff })))")
@@ -714,6 +991,8 @@ print("selectedSeed=\\(selectedRun.seed)")
 print("baselineFitness=\\(fmt(selectedRun.result.baselineFitness))")
 print("bestFitness=\\(fmt(selectedRun.result.bestFitness))")
 print("improvement=\\(fmt(selectedRun.result.improvement))")
+print("completedGenerations=\\(selectedRun.result.completedGenerations)")
+print("stoppedEarly=\\(selectedRun.result.stoppedEarly)")
 print("baselineWinRate=\\(fmt(selectedRun.result.baselineWinRate))")
 print("bestWinRate=\\(fmt(selectedRun.result.bestWinRate))")
 print("baselineAverageScoreDiff=\\(fmt(selectedRun.result.baselineAverageScoreDiff))")
@@ -760,6 +1039,35 @@ print("bidding.blindCatchUpTargetShare=\\(fmt(bidding.blindCatchUpTargetShare))"
 print("bidding.blindCatchUpConservativeTargetShare=\\(fmt(bidding.blindCatchUpConservativeTargetShare))")
 print("trumpSelection.cardBasePower=\\(fmt(trump.cardBasePower))")
 print("trumpSelection.minimumPowerToDeclareTrump=\\(fmt(trump.minimumPowerToDeclareTrump))")
+print("")
+print("=== Post-Training A/B Validation ===")
+print("abValidate=\\(abValidate)")
+if abValidate {
+    print("abValidationGamesPerCandidate=\\(abValidationConfig.gamesPerCandidate)")
+    print("abValidationPrimarySeeds=[\\(abValidationPrimarySeeds.map(String.init).joined(separator: ", "))]")
+    if abValidationHoldoutSeeds.isEmpty {
+        print("abValidationHoldoutSeeds=[]")
+    } else {
+        print("abValidationHoldoutSeeds=[\\(abValidationHoldoutSeeds.map(String.init).joined(separator: ", "))]")
+    }
+    print("")
+    logABValidationSet(
+        label: "primary",
+        seeds: abValidationPrimarySeeds,
+        baseTuning: baseTuning,
+        tunedTuning: tunedForOutput,
+        config: abValidationConfig
+    )
+    if !abValidationHoldoutSeeds.isEmpty {
+        logABValidationSet(
+            label: "holdout",
+            seeds: abValidationHoldoutSeeds,
+            baseTuning: baseTuning,
+            tunedTuning: tunedForOutput,
+            config: abValidationConfig
+        )
+    }
+}
 SWIFT
 
 swift_sources=(

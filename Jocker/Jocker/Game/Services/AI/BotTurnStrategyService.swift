@@ -711,6 +711,13 @@ extension BotTuning {
         let premiumAssistNormalization: Double
         /// Нормализация компоненты штрафа как цели чужой премии.
         let premiumPenaltyTargetNormalization: Double
+        /// Early stopping по числу поколений без значимого улучшения best fitness.
+        /// `0` отключает early stopping.
+        let earlyStoppingPatience: Int
+        /// Минимальный прирост fitness, который считается значимым улучшением.
+        let earlyStoppingMinImprovement: Double
+        /// Минимальное число завершённых поколений перед проверкой early stopping.
+        let earlyStoppingWarmupGenerations: Int
 
         init(
             populationSize: Int = 16,
@@ -737,7 +744,10 @@ extension BotTuning {
             trumpDensityUnderbidNormalization: Double = 2800.0,
             noTrumpControlUnderbidNormalization: Double = 2200.0,
             premiumAssistNormalization: Double = 1800.0,
-            premiumPenaltyTargetNormalization: Double = 1600.0
+            premiumPenaltyTargetNormalization: Double = 1600.0,
+            earlyStoppingPatience: Int = 0,
+            earlyStoppingMinImprovement: Double = 0.0,
+            earlyStoppingWarmupGenerations: Int = 0
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -779,6 +789,9 @@ extension BotTuning {
             self.noTrumpControlUnderbidNormalization = max(1.0, noTrumpControlUnderbidNormalization)
             self.premiumAssistNormalization = max(1.0, premiumAssistNormalization)
             self.premiumPenaltyTargetNormalization = max(1.0, premiumPenaltyTargetNormalization)
+            self.earlyStoppingPatience = max(0, earlyStoppingPatience)
+            self.earlyStoppingMinImprovement = max(0.0, earlyStoppingMinImprovement)
+            self.earlyStoppingWarmupGenerations = max(0, earlyStoppingWarmupGenerations)
         }
 
         private static func clamp(
@@ -795,6 +808,8 @@ extension BotTuning {
         let baselineFitness: Double
         let bestFitness: Double
         let generationBestFitness: [Double]
+        let completedGenerations: Int
+        let stoppedEarly: Bool
         let baselineWinRate: Double
         let bestWinRate: Double
         let baselineAverageScoreDiff: Double
@@ -813,6 +828,18 @@ extension BotTuning {
         var improvement: Double {
             return bestFitness - baselineFitness
         }
+    }
+
+    /// Метрики head-to-head валидации (кандидат против фиксированных оппонентов).
+    struct SelfPlayHeadToHeadValidationResult {
+        let fitness: Double
+        let winRate: Double
+        let averageScoreDiff: Double
+        let averageUnderbidLoss: Double
+        let averageTrumpDensityUnderbidLoss: Double
+        let averageNoTrumpControlUnderbidLoss: Double
+        let averagePremiumAssistLoss: Double
+        let averagePremiumPenaltyTargetLoss: Double
     }
 
     /// Событие прогресса эволюции self-play.
@@ -954,6 +981,9 @@ extension BotTuning {
         var bestBreakdown = baselineBreakdown
         var generationBestFitness: [Double] = []
         generationBestFitness.reserveCapacity(config.generations)
+        var completedGenerations = 0
+        var stoppedEarly = false
+        var lastMeaningfulImprovementGeneration = 0
 
         for generation in 0..<config.generations {
             notifyProgress(
@@ -1024,10 +1054,15 @@ extension BotTuning {
 
             guard let generationBest = scoredPopulation.first else { continue }
             generationBestFitness.append(generationBest.breakdown.fitness)
+            completedGenerations = generation + 1
 
+            let fitnessImprovement = generationBest.breakdown.fitness - bestBreakdown.fitness
             if generationBest.breakdown.fitness > bestBreakdown.fitness {
                 bestBreakdown = generationBest.breakdown
                 bestGenome = generationBest.genome
+                if fitnessImprovement > config.earlyStoppingMinImprovement {
+                    lastMeaningfulImprovementGeneration = completedGenerations
+                }
             }
             notifyProgress(
                 stage: .generationCompleted,
@@ -1035,6 +1070,14 @@ extension BotTuning {
                 generationBestFitness: generationBest.breakdown.fitness,
                 overallBestFitness: bestBreakdown.fitness
             )
+
+            let shouldEarlyStop = config.earlyStoppingPatience > 0 &&
+                completedGenerations >= config.earlyStoppingWarmupGenerations &&
+                (completedGenerations - lastMeaningfulImprovementGeneration) >= config.earlyStoppingPatience
+            if shouldEarlyStop {
+                stoppedEarly = generation + 1 < config.generations
+                break
+            }
 
             guard generation + 1 < config.generations else { continue }
 
@@ -1073,6 +1116,8 @@ extension BotTuning {
             baselineFitness: baselineBreakdown.fitness,
             bestFitness: bestBreakdown.fitness,
             generationBestFitness: generationBestFitness,
+            completedGenerations: completedGenerations,
+            stoppedEarly: stoppedEarly,
             baselineWinRate: baselineBreakdown.winRate,
             bestWinRate: bestBreakdown.winRate,
             baselineAverageScoreDiff: baselineBreakdown.averageScoreDiff,
@@ -1896,6 +1941,129 @@ extension BotTuning {
             -(averagePremiumPenaltyTargetLoss / premiumPenaltyTargetNormalization) * fitnessPremiumPenaltyTargetWeight
 
         return FitnessBreakdown(
+            fitness: fitness,
+            winRate: averageWinRate,
+            averageScoreDiff: averageScoreDiff,
+            averageUnderbidLoss: averageUnderbidLoss,
+            averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
+            averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
+            averagePremiumAssistLoss: averagePremiumAssistLoss,
+            averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+        )
+    }
+
+    /// Head-to-head оценка фиксированного кандидата против фиксированных оппонентов.
+    /// Удобно для CLI A/B-валидации после обучения.
+    static func evaluateHeadToHead(
+        candidateTuning: BotTuning,
+        opponentTuning: BotTuning,
+        config: SelfPlayEvolutionConfig = SelfPlayEvolutionConfig(),
+        seed: UInt64 = 0x5EED
+    ) -> SelfPlayHeadToHeadValidationResult {
+        let playerCount = min(4, max(3, config.playerCount))
+        let deckLimit = max(1, Deck().cards.count / playerCount)
+        let lowerCards = min(max(1, config.cardsPerRoundRange.lowerBound), deckLimit)
+        let upperCards = min(max(lowerCards, config.cardsPerRoundRange.upperBound), deckLimit)
+        let cardsRange = lowerCards...upperCards
+
+        var rng = SelfPlayRandomGenerator(seed: seed)
+        var evaluationSeeds: [UInt64] = []
+        evaluationSeeds.reserveCapacity(config.gamesPerCandidate)
+        for _ in 0..<config.gamesPerCandidate {
+            evaluationSeeds.append(rng.next())
+        }
+
+        let candidateSeats: [Int] = config.rotateCandidateAcrossSeats
+            ? Array(0..<playerCount)
+            : [0]
+
+        var totalWinRate = 0.0
+        var totalScoreDiff = 0.0
+        var totalCandidateUnderbidLoss = 0.0
+        var totalCandidateTrumpDensityUnderbidLoss = 0.0
+        var totalCandidateNoTrumpControlUnderbidLoss = 0.0
+        var totalCandidatePremiumAssistLoss = 0.0
+        var totalCandidatePremiumPenaltyTargetLoss = 0.0
+        var simulationsCount = 0
+
+        for evaluationSeed in evaluationSeeds {
+            for candidateSeat in candidateSeats {
+                var tuningsBySeat = Array(repeating: opponentTuning, count: playerCount)
+                tuningsBySeat[candidateSeat] = candidateTuning
+
+                let gameOutcome = simulateGame(
+                    tuningsBySeat: tuningsBySeat,
+                    rounds: config.roundsPerGame,
+                    cardsPerRoundRange: cardsRange,
+                    seed: evaluationSeed,
+                    useFullMatchRules: config.useFullMatchRules
+                )
+
+                let totalScores = gameOutcome.totalScores
+                guard totalScores.indices.contains(candidateSeat) else { continue }
+                let candidateScore = totalScores[candidateSeat]
+                let opponentsTotal = totalScores.reduce(0, +) - candidateScore
+                let opponentsAverage = Double(opponentsTotal) / Double(max(1, playerCount - 1))
+                let candidateUnderbidLoss = gameOutcome.underbidLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.underbidLosses[candidateSeat]
+                    : 0.0
+                let candidateTrumpDensityUnderbidLoss = gameOutcome.trumpDensityUnderbidLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.trumpDensityUnderbidLosses[candidateSeat]
+                    : 0.0
+                let candidateNoTrumpControlUnderbidLoss = gameOutcome.noTrumpControlUnderbidLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.noTrumpControlUnderbidLosses[candidateSeat]
+                    : 0.0
+                let candidatePremiumAssistLoss = gameOutcome.premiumAssistLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.premiumAssistLosses[candidateSeat]
+                    : 0.0
+                let candidatePremiumPenaltyTargetLoss = gameOutcome.premiumPenaltyTargetLosses.indices.contains(candidateSeat)
+                    ? gameOutcome.premiumPenaltyTargetLosses[candidateSeat]
+                    : 0.0
+
+                let maxScore = totalScores.max() ?? candidateScore
+                let winnersCount = max(1, totalScores.filter { $0 == maxScore }.count)
+                let winShare = candidateScore == maxScore ? 1.0 / Double(winnersCount) : 0.0
+
+                totalWinRate += winShare
+                totalScoreDiff += Double(candidateScore) - opponentsAverage
+                totalCandidateUnderbidLoss += candidateUnderbidLoss
+                totalCandidateTrumpDensityUnderbidLoss += candidateTrumpDensityUnderbidLoss
+                totalCandidateNoTrumpControlUnderbidLoss += candidateNoTrumpControlUnderbidLoss
+                totalCandidatePremiumAssistLoss += candidatePremiumAssistLoss
+                totalCandidatePremiumPenaltyTargetLoss += candidatePremiumPenaltyTargetLoss
+                simulationsCount += 1
+            }
+        }
+
+        guard simulationsCount > 0 else {
+            return SelfPlayHeadToHeadValidationResult(
+                fitness: 0.0,
+                winRate: 0.0,
+                averageScoreDiff: 0.0,
+                averageUnderbidLoss: 0.0,
+                averageTrumpDensityUnderbidLoss: 0.0,
+                averageNoTrumpControlUnderbidLoss: 0.0,
+                averagePremiumAssistLoss: 0.0,
+                averagePremiumPenaltyTargetLoss: 0.0
+            )
+        }
+
+        let averageWinRate = totalWinRate / Double(simulationsCount)
+        let averageScoreDiff = totalScoreDiff / Double(simulationsCount)
+        let averageUnderbidLoss = totalCandidateUnderbidLoss / Double(simulationsCount)
+        let averageTrumpDensityUnderbidLoss = totalCandidateTrumpDensityUnderbidLoss / Double(simulationsCount)
+        let averageNoTrumpControlUnderbidLoss = totalCandidateNoTrumpControlUnderbidLoss / Double(simulationsCount)
+        let averagePremiumAssistLoss = totalCandidatePremiumAssistLoss / Double(simulationsCount)
+        let averagePremiumPenaltyTargetLoss = totalCandidatePremiumPenaltyTargetLoss / Double(simulationsCount)
+        let fitness = averageWinRate * config.fitnessWinRateWeight +
+            (averageScoreDiff / config.scoreDiffNormalization) * config.fitnessScoreDiffWeight +
+            -(averageUnderbidLoss / config.underbidLossNormalization) * config.fitnessUnderbidLossWeight +
+            -(averageTrumpDensityUnderbidLoss / config.trumpDensityUnderbidNormalization) * config.fitnessTrumpDensityUnderbidWeight +
+            -(averageNoTrumpControlUnderbidLoss / config.noTrumpControlUnderbidNormalization) * config.fitnessNoTrumpControlUnderbidWeight +
+            -(averagePremiumAssistLoss / config.premiumAssistNormalization) * config.fitnessPremiumAssistWeight +
+            -(averagePremiumPenaltyTargetLoss / config.premiumPenaltyTargetNormalization) * config.fitnessPremiumPenaltyTargetWeight
+
+        return SelfPlayHeadToHeadValidationResult(
             fitness: fitness,
             winRate: averageWinRate,
             averageScoreDiff: averageScoreDiff,
