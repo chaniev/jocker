@@ -257,6 +257,7 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── Bot/
 │   ├── BotBiddingServiceTests.swift
+│   ├── BotTurnCandidateEvaluatorServiceTests.swift
 │   ├── BotTurnCandidateRankingServiceTests.swift
 │   ├── BotTurnCardHeuristicsServiceTests.swift
 │   ├── BotSelfPlayEvolutionEngineTests.swift
