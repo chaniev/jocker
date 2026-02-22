@@ -86,17 +86,17 @@ extension GameScene {
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        setPendingInteractionModal(.humanTrumpChoice)
-        let modal = TrumpSelectionViewController(
-            playerName: playerName,
-            handCards: handCards
-        ) { [weak self] selectedSuit in
-            self?.clearPendingInteractionModal(.humanTrumpChoice)
-            completion(selectedSuit)
-        }
-        if !presentOverlayModal(modal) {
-            clearPendingInteractionModal(.humanTrumpChoice)
-            completion(fallbackTrump)
+        presentPendingChoiceModal(
+            .humanTrumpChoice,
+            fallbackResult: fallbackTrump,
+            completion: completion
+        ) { resolve in
+            TrumpSelectionViewController(
+                playerName: playerName,
+                handCards: handCards
+            ) { selectedSuit in
+                resolve(selectedSuit)
+            }
         }
     }
 
@@ -119,26 +119,25 @@ extension GameScene {
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        setPendingInteractionModal(.humanBidChoice)
-
-        let modal = BidSelectionViewController(
-            playerName: playerName,
-            handCards: handCards,
-            allowedBids: normalizedAllowedBids,
-            maxBid: gameState.currentCardsPerPlayer,
-            playerNames: gameState.players.map { $0.name },
-            displayedBidsByPlayer: displayedBidsByPlayer,
-            biddingOrder: biddingOrder,
-            currentPlayerIndex: playerIndex,
-            forbiddenBid: forbiddenBid,
-            trumpSuit: currentTrump
-        ) { [weak self] selectedBid in
-            self?.clearPendingInteractionModal(.humanBidChoice)
-            completion(selectedBid)
-        }
-        if !presentOverlayModal(modal) {
-            clearPendingInteractionModal(.humanBidChoice)
-            completion(normalizedAllowedBids[0])
+        presentPendingChoiceModal(
+            .humanBidChoice,
+            fallbackResult: normalizedAllowedBids[0],
+            completion: completion
+        ) { resolve in
+            BidSelectionViewController(
+                playerName: playerName,
+                handCards: handCards,
+                allowedBids: normalizedAllowedBids,
+                maxBid: gameState.currentCardsPerPlayer,
+                playerNames: gameState.players.map { $0.name },
+                displayedBidsByPlayer: displayedBidsByPlayer,
+                biddingOrder: biddingOrder,
+                currentPlayerIndex: playerIndex,
+                forbiddenBid: forbiddenBid,
+                trumpSuit: currentTrump
+            ) { selectedBid in
+                resolve(selectedBid)
+            }
         }
     }
 
@@ -154,19 +153,20 @@ extension GameScene {
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        setPendingInteractionModal(.humanBlindChoice)
-
-        let modal = PreDealBlindSelectionViewController(
-            playerName: playerName,
-            allowedBlindBids: normalizedAllowedBlindBids,
-            canChooseBlind: canChooseBlind
-        ) { [weak self] isBlind, bid in
-            self?.clearPendingInteractionModal(.humanBlindChoice)
-            completion(isBlind, bid)
-        }
-        if !presentOverlayModal(modal) {
-            clearPendingInteractionModal(.humanBlindChoice)
-            completion(false, nil)
+        presentPendingChoiceModal(
+            .humanBlindChoice,
+            fallbackResult: (false, nil as Int?),
+            completion: { result in
+                completion(result.0, result.1)
+            }
+        ) { resolve in
+            PreDealBlindSelectionViewController(
+                playerName: playerName,
+                allowedBlindBids: normalizedAllowedBlindBids,
+                canChooseBlind: canChooseBlind
+            ) { isBlind, bid in
+                resolve((isBlind, bid))
+            }
         }
     }
 
@@ -248,6 +248,26 @@ extension GameScene {
 
         if !presentOverlayModal(modal) {
             completion(fallbackDecision)
+        }
+    }
+
+    private func presentPendingChoiceModal<Result>(
+        _ pendingModal: GameSceneInteractionState.PendingModal,
+        fallbackResult: @autoclosure () -> Result,
+        completion: @escaping (Result) -> Void,
+        makeModal: (@escaping (Result) -> Void) -> UIViewController
+    ) {
+        setPendingInteractionModal(pendingModal)
+
+        let resolve: (Result) -> Void = { [weak self] result in
+            self?.clearPendingInteractionModal(pendingModal)
+            completion(result)
+        }
+
+        let modal = makeModal(resolve)
+        if !presentOverlayModal(modal) {
+            clearPendingInteractionModal(pendingModal)
+            completion(fallbackResult())
         }
     }
 

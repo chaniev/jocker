@@ -101,6 +101,51 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertNil(manager.inProgressRoundResult(forBlockIndex: 0, roundIndex: 1, playerIndex: 0))
         XCTAssertNil(manager.inProgressRoundResults)
     }
+
+    func testPlayerCountGetter_doesNotSynchronizeOrResetStateWhenProviderChanges() {
+        var dynamicPlayerCount = 4
+        let manager = ScoreManager(playerCountProvider: { dynamicPlayerCount })
+        manager.recordRoundResults([
+            matchedResult(bid: 1, cardsInRound: 1),
+            matchedResult(bid: 0, cardsInRound: 1),
+            matchedResult(bid: 0, cardsInRound: 1),
+            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1)
+        ])
+        dynamicPlayerCount = 3
+
+        XCTAssertEqual(manager.playerCount, 4, "Getter should be side-effect free and return cached value")
+        XCTAssertEqual(manager.currentBlockRoundResults.count, 4, "State must not reset on property read")
+        XCTAssertEqual(manager.currentBlockRoundResults[0].count, 1, "Existing data must be preserved")
+    }
+
+    func testSynchronizePlayerCountIfNeeded_updatesCacheAndResetsStateExplicitly() {
+        var dynamicPlayerCount = 4
+        let manager = ScoreManager(playerCountProvider: { dynamicPlayerCount })
+
+        manager.recordRoundResults([
+            matchedResult(bid: 1, cardsInRound: 1),
+            matchedResult(bid: 0, cardsInRound: 1),
+            matchedResult(bid: 0, cardsInRound: 1),
+            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1)
+        ])
+        manager.setInProgressRoundResults([
+            RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 0, isBlind: false),
+            RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false)
+        ], blockIndex: 0, roundIndex: 1)
+        _ = manager.finalizeBlock()
+
+        dynamicPlayerCount = 3
+        let didSync = manager.synchronizePlayerCountIfNeeded()
+
+        XCTAssertTrue(didSync)
+        XCTAssertEqual(manager.playerCount, 3)
+        XCTAssertEqual(manager.currentBlockRoundResults.count, 3)
+        XCTAssertTrue(manager.currentBlockRoundResults.allSatisfy(\.isEmpty))
+        XCTAssertNil(manager.inProgressRoundResults)
+        XCTAssertTrue(manager.completedBlocks.isEmpty, "Sync reset should drop state to avoid inconsistent snapshots")
+    }
     
     // MARK: - Базовые очки текущего блока
     

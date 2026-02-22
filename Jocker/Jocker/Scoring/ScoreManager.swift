@@ -26,7 +26,6 @@ class ScoreManager {
 
     /// Количество игроков
     var playerCount: Int {
-        syncPlayerCountIfNeeded()
         return storedPlayerCount
     }
 
@@ -68,6 +67,7 @@ class ScoreManager {
 
     /// Записать результат раунда для одного игрока
     func recordRoundResult(playerIndex: Int, result: RoundResult) {
+        synchronizePlayerCountIfNeeded()
         guard playerIndex >= 0, playerIndex < playerCount else { return }
         currentBlockRoundResults[playerIndex].append(result)
     }
@@ -76,6 +76,7 @@ class ScoreManager {
     ///
     /// - Parameter results: массив результатов, по одному для каждого игрока (в порядке индексов)
     func recordRoundResults(_ results: [RoundResult]) {
+        synchronizePlayerCountIfNeeded()
         guard results.count == playerCount else { return }
         for (index, result) in results.enumerated() {
             currentBlockRoundResults[index].append(result)
@@ -84,6 +85,7 @@ class ScoreManager {
 
     /// Сохранить снимок текущего раунда (ещё не завершённого).
     func setInProgressRoundResults(_ results: [RoundResult], blockIndex: Int, roundIndex: Int) {
+        synchronizePlayerCountIfNeeded()
         guard results.count == playerCount else { return }
         guard blockIndex >= 0, roundIndex >= 0 else { return }
 
@@ -105,6 +107,7 @@ class ScoreManager {
         roundIndex: Int,
         playerIndex: Int
     ) -> RoundResult? {
+        synchronizePlayerCountIfNeeded()
         guard inProgressRoundBlockIndex == blockIndex else { return nil }
         guard inProgressRoundIndex == roundIndex else { return nil }
         guard let inProgressRoundResults else { return nil }
@@ -121,6 +124,7 @@ class ScoreManager {
     /// - Returns: результат завершённого блока
     @discardableResult
     func finalizeBlock(blockNumber: Int = 0) -> BlockResult {
+        synchronizePlayerCountIfNeeded()
         let finalization = PremiumRules.finalizeBlockScores(
             blockRoundResults: currentBlockRoundResults,
             blockNumber: blockNumber,
@@ -201,9 +205,19 @@ class ScoreManager {
 
     /// Полный сброс менеджера для новой игры
     func reset() {
+        synchronizePlayerCountIfNeeded()
         currentBlockRoundResults = Array(repeating: [], count: playerCount)
         clearInProgressRoundResults()
         completedBlocks = []
+    }
+
+    /// Явно синхронизировать кэшированное количество игроков с `playerCountProvider`.
+    ///
+    /// Важно: может очистить текущее состояние (текущий блок, in-progress round, завершённые блоки),
+    /// если провайдер вернул другое положительное количество игроков.
+    @discardableResult
+    func synchronizePlayerCountIfNeeded() -> Bool {
+        return applyPlayerCountProviderUpdateIfNeeded()
     }
 
     // MARK: - Private Methods
@@ -226,13 +240,16 @@ class ScoreManager {
         currentBlockRoundResults = Array(repeating: [], count: playerCount)
     }
 
-    /// Обновить количество игроков, если источник изменился
-    private func syncPlayerCountIfNeeded() {
+    /// Обновить количество игроков, если источник изменился.
+    /// - Returns: `true`, если количество игроков изменилось и состояние было сброшено.
+    @discardableResult
+    private func applyPlayerCountProviderUpdateIfNeeded() -> Bool {
         let updatedCount = playerCountProvider()
-        guard updatedCount > 0, updatedCount != storedPlayerCount else { return }
+        guard updatedCount > 0, updatedCount != storedPlayerCount else { return false }
         storedPlayerCount = updatedCount
         currentBlockRoundResults = Array(repeating: [], count: updatedCount)
         clearInProgressRoundResults()
         completedBlocks = []
+        return true
     }
 }
