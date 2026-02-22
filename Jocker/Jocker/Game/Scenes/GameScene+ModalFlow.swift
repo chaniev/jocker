@@ -86,16 +86,16 @@ extension GameScene {
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        isAwaitingHumanTrumpChoice = true
+        setPendingInteractionModal(.humanTrumpChoice)
         let modal = TrumpSelectionViewController(
             playerName: playerName,
             handCards: handCards
         ) { [weak self] selectedSuit in
-            self?.isAwaitingHumanTrumpChoice = false
+            self?.clearPendingInteractionModal(.humanTrumpChoice)
             completion(selectedSuit)
         }
         if !presentOverlayModal(modal) {
-            isAwaitingHumanTrumpChoice = false
+            clearPendingInteractionModal(.humanTrumpChoice)
             completion(fallbackTrump)
         }
     }
@@ -119,7 +119,7 @@ extension GameScene {
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        isAwaitingHumanBidChoice = true
+        setPendingInteractionModal(.humanBidChoice)
 
         let modal = BidSelectionViewController(
             playerName: playerName,
@@ -133,11 +133,11 @@ extension GameScene {
             forbiddenBid: forbiddenBid,
             trumpSuit: currentTrump
         ) { [weak self] selectedBid in
-            self?.isAwaitingHumanBidChoice = false
+            self?.clearPendingInteractionModal(.humanBidChoice)
             completion(selectedBid)
         }
         if !presentOverlayModal(modal) {
-            isAwaitingHumanBidChoice = false
+            clearPendingInteractionModal(.humanBidChoice)
             completion(normalizedAllowedBids[0])
         }
     }
@@ -154,18 +154,18 @@ extension GameScene {
             ? gameState.players[playerIndex].name
             : "Игрок \(playerIndex + 1)"
 
-        isAwaitingHumanBlindChoice = true
+        setPendingInteractionModal(.humanBlindChoice)
 
         let modal = PreDealBlindSelectionViewController(
             playerName: playerName,
             allowedBlindBids: normalizedAllowedBlindBids,
             canChooseBlind: canChooseBlind
         ) { [weak self] isBlind, bid in
-            self?.isAwaitingHumanBlindChoice = false
+            self?.clearPendingInteractionModal(.humanBlindChoice)
             completion(isBlind, bid)
         }
         if !presentOverlayModal(modal) {
-            isAwaitingHumanBlindChoice = false
+            clearPendingInteractionModal(.humanBlindChoice)
             completion(false, nil)
         }
     }
@@ -173,11 +173,11 @@ extension GameScene {
     func requestJokerDecisionAndPlay(cardNode: CardNode, playerIndex: Int) {
         let isLeadCard = trickNode.playedCards.isEmpty
         let fallbackDecision = isLeadCard ? JokerPlayDecision.defaultLead : JokerPlayDecision.defaultNonLead
-        isAwaitingJokerDecision = true
+        setPendingInteractionModal(.jokerDecision)
 
         let applyDecision: (JokerPlayDecision?) -> Void = { [weak self, weak cardNode] decision in
             guard let self = self else { return }
-            self.isAwaitingJokerDecision = false
+            self.clearPendingInteractionModal(.jokerDecision)
 
             guard self.players.indices.contains(playerIndex),
                   self.gameState.phase == .playing,

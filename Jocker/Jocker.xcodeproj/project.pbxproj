@@ -88,6 +88,7 @@
 		D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */; };
 		D4C700012F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */; };
 		D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */; };
+		D4C800012F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */; };
 		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
 		D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
 		D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
@@ -225,6 +226,7 @@
 		D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionState.swift; sourceTree = "<group>"; };
 		D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRenderSnapshotBuilder.swift; sourceTree = "<group>"; };
 		D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionStateTests.swift; sourceTree = "<group>"; };
+		D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRenderSnapshotBuilderTests.swift; sourceTree = "<group>"; };
 		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
 		D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
 		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
@@ -679,6 +681,7 @@
 			isa = PBXGroup;
 			children = (
 				B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */,
+				D4C800022F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift */,
 			);
 			path = Results;
 			sourceTree = "<group>";
@@ -945,6 +948,7 @@
 			files = (
 				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
 				B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */,
+				D4C800012F8007010037CA75 /* ScoreTableRenderSnapshotBuilderTests.swift in Sources */,
 				D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */,
 				D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */,
 				E10000052F7400010037CA75 /* GameFinalPlayerSummaryTests.swift in Sources */,

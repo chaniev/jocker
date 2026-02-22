@@ -143,7 +143,7 @@ extension GameScene {
             return
         }
 
-        isRunningPreDealBlindFlow = true
+        setPrimaryInteractionFlow(.preDealBlind)
         processPreDealBlindStep(order: biddingOrder(), step: 0, onCompleted: onCompleted)
     }
 
@@ -153,13 +153,13 @@ extension GameScene {
         onCompleted: @escaping () -> Void
     ) {
         guard gameState.phase == .bidding else {
-            isRunningPreDealBlindFlow = false
+            clearPrimaryInteractionFlow(.preDealBlind)
             onCompleted()
             return
         }
 
         guard step < order.count else {
-            isRunningPreDealBlindFlow = false
+            clearPrimaryInteractionFlow(.preDealBlind)
             onCompleted()
             return
         }
@@ -266,7 +266,7 @@ extension GameScene {
             roundIndex: roundIndex
         )
 
-        isRunningTrumpSelectionFlow = true
+        setPrimaryInteractionFlow(.trumpSelection)
         trumpIndicator.setAwaitingTrumpSelection(animated: true)
 
         coordinator.runDealStageAnimation(
@@ -298,7 +298,7 @@ extension GameScene {
                 self.trumpIndicator.setTrumpSuit(selectedTrump, animated: animateTrumpReveal)
 
                 if remainingCardsPerPlayer == 0 {
-                    self.isRunningTrumpSelectionFlow = false
+                    self.clearPrimaryInteractionFlow(.trumpSelection)
                     self.updateGameInfoLabel()
                     self.updateTurnUI(animated: true)
                     self.startBiddingFlowIfNeeded()
@@ -313,7 +313,7 @@ extension GameScene {
                     hands: remainingDeal.hands
                 ) { [weak self] in
                     guard let self else { return }
-                    self.isRunningTrumpSelectionFlow = false
+                    self.clearPrimaryInteractionFlow(.trumpSelection)
                     self.updateGameInfoLabel()
                     self.updateTurnUI(animated: true)
                     self.startBiddingFlowIfNeeded()

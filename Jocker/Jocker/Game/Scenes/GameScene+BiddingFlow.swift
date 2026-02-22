@@ -14,7 +14,7 @@ extension GameScene {
         guard gameState.phase == .bidding else { return }
         guard !isRunningBiddingFlow else { return }
 
-        isRunningBiddingFlow = true
+        setPrimaryInteractionFlow(.bidding)
         if gameState.currentBlock != .fourth {
             pendingBids = Array(repeating: 0, count: playerCount)
             pendingBlindSelections = Array(repeating: false, count: playerCount)
@@ -35,7 +35,7 @@ extension GameScene {
 
     private func processBiddingStep(order: [Int], step: Int) {
         guard gameState.phase == .bidding else {
-            isRunningBiddingFlow = false
+            clearPrimaryInteractionFlow(.bidding)
             pendingBids.removeAll()
             pendingBlindSelections.removeAll()
             return
@@ -46,7 +46,7 @@ extension GameScene {
             let blindSelections = pendingBlindSelections
             pendingBids.removeAll()
             pendingBlindSelections.removeAll()
-            isRunningBiddingFlow = false
+            clearPrimaryInteractionFlow(.bidding)
             applyBidsToGameStateAndStartPlaying(bids, blindSelections: blindSelections)
             return
         }

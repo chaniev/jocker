@@ -9,6 +9,9 @@ This document is the source of truth for repository structure and file placement
 ```
 /
 ├── AGENTS.md
+├── .github/
+│   └── workflows/
+│       └── ios-tests.yml
 ├── Makefile
 ├── FOLDER_STRUCTURE_SPEC.md
 ├── CARDS_DOCUMENTATION.md
@@ -53,7 +56,9 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/AI/BotTuning+SelfPlayEvolution.swift`: thin `BotTuning` adapter over self-play evolution/head-to-head APIs (typealiases + forwarding methods).
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine.swift`: self-play evolution/simulation engine and fitness evaluation internals for tuning `BotTuning` coefficients.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training.
+- `.github/workflows/ios-tests.yml`: GitHub Actions CI workflow that runs Xcode tests on macOS for every `push` and uploads test run artifacts from `.derivedData/test-runs`.
 - `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
+- `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/AI/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
@@ -242,7 +247,8 @@ Jocker/JockerTests/
 ├── Players/
 │   └── GamePlayersSettingsStoreTests.swift
 ├── Results/
-│   └── GameResultsPresentationIntegrationTests.swift
+│   ├── GameResultsPresentationIntegrationTests.swift
+│   └── ScoreTableRenderSnapshotBuilderTests.swift
 ├── Rules/
 │   ├── BiddingRulesTests.swift
 │   └── TrickTakingResolverTests.swift

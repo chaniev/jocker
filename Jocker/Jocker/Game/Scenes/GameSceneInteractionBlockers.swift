@@ -20,6 +20,20 @@ struct GameSceneInteractionBlockers: OptionSet {
     static let runningPreDealBlindFlow = GameSceneInteractionBlockers(rawValue: 1 << 6)
     static let runningTrumpSelectionFlow = GameSceneInteractionBlockers(rawValue: 1 << 7)
 
+    static let primaryFlowStates: GameSceneInteractionBlockers = [
+        .selectingFirstDealer,
+        .runningBiddingFlow,
+        .runningPreDealBlindFlow,
+        .runningTrumpSelectionFlow
+    ]
+
+    static let pendingModalStates: GameSceneInteractionBlockers = [
+        .awaitingJokerDecision,
+        .awaitingHumanBidChoice,
+        .awaitingHumanBlindChoice,
+        .awaitingHumanTrumpChoice
+    ]
+
     static let humanInputModals: GameSceneInteractionBlockers = [
         .awaitingHumanBidChoice,
         .awaitingHumanBlindChoice,

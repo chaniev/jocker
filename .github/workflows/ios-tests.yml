@@ -1,0 +1,35 @@
+name: iOS Tests
+
+on:
+  push:
+
+concurrency:
+  group: ios-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Run Xcode Tests
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Run tests
+        run: bash scripts/run_all_tests.sh --destination "platform=iOS Simulator"
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcode-test-artifacts
+          path: .derivedData/test-runs
+          if-no-files-found: ignore
+          retention-days: 14

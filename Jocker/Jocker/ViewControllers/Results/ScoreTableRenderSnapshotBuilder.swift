@@ -20,12 +20,12 @@ struct ScoreTableRenderSnapshotBuilder {
             let playerIndex: Int
         }
 
-        enum ColumnMarkKind {
+        enum ColumnMarkKind: Equatable {
             case trophy
             case premiumLoss
         }
 
-        struct ColumnMark {
+        struct ColumnMark: Equatable {
             let playerIndex: Int
             let topSummaryRowIndex: Int
             let bottomSummaryRowIndex: Int
