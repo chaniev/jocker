@@ -9,7 +9,7 @@ import UIKit
 
 final class ScoreTableView: UIView, UIScrollViewDelegate {
 
-    private enum RowKind: Equatable {
+    enum RowKind: Equatable {
         case deal(cards: Int)
         case subtotal
         case cumulative
@@ -21,43 +21,14 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         let rowMappings: [RowMapping]
     }
 
-    private struct RowMapping {
+    struct RowMapping {
         let kind: RowKind
         let blockIndex: Int
         let roundIndex: Int?
     }
 
-    private struct ScoreDataSnapshot {
-        let completedBlocks: [BlockResult]
-        let currentBlockResults: [[RoundResult]]
-        let currentBlockScores: [Int]
-    }
-
-    private struct ScoreDecorationsSnapshot {
-        struct PenaltyStrikeCell: Hashable {
-            let rowIndex: Int
-            let playerIndex: Int
-        }
-
-        enum ColumnMarkKind {
-            case trophy
-            case premiumLoss
-        }
-
-        struct ColumnMark {
-            let blockIndex: Int
-            let playerIndex: Int
-            let kind: ColumnMarkKind
-        }
-
-        static let empty = ScoreDecorationsSnapshot(
-            penaltyStrikeCells: [],
-            columnMarks: []
-        )
-
-        let penaltyStrikeCells: Set<PenaltyStrikeCell>
-        let columnMarks: [ColumnMark]
-    }
+    private typealias ScoreDataSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDataSnapshot
+    private typealias ScoreDecorationsSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDecorationsSnapshot
 
     private struct GeometrySignature: Equatable {
         let boundsSize: CGSize
@@ -72,6 +43,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let displayIndexByPlayerIndex: [Int: Int]
     private let playerNames: [String]
     private let layout: Layout
+    private let snapshotBuilder: ScoreTableRenderSnapshotBuilder
     private var scoreManager: ScoreManager?
     private var scoreDataSnapshot: ScoreDataSnapshot?
     private var scoreDecorationsSnapshot: ScoreDecorationsSnapshot = .empty
@@ -136,6 +108,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         )
         self.playerNames = playerNames
         self.layout = ScoreTableView.buildLayout(playerCount: playerCount)
+        self.snapshotBuilder = ScoreTableRenderSnapshotBuilder(
+            playerCount: playerCount,
+            rowMappings: self.layout.rowMappings
+        )
         super.init(frame: .zero)
         setupView()
         buildLabels()
@@ -162,9 +138,9 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
     func update(with scoreManager: ScoreManager) {
         self.scoreManager = scoreManager
-        let snapshot = makeScoreDataSnapshot(from: scoreManager)
+        let snapshot = snapshotBuilder.makeDataSnapshot(from: scoreManager)
         scoreDataSnapshot = snapshot
-        scoreDecorationsSnapshot = makeScoreDecorationsSnapshot(from: snapshot)
+        scoreDecorationsSnapshot = snapshotBuilder.makeDecorationsSnapshot(from: snapshot)
         isScoreRowsDirty = true
         isScoreDecorationsDirty = true
         setNeedsLayout()
@@ -419,14 +395,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         return contentView.bounds.width > 0 && contentView.bounds.height > 0
     }
 
-    private func makeScoreDataSnapshot(from scoreManager: ScoreManager) -> ScoreDataSnapshot {
-        return ScoreDataSnapshot(
-            completedBlocks: scoreManager.completedBlocks,
-            currentBlockResults: scoreManager.currentBlockRoundResults,
-            currentBlockScores: scoreManager.currentBlockBaseScores
-        )
-    }
-
     private func applyScoreRows(from snapshot: ScoreDataSnapshot) {
         for (rowIndex, mapping) in layout.rowMappings.enumerated() {
             switch mapping.kind {
@@ -623,21 +591,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         premiumScoreStrikeLayers.removeAll()
     }
 
-    private func penaltyStrikeData(for blockResult: BlockResult) -> [Int: (roundIndex: Int, score: Int)] {
-        var data: [Int: (roundIndex: Int, score: Int)] = [:]
-
-        for playerIndex in 0..<playerCount {
-            guard blockResult.premiumPenaltyRoundIndices.indices.contains(playerIndex) else { continue }
-            guard blockResult.premiumPenaltyRoundScores.indices.contains(playerIndex) else { continue }
-            guard let roundIndex = blockResult.premiumPenaltyRoundIndices[playerIndex] else { continue }
-            let score = blockResult.premiumPenaltyRoundScores[playerIndex]
-            guard score > 0 else { continue }
-            data[playerIndex] = (roundIndex: roundIndex, score: score)
-        }
-
-        return data
-    }
-
     private func circledBidText(_ bid: Int) -> String {
         switch bid {
         case 0: return "⓪"
@@ -722,110 +675,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         return scores
     }
 
-    private func makeScoreDecorationsSnapshot(from snapshot: ScoreDataSnapshot) -> ScoreDecorationsSnapshot {
-        return ScoreDecorationsSnapshot(
-            penaltyStrikeCells: makePenaltyStrikeCells(completedBlocks: snapshot.completedBlocks),
-            columnMarks: makePremiumColumnMarks(
-                completedBlocks: snapshot.completedBlocks,
-                currentBlockResults: snapshot.currentBlockResults
-            )
-        )
-    }
-
-    private func makePenaltyStrikeCells(
-        completedBlocks: [BlockResult]
-    ) -> Set<ScoreDecorationsSnapshot.PenaltyStrikeCell> {
-        guard !completedBlocks.isEmpty else { return [] }
-
-        let penaltyStrikeDataByBlock = completedBlocks.map { penaltyStrikeData(for: $0) }
-        var strikeCells: Set<ScoreDecorationsSnapshot.PenaltyStrikeCell> = []
-
-        for (rowIndex, mapping) in layout.rowMappings.enumerated() {
-            guard case .deal = mapping.kind else { continue }
-            guard let roundIndex = mapping.roundIndex else { continue }
-            guard completedBlocks.indices.contains(mapping.blockIndex) else { continue }
-
-            let block = completedBlocks[mapping.blockIndex]
-            let penaltyDataByPlayer = penaltyStrikeDataByBlock[mapping.blockIndex]
-
-            for playerIndex in 0..<playerCount {
-                guard let strikeData = penaltyDataByPlayer[playerIndex] else { continue }
-                guard strikeData.roundIndex == roundIndex else { continue }
-                guard block.roundResults.indices.contains(playerIndex) else { continue }
-                guard block.roundResults[playerIndex].indices.contains(roundIndex) else { continue }
-
-                let roundResult = block.roundResults[playerIndex][roundIndex]
-                guard roundResult.score == strikeData.score else { continue }
-
-                strikeCells.insert(
-                    ScoreDecorationsSnapshot.PenaltyStrikeCell(
-                        rowIndex: rowIndex,
-                        playerIndex: playerIndex
-                    )
-                )
-            }
-        }
-
-        return strikeCells
-    }
-
-    private func makePremiumColumnMarks(
-        completedBlocks: [BlockResult],
-        currentBlockResults: [[RoundResult]]
-    ) -> [ScoreDecorationsSnapshot.ColumnMark] {
-        let maxBlockIndex = layout.rowMappings.map(\.blockIndex).max() ?? -1
-        guard maxBlockIndex >= 0 else { return [] }
-
-        var marks: [ScoreDecorationsSnapshot.ColumnMark] = []
-
-        for blockIndex in 0...maxBlockIndex {
-            let roundResultsByPlayer: [[RoundResult]]?
-            let premiumPlayers: Set<Int>
-
-            if blockIndex < completedBlocks.count {
-                let block = completedBlocks[blockIndex]
-                roundResultsByPlayer = block.roundResults
-                premiumPlayers = Set(block.premiumPlayerIndices + block.zeroPremiumPlayerIndices)
-            } else if blockIndex == completedBlocks.count {
-                roundResultsByPlayer = currentBlockResults
-                premiumPlayers = []
-            } else {
-                roundResultsByPlayer = nil
-                premiumPlayers = []
-            }
-
-            guard let roundResultsByPlayer else { continue }
-
-            for playerIndex in 0..<playerCount {
-                guard roundResultsByPlayer.indices.contains(playerIndex) else { continue }
-
-                if premiumPlayers.contains(playerIndex) {
-                    marks.append(
-                        ScoreDecorationsSnapshot.ColumnMark(
-                            blockIndex: blockIndex,
-                            playerIndex: playerIndex,
-                            kind: .trophy
-                        )
-                    )
-                    continue
-                }
-
-                let playerRoundResults = roundResultsByPlayer[playerIndex]
-                guard hasLostPremium(in: playerRoundResults) else { continue }
-
-                marks.append(
-                    ScoreDecorationsSnapshot.ColumnMark(
-                        blockIndex: blockIndex,
-                        playerIndex: playerIndex,
-                        kind: .premiumLoss
-                    )
-                )
-            }
-        }
-
-        return marks
-    }
-
     private func renderPremiumDecorations(from snapshot: ScoreDecorationsSnapshot) {
         clearPremiumScoreStrikeLayers()
         renderPenaltyStrikeLayers(from: snapshot.penaltyStrikeCells)
@@ -850,15 +699,11 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
 
         let path = UIBezierPath()
         for mark in marks {
-            let summaryRows = summaryRowsForBlock(mark.blockIndex)
-            guard !summaryRows.isEmpty else { continue }
-            let sortedRows = summaryRows.sorted()
-            guard let topRowIndex = sortedRows.first, let bottomRowIndex = sortedRows.last else { continue }
             guard let displayIndex = displayIndexByPlayerIndex[mark.playerIndex] else { continue }
 
             let baseX = leftColumnWidth + CGFloat(displayIndex) * (trickColumnWidth + pointsColumnWidth)
-            let topY = headerHeight + CGFloat(topRowIndex) * rowHeight
-            let height = CGFloat(bottomRowIndex - topRowIndex + 1) * rowHeight
+            let topY = headerHeight + CGFloat(mark.topSummaryRowIndex) * rowHeight
+            let height = CGFloat(mark.bottomSummaryRowIndex - mark.topSummaryRowIndex + 1) * rowHeight
             let markRect = CGRect(
                 x: baseX,
                 y: topY,
@@ -879,10 +724,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         }
 
         premiumLossLayer.path = path.cgPath
-    }
-
-    private func hasLostPremium(in roundResults: [RoundResult]) -> Bool {
-        return roundResults.contains(where: { $0.bid != $0.tricksTaken })
     }
 
     private func addPremiumTrophyMark(in rect: CGRect) {

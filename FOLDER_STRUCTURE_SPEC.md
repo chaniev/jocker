@@ -84,6 +84,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared modal UI building blocks for bid-related selectors (container, labels, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human post-deal bid amount with current hand/trump context and bidding summary panel.
@@ -206,6 +207,7 @@ Jocker/Jocker/
 │   ├── Results/
 │   │   ├── DealHistoryViewController.swift
 │   │   ├── GameResultsViewController.swift
+│   │   ├── ScoreTableRenderSnapshotBuilder.swift
 │   │   ├── ScoreTableView.swift
 │   │   └── ScoreTableViewController.swift
 │   └── Statistics/
@@ -231,6 +233,7 @@ Jocker/JockerTests/
 ├── Flow/
 │   ├── AutoPlayFlowTests.swift
 │   ├── GameFlowIntegrationTests.swift
+│   ├── GameSceneInteractionStateTests.swift
 │   ├── GameScenePlayingFlowTests.swift
 │   └── GameStateTests.swift
 ├── History/
