@@ -92,6 +92,8 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableRowNavigationResolver.swift`: pure row navigation helper for `ScoreTableView` that resolves scroll targets for deal rows and block summary rows from static row mappings.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays and summary score formatting.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared modal UI building blocks for bid-related selectors (container, labels, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human post-deal bid amount with current hand/trump context and bidding summary panel.
@@ -217,6 +219,8 @@ Jocker/Jocker/
 │   │   ├── GameResultsViewController.swift
 │   │   ├── ScoreTableInProgressRoundSnapshotProvider.swift
 │   │   ├── ScoreTableRenderSnapshotBuilder.swift
+│   │   ├── ScoreTableRowNavigationResolver.swift
+│   │   ├── ScoreTableRowTextRenderer.swift
 │   │   ├── ScoreTableView.swift
 │   │   └── ScoreTableViewController.swift
 │   └── Statistics/
@@ -253,7 +257,9 @@ Jocker/JockerTests/
 │   └── GamePlayersSettingsStoreTests.swift
 ├── Results/
 │   ├── GameResultsPresentationIntegrationTests.swift
-│   └── ScoreTableRenderSnapshotBuilderTests.swift
+│   ├── ScoreTableInProgressRoundSnapshotProviderTests.swift
+│   ├── ScoreTableRenderSnapshotBuilderTests.swift
+│   └── ScoreTableRowTextRendererTests.swift
 ├── Rules/
 │   ├── BiddingRulesTests.swift
 │   └── TrickTakingResolverTests.swift

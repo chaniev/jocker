@@ -30,7 +30,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private typealias ScoreDataSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDataSnapshot
     private typealias ScoreDecorationsSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDecorationsSnapshot
     private typealias InProgressRoundSnapshot = ScoreTableInProgressRoundSnapshotProvider.Snapshot
-    private typealias InProgressRoundCell = ScoreTableInProgressRoundSnapshotProvider.Cell
 
     private struct GeometrySignature: Equatable {
         let boundsSize: CGSize
@@ -47,6 +46,8 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let layout: Layout
     private let snapshotBuilder: ScoreTableRenderSnapshotBuilder
     private let inProgressRoundSnapshotProvider: ScoreTableInProgressRoundSnapshotProvider
+    private let rowNavigationResolver: ScoreTableRowNavigationResolver
+    private let rowTextRenderer: ScoreTableRowTextRenderer
     private var scoreDataSnapshot: ScoreDataSnapshot?
     private var scoreDecorationsSnapshot: ScoreDecorationsSnapshot = .empty
     private var inProgressRoundSnapshot: InProgressRoundSnapshot = .empty
@@ -85,17 +86,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let textSecondaryColor = UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0)
     private let premiumPenaltyColor = UIColor(red: 0.86, green: 0.23, blue: 0.15, alpha: 0.95)
 
-    private static let summaryScoreFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 1
-        formatter.maximumFractionDigits = 1
-        formatter.minimumIntegerDigits = 1
-        formatter.usesGroupingSeparator = false
-        return formatter
-    }()
-
     init(
         playerCount: Int,
         displayStartPlayerIndex: Int = 0,
@@ -117,6 +107,14 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         )
         self.inProgressRoundSnapshotProvider = ScoreTableInProgressRoundSnapshotProvider(
             playerCount: playerCount,
+            rowMappings: self.layout.rowMappings
+        )
+        self.rowNavigationResolver = ScoreTableRowNavigationResolver(
+            rowMappings: self.layout.rowMappings
+        )
+        self.rowTextRenderer = ScoreTableRowTextRenderer(
+            playerCount: playerCount,
+            playerDisplayOrder: self.playerDisplayOrder,
             rowMappings: self.layout.rowMappings
         )
         super.init(frame: .zero)
@@ -157,7 +155,10 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     func scrollToDeal(blockIndex: Int, roundIndex: Int, animated: Bool) {
         layoutIfNeeded()
 
-        guard let targetRowIndex = targetDealRowIndex(blockIndex: blockIndex, roundIndex: roundIndex) else {
+        guard let targetRowIndex = rowNavigationResolver.targetDealRowIndex(
+            blockIndex: blockIndex,
+            roundIndex: roundIndex
+        ) else {
             return
         }
 
@@ -167,7 +168,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     func scrollToBlockSummary(blockIndex: Int, animated: Bool) {
         layoutIfNeeded()
 
-        guard let targetRowIndex = targetSummaryRowIndex(blockIndex: blockIndex) else {
+        guard let targetRowIndex = rowNavigationResolver.targetSummaryRowIndex(blockIndex: blockIndex) else {
             return
         }
 
@@ -403,30 +404,15 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     }
 
     private func applyScoreRows(from snapshot: ScoreDataSnapshot) {
-        for (rowIndex, mapping) in layout.rowMappings.enumerated() {
-            switch mapping.kind {
-            case .deal:
-                applyDealRow(
-                    rowIndex: rowIndex,
-                    blockIndex: mapping.blockIndex,
-                    roundIndex: mapping.roundIndex ?? 0,
-                    completedBlocks: snapshot.completedBlocks,
-                    currentBlockResults: snapshot.currentBlockResults
-                )
-            case .subtotal:
-                applySubtotalRow(
-                    rowIndex: rowIndex,
-                    blockIndex: mapping.blockIndex,
-                    completedBlocks: snapshot.completedBlocks,
-                    currentBlockScores: snapshot.currentBlockScores
-                )
-            case .cumulative:
-                applyCumulativeRow(
-                    rowIndex: rowIndex,
-                    blockIndex: mapping.blockIndex,
-                    completedBlocks: snapshot.completedBlocks,
-                    currentBlockScores: snapshot.currentBlockScores
-                )
+        let rowTextSnapshot = rowTextRenderer.makeSnapshot(
+            dataSnapshot: snapshot,
+            inProgressRoundSnapshot: inProgressRoundSnapshot
+        )
+
+        for rowIndex in 0..<layout.rowMappings.count {
+            for displayIndex in 0..<playerCount {
+                tricksLabels[rowIndex][displayIndex].text = rowTextSnapshot.tricksTexts[rowIndex][displayIndex]
+                pointsLabels[rowIndex][displayIndex].text = rowTextSnapshot.pointsTexts[rowIndex][displayIndex]
             }
         }
     }
@@ -463,112 +449,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         return trimmedName.isEmpty ? "Игрок \(playerIndex + 1)" : trimmedName
     }
 
-    private func targetDealRowIndex(blockIndex: Int, roundIndex: Int) -> Int? {
-        let dealRows = layout.rowMappings.enumerated().compactMap { (rowIndex, mapping) -> (rowIndex: Int, roundIndex: Int)? in
-            guard mapping.blockIndex == blockIndex else { return nil }
-
-            if case .deal = mapping.kind {
-                return (rowIndex, mapping.roundIndex ?? 0)
-            }
-
-            return nil
-        }
-
-        guard !dealRows.isEmpty else { return nil }
-
-        let safeRound = min(max(roundIndex, 0), dealRows.count - 1)
-        if let exactMatch = dealRows.first(where: { $0.roundIndex == safeRound }) {
-            return exactMatch.rowIndex
-        }
-
-        return dealRows[safeRound].rowIndex
-    }
-
-    private func targetSummaryRowIndex(blockIndex: Int) -> Int? {
-        return summaryRowsForBlock(blockIndex).max()
-    }
-
-    private func applyDealRow(
-        rowIndex: Int,
-        blockIndex: Int,
-        roundIndex: Int,
-        completedBlocks: [BlockResult],
-        currentBlockResults: [[RoundResult]]
-    ) {
-        let results: [[RoundResult]]?
-        let isCurrentBlock = blockIndex == completedBlocks.count
-
-        if blockIndex < completedBlocks.count {
-            let completedBlock = completedBlocks[blockIndex]
-            results = completedBlock.roundResults
-        } else if isCurrentBlock {
-            results = currentBlockResults
-        } else {
-            results = nil
-        }
-
-        for displayIndex in 0..<playerCount {
-            let playerIndex = playerDisplayOrder[displayIndex]
-            let tricksLabel = tricksLabels[rowIndex][displayIndex]
-            let pointsLabel = pointsLabels[rowIndex][displayIndex]
-
-            if
-                let results = results,
-                playerIndex < results.count,
-                roundIndex < results[playerIndex].count
-            {
-                let roundResult = results[playerIndex][roundIndex]
-                applyRoundResult(
-                    roundResult,
-                    to: tricksLabel,
-                    pointsLabel: pointsLabel,
-                    displayedTricksTaken: nil,
-                    pointsText: "\(roundResult.score)"
-                )
-                continue
-            }
-
-            if
-                isCurrentBlock,
-                let inProgressResult = inProgressRoundSnapshot.roundResultsByCell[
-                    InProgressRoundCell(rowIndex: rowIndex, playerIndex: playerIndex)
-                ]
-            {
-                applyRoundResult(
-                    inProgressResult,
-                    to: tricksLabel,
-                    pointsLabel: pointsLabel,
-                    displayedTricksTaken: 0,
-                    pointsText: "0"
-                )
-                continue
-            }
-
-            tricksLabel.text = ""
-            pointsLabel.text = ""
-        }
-    }
-
-    private func applyRoundResult(
-        _ roundResult: RoundResult,
-        to tricksLabel: UILabel,
-        pointsLabel: UILabel,
-        displayedTricksTaken: Int?,
-        pointsText: String
-    ) {
-        let tricksTaken = displayedTricksTaken ?? roundResult.tricksTaken
-        if roundResult.isBlind {
-            tricksLabel.text = "\(circledBidText(roundResult.bid))/\(tricksTaken)"
-        } else {
-            tricksLabel.text = "\(roundResult.bid)/\(tricksTaken)"
-        }
-        applyPointsText(pointsText, to: pointsLabel)
-    }
-
-    private func applyPointsText(_ text: String, to label: UILabel) {
-        label.text = text
-    }
-
     private func addPremiumScoreStrikeLayer(on label: UILabel) {
         let bounds = label.bounds
         guard bounds.width > 2, bounds.height > 2 else { return }
@@ -594,90 +474,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             layer.removeFromSuperlayer()
         }
         premiumScoreStrikeLayers.removeAll()
-    }
-
-    private func circledBidText(_ bid: Int) -> String {
-        switch bid {
-        case 0: return "⓪"
-        case 1...20:
-            if let scalar = UnicodeScalar(0x2460 + bid - 1) {
-                return String(scalar)
-            }
-            return "\(bid)"
-        default:
-            return "\(bid)"
-        }
-    }
-
-    private func applySubtotalRow(
-        rowIndex: Int,
-        blockIndex: Int,
-        completedBlocks: [BlockResult],
-        currentBlockScores: [Int]
-    ) {
-        let scores: [Int]?
-
-        if blockIndex < completedBlocks.count {
-            scores = completedBlocks[blockIndex].finalScores
-        } else if blockIndex == completedBlocks.count {
-            scores = currentBlockScores
-        } else {
-            scores = nil
-        }
-
-        applySummaryRow(rowIndex: rowIndex, scores: scores)
-    }
-
-    private func applyCumulativeRow(
-        rowIndex: Int,
-        blockIndex: Int,
-        completedBlocks: [BlockResult],
-        currentBlockScores: [Int]
-    ) {
-        let scores: [Int]?
-
-        if blockIndex < completedBlocks.count {
-            scores = cumulativeScores(through: blockIndex, completedBlocks: completedBlocks)
-        } else if blockIndex == completedBlocks.count {
-            scores = cumulativeScoresIncludingCurrent(completedBlocks: completedBlocks, currentBlockScores: currentBlockScores)
-        } else {
-            scores = nil
-        }
-
-        applySummaryRow(rowIndex: rowIndex, scores: scores)
-    }
-
-    private func displayedSummaryScore(from rawScore: Int) -> String {
-        let value = NSNumber(value: Double(rawScore) / 100.0)
-        return Self.summaryScoreFormatter.string(from: value) ?? "0,0"
-    }
-
-    private func applySummaryRow(rowIndex: Int, scores: [Int]?) {
-        for displayIndex in 0..<playerCount {
-            let playerIndex = playerDisplayOrder[displayIndex]
-            tricksLabels[rowIndex][displayIndex].text = ""
-            if let score = summaryScore(for: playerIndex, in: scores) {
-                pointsLabels[rowIndex][displayIndex].text = displayedSummaryScore(from: score)
-            } else {
-                pointsLabels[rowIndex][displayIndex].text = ""
-            }
-        }
-    }
-
-    private func cumulativeScores(through blockIndex: Int, completedBlocks: [BlockResult]) -> [Int] {
-        var scores = Array(repeating: 0, count: playerCount)
-        guard !completedBlocks.isEmpty else { return scores }
-
-        for index in 0...min(blockIndex, completedBlocks.count - 1) {
-            let block = completedBlocks[index]
-            for playerIndex in 0..<playerCount {
-                if block.finalScores.indices.contains(playerIndex) {
-                    scores[playerIndex] += block.finalScores[playerIndex]
-                }
-            }
-        }
-
-        return scores
     }
 
     private func renderPremiumDecorations(from snapshot: ScoreDecorationsSnapshot) {
@@ -746,37 +542,6 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             label.removeFromSuperview()
         }
         premiumTrophyLabels.removeAll()
-    }
-
-    private func summaryRowsForBlock(_ blockIndex: Int) -> [Int] {
-        return layout.rowMappings.enumerated().compactMap { rowIndex, mapping in
-            guard mapping.blockIndex == blockIndex else { return nil }
-            switch mapping.kind {
-            case .subtotal, .cumulative:
-                return rowIndex
-            case .deal:
-                return nil
-            }
-        }
-    }
-
-    private func cumulativeScoresIncludingCurrent(
-        completedBlocks: [BlockResult],
-        currentBlockScores: [Int]
-    ) -> [Int] {
-        var scores = cumulativeScores(through: completedBlocks.count - 1, completedBlocks: completedBlocks)
-        for playerIndex in 0..<playerCount {
-            if currentBlockScores.indices.contains(playerIndex) {
-                scores[playerIndex] += currentBlockScores[playerIndex]
-            }
-        }
-        return scores
-    }
-
-    private func summaryScore(for playerIndex: Int, in scores: [Int]?) -> Int? {
-        guard let scores else { return nil }
-        guard scores.indices.contains(playerIndex) else { return nil }
-        return scores[playerIndex]
     }
 
     // MARK: - Grid
