@@ -36,6 +36,38 @@
 - Улучшается качество выбора объявления джокера (`wish/above/takes`) в контекстных сценариях.
 - Нет заметного регресса по win rate/score diff против текущего hard-бота.
 
+## Актуальное состояние кода (после последних изменений)
+
+Ниже зафиксировано текущее состояние AI-слоя, чтобы план отражал реальную архитектуру, а не исходную монолитную версию.
+
+### Что уже изменилось в коде (архитектурная база)
+
+- Runtime-логика хода бота декомпозирована:
+  - `BotTurnStrategyService` теперь orchestration-слой;
+  - `BotTurnCandidateEvaluatorService` выполняет цикл перебора/оценки кандидатов;
+  - `BotTurnCandidateRankingService` отвечает за `utility` и tie-break;
+  - `BotTurnCardHeuristicsService` содержит `cardThreat`, joker-варианты, `unseenCards`, `estimateImmediateWinProbability`;
+  - `BotTurnRoundProjectionService` содержит `normalizedBid`, прогноз будущих взяток и `expectedRoundScore`.
+- Введен `BotTurnStrategyService.BotTurnDecisionContext`, и runtime-API уже умеет принимать контекст-объект.
+- `GameTurnService` уже имеет `automaticTurnDecision(context:)`.
+- `GameScene+PlayingFlow.swift` уже вызывает автоход через context-based API (`automaticTurnDecision(context:)`).
+- Общие признаки руки вынесены в `HandFeatureExtractor` и переиспользуются в `BotBiddingService`, `BotTrumpSelectionService`, `BotTurnRoundProjectionService`.
+- Нормализация рангов вынесена в `BotRankNormalization`.
+
+### Что по-прежнему остается проблемой (по поведению)
+
+- `BotBiddingService.makePreDealBlindBid(...)` все еще использует старую пороговую blind-эвристику.
+- `BotTurnRoundProjectionService.expectedRoundScore(...)` все еще считает `isBlind: false`.
+- `BotTurnCardHeuristicsService.cardThreat(...)` все еще почти статичен и не учитывает фазу.
+- Runtime-решения бота все еще не получают блоковый/премиальный контекст.
+- Нет runtime-адаптации к стилю соперников.
+
+### Влияние на план
+
+- Этапы остаются актуальными по цели, но точки внедрения смещаются в новые сервисы.
+- Этапы 2 и 3 теперь должны меняться преимущественно в `BotTurnRoundProjectionService`, `BotTurnCandidateRankingService`, `BotTurnCandidateEvaluatorService`, `BotTurnCardHeuristicsService`, а не только в `BotTurnStrategyService`.
+- Этап 2.5 теперь про расширение уже существующего `BotTurnDecisionContext`, а не про ввод context-API с нуля.
+
 ## Метрики и baseline (этап 0)
 
 До внесения логики нужно зафиксировать baseline.
@@ -185,8 +217,10 @@
 
 ### Изменения
 
-- Передавать `isBlind` в ходовой AI (`BotTurnStrategyService`).
-- Учесть `isBlind` в оценке `expectedRoundScore(...)` и/или `moveUtility(...)`.
+- Расширить `BotTurnStrategyService.BotTurnDecisionContext` полем `isBlind`.
+- Протянуть `isBlind` в `BotTurnCandidateEvaluatorService.DecisionContext` (или вложенный utility/projection context).
+- Учесть `isBlind` в `BotTurnRoundProjectionService.expectedRoundScore(...)`.
+- При необходимости учесть `isBlind` в `BotTurnCandidateRankingService.moveUtility(...)` (вес риска/награды в `chase`/`dump`).
 - Усилить влияние риска/награды при chase/dump в blind-режиме.
 - Добавить тесты на различие решений в одинаковом состоянии при `blind=false` и `blind=true`.
 
@@ -198,43 +232,45 @@
 
 ### Файлы (ожидаемо)
 
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
-- `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift` (расширение decision context / orchestration)
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`
 - `Jocker/JockerTests/Bot/*`
 
 ## Этап 2.5. Интеграция blind-контекста в игровой flow (обязательный plumbing-этап)
 
 ### Цель
 
-Явно и безопасно протянуть `isBlind` от игрового состояния до ходового AI.
+Явно и безопасно протянуть `isBlind` от игрового состояния до ходового AI через уже существующий context-based runtime API.
 
 ### Изменения (по слоям)
 
+- `BotTurnStrategyService.BotTurnDecisionContext`:
+  - добавить поле `isBlind`.
 - `GameScene+PlayingFlow.swift`:
-  - определить `isBlindRound` для текущего игрока/раунда;
-  - передать blind-контекст в coordinator при автходе бота.
-- `GameSceneCoordinator.swift`:
-  - принять параметр `isBlind` в точке вызова автохода;
-  - пробросить значение в `GameTurnService`.
+  - определить `isBlindRound` (источник: runtime-состояние игрока, например `gameState.players[playerIndex].isBlindBid`);
+  - передать `isBlind` в `BotTurnDecisionContext` при автходе бота.
 - `GameTurnService.swift`:
-  - принять `isBlind` в `automaticTurnDecision(...)`;
-  - передать `isBlind` в `BotTurnStrategyService.makeTurnDecision(...)`.
-- `BotTurnStrategyService.swift`:
-  - принять параметр `isBlind: Bool`;
-  - использовать его в utility/score projection.
+  - использовать уже существующий `automaticTurnDecision(context:)`;
+  - убедиться, что новый флаг `isBlind` не теряется при проходе через service boundary.
+- `GameSceneCoordinator.swift`:
+  - отметить как вторичный путь (если этот API используется для автохода в будущем / в тестовых сценариях), синхронизировать сигнатуру при необходимости.
 
 ### Критерии приемки
 
 - `isBlind` проходит по стеку вызова до `BotTurnStrategyService`.
+- `isBlind` далее доступен в `BotTurnCandidateEvaluatorService`/projection utility.
 - Нет регресса в non-blind раундах.
 - Добавлены тесты/проверки на корректную передачу контекста.
 
 ### Файлы (ожидаемо)
 
 - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`
-- `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+- `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift` (если требуется синхронизация API)
 - `Jocker/JockerTests/Bot/*`
 
 ## Этап 3. Фазозависимая оценка угрозы карт (высокий приоритет)
@@ -245,13 +281,14 @@
 
 ### Изменения
 
-- Расширить сигнатуру `cardThreat(...)` контекстом:
+- Расширить сигнатуру `BotTurnCardHeuristicsService.cardThreat(...)` контекстом:
   - сколько взяток осталось;
   - сколько взяток нужно добрать/слить относительно заказа;
   - режим (`chase`/`dump`);
   - `chasePressure`;
   - blind/non-blind;
   - позиция в текущей взятке (lead / mid / last).
+- Протянуть новый threat-context через `BotTurnCandidateEvaluatorService` (где сейчас вызывается `cardThreat`).
 - Для обычных карт:
   - разная цена сохранения козыря/старшей карты в ранней и поздней фазе;
   - учет дефицита/избытка взяток.
@@ -261,14 +298,19 @@
 
 ### Критерии приемки
 
-- `cardThreat` перестает быть чисто константным по типу карты.
+- `BotTurnCardHeuristicsService.cardThreat(...)` перестает быть чисто константным по типу карты.
 - Появляются тесты на фазовые различия оценки.
 - Улучшается качество решений в сценариях "нужно добрать последние 1-2 взятки" и "нужно избегать лишней взятки".
 
 ### Файлы (ожидаемо)
 
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
-- `Jocker/JockerTests/Bot/*`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift` (если часть фазового контекста влияет на utility, а не только на threat)
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift` (минимальный plumbing при изменении контекстов)
+- `Jocker/JockerTests/Bot/BotTurnCardHeuristicsServiceTests.swift`
+- `Jocker/JockerTests/Bot/BotTurnCandidateEvaluatorServiceTests.swift`
+- `Jocker/JockerTests/Bot/BotTurnStrategyServiceTests.swift`
 
 ## Этап 4a. Базовый контекст блока в runtime-решениях (ключевой plumbing-этап)
 
@@ -278,7 +320,7 @@
 
 ### Изменения
 
-- Ввести отдельный контекст для решений бота (например, `BotDecisionContext` / `BotRoundContext`):
+- Расширить существующий `BotTurnStrategyService.BotTurnDecisionContext` или добавить вложенный `matchContext` / `roundContext`:
   - номер блока;
   - индекс раздачи внутри блока;
   - прогресс блока (раунд X из Y);
@@ -287,6 +329,9 @@
 - Передавать этот контекст в:
   - `BotBiddingService`;
   - `BotTurnStrategyService`.
+- Внутри turn-stack прокинуть данные до сервисов, где они реально используются:
+  - `BotTurnCandidateEvaluatorService`;
+  - `BotTurnCandidateRankingService` и/или `BotTurnRoundProjectionService` (в зависимости от места применения).
 - Подготовить точки расширения для premium-aware utility, но без сложных вычислений вероятностей.
 
 ### Интеграция с flow (обязательная часть 4a)
@@ -295,7 +340,9 @@
   - `gameState.currentBlock`;
   - текущий индекс раздачи в блоке;
   - данные `ScoreManager`/результатов блока, доступные на этом шаге.
-- Протянуть контекст через `GameScene+PlayingFlow.swift` -> `GameSceneCoordinator.swift` -> `GameTurnService.swift` -> `BotTurnStrategyService.swift`.
+- Протянуть контекст через фактически используемый runtime-путь:
+  - `GameScene+PlayingFlow.swift` -> `GameTurnService.swift` -> `BotTurnStrategyService.swift`.
+- Для альтернативного/резервного пути синхронизировать `GameSceneCoordinator.swift`, если его API используется/будет использоваться для автоходов.
 - Аналогично протянуть контекст до `BotBiddingService` в стадиях торгов/blind.
 
 ### Критерии приемки
@@ -314,10 +361,13 @@
 ### Файлы (ожидаемо)
 
 - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`
-- `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift` (если контекст влияет на projection utility)
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`
+- `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift` (если требуется синхронизация API)
 - Возможные новые модели в `Jocker/Jocker/Models/Bot/`
 - `Jocker/JockerTests/Bot/*`
 
@@ -336,6 +386,9 @@
 - Добавить utility-компоненты:
   - `premiumPreserveUtility` (сохранить шанс на свою премию);
   - `matchCatchUpUtility` (стратегический риск/осторожность по счету).
+- Реализовать их в текущем модульном turn-stack:
+  - utility-часть преимущественно в `BotTurnCandidateRankingService`;
+  - при необходимости признаки/проекции в `BotTurnCandidateEvaluatorService` и `BotTurnRoundProjectionService`.
 - Сделать правила фазозависимыми: в конце блока премиальная составляющая должна весить больше.
 
 ### Важный компромисс
@@ -362,7 +415,10 @@
 
 ### Файлы (ожидаемо)
 
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift` (оркестрация контекста)
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift` (если контекст влияет на round-scoring projection)
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`
 - Возможные новые utility/helper типы в `Game/Services/AI/`
 - `Jocker/JockerTests/Bot/*`
@@ -379,6 +435,7 @@
 - Добавить utility-компоненты:
   - `penaltyAvoidUtility` (снизить риск стать целью штрафа);
   - `premiumDenyUtility` (снизить шанс премии соперника) — в упрощенной эвристической форме.
+- Основная интеграция expectedly в `BotTurnCandidateRankingService` (utility) с plumbing через `BotTurnCandidateEvaluatorService`.
 - Учитывать позицию относительно соседа слева как отдельный фактор.
 
 ### Критерии приемки
@@ -400,7 +457,9 @@
 
 ### Файлы (ожидаемо)
 
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift` (оркестрация контекста)
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`
 - Возможные новые utility/helper типы в `Game/Services/AI/`
 - `Jocker/JockerTests/Bot/*`
@@ -422,6 +481,9 @@
   - необходимость контроля масти после хода;
   - премиальный контекст (если актуален).
 - Оставить `BotTuning` коэффициенты (`chaseLeadWishBonus`, `threatLeadWishJoker` и др.) как корректирующие веса, а не основной механизм.
+- Встроить новую оценку в текущую модульную схему:
+  - генерация вариантов остается в `BotTurnCardHeuristicsService`;
+  - scoring/utility обновляется в `BotTurnCandidateRankingService` и/или выделенном joker-helper.
 
 ### Критерии приемки
 
@@ -436,7 +498,10 @@
 
 ### Файлы (ожидаемо)
 
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift` (оркестрация/контекст)
+- `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
 - Возможно новый helper/service для джокера
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`
 - `Jocker/JockerTests/Bot/*`
@@ -479,7 +544,10 @@
 ### Файлы (ожидаемо)
 
 - Новый тип модели соперника в `Jocker/Jocker/Models/Bot/` или `Game/Services/AI/`
-- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift` (оркестрация/контекст)
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+- `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift` (если модель влияет на вероятности/угрозы)
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`
 - Игровой flow/координатор для обновления наблюдений
 - `Jocker/JockerTests/Bot/*`
