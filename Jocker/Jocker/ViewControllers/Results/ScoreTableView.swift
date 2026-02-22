@@ -48,6 +48,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     private let inProgressRoundSnapshotProvider: ScoreTableInProgressRoundSnapshotProvider
     private let rowNavigationResolver: ScoreTableRowNavigationResolver
     private let scrollOffsetResolver: ScoreTableScrollOffsetResolver
+    private let tapTargetResolver: ScoreTableTapTargetResolver
     private let rowTextRenderer: ScoreTableRowTextRenderer
     private var scoreDataSnapshot: ScoreDataSnapshot?
     private var scoreDecorationsSnapshot: ScoreDecorationsSnapshot = .empty
@@ -114,6 +115,11 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
             rowMappings: self.layout.rowMappings
         )
         self.scrollOffsetResolver = ScoreTableScrollOffsetResolver(
+            headerHeight: self.headerHeight,
+            rowHeight: self.rowHeight
+        )
+        self.tapTargetResolver = ScoreTableTapTargetResolver(
+            rowMappings: self.layout.rowMappings,
             headerHeight: self.headerHeight,
             rowHeight: self.rowHeight
         )
@@ -364,19 +370,14 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     @objc private func handleTableTap(_ recognizer: UITapGestureRecognizer) {
         guard recognizer.state == .ended else { return }
         let locationInScrollView = recognizer.location(in: scrollView)
-        guard locationInScrollView.y >= headerHeight else { return }
-
         let location = recognizer.location(in: contentView)
-        guard location.x >= 0, location.x <= contentView.bounds.width else { return }
+        guard let target = tapTargetResolver.dealRowTarget(
+            scrollViewTapLocationY: locationInScrollView.y,
+            contentTapLocation: location,
+            contentWidth: contentView.bounds.width
+        ) else { return }
 
-        let rowIndex = Int((location.y - headerHeight) / rowHeight)
-        guard layout.rowMappings.indices.contains(rowIndex) else { return }
-
-        let mapping = layout.rowMappings[rowIndex]
-        guard case .deal = mapping.kind else { return }
-        guard let roundIndex = mapping.roundIndex else { return }
-
-        onDealRowTapped?(mapping.blockIndex, roundIndex)
+        onDealRowTapped?(target.blockIndex, target.roundIndex)
     }
 
     // MARK: - Данные
