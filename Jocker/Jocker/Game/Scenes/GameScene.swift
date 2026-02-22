@@ -113,6 +113,7 @@ class GameScene: SKScene {
     let dealHistoryExportService = DealHistoryExportService()
     let shouldRevealAllPlayersCards = false
     private var interactionBlockers: GameSceneInteractionBlockers = []
+    private var interactionState = GameSceneInteractionState()
     var isSelectingFirstDealer: Bool {
         get { interactionBlockers.contains(.selectingFirstDealer) }
         set { setInteractionBlocker(.selectingFirstDealer, isActive: newValue) }
@@ -161,7 +162,7 @@ class GameScene: SKScene {
     }
 
     var isInteractionBlocked: Bool {
-        return coordinator.isInteractionLocked || !interactionBlockers.isEmpty
+        return coordinator.isInteractionLocked || interactionState.isBlockingInteraction
     }
 
     func setInteractionBlocker(
@@ -173,10 +174,12 @@ class GameScene: SKScene {
         } else {
             interactionBlockers.remove(blocker)
         }
+        syncInteractionStateFromBlockers()
     }
 
     func clearInteractionBlockers(_ blockers: GameSceneInteractionBlockers) {
         interactionBlockers.subtract(blockers)
+        syncInteractionStateFromBlockers()
     }
 
     func resetTransientDealFlowState() {
@@ -187,8 +190,21 @@ class GameScene: SKScene {
 
     func resetAllInteractionFlowState() {
         interactionBlockers = []
+        syncInteractionStateFromBlockers()
         pendingBids.removeAll()
         pendingBlindSelections.removeAll()
+    }
+
+    func syncInteractionStateFromBlockers() {
+        interactionState = GameSceneInteractionState(blockers: interactionBlockers)
+        assert(
+            !interactionState.hasConflictingFlowBlockers,
+            "Conflicting GameScene flow blockers: \(interactionBlockers)"
+        )
+        assert(
+            !interactionState.hasConflictingModalBlockers,
+            "Conflicting GameScene modal blockers: \(interactionBlockers)"
+        )
     }
 
     var scoreTableFirstPlayerIndex: Int {

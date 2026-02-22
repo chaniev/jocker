@@ -85,6 +85,7 @@
 		D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */; };
 		D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */; };
 		D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */; };
+		D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */; };
 		D2B100022F7300010037CA75 /* GameScenePlayingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */; };
 		D3A000012F7600010037CA75 /* Suit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000112F7600010037CA75 /* Suit.swift */; };
 		D3A000022F7600010037CA75 /* CardColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A000122F7600010037CA75 /* CardColor.swift */; };
@@ -219,6 +220,7 @@
 		D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+PlayingFlow.swift"; sourceTree = "<group>"; };
 		D1A000072F7000010037CA75 /* GameScene+ModalFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameScene+ModalFlow.swift"; sourceTree = "<group>"; };
 		D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionBlockers.swift; sourceTree = "<group>"; };
+		D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionState.swift; sourceTree = "<group>"; };
 		D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScenePlayingFlowTests.swift; sourceTree = "<group>"; };
 		D3A000112F7600010037CA75 /* Suit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suit.swift; sourceTree = "<group>"; };
 		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 			children = (
 				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
 				D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */,
+				D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */,
 				D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */,
 				D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */,
 				D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */,
@@ -846,6 +849,7 @@
 			files = (
 				7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
 				D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */,
+				D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */,
 				D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */,
 				D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */,
 				D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */,
