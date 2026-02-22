@@ -9,6 +9,29 @@ import Foundation
 
 /// Сервис выбора карты и режима розыгрыша джокера для хода бота.
 final class BotTurnStrategyService {
+    struct BotTurnDecisionContext {
+        let handCards: [Card]
+        let trickNode: TrickNode
+        let trump: Suit?
+        let bid: Int?
+        let tricksTaken: Int?
+        let cardsInRound: Int?
+        let playerCount: Int?
+    }
+
+    private struct ResolvedDecisionContext {
+        let request: BotTurnDecisionContext
+        let trick: BotTurnCardHeuristicsService.TrickSnapshot
+        let legalCards: [Card]
+        let resolvedCardsInRound: Int
+        let currentTricks: Int
+        let targetBid: Int
+
+        var shouldChaseTrick: Bool {
+            return currentTricks < targetBid
+        }
+    }
+
     private let tuning: BotTuning
     private let cardHeuristics: BotTurnCardHeuristicsService
     private let roundProjection: BotTurnRoundProjectionService
@@ -39,45 +62,84 @@ final class BotTurnStrategyService {
         cardsInRound: Int? = nil,
         playerCount: Int? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
-        guard !handCards.isEmpty else { return nil }
-
-        let legalCards = handCards.filter { candidate in
-            trickNode.canPlayCard(candidate, fromHand: handCards, trump: trump)
-        }
-        guard !legalCards.isEmpty else { return nil }
-
-        let resolvedCardsInRound = max(handCards.count, cardsInRound ?? handCards.count)
-        let currentTricks = max(0, tricksTaken ?? 0)
-        let targetBid = roundProjection.normalizedBid(
-            bid: bid,
-            handCards: handCards,
-            cardsInRound: resolvedCardsInRound,
-            trump: trump
+        return makeTurnDecision(
+            context: .init(
+                handCards: handCards,
+                trickNode: trickNode,
+                trump: trump,
+                bid: bid,
+                tricksTaken: tricksTaken,
+                cardsInRound: cardsInRound,
+                playerCount: playerCount
+            )
         )
-        let shouldChaseTrick = currentTricks < targetBid
+    }
+
+    func makeTurnDecision(
+        context: BotTurnDecisionContext
+    ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
+        guard let resolvedContext = resolveDecisionContext(context) else { return nil }
+
         if let bestMove = candidateEvaluator.bestMove(
-            legalCards: legalCards,
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: trump,
-            targetBid: targetBid,
-            currentTricks: currentTricks,
-            cardsInRound: resolvedCardsInRound,
-            playerCount: playerCount
+            context: .init(
+                legalCards: resolvedContext.legalCards,
+                handCards: resolvedContext.request.handCards,
+                trick: resolvedContext.trick,
+                trump: resolvedContext.request.trump,
+                targetBid: resolvedContext.targetBid,
+                currentTricks: resolvedContext.currentTricks,
+                cardsInRound: resolvedContext.resolvedCardsInRound,
+                playerCount: resolvedContext.request.playerCount
+            )
         ) {
             return bestMove
         }
 
         // Safety fallback: значение должно быть найдено всегда, но оставляем защиту.
-        let fallbackCard = legalCards[0]
+        let fallbackCard = resolvedContext.legalCards[0]
         let fallbackDecision = fallbackCard.isJoker
             ? cardHeuristics.candidateDecisions(
                 for: fallbackCard,
-                trickNode: trickNode,
-                shouldChaseTrick: shouldChaseTrick
+                trick: resolvedContext.trick,
+                shouldChaseTrick: resolvedContext.shouldChaseTrick
             ).first ?? .defaultNonLead
             : .defaultNonLead
         return (fallbackCard, fallbackDecision)
     }
 
+    private func resolveDecisionContext(
+        _ context: BotTurnDecisionContext
+    ) -> ResolvedDecisionContext? {
+        guard !context.handCards.isEmpty else { return nil }
+
+        let legalCards = context.handCards.filter { candidate in
+            context.trickNode.canPlayCard(
+                candidate,
+                fromHand: context.handCards,
+                trump: context.trump
+            )
+        }
+        guard !legalCards.isEmpty else { return nil }
+
+        let resolvedCardsInRound = max(
+            context.handCards.count,
+            context.cardsInRound ?? context.handCards.count
+        )
+        let currentTricks = max(0, context.tricksTaken ?? 0)
+        let targetBid = roundProjection.normalizedBid(
+            bid: context.bid,
+            handCards: context.handCards,
+            cardsInRound: resolvedCardsInRound,
+            trump: context.trump
+        )
+
+        return ResolvedDecisionContext(
+            request: context,
+            trick: .init(trickNode: context.trickNode),
+            legalCards: legalCards,
+            resolvedCardsInRound: resolvedCardsInRound,
+            currentTricks: currentTricks,
+            targetBid: targetBid
+        )
+    }
 }

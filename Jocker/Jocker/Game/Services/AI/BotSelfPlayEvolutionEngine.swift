@@ -2220,13 +2220,15 @@ enum BotSelfPlayEvolutionEngine {
                 guard !playerHand.isEmpty else { continue }
 
                 let strategyMove = turnServices[player].makeTurnDecision(
-                    handCards: playerHand,
-                    trickNode: trickNode,
-                    trump: trump,
-                    bid: bids[player],
-                    tricksTaken: tricksTaken[player],
-                    cardsInRound: cardsInRound,
-                    playerCount: playerCount
+                    context: .init(
+                        handCards: playerHand,
+                        trickNode: trickNode,
+                        trump: trump,
+                        bid: bids[player],
+                        tricksTaken: tricksTaken[player],
+                        cardsInRound: cardsInRound,
+                        playerCount: playerCount
+                    )
                 )
 
                 let move: (card: Card, decision: JokerPlayDecision)

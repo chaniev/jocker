@@ -96,13 +96,15 @@ extension GameScene {
             : nil
 
         guard let turnDecision = botTurnService(for: playerIndex).automaticTurnDecision(
-            from: players[playerIndex].hand.cards,
-            trickNode: trickNode,
-            trump: currentTrump,
-            bid: bid,
-            tricksTaken: tricksTaken,
-            cardsInRound: gameState.currentCardsPerPlayer,
-            playerCount: playerCount
+            context: .init(
+                handCards: players[playerIndex].hand.cards,
+                trickNode: trickNode,
+                trump: currentTrump,
+                bid: bid,
+                tricksTaken: tricksTaken,
+                cardsInRound: gameState.currentCardsPerPlayer,
+                playerCount: playerCount
+            )
         ) else {
             return
         }

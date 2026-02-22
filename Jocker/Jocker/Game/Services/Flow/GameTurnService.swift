@@ -9,6 +9,8 @@ import Foundation
 
 /// Сервис логики хода и определения победителя взятки.
 final class GameTurnService {
+    typealias BotTurnDecisionContext = BotTurnStrategyService.BotTurnDecisionContext
+
     private let strategyService: BotTurnStrategyService
 
     init(strategyService: BotTurnStrategyService = BotTurnStrategyService()) {
@@ -20,6 +22,12 @@ final class GameTurnService {
     }
 
     func automaticTurnDecision(
+        context: BotTurnDecisionContext
+    ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
+        return strategyService.makeTurnDecision(context: context)
+    }
+
+    func automaticTurnDecision(
         from handCards: [Card],
         trickNode: TrickNode,
         trump: Suit?,
@@ -28,14 +36,16 @@ final class GameTurnService {
         cardsInRound: Int? = nil,
         playerCount: Int? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
-        return strategyService.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: trump,
-            bid: bid,
-            tricksTaken: tricksTaken,
-            cardsInRound: cardsInRound,
-            playerCount: playerCount
+        return automaticTurnDecision(
+            context: .init(
+                handCards: handCards,
+                trickNode: trickNode,
+                trump: trump,
+                bid: bid,
+                tricksTaken: tricksTaken,
+                cardsInRound: cardsInRound,
+                playerCount: playerCount
+            )
         )
     }
 

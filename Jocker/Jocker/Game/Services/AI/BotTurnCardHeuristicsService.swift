@@ -10,6 +10,18 @@ import Foundation
 /// Низкоуровневые эвристики runtime-хода бота:
 /// генерация joker-вариантов, оценка угрозы карты и вероятности мгновенного взятия.
 struct BotTurnCardHeuristicsService {
+    struct TrickSnapshot {
+        let playedCards: [PlayedTrickCard]
+
+        init(playedCards: [PlayedTrickCard]) {
+            self.playedCards = playedCards
+        }
+
+        init(trickNode: TrickNode) {
+            self.playedCards = trickNode.playedCards
+        }
+    }
+
     private let tuning: BotTuning
 
     init(tuning: BotTuning) {
@@ -18,12 +30,12 @@ struct BotTurnCardHeuristicsService {
 
     func candidateDecisions(
         for card: Card,
-        trickNode: TrickNode,
+        trick: TrickSnapshot,
         shouldChaseTrick: Bool
     ) -> [JokerPlayDecision] {
         guard card.isJoker else { return [.defaultNonLead] }
 
-        let isLead = trickNode.playedCards.isEmpty
+        let isLead = trick.playedCards.isEmpty
         if !isLead {
             if shouldChaseTrick {
                 return [
@@ -45,6 +57,18 @@ struct BotTurnCardHeuristicsService {
             decisions.append(JokerPlayDecision(style: .faceUp, leadDeclaration: .takes(suit: suit)))
         }
         return decisions
+    }
+
+    func candidateDecisions(
+        for card: Card,
+        trickNode: TrickNode,
+        shouldChaseTrick: Bool
+    ) -> [JokerPlayDecision] {
+        return candidateDecisions(
+            for: card,
+            trick: TrickSnapshot(trickNode: trickNode),
+            shouldChaseTrick: shouldChaseTrick
+        )
     }
 
     func unseenCards(excluding handCards: [Card], and playedCards: [Card]) -> [Card] {
@@ -70,17 +94,17 @@ struct BotTurnCardHeuristicsService {
         card: Card,
         decision: JokerPlayDecision,
         trump: Suit?,
-        trickNode: TrickNode
+        trick: TrickSnapshot
     ) -> Double {
         let strategy = tuning.turnStrategy
         if card.isJoker {
             if decision.style == .faceDown {
-                return trickNode.playedCards.isEmpty
+                return trick.playedCards.isEmpty
                     ? strategy.threatFaceDownLeadJoker
                     : strategy.threatFaceDownNonLeadJoker
             }
 
-            if trickNode.playedCards.isEmpty {
+            if trick.playedCards.isEmpty {
                 switch decision.leadDeclaration {
                 case .takes:
                     return strategy.threatLeadTakesJoker
@@ -105,13 +129,27 @@ struct BotTurnCardHeuristicsService {
         return threat
     }
 
+    func cardThreat(
+        card: Card,
+        decision: JokerPlayDecision,
+        trump: Suit?,
+        trickNode: TrickNode
+    ) -> Double {
+        return cardThreat(
+            card: card,
+            decision: decision,
+            trump: trump,
+            trick: TrickSnapshot(trickNode: trickNode)
+        )
+    }
+
     func winsTrickRightNow(
         with card: Card,
         decision: JokerPlayDecision,
-        trickNode: TrickNode,
+        trick: TrickSnapshot,
         trump: Suit?
     ) -> Bool {
-        let simulatedTrick = trickNode.playedCards + [
+        let simulatedTrick = trick.playedCards + [
             PlayedTrickCard(
                 playerIndex: -1,
                 card: card,
@@ -126,10 +164,24 @@ struct BotTurnCardHeuristicsService {
         ) == -1
     }
 
+    func winsTrickRightNow(
+        with card: Card,
+        decision: JokerPlayDecision,
+        trickNode: TrickNode,
+        trump: Suit?
+    ) -> Bool {
+        return winsTrickRightNow(
+            with: card,
+            decision: decision,
+            trick: TrickSnapshot(trickNode: trickNode),
+            trump: trump
+        )
+    }
+
     func estimateImmediateWinProbability(
         card: Card,
         decision: JokerPlayDecision,
-        trickNode: TrickNode,
+        trick: TrickSnapshot,
         trump: Suit?,
         unseenCards: [Card],
         opponentsRemaining: Int,
@@ -138,7 +190,7 @@ struct BotTurnCardHeuristicsService {
         guard winsTrickRightNow(
             with: card,
             decision: decision,
-            trickNode: trickNode,
+            trick: trick,
             trump: trump
         ) else {
             return 0.0
@@ -152,7 +204,7 @@ struct BotTurnCardHeuristicsService {
             return 1.0
         }
 
-        let trickAfterMove = trickNode.playedCards + [
+        let trickAfterMove = trick.playedCards + [
             PlayedTrickCard(
                 playerIndex: -1,
                 card: card,
@@ -188,7 +240,7 @@ struct BotTurnCardHeuristicsService {
             1.0,
             max(
                 0.0,
-                Double(cardPower(card, decision: decision, trickNode: trickNode, trump: trump)) /
+                Double(cardPower(card, decision: decision, trick: trick, trump: trump)) /
                     max(1.0, strategy.powerNormalizationValue)
             )
         )
@@ -203,10 +255,30 @@ struct BotTurnCardHeuristicsService {
         )
     }
 
+    func estimateImmediateWinProbability(
+        card: Card,
+        decision: JokerPlayDecision,
+        trickNode: TrickNode,
+        trump: Suit?,
+        unseenCards: [Card],
+        opponentsRemaining: Int,
+        handSizeBeforeMove: Int
+    ) -> Double {
+        return estimateImmediateWinProbability(
+            card: card,
+            decision: decision,
+            trick: TrickSnapshot(trickNode: trickNode),
+            trump: trump,
+            unseenCards: unseenCards,
+            opponentsRemaining: opponentsRemaining,
+            handSizeBeforeMove: handSizeBeforeMove
+        )
+    }
+
     private func cardPower(
         _ card: Card,
         decision: JokerPlayDecision,
-        trickNode: TrickNode,
+        trick: TrickSnapshot,
         trump: Suit?
     ) -> Int {
         let strategy = tuning.turnStrategy
@@ -215,7 +287,7 @@ struct BotTurnCardHeuristicsService {
                 return strategy.powerFaceDownJoker
             }
 
-            if trickNode.playedCards.isEmpty {
+            if trick.playedCards.isEmpty {
                 switch decision.leadDeclaration {
                 case .takes:
                     return strategy.powerLeadTakesJoker
@@ -235,15 +307,15 @@ struct BotTurnCardHeuristicsService {
         if let trump, suit == trump {
             value += strategy.powerTrumpBonus
         }
-        if let leadSuit = effectiveLeadSuit(in: trickNode), suit == leadSuit {
+        if let leadSuit = effectiveLeadSuit(in: trick), suit == leadSuit {
             value += strategy.powerLeadSuitBonus
         }
 
         return value
     }
 
-    private func effectiveLeadSuit(in trickNode: TrickNode) -> Suit? {
-        guard let leadCard = trickNode.playedCards.first else { return nil }
+    private func effectiveLeadSuit(in trick: TrickSnapshot) -> Suit? {
+        guard let leadCard = trick.playedCards.first else { return nil }
         if let suit = leadCard.card.suit {
             return suit
         }
