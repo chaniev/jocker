@@ -10,6 +10,7 @@ import Foundation
 /// Сервис выбора козыря ботом по открытым картам этапа выбора.
 final class BotTrumpSelectionService {
     private let tuning: BotTuning
+    private let handFeatureExtractor = HandFeatureExtractor()
     private enum BonusPower {
         // Явный приоритет для блока выбора козыря (2/4):
         // если из 3 открытых карт 2 одной масти, усиливаем эту масть.
@@ -26,19 +27,20 @@ final class BotTrumpSelectionService {
     ) -> Suit? {
         guard !hand.isEmpty else { return nil }
         let trumpTuning = tuning.trumpSelection
+        let handFeatures = handFeatureExtractor.extract(from: hand)
         let pairBonusBySuit = twoOfThreeSameSuitBonus(
             in: hand,
             isPlayerChosenTrumpStage: isPlayerChosenTrumpStage
         )
 
         var suitPower: [Suit: Double] = [:]
-        var regularCardsCount = 0
+        let regularCardsCount = handFeatures.regularCardsCount
 
-        for card in hand {
-            guard case .regular(let suit, let rank) = card else { continue }
-            regularCardsCount += 1
+        for card in handFeatures.regularCards {
+            let suit = card.suit
+            let rank = card.rank
 
-            let normalizedRank = Double(rank.rawValue - Rank.six.rawValue) / 8.0
+            let normalizedRank = BotRankNormalization.normalizedForTrumpSelection(rank)
             let cardPower = trumpTuning.cardBasePower + normalizedRank
             suitPower[suit, default: 0.0] += cardPower
         }
@@ -72,11 +74,10 @@ final class BotTrumpSelectionService {
     ) -> [Suit: Double] {
         guard isPlayerChosenTrumpStage else { return [:] }
         guard hand.count == 3 else { return [:] }
+        let handFeatures = handFeatureExtractor.extract(from: hand)
+        guard handFeatures.regularCardsCount == 3 else { return [:] } // В сценарии учитываем только 3 обычные карты.
 
-        let suits = hand.compactMap(\.suit)
-        guard suits.count == 3 else { return [:] } // В сценарии учитываем только 3 обычные карты.
-
-        let suitCounts = Dictionary(grouping: suits, by: { $0 }).mapValues(\.count)
+        let suitCounts = handFeatures.suitCounts
         guard suitCounts.count == 2 else { return [:] } // Ровно 2+1, а не 3 одинаковых.
 
         guard let targetSuit = suitCounts.first(where: { $0.value == 2 })?.key else {

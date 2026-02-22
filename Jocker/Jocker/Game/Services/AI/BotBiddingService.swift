@@ -10,6 +10,7 @@ import Foundation
 /// Сервис авто-заказа взяток для бота.
 final class BotBiddingService {
     private let tuning: BotTuning
+    private let handFeatureExtractor = HandFeatureExtractor()
 
     init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
         self.tuning = tuning
@@ -129,18 +130,11 @@ final class BotBiddingService {
         guard cardsInRound > 0 else { return 0 }
         guard !hand.isEmpty else { return 0 }
         let bidding = tuning.bidding
-        let regularCards = hand.compactMap { card -> (suit: Suit, rank: Rank)? in
-            guard case .regular(let suit, let rank) = card else { return nil }
-            return (suit, rank)
-        }
-        let suitCounts = Dictionary(grouping: regularCards, by: \.suit).mapValues(\.count)
-        let jokerCount = hand.reduce(0) { partial, card in
-            partial + (card.isJoker ? 1 : 0)
-        }
-        let highCardCount = regularCards.reduce(0) { partial, card in
-            partial + (card.rank.rawValue >= Rank.queen.rawValue ? 1 : 0)
-        }
-        let longestSuit = suitCounts.values.max() ?? 0
+        let handFeatures = handFeatureExtractor.extract(from: hand)
+        let suitCounts = handFeatures.suitCounts
+        let jokerCount = handFeatures.jokerCount
+        let highCardCount = handFeatures.highCardCount
+        let longestSuit = handFeatures.longestSuitCount
 
         var power = 0.0
 
@@ -152,12 +146,12 @@ final class BotBiddingService {
 
             guard case .regular(let suit, let rank) = card else { continue }
 
-            let normalizedRank = Double(rank.rawValue - 5) / 9.0
+            let normalizedRank = BotRankNormalization.normalizedForBidding(rank)
             var value = normalizedRank * bidding.expectedRankWeight
 
             if let trump, suit == trump {
                 value += bidding.expectedTrumpBaseBonus + normalizedRank * bidding.expectedTrumpRankWeight
-            } else if rank.rawValue >= Rank.queen.rawValue {
+            } else if BotRankNormalization.isHighCard(rank) {
                 value += bidding.expectedHighRankBonus
             }
 

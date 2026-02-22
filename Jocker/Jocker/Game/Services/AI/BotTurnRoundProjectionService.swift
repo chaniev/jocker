@@ -11,6 +11,7 @@ import Foundation
 /// нормализация ставки, оценка будущих взяток и ожидаемого очкового исхода.
 struct BotTurnRoundProjectionService {
     private let tuning: BotTuning
+    private let handFeatureExtractor = HandFeatureExtractor()
 
     init(tuning: BotTuning) {
         self.tuning = tuning
@@ -103,12 +104,8 @@ struct BotTurnRoundProjectionService {
     func estimateFutureTricks(in handCards: [Card], trump: Suit?) -> Double {
         guard !handCards.isEmpty else { return 0.0 }
         let strategy = tuning.turnStrategy
-
-        let regularCards = handCards.compactMap { card -> (suit: Suit, rank: Rank)? in
-            guard case .regular(let suit, let rank) = card else { return nil }
-            return (suit, rank)
-        }
-        let suitCounts = Dictionary(grouping: regularCards, by: \.suit).mapValues(\.count)
+        let handFeatures = handFeatureExtractor.extract(from: handCards)
+        let suitCounts = handFeatures.suitCounts
 
         var totalPower = 0.0
         for card in handCards {
@@ -119,13 +116,12 @@ struct BotTurnRoundProjectionService {
 
             guard case .regular(let suit, let rank) = card else { continue }
 
-            let rankSpan = Double(Rank.ace.rawValue - Rank.six.rawValue)
-            let normalizedRank = Double(rank.rawValue - Rank.six.rawValue) / max(1.0, rankSpan)
+            let normalizedRank = BotRankNormalization.normalizedForFutureProjection(rank)
             var cardPower = strategy.futureRegularBasePower + normalizedRank * strategy.futureRegularRankWeight
 
             if let trump, suit == trump {
                 cardPower += strategy.futureTrumpBaseBonus + normalizedRank * strategy.futureTrumpRankWeight
-            } else if rank.rawValue >= Rank.queen.rawValue {
+            } else if BotRankNormalization.isHighCard(rank) {
                 cardPower += strategy.futureHighRankBonus
             }
 
