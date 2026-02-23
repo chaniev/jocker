@@ -125,6 +125,7 @@
   - `leadJokerDeclarationUtility` начал учитывать `remaining control reserve` (низкий reserve сильнее смещает к немедленному контролю в early chase);
   - добавлены unit-тесты на влияние `control reserve` в utility и сценарный draft `JOKER-007`.
   - добавлен runtime `Strategy` probe на reserve-aware lead-joker declaration (`JOKER-008`) как цель retuning/стабилизации до strict runtime-assert.
+  - добавлен strict runtime `Strategy`-тест на `above(trump) -> wish` flip по срочности добора (`JOKER-009`) для weak-hand lead-joker сценария.
 
 ### Ограничение валидации (текущее окружение)
 

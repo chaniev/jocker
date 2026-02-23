@@ -397,6 +397,34 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-009
+
+```json
+{
+  "id": "JOKER-009",
+  "stateType": "runtimeTurnDecision-assert",
+  "inputs": {
+    "sharedTemplate": {
+      "handCards": ["JOKER", "C-6", "D-7", "H-8"],
+      "trick": [],
+      "trump": "S",
+      "tricksTaken": 0,
+      "cardsInRound": 8,
+      "playerCount": 4
+    },
+    "variants": [
+      { "label": "earlyChase", "bid": 1 },
+      { "label": "allInChase", "bid": 4 }
+    ]
+  },
+  "expected": {
+    "earlyChaseDecision": { "card": "JOKER", "leadDeclaration": "above(S)" },
+    "allInChaseDecision": { "card": "JOKER", "leadDeclaration": "wish" },
+    "reason": "Stage-5 declaration utility should shift from immediate control to raw win-reliability under all-in chase urgency"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

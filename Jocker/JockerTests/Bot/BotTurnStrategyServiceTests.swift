@@ -258,6 +258,41 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(allInDecl, .wish)
     }
 
+    func testMakeTurnDecision_whenEarlyVsAllInChaseWithWeakHand_flipsLeadJokerDeclarationAboveToWish() {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+        let handCards: [Card] = [
+            .joker,
+            card(.clubs, .six),
+            card(.diamonds, .seven),
+            card(.hearts, .eight)
+        ]
+
+        let earlyChaseDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 1,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+        let allInChaseDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 4,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+
+        XCTAssertEqual(earlyChaseDecision?.card, .joker)
+        XCTAssertEqual(allInChaseDecision?.card, .joker)
+        XCTAssertEqual(earlyChaseDecision?.jokerDecision.leadDeclaration, .above(suit: .spades))
+        XCTAssertEqual(allInChaseDecision?.jokerDecision.leadDeclaration, .wish)
+    }
+
     func testMakeTurnDecision_jokerTakesProbe_mayPreferLeadJokerTakesInEarlyDumpWhenNonJokerLeadsAreRisky() throws {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
