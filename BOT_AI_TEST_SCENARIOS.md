@@ -615,6 +615,41 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-015
+
+```json
+{
+  "id": "JOKER-015",
+  "stateType": "forcedLeadJokerDeclaration-assert",
+  "inputs": {
+    "legalCards": ["JOKER"],
+    "sharedTemplate": {
+      "trick": [],
+      "trump": "C",
+      "targetBid": 1,
+      "currentTricks": 0,
+      "cardsInRound": 8,
+      "playerCount": 4
+    },
+    "variants": [
+      {
+        "label": "spadeControlDominates",
+        "handCards": ["JOKER", "S-K", "S-Q", "H-6"],
+        "expectedLeadDeclaration": "above(S)"
+      },
+      {
+        "label": "heartControlDominates",
+        "handCards": ["JOKER", "H-K", "H-Q", "S-6"],
+        "expectedLeadDeclaration": "above(H)"
+      }
+    ]
+  },
+  "expected": {
+    "reason": "Evaluator should use preferred post-joker control suit signal when selecting `above(<suit>)` in early chase"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

@@ -182,6 +182,48 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         XCTAssertNotEqual(suit, .spades)
     }
 
+    func testBestMove_whenForcedLeadJokerEarlyChaseAndSpadeControlDominates_prefersAboveSpades() {
+        let move = evaluator.bestMove(
+            context: .init(
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                handCards: [.joker, card(.spades, .king), card(.spades, .queen), card(.hearts, .six)],
+                trick: .init(playedCards: []),
+                trump: .clubs,
+                targetBid: 1,
+                currentTricks: 0,
+                cardsInRound: 8,
+                playerCount: 4,
+                isBlind: false,
+                matchContext: nil
+            )
+        )
+
+        XCTAssertEqual(move?.card, .joker)
+        XCTAssertEqual(move?.jokerDecision.style, .faceUp)
+        XCTAssertEqual(move?.jokerDecision.leadDeclaration, .above(suit: .spades))
+    }
+
+    func testBestMove_whenForcedLeadJokerEarlyChaseAndHeartControlDominates_prefersAboveHearts() {
+        let move = evaluator.bestMove(
+            context: .init(
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                handCards: [.joker, card(.hearts, .king), card(.hearts, .queen), card(.spades, .six)],
+                trick: .init(playedCards: []),
+                trump: .clubs,
+                targetBid: 1,
+                currentTricks: 0,
+                cardsInRound: 8,
+                playerCount: 4,
+                isBlind: false,
+                matchContext: nil
+            )
+        )
+
+        XCTAssertEqual(move?.card, .joker)
+        XCTAssertEqual(move?.jokerDecision.style, .faceUp)
+        XCTAssertEqual(move?.jokerDecision.leadDeclaration, .above(suit: .hearts))
+    }
+
     func testBestMove_withNeutralMatchContext_preservesDecision() {
         let trickNode = TrickNode()
         _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)

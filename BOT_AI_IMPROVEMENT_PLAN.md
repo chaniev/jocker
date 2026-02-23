@@ -134,6 +134,7 @@
   - добавлены unit-тесты на влияние preferred-suit сигнала и сценарный draft `JOKER-012`.
   - добавлен runtime `Strategy` probe на preferred-suit-aware lead-joker declaration (`JOKER-013`) как цель retuning/стабилизации.
   - добавлен strict runtime `Strategy`-тест на `takes(non-trump)` в early overbid dump при own-premium protection (`JOKER-014`).
+  - добавлены strict evaluator-level тесты на выбор `above(preferredSuit)` для suit-dominant post-joker hands и сценарный draft `JOKER-015`.
 
 ### Ограничение валидации (текущее окружение)
 
