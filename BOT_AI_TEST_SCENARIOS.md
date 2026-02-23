@@ -313,19 +313,18 @@ Observed (candidate):
 ```json
 {
   "id": "JOKER-006",
-  "stateType": "runtimeTurnDecision-probe",
+  "stateType": "runtimeTurnDecision-strict",
   "inputs": {
     "handCards": ["JOKER", "S-A", "S-K", "S-Q"],
     "trick": [],
     "trump": "S",
     "bid": 0,
-    "tricksTaken": 1,
+    "tricksTaken": 2,
     "cardsInRound": 8,
     "playerCount": 4
   },
   "expected": {
-    "relationship": "runtime may prefer lead-joker + takes(non-trump) in early dump over risky non-joker trump leads",
-    "diagnostic": "if runtime still chooses non-joker, keep as Stage-5 retuning probe"
+    "relationship": "runtime chooses lead-joker + takes(non-trump) in early overbid dump when non-joker leads are risky trump wins"
   }
 }
 ```
@@ -1213,7 +1212,7 @@ Expected behavior:
 | `JOKER-003` | ranking utility | `strict` | `above(trump)` vs `above(non-trump)` в `chase` |
 | `JOKER-004` | runtime strategy | `probe` + `strict` (`JOKER-009`) | flip `above -> wish` по срочности добора |
 | `JOKER-005` | evaluator/ranking | `strict` | `takes(non-trump)` в `dump`, `above(trump)` в `chase` |
-| `JOKER-006` | runtime strategy | `probe` | `takes(non-trump)` в раннем `dump` с опасной trump-рукой |
+| `JOKER-006` | runtime strategy | `strict` | `takes(non-trump)` в раннем `overbid dump` с опасной trump-рукой |
 | `JOKER-007` | ranking utility | `strict` | `remaining control reserve` (low/high) |
 | `JOKER-008` | runtime strategy | `probe` | declaration shift по `control reserve` |
 | `JOKER-009` | runtime strategy | `strict` | weak-hand all-in chase: `above(trump)` -> `wish` |
@@ -1226,9 +1225,8 @@ Expected behavior:
 
 ### Stage 5 Retuning Priorities (JOKER Pack)
 
-- `P0`: стабилизировать `probe -> strict` для `JOKER-006` (`takes` runtime).
-- `P1`: стабилизировать `probe -> strict` для `JOKER-013` (preferred-suit runtime shift).
-- `P1`: перепроверить, что `JOKER-009`, `JOKER-011` и `JOKER-014` сохраняются после ретюнинга (guardrails).
+- `P0`: стабилизировать `probe -> strict` для `JOKER-013` (preferred-suit runtime shift).
+- `P1`: перепроверить, что `JOKER-006`, `JOKER-009`, `JOKER-011` и `JOKER-014` сохраняются после ретюнинга (guardrails).
 - `P2`: расширить `JOKER-002` в поднабор точных serialized runtime asserts после retuning.
 
 ### Harness Commands (JOKER Pack)

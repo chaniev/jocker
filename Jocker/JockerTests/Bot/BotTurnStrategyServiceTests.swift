@@ -293,7 +293,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(allInChaseDecision?.jokerDecision.leadDeclaration, .wish)
     }
 
-    func testMakeTurnDecision_jokerTakesProbe_mayPreferLeadJokerTakesInEarlyDumpWhenNonJokerLeadsAreRisky() throws {
+    func testMakeTurnDecision_whenEarlyOverbidDumpAndNoSafeNonJokerLead_prefersLeadJokerTakesNonTrump() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
         let handCards: [Card] = [
@@ -308,27 +308,15 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             trickNode: trickNode,
             trump: .spades,
             bid: 0,
-            tricksTaken: 1, // overbid: усиливаем мотивацию controlled-loss в dump
+            tricksTaken: 2, // overbid (2): усиливаем мотивацию controlled-loss в dump
             cardsInRound: 8,
             playerCount: 4
         )
 
-        guard let dumpDecision else {
-            XCTFail("Ожидалось валидное решение в takes probe dump-сценарии")
+        XCTAssertEqual(dumpDecision?.card, .joker)
+        guard case .some(.takes(let suit)) = dumpDecision?.jokerDecision.leadDeclaration else {
+            XCTFail("Ожидался lead-джокер + takes в раннем overbid dump без safe non-joker lead")
             return
-        }
-
-        guard dumpDecision.card == .joker else {
-            throw XCTSkip(
-                "Текущий runtime ещё не выбирает lead-джокер в этом раннем dump-сценарии. " +
-                "Probe оставлен как цель retuning для Stage 5 (`takes`)."
-            )
-        }
-
-        guard case .some(.takes(let suit)) = dumpDecision.jokerDecision.leadDeclaration else {
-            throw XCTSkip(
-                "Runtime выбрал lead-джокер, но не `takes`; probe оставлен как цель retuning Stage 5."
-            )
         }
 
         XCTAssertNotEqual(suit, .spades)

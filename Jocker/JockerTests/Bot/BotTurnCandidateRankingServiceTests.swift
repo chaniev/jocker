@@ -427,6 +427,80 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         XCTAssertGreaterThan(nonTrumpUtility, trumpUtility)
     }
 
+    func testMoveUtility_whenLeadJokerDumpingOverbidWithoutLosingNonJoker_increasesTakesNonTrumpUtility() {
+        let trickNode = TrickNode()
+        let takesNonTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .takes(suit: .hearts))
+        )
+
+        let exactUtility = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesNonTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            trickDeltaToBidBeforeMove: 0,
+            chasePressure: 0.0
+        )
+        let overbidNoSafeDumpUtility = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesNonTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            trickDeltaToBidBeforeMove: 1,
+            chasePressure: 0.0
+        )
+        let exactWithSafeDumpUtility = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesNonTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: true,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            trickDeltaToBidBeforeMove: 0,
+            chasePressure: 0.0
+        )
+        let overbidWithSafeDumpUtility = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesNonTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: true,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            trickDeltaToBidBeforeMove: 1,
+            chasePressure: 0.0
+        )
+
+        let noSafeDumpOverbidBoost = overbidNoSafeDumpUtility - exactUtility
+        let safeDumpOverbidBoost = overbidWithSafeDumpUtility - exactWithSafeDumpUtility
+        XCTAssertGreaterThan(noSafeDumpOverbidBoost, safeDumpOverbidBoost)
+        XCTAssertGreaterThan(overbidNoSafeDumpUtility, exactUtility)
+    }
+
     func testMoveUtility_whenLeadJokerChasingEarly_prefersAboveTrumpOverTakesTrump() {
         let trickNode = TrickNode()
         let aboveTrump = BotTurnCandidateRankingService.Move(

@@ -422,6 +422,16 @@ struct BotTurnCandidateRankingService {
             if ownPremiumProtectionContext {
                 bonus += 2.0
             }
+            if context.trickDeltaToBidBeforeMove > 0 && !context.hasLosingNonJoker {
+                // Stage 5 retune (JOKER-006): если бот уже перебрал и в руке нет безопасного
+                // не-джокер сброса, `takes(non-trump)` должен заметнее выигрывать как controlled-loss lead.
+                let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
+                var controlledLossLeadBonus = (2.5 + 2.0 * earlyPhaseWeight) * overbidSeverity
+                if !declaresTrump {
+                    controlledLossLeadBonus += 1.0
+                }
+                bonus += controlledLossLeadBonus
+            }
             let lowReserveAmplifier = 0.90 + 0.25 * lowReserveNeedForImmediateControl
             return bonus * (0.80 + 0.20 * (1.0 - immediateWinProbability)) * lowReserveAmplifier
         }

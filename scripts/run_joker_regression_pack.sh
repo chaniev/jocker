@@ -160,10 +160,10 @@ catalog_entries=(
   # JOKER-009 / JOKER-014 (runtime strategy strict)
   "JOKER-009|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyVsAllInChaseWithWeakHand_flipsLeadJokerDeclarationAboveToWish"
   "JOKER-014|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyOverbidDumpAndOwnPremiumProtection_prefersLeadJokerTakesNonTrump"
+  "JOKER-006|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyOverbidDumpAndNoSafeNonJokerLead_prefersLeadJokerTakesNonTrump"
 
   # Probe targets for Stage 5 retuning
   "JOKER-004|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerDeclarationProbe_mayFlipBetweenAboveAndWishByChaseUrgency"
-  "JOKER-006|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerTakesProbe_mayPreferLeadJokerTakesInEarlyDumpWhenNonJokerLeadsAreRisky"
   "JOKER-008|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerControlReserveProbe_mayShiftLeadJokerDeclarationInEarlyChase"
   "JOKER-013|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerPreferredSuitProbe_mayShiftAboveDeclarationByPostJokerControlSuit"
 
