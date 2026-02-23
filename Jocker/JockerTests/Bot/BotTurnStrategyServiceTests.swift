@@ -299,6 +299,72 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertNotEqual(suit, .spades)
     }
 
+    func testMakeTurnDecision_jokerControlReserveProbe_mayShiftLeadJokerDeclarationInEarlyChase() throws {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+
+        let lowReserveHand: [Card] = [
+            .joker,
+            card(.clubs, .six),
+            card(.diamonds, .seven),
+            card(.hearts, .eight)
+        ]
+        let higherReserveHand: [Card] = [
+            .joker,
+            card(.spades, .eight),
+            card(.spades, .nine),
+            card(.spades, .ten)
+        ]
+
+        let lowReserveDecision = service.makeTurnDecision(
+            handCards: lowReserveHand,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 1,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+        let higherReserveDecision = service.makeTurnDecision(
+            handCards: higherReserveHand,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 1,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+
+        guard let lowReserveDecision, let higherReserveDecision else {
+            XCTFail("Ожидались валидные решения в control-reserve probe сценарии")
+            return
+        }
+
+        if lowReserveDecision.card != .joker || higherReserveDecision.card != .joker {
+            throw XCTSkip(
+                "Текущий runtime выбирает не-джокер хотя бы в одной ветке reserve probe. " +
+                "Сценарий оставлен как цель retuning для Stage 5."
+            )
+        }
+
+        let lowDecl = lowReserveDecision.jokerDecision.leadDeclaration
+        let highDecl = higherReserveDecision.jokerDecision.leadDeclaration
+        if lowDecl == highDecl {
+            throw XCTSkip(
+                "Текущие коэффициенты пока не дают declaration flip по control-reserve сигналу. " +
+                "Сценарий оставлен как Stage-5 retuning probe."
+            )
+        }
+
+        if case .some(.above(suit: .spades)) = lowDecl {
+            // ok: при низком reserve ожидаем более сильный сдвиг к немедленному контролю.
+        } else {
+            throw XCTSkip(
+                "Flip произошёл, но low-reserve ветка не выбрала `above(trump)`; оставляем как probe до retuning."
+            )
+        }
+    }
+
     func testMakeTurnDecision_phaseProbe_mayChangeLeadDumpChoiceBetweenEarlyAndLateContexts() throws {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()

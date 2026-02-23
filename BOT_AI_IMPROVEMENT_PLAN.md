@@ -124,6 +124,7 @@
   - в `Evaluator` добавлен plumbing сигнала `remaining control in hand after move` для lead-joker declaration scoring (`wish/above/takes`);
   - `leadJokerDeclarationUtility` начал учитывать `remaining control reserve` (низкий reserve сильнее смещает к немедленному контролю в early chase);
   - добавлены unit-тесты на влияние `control reserve` в utility и сценарный draft `JOKER-007`.
+  - добавлен runtime `Strategy` probe на reserve-aware lead-joker declaration (`JOKER-008`) как цель retuning/стабилизации до strict runtime-assert.
 
 ### Ограничение валидации (текущее окружение)
 

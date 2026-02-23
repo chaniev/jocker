@@ -364,6 +364,39 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-008
+
+```json
+{
+  "id": "JOKER-008",
+  "stateType": "runtimeTurnDecision-compare-probe",
+  "inputs": {
+    "sharedTemplate": {
+      "trick": [],
+      "trump": "S",
+      "bid": 1,
+      "tricksTaken": 0,
+      "cardsInRound": 8,
+      "playerCount": 4
+    },
+    "variants": [
+      {
+        "label": "lowControlReserveAfterLeadJoker",
+        "handCards": ["JOKER", "C-6", "D-7", "H-8"]
+      },
+      {
+        "label": "higherControlReserveAfterLeadJoker",
+        "handCards": ["JOKER", "S-8", "S-9", "S-10"]
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "runtime declaration may differ by remaining control reserve after lead-joker (Stage-5 probe)",
+    "diagnostic": "if runtime chooses non-joker or no flip, keep as retuning probe"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json
