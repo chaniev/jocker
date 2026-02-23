@@ -464,7 +464,7 @@ Observed (candidate):
 ```json
 {
   "id": "JOKER-011",
-  "stateType": "runtimeTurnDecision-compare-probe",
+  "stateType": "runtimeTurnDecision-compare-strict",
   "inputs": {
     "sharedTemplate": {
       "handCards": ["JOKER", "C-6", "D-7", "H-8"],
@@ -497,8 +497,7 @@ Observed (candidate):
     ]
   },
   "expected": {
-    "relationship": "runtime lead-joker declaration may flip from wish to above(trump) under anti-premium pressure in all-in chase",
-    "diagnostic": "if no flip under current tuning, keep as Stage-5 retuning probe"
+    "relationship": "runtime lead-joker declaration flips from wish to above(trump) under anti-premium pressure in all-in chase"
   }
 }
 ```
@@ -1219,7 +1218,7 @@ Expected behavior:
 | `JOKER-008` | runtime strategy | `probe` | declaration shift по `control reserve` |
 | `JOKER-009` | runtime strategy | `strict` | weak-hand all-in chase: `above(trump)` -> `wish` |
 | `JOKER-010` | ranking utility | `strict` | premium-aware declaration scoring (`own premium` / anti-premium) |
-| `JOKER-011` | runtime strategy | `probe` | anti-premium pressure в all-in chase (`wish -> above`) |
+| `JOKER-011` | runtime strategy | `strict` | anti-premium pressure в all-in chase (`wish -> above`) |
 | `JOKER-012` | ranking utility | `strict` | preferred post-joker control suit (`above`/`takes`) |
 | `JOKER-013` | runtime strategy | `probe` | runtime shift `above(S)` vs `above(H)` по preferred suit |
 | `JOKER-014` | runtime strategy | `strict` | early overbid dump + own premium -> `takes(non-trump)` |
@@ -1228,9 +1227,8 @@ Expected behavior:
 ### Stage 5 Retuning Priorities (JOKER Pack)
 
 - `P0`: стабилизировать `probe -> strict` для `JOKER-006` (`takes` runtime).
-- `P0`: стабилизировать `probe -> strict` для `JOKER-011` (premium-aware all-in chase).
 - `P1`: стабилизировать `probe -> strict` для `JOKER-013` (preferred-suit runtime shift).
-- `P1`: перепроверить, что `JOKER-009` и `JOKER-014` сохраняются после ретюнинга (guardrails).
+- `P1`: перепроверить, что `JOKER-009`, `JOKER-011` и `JOKER-014` сохраняются после ретюнинга (guardrails).
 - `P2`: расширить `JOKER-002` в поднабор точных serialized runtime asserts после retuning.
 
 ### Harness Commands (JOKER Pack)

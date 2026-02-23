@@ -311,8 +311,13 @@ struct BotTurnCandidateRankingService {
         case .wish:
             if context.shouldChaseTrick {
                 if isFinalTrick || isAllInChase {
-                    // В финале/аврале оставляем `wish` сильным вариантом.
-                    return 4.0 * (0.6 + 0.4 * immediateWinProbability)
+                    // В финале/аврале `wish` обычно силён, но при anti-premium давлении
+                    // в all-in chase полезнее смещать выбор к немедленному контролю (`above`).
+                    var bonus = 4.0 * (0.6 + 0.4 * immediateWinProbability)
+                    if isAllInChase && !isFinalTrick && antiPremiumPressureContext {
+                        bonus -= 2.5
+                    }
+                    return bonus
                 }
 
                 let controlLossPenalty = (8.0 + 8.0 * earlyPhaseWeight) * blindMultiplier
@@ -354,6 +359,9 @@ struct BotTurnCandidateRankingService {
                 }
                 if antiPremiumPressureContext {
                     bonus += 2.5
+                    if isAllInChase && !isFinalTrick {
+                        bonus += 2.0
+                    }
                 }
                 let lowReserveAmplifier = 0.90 + 0.30 * lowReserveNeedForImmediateControl
                 return bonus * (0.65 + 0.35 * immediateWinProbability) * lowReserveAmplifier

@@ -165,8 +165,10 @@ catalog_entries=(
   "JOKER-004|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerDeclarationProbe_mayFlipBetweenAboveAndWishByChaseUrgency"
   "JOKER-006|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerTakesProbe_mayPreferLeadJokerTakesInEarlyDumpWhenNonJokerLeadsAreRisky"
   "JOKER-008|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerControlReserveProbe_mayShiftLeadJokerDeclarationInEarlyChase"
-  "JOKER-011|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerPremiumAwareChaseProbe_mayFlipAllInWishTowardAboveUnderAntiPremiumPressure"
   "JOKER-013|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerPreferredSuitProbe_mayShiftAboveDeclarationByPostJokerControlSuit"
+
+  # JOKER-011 (runtime strategy strict after Stage-5 anti-premium all-in-chase retune)
+  "JOKER-011|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenAllInChaseUnderAntiPremiumPressure_flipsLeadJokerWishTowardAboveTrump"
 )
 
 selected_entries=()

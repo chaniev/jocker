@@ -450,7 +450,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         }
     }
 
-    func testMakeTurnDecision_jokerPremiumAwareChaseProbe_mayFlipAllInWishTowardAboveUnderAntiPremiumPressure() throws {
+    func testMakeTurnDecision_whenAllInChaseUnderAntiPremiumPressure_flipsLeadJokerWishTowardAboveTrump() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
         let handCards: [Card] = [
@@ -524,33 +524,17 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         )
 
         guard let neutralDecision, let antiPremiumDecision else {
-            XCTFail("Ожидались валидные решения в premium-aware joker chase probe")
+            XCTFail("Ожидались валидные решения в premium-aware joker chase runtime-сценарии")
             return
         }
 
-        if neutralDecision.card != .joker || antiPremiumDecision.card != .joker {
-            throw XCTSkip(
-                "В одной из веток runtime выбрал не-джокер; probe оставлен как цель retuning Stage 5."
-            )
-        }
+        XCTAssertEqual(neutralDecision.card, .joker)
+        XCTAssertEqual(antiPremiumDecision.card, .joker)
 
         let neutralDecl = neutralDecision.jokerDecision.leadDeclaration
         let antiDecl = antiPremiumDecision.jokerDecision.leadDeclaration
-        if neutralDecl == antiDecl {
-            throw XCTSkip(
-                "Текущие коэффициенты пока не дают premium-aware declaration flip в all-in chase probe. " +
-                "Сценарий оставлен как цель retuning Stage 5."
-            )
-        }
-
         XCTAssertEqual(neutralDecl, .wish)
-        if case .some(.above(suit: .spades)) = antiDecl {
-            // ok
-        } else {
-            throw XCTSkip(
-                "Flip произошёл, но anti-premium ветка выбрала не `above(trump)`; оставляем как probe."
-            )
-        }
+        XCTAssertEqual(antiDecl, .above(suit: .spades))
     }
 
     func testMakeTurnDecision_jokerPreferredSuitProbe_mayShiftAboveDeclarationByPostJokerControlSuit() throws {

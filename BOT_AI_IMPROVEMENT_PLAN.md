@@ -135,8 +135,9 @@
   - добавлен runtime `Strategy` probe на preferred-suit-aware lead-joker declaration (`JOKER-013`) как цель retuning/стабилизации.
   - добавлен strict runtime `Strategy`-тест на `takes(non-trump)` в early overbid dump при own-premium protection (`JOKER-014`).
   - добавлены strict evaluator-level тесты на выбор `above(preferredSuit)` для suit-dominant post-joker hands и сценарный draft `JOKER-015`.
-  - собран `JOKER regression pack (v1)` в `BOT_AI_TEST_SCENARIOS.md` с классификацией `strict/probe` и retuning-priority (`JOKER-006/011/013` как основные probe-цели).
+  - собран `JOKER regression pack (v1)` в `BOT_AI_TEST_SCENARIOS.md` с классификацией `strict/probe` и retuning-priority (`JOKER-006/013` как основные probe-цели; `JOKER-011` стабилизирован в strict).
   - добавлен automation entrypoint для Stage-5 retuning prep: `scripts/run_joker_regression_pack.sh` + `make joker-pack` / `make joker-pack-all` (`strict` vs `strict+probe`) с сохранением артефактов прогона.
+  - выполнен точечный Stage-5 retune для anti-premium all-in chase (`wish` vs `above`) и `JOKER-011` переведен из runtime `probe` в `strict` (`Strategy`) с обновлением regression-pack mapping.
 
 ### Ограничение валидации (текущее окружение)
 
