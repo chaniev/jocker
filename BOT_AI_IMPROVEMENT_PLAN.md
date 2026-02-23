@@ -126,6 +126,8 @@
   - добавлены unit-тесты на влияние `control reserve` в utility и сценарный draft `JOKER-007`.
   - добавлен runtime `Strategy` probe на reserve-aware lead-joker declaration (`JOKER-008`) как цель retuning/стабилизации до strict runtime-assert.
   - добавлен strict runtime `Strategy`-тест на `above(trump) -> wish` flip по срочности добора (`JOKER-009`) для weak-hand lead-joker сценария.
+  - `leadJokerDeclarationUtility` получил premium/penalty-aware корректировки (own-premium protection в dump, anti-premium pressure в chase);
+  - добавлены unit-тесты на влияние premium-context на выбор `wish/above/takes` и сценарный draft `JOKER-010`.
 
 ### Ограничение валидации (текущее окружение)
 

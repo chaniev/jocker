@@ -425,6 +425,40 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-010
+
+```json
+{
+  "id": "JOKER-010",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "shared": {
+      "trick": [],
+      "trump": "S",
+      "cardsInRound": 8,
+      "tricksRemainingIncludingCurrent": 4
+    },
+    "subcases": [
+      {
+        "label": "dumpOwnPremiumProtection",
+        "shouldChaseTrick": false,
+        "moves": ["wish", "takes(non-trump)"],
+        "expectation": "ownPremiumContext increases utility advantage of takes(non-trump) over wish"
+      },
+      {
+        "label": "chaseAntiPremiumPressure",
+        "shouldChaseTrick": true,
+        "moves": ["wish", "above(trump)"],
+        "expectation": "antiPremiumPressure context increases utility advantage of above(trump) over wish"
+      }
+    ]
+  },
+  "expected": {
+    "reason": "Stage-5 premium-aware declaration scoring should react to block premium/penalty context"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

@@ -588,6 +588,234 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         XCTAssertGreaterThan(lowReserveAdvantage, highReserveAdvantage)
     }
 
+    func testMoveUtility_whenLeadJokerDumpingAndOwnPremiumCandidate_increasesTakesNonTrumpAdvantageOverWish() {
+        let trickNode = TrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+        let takesNonTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .takes(suit: .hearts))
+        )
+        let neutralContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false
+            )
+        )
+        let ownPremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: true,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false
+            )
+        )
+
+        let wishNeutral = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 110,
+            move: wish,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.0,
+            matchContext: neutralContext
+        )
+        let takesNeutral = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesNonTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.0,
+            matchContext: neutralContext
+        )
+        let wishOwnPremium = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 110,
+            move: wish,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.0,
+            matchContext: ownPremiumContext
+        )
+        let takesOwnPremium = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesNonTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.0,
+            matchContext: ownPremiumContext
+        )
+
+        let neutralAdvantage = takesNeutral - wishNeutral
+        let ownPremiumAdvantage = takesOwnPremium - wishOwnPremium
+        XCTAssertGreaterThan(ownPremiumAdvantage, neutralAdvantage)
+    }
+
+    func testMoveUtility_whenLeadJokerChasingWithAntiPremiumPressure_increasesAboveTrumpAdvantageOverWish() {
+        let trickNode = TrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+        let aboveTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .above(suit: .spades))
+        )
+        let neutralContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: false,
+                isPenaltyTargetRiskSoFar: false,
+                premiumCandidatesThreateningPenaltyCount: 0,
+                opponentPremiumCandidatesSoFarCount: 0
+            )
+        )
+        let antiPremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: true,
+                isPenaltyTargetRiskSoFar: false,
+                premiumCandidatesThreateningPenaltyCount: 0,
+                opponentPremiumCandidatesSoFarCount: 1
+            )
+        )
+
+        let wishNeutral = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 110,
+            move: wish,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.25,
+            matchContext: neutralContext
+        )
+        let aboveNeutral = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 95,
+            move: aboveTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.25,
+            matchContext: neutralContext
+        )
+        let wishAntiPremium = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 110,
+            move: wish,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.25,
+            matchContext: antiPremiumContext
+        )
+        let aboveAntiPremium = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 95,
+            move: aboveTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.25,
+            matchContext: antiPremiumContext
+        )
+
+        let neutralAdvantage = aboveNeutral - wishNeutral
+        let antiPremiumAdvantage = aboveAntiPremium - wishAntiPremium
+        XCTAssertGreaterThan(antiPremiumAdvantage, neutralAdvantage)
+    }
+
     func testMoveUtility_withNeutralMatchContext_preservesBehavior() {
         let trickNode = TrickNode()
         _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)

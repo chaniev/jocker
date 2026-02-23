@@ -293,6 +293,15 @@ struct BotTurnCandidateRankingService {
             context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
         let controlReserve = min(1.0, max(0.0, leadControlReserveAfterMove))
         let lowReserveNeedForImmediateControl = 1.0 - controlReserve
+        let premium = context.matchContext?.premium
+        let ownPremiumProtectionContext = premium.map {
+            $0.isPremiumCandidateSoFar || $0.isZeroPremiumCandidateSoFar
+        } ?? false
+        let antiPremiumPressureContext = premium.map {
+            $0.leftNeighborIsPremiumCandidateSoFar ||
+                $0.isPenaltyTargetRiskSoFar ||
+                $0.opponentPremiumCandidatesSoFarCount > 0
+        } ?? false
 
         switch declaration {
         case .wish:
@@ -305,12 +314,21 @@ struct BotTurnCandidateRankingService {
                 let controlLossPenalty = (8.0 + 8.0 * earlyPhaseWeight) * blindMultiplier
                 let pressureRelief = 1.0 - 0.35 * context.chasePressure
                 let noTrumpRelief = context.trump == nil ? 0.80 : 1.0
+                let antiPremiumControlNeedMultiplier = antiPremiumPressureContext ? 1.15 : 1.0
                 let lowReserveAmplifier = 0.85 + 0.35 * lowReserveNeedForImmediateControl
-                return -controlLossPenalty * pressureRelief * noTrumpRelief * lowReserveAmplifier
+                return -controlLossPenalty *
+                    pressureRelief *
+                    noTrumpRelief *
+                    antiPremiumControlNeedMultiplier *
+                    lowReserveAmplifier
             }
 
             // В dump-режиме `wish` часто менее "контролирующий", чем `above`.
-            return (2.0 + 4.0 * earlyPhaseWeight) * (context.isBlindRound ? 1.05 : 1.0)
+            var wishDumpBonus = (2.0 + 4.0 * earlyPhaseWeight) * (context.isBlindRound ? 1.05 : 1.0)
+            if ownPremiumProtectionContext {
+                wishDumpBonus -= 2.0
+            }
+            return wishDumpBonus
 
         case .above(let suit):
             let declaresTrump = context.trump == suit
@@ -325,6 +343,9 @@ struct BotTurnCandidateRankingService {
                 }
                 if isAllInChase {
                     bonus *= 0.70
+                }
+                if antiPremiumPressureContext {
+                    bonus += 2.5
                 }
                 let lowReserveAmplifier = 0.90 + 0.30 * lowReserveNeedForImmediateControl
                 return bonus * (0.65 + 0.35 * immediateWinProbability) * lowReserveAmplifier
@@ -373,6 +394,9 @@ struct BotTurnCandidateRankingService {
                premium.leftNeighborIsPremiumCandidateSoFar || premium.isPenaltyTargetRiskSoFar {
                 // В anti-premium/penalty-aware контексте controlled-loss lead чуть ценнее.
                 bonus += 1.5
+            }
+            if ownPremiumProtectionContext {
+                bonus += 2.0
             }
             let lowReserveAmplifier = 0.90 + 0.25 * lowReserveNeedForImmediateControl
             return bonus * (0.80 + 0.20 * (1.0 - immediateWinProbability)) * lowReserveAmplifier
