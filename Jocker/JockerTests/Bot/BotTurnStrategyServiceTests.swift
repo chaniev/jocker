@@ -525,7 +525,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(antiDecl, .above(suit: .spades))
     }
 
-    func testMakeTurnDecision_jokerPreferredSuitProbe_mayShiftAboveDeclarationByPostJokerControlSuit() throws {
+    func testMakeTurnDecision_whenEarlyHighPressureChase_flipsLeadJokerAboveDeclarationByPreferredControlSuit() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
         let spadeControlHand: [Card] = [
@@ -545,7 +545,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             handCards: spadeControlHand,
             trickNode: trickNode,
             trump: .clubs,
-            bid: 1,
+            bid: 3,
             tricksTaken: 0,
             cardsInRound: 8,
             playerCount: 4
@@ -554,46 +554,24 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             handCards: heartControlHand,
             trickNode: trickNode,
             trump: .clubs,
-            bid: 1,
+            bid: 3,
             tricksTaken: 0,
             cardsInRound: 8,
             playerCount: 4
         )
 
         guard let spadeControlDecision, let heartControlDecision else {
-            XCTFail("Ожидались валидные решения в preferred-suit joker probe")
+            XCTFail("Ожидались валидные решения в preferred-suit runtime-сценарии")
             return
         }
 
-        if spadeControlDecision.card != .joker || heartControlDecision.card != .joker {
-            throw XCTSkip(
-                "В одной из веток runtime не выбрал lead-джокер; preferred-suit probe оставлен как цель retuning."
-            )
-        }
+        XCTAssertEqual(spadeControlDecision.card, .joker)
+        XCTAssertEqual(heartControlDecision.card, .joker)
 
         let spadeDecl = spadeControlDecision.jokerDecision.leadDeclaration
         let heartDecl = heartControlDecision.jokerDecision.leadDeclaration
-        if spadeDecl == heartDecl {
-            throw XCTSkip(
-                "Текущие коэффициенты пока не дают declaration shift по preferred-suit сигналу. " +
-                "Сценарий оставлен как Stage-5 retuning probe."
-            )
-        }
-
-        if case .some(.above(suit: .spades)) = spadeDecl {
-            // ok
-        } else {
-            throw XCTSkip(
-                "Spade-control ветка не выбрала `above(S)`; оставляем preferred-suit probe до retuning."
-            )
-        }
-        if case .some(.above(suit: .hearts)) = heartDecl {
-            // ok
-        } else {
-            throw XCTSkip(
-                "Heart-control ветка не выбрала `above(H)`; оставляем preferred-suit probe до retuning."
-            )
-        }
+        XCTAssertEqual(spadeDecl, .above(suit: .spades))
+        XCTAssertEqual(heartDecl, .above(suit: .hearts))
     }
 
     func testMakeTurnDecision_phaseProbe_mayChangeLeadDumpChoiceBetweenEarlyAndLateContexts() throws {
