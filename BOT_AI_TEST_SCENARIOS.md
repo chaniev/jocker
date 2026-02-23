@@ -1233,8 +1233,21 @@ Expected behavior:
 - `P1`: перепроверить, что `JOKER-009` и `JOKER-014` сохраняются после ретюнинга (guardrails).
 - `P2`: расширить `JOKER-002` в поднабор точных serialized runtime asserts после retuning.
 
+### Harness Commands (JOKER Pack)
+
+- Список текущего набора (`strict` по умолчанию):
+  - `scripts/run_joker_regression_pack.sh --list`
+  - `make joker-pack-list`
+- Прогон `strict` guardrails:
+  - `scripts/run_joker_regression_pack.sh`
+  - `make joker-pack`
+- Прогон `strict + probe` (retuning session):
+  - `scripts/run_joker_regression_pack.sh --include-probes`
+  - `make joker-pack-all`
+- Артефакты сохраняются в `.derivedData/joker-regression-runs/<timestamp>/` (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`).
+
 ## Next Fill-In Tasks
 
 - Добавить точные сериализованные состояния для первых 8 кейсов.
-- Привязать каждый кейс к автоматическому тесту или harness-команде.
+- Привязать каждый кейс к автоматическому тесту или harness-команде (JOKER pack CLI/Makefile entrypoints добавлены; осталось расширить mapping для draft-кейсов).
 - Зафиксировать финальный seed-набор baseline для этапа 0.
