@@ -325,11 +325,13 @@ struct BotTurnCandidateRankingService {
                 let noTrumpRelief = context.trump == nil ? 0.80 : 1.0
                 let antiPremiumControlNeedMultiplier = antiPremiumPressureContext ? 1.15 : 1.0
                 let lowReserveAmplifier = 0.85 + 0.35 * lowReserveNeedForImmediateControl
+                let highReserveWishRelief = 2.0 * controlReserve * (0.4 + 0.6 * earlyPhaseWeight)
                 return -controlLossPenalty *
                     pressureRelief *
                     noTrumpRelief *
                     antiPremiumControlNeedMultiplier *
-                    lowReserveAmplifier
+                    lowReserveAmplifier +
+                    highReserveWishRelief
             }
 
             // В dump-режиме `wish` часто менее "контролирующий", чем `above`.
@@ -364,7 +366,11 @@ struct BotTurnCandidateRankingService {
                     }
                 }
                 let lowReserveAmplifier = 0.90 + 0.30 * lowReserveNeedForImmediateControl
-                return bonus * (0.65 + 0.35 * immediateWinProbability) * lowReserveAmplifier
+                let highReserveAboveRelaxation = isAllInChase ? 1.0 : (1.0 - 0.12 * controlReserve)
+                return bonus *
+                    (0.65 + 0.35 * immediateWinProbability) *
+                    lowReserveAmplifier *
+                    highReserveAboveRelaxation
             }
 
             var penalty = (3.0 + 5.0 * earlyPhaseWeight) * blindMultiplier
@@ -544,7 +550,21 @@ struct BotTurnCandidateRankingService {
             let basePenalty = 24.0 + Double(tricksAfterCurrent) * 6.0
             let chaseMultiplier = context.shouldChaseTrick ? (1.0 + context.chasePressure * 0.25) : 1.0
             let blindWishPenaltyMultiplier = context.isBlindRound ? 1.25 : 1.0
-            utility -= basePenalty * chaseMultiplier * blindWishPenaltyMultiplier
+            let isAllInChase = context.shouldChaseTrick &&
+                context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
+            let wishPenaltyReserveMultiplier: Double
+            if context.shouldChaseTrick && !isAllInChase {
+                let controlReserve = min(1.0, max(0.0, leadControlReserveAfterMove))
+                // Stage 5 retune (JOKER-008): при высоком post-joker reserve штраф за ранний `wish`
+                // должен заметнее ослабляться, чтобы runtime мог стабильно менять декларацию.
+                wishPenaltyReserveMultiplier = 1.15 - 0.45 * controlReserve
+            } else {
+                wishPenaltyReserveMultiplier = 1.0
+            }
+            utility -= basePenalty *
+                chaseMultiplier *
+                blindWishPenaltyMultiplier *
+                wishPenaltyReserveMultiplier
         }
 
         if context.shouldChaseTrick {

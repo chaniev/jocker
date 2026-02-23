@@ -662,6 +662,83 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         XCTAssertGreaterThan(lowReserveAdvantage, highReserveAdvantage)
     }
 
+    func testMoveUtility_whenLeadJokerChasingHighPressureNonAllIn_lowControlReserveAmplifiesAboveTrumpAdvantageOverWish() {
+        let trickNode = TrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+        let aboveTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .above(suit: .spades))
+        )
+
+        let wishLowReserve = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 100,
+            move: wish,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 3,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.75,
+            leadControlReserveAfterMove: 0.0
+        )
+        let aboveLowReserve = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 100,
+            move: aboveTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 3,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.75,
+            leadControlReserveAfterMove: 0.0
+        )
+        let wishHighReserve = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 100,
+            move: wish,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 3,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.75,
+            leadControlReserveAfterMove: 1.0
+        )
+        let aboveHighReserve = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 100,
+            move: aboveTrump,
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 3,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.75,
+            leadControlReserveAfterMove: 1.0
+        )
+
+        let lowReserveAdvantage = aboveLowReserve - wishLowReserve
+        let highReserveAdvantage = aboveHighReserve - wishHighReserve
+        XCTAssertGreaterThan(lowReserveAdvantage, highReserveAdvantage)
+    }
+
     func testMoveUtility_whenLeadJokerDumpingAndOwnPremiumCandidate_increasesTakesNonTrumpAdvantageOverWish() {
         let trickNode = TrickNode()
         let wish = BotTurnCandidateRankingService.Move(

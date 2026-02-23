@@ -372,7 +372,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertNotEqual(suit, .spades)
     }
 
-    func testMakeTurnDecision_jokerControlReserveProbe_mayShiftLeadJokerDeclarationInEarlyChase() throws {
+    func testMakeTurnDecision_whenEarlyHighPressureChase_controlReserveShiftsLeadJokerDeclaration() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
 
@@ -393,7 +393,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             handCards: lowReserveHand,
             trickNode: trickNode,
             trump: .spades,
-            bid: 1,
+            bid: 3,
             tricksTaken: 0,
             cardsInRound: 8,
             playerCount: 4
@@ -402,40 +402,25 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             handCards: higherReserveHand,
             trickNode: trickNode,
             trump: .spades,
-            bid: 1,
+            bid: 3,
             tricksTaken: 0,
             cardsInRound: 8,
             playerCount: 4
         )
 
         guard let lowReserveDecision, let higherReserveDecision else {
-            XCTFail("Ожидались валидные решения в control-reserve probe сценарии")
+            XCTFail("Ожидались валидные решения в control-reserve runtime-сценарии")
             return
         }
 
-        if lowReserveDecision.card != .joker || higherReserveDecision.card != .joker {
-            throw XCTSkip(
-                "Текущий runtime выбирает не-джокер хотя бы в одной ветке reserve probe. " +
-                "Сценарий оставлен как цель retuning для Stage 5."
-            )
-        }
+        XCTAssertEqual(lowReserveDecision.card, .joker)
+        XCTAssertEqual(higherReserveDecision.card, .joker)
 
         let lowDecl = lowReserveDecision.jokerDecision.leadDeclaration
         let highDecl = higherReserveDecision.jokerDecision.leadDeclaration
-        if lowDecl == highDecl {
-            throw XCTSkip(
-                "Текущие коэффициенты пока не дают declaration flip по control-reserve сигналу. " +
-                "Сценарий оставлен как Stage-5 retuning probe."
-            )
-        }
+        XCTAssertNotEqual(lowDecl, highDecl)
 
-        if case .some(.above(suit: .spades)) = lowDecl {
-            // ok: при низком reserve ожидаем более сильный сдвиг к немедленному контролю.
-        } else {
-            throw XCTSkip(
-                "Flip произошёл, но low-reserve ветка не выбрала `above(trump)`; оставляем как probe до retuning."
-            )
-        }
+        XCTAssertEqual(lowDecl, .above(suit: .spades))
     }
 
     func testMakeTurnDecision_whenAllInChaseUnderAntiPremiumPressure_flipsLeadJokerWishTowardAboveTrump() {
