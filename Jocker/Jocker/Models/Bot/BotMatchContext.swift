@@ -57,6 +57,7 @@ struct BotMatchContext: Equatable {
     let dealerIndex: Int
     let playerCount: Int
     let premium: PremiumSnapshot?
+    let opponents: BotOpponentModel? = nil
 
     var blockNumber: Int {
         return block.rawValue

@@ -141,6 +141,11 @@
   - выполнен точечный Stage-5 retune для раннего `overbid dump` (`takes(non-trump)` при отсутствии safe non-joker lead); `JOKER-006` переведен из runtime `probe` в `strict` (`Strategy`) и добавлен unit-тест на targeted utility-bonus.
   - `JOKER-013` (preferred-suit runtime shift) переведен из `probe` в `strict` за счет стабилизации runtime-сценария (early high-pressure chase, `bid=3`) и обновления regression-pack mapping.
   - выполнен точечный Stage-5 retune для reserve-aware раннего `chase` (усилен reserve-эффект для `wish/above` в non-all-in, включая ранний non-final `wish` penalty); `JOKER-008` переведен из runtime `probe` в `strict` (`Strategy`) и добавлен high-pressure utility-тест.
+- Этап 6 (Opponent model): начат (Stage 6a, plumbing)
+  - добавлен `BotOpponentModel` (MVP snapshot) для наблюдаемых паттернов соперников по текущему блоку: blind-rate, exact/over/underbid rates, средняя агрессивность заказа;
+  - `BotMatchContext` расширен полем `opponents` и `GameScene.botMatchContext(...)` начал собирать opponent snapshots из `ScoreManager.currentBlockRoundResults`;
+  - добавлены flow-тесты на построение opponent model snapshot (observed rounds и zero-evidence старт блока);
+  - поведение runtime AI на этом подшаге пока не меняется (feature-plumbing перед Stage 6 utility integration).
 
 ### Ограничение валидации (текущее окружение)
 

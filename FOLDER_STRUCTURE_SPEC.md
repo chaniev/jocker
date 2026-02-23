@@ -98,6 +98,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/Players/GamePlayersSettings.swift`: normalized snapshot of editable names for 4 player slots and stored bot difficulties for slots 2–4.
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
+- `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
@@ -182,6 +183,7 @@ Jocker/Jocker/
 │   ├── Bot/
 │   │   ├── BotDifficulty.swift
 │   │   ├── BotMatchContext.swift
+│   │   ├── BotOpponentModel.swift
 │   │   └── BotTuning.swift
 │   ├── Cards/
 │   │   ├── Card.swift

@@ -324,6 +324,77 @@ final class GameScenePlayingFlowTests: XCTestCase {
         XCTAssertEqual(context.premium?.opponentPremiumCandidatesSoFarCount, 1)
     }
 
+    func testBotMatchContext_buildsOpponentModelSnapshotFromObservedRounds() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame(initialDealerIndex: 0)
+
+        scene.scoreManager.recordRoundResults([
+            RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 1, isBlind: false), // p0 (self for context)
+            RoundResult(cardsInRound: 2, bid: 2, tricksTaken: 1, isBlind: true),  // p1 underbid + blind
+            RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false), // p2 exact
+            RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 2, isBlind: false)  // p3 overbid
+        ])
+        scene.scoreManager.recordRoundResults([
+            RoundResult(cardsInRound: 4, bid: 2, tricksTaken: 2, isBlind: false), // p0
+            RoundResult(cardsInRound: 4, bid: 3, tricksTaken: 4, isBlind: false), // p1 overbid
+            RoundResult(cardsInRound: 4, bid: 2, tricksTaken: 2, isBlind: false), // p2 exact
+            RoundResult(cardsInRound: 4, bid: 1, tricksTaken: 0, isBlind: false)  // p3 underbid
+        ])
+
+        guard let context = scene.botMatchContext(for: 0) else {
+            XCTFail("Ожидался матчевый контекст")
+            return
+        }
+        guard let opponents = context.opponents else {
+            XCTFail("Ожидалась opponent model snapshot в match context")
+            return
+        }
+
+        XCTAssertEqual(opponents.perspectivePlayerIndex, 0)
+        XCTAssertEqual(opponents.leftNeighborIndex, 1)
+        XCTAssertEqual(opponents.snapshots.count, 3)
+
+        guard let p1 = opponents.snapshot(for: 1) else {
+            XCTFail("Ожидался snapshot для игрока 1")
+            return
+        }
+        XCTAssertEqual(p1.observedRounds, 2)
+        XCTAssertEqual(p1.blindBidRate, 0.5, accuracy: 0.000_1)
+        XCTAssertEqual(p1.exactBidRate, 0.0, accuracy: 0.000_1)
+        XCTAssertEqual(p1.overbidRate, 0.5, accuracy: 0.000_1)
+        XCTAssertEqual(p1.underbidRate, 0.5, accuracy: 0.000_1)
+        XCTAssertEqual(p1.averageBidAggression, 0.875, accuracy: 0.000_1)
+
+        guard let p2 = opponents.snapshot(for: 2) else {
+            XCTFail("Ожидался snapshot для игрока 2")
+            return
+        }
+        XCTAssertEqual(p2.exactBidRate, 1.0, accuracy: 0.000_1)
+        XCTAssertEqual(p2.averageBidAggression, 0.25, accuracy: 0.000_1)
+    }
+
+    func testBotMatchContext_buildsOpponentModelWithZeroEvidenceAtBlockStart() {
+        let scene = GameScene(size: CGSize(width: 1366, height: 768))
+        scene.playerCount = 4
+        scene.gameState.startGame(initialDealerIndex: 0)
+
+        guard let context = scene.botMatchContext(for: 0) else {
+            XCTFail("Ожидался матчевый контекст")
+            return
+        }
+        guard let opponents = context.opponents else {
+            XCTFail("Ожидалась opponent model snapshot в match context")
+            return
+        }
+
+        XCTAssertEqual(opponents.snapshots.count, 3)
+        XCTAssertTrue(opponents.snapshots.allSatisfy { !$0.hasEvidence })
+        XCTAssertTrue(opponents.snapshots.allSatisfy { $0.observedRounds == 0 })
+        XCTAssertTrue(opponents.snapshots.allSatisfy { $0.blindBidRate == 0 })
+        XCTAssertTrue(opponents.snapshots.allSatisfy { $0.averageBidAggression == 0 })
+    }
+
     func testBotMatchContext_invalidPlayer_returnsNil() {
         let scene = GameScene(size: CGSize(width: 1366, height: 768))
         scene.playerCount = 4

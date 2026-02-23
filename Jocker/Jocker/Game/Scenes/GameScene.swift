@@ -415,7 +415,8 @@ class GameScene: SKScene {
             playerIndex: playerIndex,
             dealerIndex: gameState.currentDealer,
             playerCount: playerCount,
-            premium: botPremiumSnapshot(for: playerIndex)
+            premium: botPremiumSnapshot(for: playerIndex),
+            opponents: botOpponentModel(for: playerIndex)
         )
     }
 
@@ -477,6 +478,60 @@ class GameScene: SKScene {
             isPenaltyTargetRiskSoFar: isPenaltyTargetRiskSoFar,
             premiumCandidatesThreateningPenaltyCount: threateningPenaltyCandidatesCount,
             opponentPremiumCandidatesSoFarCount: opponentPremiumCandidatesSoFarCount
+        )
+    }
+
+    private func botOpponentModel(for playerIndex: Int) -> BotOpponentModel? {
+        guard playerIndex >= 0, playerIndex < playerCount else { return nil }
+
+        let totalRounds = max(0, gameState.totalRoundsInBlock)
+        let leftNeighborIndex = playerCount > 1
+            ? PremiumRules.leftNeighbor(of: playerIndex, playerCount: playerCount)
+            : nil
+
+        let snapshots = (0..<playerCount).compactMap { opponentIndex -> BotOpponentModel.OpponentSnapshot? in
+            guard opponentIndex != playerIndex else { return nil }
+            guard scoreManager.currentBlockRoundResults.indices.contains(opponentIndex) else { return nil }
+
+            let results = Array(scoreManager.currentBlockRoundResults[opponentIndex].prefix(totalRounds))
+            let observedRounds = results.count
+            guard observedRounds > 0 else {
+                return BotOpponentModel.OpponentSnapshot(
+                    playerIndex: opponentIndex,
+                    observedRounds: 0,
+                    blindBidRate: 0.0,
+                    exactBidRate: 0.0,
+                    overbidRate: 0.0,
+                    underbidRate: 0.0,
+                    averageBidAggression: 0.0
+                )
+            }
+
+            let blindCount = results.reduce(0) { $0 + ($1.isBlind ? 1 : 0) }
+            let exactCount = results.reduce(0) { $0 + ($1.bidMatched ? 1 : 0) }
+            let overbidCount = results.reduce(0) { $0 + ($1.tricksTaken > $1.bid ? 1 : 0) }
+            let underbidCount = results.reduce(0) { $0 + ($1.tricksTaken < $1.bid ? 1 : 0) }
+            let bidAggressionSum = results.reduce(0.0) { partial, result in
+                let cards = Double(max(1, result.cardsInRound))
+                return partial + Double(max(0, result.bid)) / cards
+            }
+            let rounds = Double(observedRounds)
+
+            return BotOpponentModel.OpponentSnapshot(
+                playerIndex: opponentIndex,
+                observedRounds: observedRounds,
+                blindBidRate: Double(blindCount) / rounds,
+                exactBidRate: Double(exactCount) / rounds,
+                overbidRate: Double(overbidCount) / rounds,
+                underbidRate: Double(underbidCount) / rounds,
+                averageBidAggression: bidAggressionSum / rounds
+            )
+        }
+
+        return BotOpponentModel(
+            perspectivePlayerIndex: playerIndex,
+            leftNeighborIndex: leftNeighborIndex,
+            snapshots: snapshots
         )
     }
 
