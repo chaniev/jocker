@@ -816,6 +816,100 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         XCTAssertGreaterThan(antiPremiumAdvantage, neutralAdvantage)
     }
 
+    func testMoveUtility_whenLeadJokerChasing_preferredControlSuitBoostsMatchingAboveDeclaration() {
+        let trickNode = TrickNode()
+        let abovePreferred = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .above(suit: .spades))
+        )
+        let aboveOther = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .above(suit: .hearts))
+        )
+
+        let preferredUtility = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 95,
+            move: abovePreferred,
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.25,
+            leadPreferredControlSuitAfterMove: .spades,
+            leadPreferredControlSuitStrengthAfterMove: 1.0
+        )
+        let otherUtility = service.moveUtility(
+            projectedScore: 30,
+            immediateWinProbability: 0.95,
+            threat: 95,
+            move: aboveOther,
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.25,
+            leadPreferredControlSuitAfterMove: .spades,
+            leadPreferredControlSuitStrengthAfterMove: 1.0
+        )
+
+        XCTAssertGreaterThan(preferredUtility, otherUtility)
+    }
+
+    func testMoveUtility_whenLeadJokerDumping_preferredControlSuitPenalizesMatchingTakesDeclaration() {
+        let trickNode = TrickNode()
+        let takesPreferred = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .takes(suit: .spades))
+        )
+        let takesOther = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .takes(suit: .hearts))
+        )
+
+        let preferredUtility = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesPreferred,
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.0,
+            leadPreferredControlSuitAfterMove: .spades,
+            leadPreferredControlSuitStrengthAfterMove: 1.0
+        )
+        let otherUtility = service.moveUtility(
+            projectedScore: 15,
+            immediateWinProbability: 0.85,
+            threat: 45,
+            move: takesOther,
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 4,
+            chasePressure: 0.0,
+            leadPreferredControlSuitAfterMove: .spades,
+            leadPreferredControlSuitStrengthAfterMove: 1.0
+        )
+
+        XCTAssertLessThan(preferredUtility, otherUtility)
+    }
+
     func testMoveUtility_withNeutralMatchContext_preservesBehavior() {
         let trickNode = TrickNode()
         _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)

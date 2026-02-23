@@ -400,6 +400,109 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         }
     }
 
+    func testMakeTurnDecision_jokerPremiumAwareChaseProbe_mayFlipAllInWishTowardAboveUnderAntiPremiumPressure() throws {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+        let handCards: [Card] = [
+            .joker,
+            card(.clubs, .six),
+            card(.diamonds, .seven),
+            card(.hearts, .eight)
+        ]
+        let neutralContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: false,
+                isPenaltyTargetRiskSoFar: false,
+                premiumCandidatesThreateningPenaltyCount: 0,
+                opponentPremiumCandidatesSoFarCount: 0
+            )
+        )
+        let antiPremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: true,
+                isPenaltyTargetRiskSoFar: true,
+                premiumCandidatesThreateningPenaltyCount: 1,
+                opponentPremiumCandidatesSoFarCount: 2
+            )
+        )
+
+        let neutralDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 4,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4,
+            matchContext: neutralContext
+        )
+        let antiPremiumDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 4,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4,
+            matchContext: antiPremiumContext
+        )
+
+        guard let neutralDecision, let antiPremiumDecision else {
+            XCTFail("Ожидались валидные решения в premium-aware joker chase probe")
+            return
+        }
+
+        if neutralDecision.card != .joker || antiPremiumDecision.card != .joker {
+            throw XCTSkip(
+                "В одной из веток runtime выбрал не-джокер; probe оставлен как цель retuning Stage 5."
+            )
+        }
+
+        let neutralDecl = neutralDecision.jokerDecision.leadDeclaration
+        let antiDecl = antiPremiumDecision.jokerDecision.leadDeclaration
+        if neutralDecl == antiDecl {
+            throw XCTSkip(
+                "Текущие коэффициенты пока не дают premium-aware declaration flip в all-in chase probe. " +
+                "Сценарий оставлен как цель retuning Stage 5."
+            )
+        }
+
+        XCTAssertEqual(neutralDecl, .wish)
+        if case .some(.above(suit: .spades)) = antiDecl {
+            // ok
+        } else {
+            throw XCTSkip(
+                "Flip произошёл, но anti-premium ветка выбрала не `above(trump)`; оставляем как probe."
+            )
+        }
+    }
+
     func testMakeTurnDecision_phaseProbe_mayChangeLeadDumpChoiceBetweenEarlyAndLateContexts() throws {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()

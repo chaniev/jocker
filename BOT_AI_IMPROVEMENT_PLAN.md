@@ -128,6 +128,10 @@
   - добавлен strict runtime `Strategy`-тест на `above(trump) -> wish` flip по срочности добора (`JOKER-009`) для weak-hand lead-joker сценария.
   - `leadJokerDeclarationUtility` получил premium/penalty-aware корректировки (own-premium protection в dump, anti-premium pressure в chase);
   - добавлены unit-тесты на влияние premium-context на выбор `wish/above/takes` и сценарный draft `JOKER-010`.
+  - добавлен runtime `Strategy` probe на premium-aware joker declaration в all-in chase (`JOKER-011`, anti-premium pressure vs neutral) как цель retuning.
+  - добавлен suit-specific control signal (`preferred control suit after lead-joker`) и plumbing из `Evaluator` в `Ranking`;
+  - `leadJokerDeclarationUtility` начал учитывать совпадение объявления с preferred suit (boost для `above` в chase, penalty для `takes` в dump);
+  - добавлены unit-тесты на влияние preferred-suit сигнала и сценарный draft `JOKER-012`.
 
 ### Ограничение валидации (текущее окружение)
 

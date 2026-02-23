@@ -159,6 +159,13 @@ struct BotTurnCandidateEvaluatorService {
             ) {
                 let move = CandidateMove(card: card, decision: decision)
                 let remainingHand = roundProjection.remainingHand(afterPlaying: card, from: context.handCards)
+                let preferredControlSuitSignal = leadPreferredControlSuitSignal(
+                    afterPlaying: move.card,
+                    decision: move.decision,
+                    remainingHand: remainingHand,
+                    trump: context.trump,
+                    trick: context.trick
+                )
                 let immediateWinProbability = cardHeuristics.estimateImmediateWinProbability(
                     card: move.card,
                     decision: move.decision,
@@ -202,6 +209,8 @@ struct BotTurnCandidateEvaluatorService {
                         trump: context.trump,
                         trick: context.trick
                     ),
+                    leadPreferredControlSuitAfterMove: preferredControlSuitSignal.suit,
+                    leadPreferredControlSuitStrengthAfterMove: preferredControlSuitSignal.strength,
                     context: utilityContext
                 )
 
@@ -290,5 +299,62 @@ struct BotTurnCandidateEvaluatorService {
 
         let normalizedByHandSize = rawControl / Double(max(1, remainingHand.count))
         return min(1.0, max(0.0, normalizedByHandSize))
+    }
+
+    /// Этап 5: оценка "какую масть полезно контролировать после lead-джокера".
+    /// Возвращает масть с наибольшим post-joker control potential и нормализованную силу сигнала.
+    private func leadPreferredControlSuitSignal(
+        afterPlaying card: Card,
+        decision: JokerPlayDecision,
+        remainingHand: [Card],
+        trump: Suit?,
+        trick: BotTurnCardHeuristicsService.TrickSnapshot
+    ) -> (suit: Suit?, strength: Double) {
+        guard card.isJoker else { return (nil, 0.0) }
+        guard trick.playedCards.isEmpty else { return (nil, 0.0) }
+        guard decision.style == .faceUp else { return (nil, 0.0) }
+        guard decision.leadDeclaration != nil else { return (nil, 0.0) }
+        guard !remainingHand.isEmpty else { return (nil, 0.0) }
+
+        var suitScores: [Suit: Double] = [:]
+        for remainingCard in remainingHand {
+            guard case .regular(let suit, let rank) = remainingCard else { continue }
+
+            var score = 0.2
+            switch rank {
+            case .ace:
+                score += 1.20
+            case .king:
+                score += 0.95
+            case .queen:
+                score += 0.75
+            case .jack:
+                score += 0.50
+            case .ten:
+                score += 0.35
+            default:
+                score += 0.12
+            }
+            if let trump, suit == trump {
+                score += 0.45
+            }
+
+            suitScores[suit, default: 0.0] += score
+        }
+
+        guard let best = suitScores.max(by: { lhs, rhs in
+            if abs(lhs.value - rhs.value) > 0.000_001 {
+                return lhs.value < rhs.value
+            }
+            return lhs.key.rawValue < rhs.key.rawValue
+        }) else {
+            return (nil, 0.0)
+        }
+
+        let totalScore = suitScores.values.reduce(0.0, +)
+        guard totalScore > 0 else { return (best.key, 0.0) }
+        let share = best.value / totalScore
+        let concentration = min(1.0, max(0.0, (share - 0.25) / 0.55))
+        return (best.key, concentration)
     }
 }

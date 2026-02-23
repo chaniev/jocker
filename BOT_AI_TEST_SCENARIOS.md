@@ -459,6 +459,87 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-011
+
+```json
+{
+  "id": "JOKER-011",
+  "stateType": "runtimeTurnDecision-compare-probe",
+  "inputs": {
+    "sharedTemplate": {
+      "handCards": ["JOKER", "C-6", "D-7", "H-8"],
+      "trick": [],
+      "trump": "S",
+      "bid": 4,
+      "tricksTaken": 0,
+      "cardsInRound": 8,
+      "playerCount": 4
+    },
+    "variants": [
+      {
+        "label": "neutralContext",
+        "matchContextPremium": {
+          "leftNeighborIsPremiumCandidateSoFar": false,
+          "isPenaltyTargetRiskSoFar": false,
+          "premiumCandidatesThreateningPenaltyCount": 0,
+          "opponentPremiumCandidatesSoFarCount": 0
+        }
+      },
+      {
+        "label": "antiPremiumPressureContext",
+        "matchContextPremium": {
+          "leftNeighborIsPremiumCandidateSoFar": true,
+          "isPenaltyTargetRiskSoFar": true,
+          "premiumCandidatesThreateningPenaltyCount": 1,
+          "opponentPremiumCandidatesSoFarCount": 2
+        }
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "runtime lead-joker declaration may flip from wish to above(trump) under anti-premium pressure in all-in chase",
+    "diagnostic": "if no flip under current tuning, keep as Stage-5 retuning probe"
+  }
+}
+```
+
+### Case Draft: JOKER-012
+
+```json
+{
+  "id": "JOKER-012",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "shared": {
+      "trick": [],
+      "cardsInRound": 8,
+      "tricksRemainingIncludingCurrent": 4
+    },
+    "subcases": [
+      {
+        "label": "chaseAbovePreferredSuit",
+        "shouldChaseTrick": true,
+        "trump": "C",
+        "preferredControlSuitAfterMove": "S",
+        "preferredControlSuitStrengthAfterMove": 1.0,
+        "expectation": "above(S) > above(H)"
+      },
+      {
+        "label": "dumpTakesPreferredSuitPenalty",
+        "shouldChaseTrick": false,
+        "trump": "C",
+        "preferredControlSuitAfterMove": "S",
+        "preferredControlSuitStrengthAfterMove": 1.0,
+        "expectation": "takes(S) < takes(H)"
+      }
+    ]
+  },
+  "expected": {
+    "reason": "Stage-5 suit-control-aware declaration scoring should react to post-joker preferred control suit"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

@@ -277,6 +277,8 @@ struct BotTurnCandidateRankingService {
     private func leadJokerDeclarationUtilityAdjustment(
         immediateWinProbability: Double,
         leadControlReserveAfterMove: Double,
+        leadPreferredControlSuitAfterMove: Suit?,
+        leadPreferredControlSuitStrengthAfterMove: Double,
         move: Move,
         context: UtilityContext
     ) -> Double {
@@ -293,6 +295,8 @@ struct BotTurnCandidateRankingService {
             context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
         let controlReserve = min(1.0, max(0.0, leadControlReserveAfterMove))
         let lowReserveNeedForImmediateControl = 1.0 - controlReserve
+        let preferredControlSuit = leadPreferredControlSuitAfterMove
+        let preferredControlSuitStrength = min(1.0, max(0.0, leadPreferredControlSuitStrengthAfterMove))
         let premium = context.matchContext?.premium
         let ownPremiumProtectionContext = premium.map {
             $0.isPremiumCandidateSoFar || $0.isZeroPremiumCandidateSoFar
@@ -332,11 +336,15 @@ struct BotTurnCandidateRankingService {
 
         case .above(let suit):
             let declaresTrump = context.trump == suit
+            let matchesPreferredControlSuit = preferredControlSuit == suit
 
             if context.shouldChaseTrick {
                 var bonus = (4.0 + 7.0 * earlyPhaseWeight + 3.0 * context.chasePressure) * blindMultiplier
                 if declaresTrump {
                     bonus += 3.0
+                }
+                if matchesPreferredControlSuit {
+                    bonus += 2.5 + 2.5 * preferredControlSuitStrength
                 }
                 if isFinalTrick {
                     bonus *= 0.55
@@ -363,12 +371,16 @@ struct BotTurnCandidateRankingService {
 
         case .takes(let suit):
             let declaresTrump = context.trump == suit
+            let matchesPreferredControlSuit = preferredControlSuit == suit
 
             if context.shouldChaseTrick {
                 // `takes` обычно слабее для контроля стола в chase, особенно в ранней фазе.
                 var penalty = (5.0 + 8.0 * earlyPhaseWeight) * blindMultiplier
                 if declaresTrump {
                     penalty += 2.0
+                }
+                if matchesPreferredControlSuit {
+                    penalty += 1.5 + 1.5 * preferredControlSuitStrength
                 }
                 if isAllInChase {
                     penalty *= 1.15
@@ -386,6 +398,10 @@ struct BotTurnCandidateRankingService {
                 bonus -= 5.0
             } else {
                 bonus += 3.0
+            }
+            if matchesPreferredControlSuit {
+                // В dump чаще не хочется "сдавать" контроль по желаемой масти.
+                bonus -= 1.5 + 1.5 * preferredControlSuitStrength
             }
             if isFinalTrick {
                 bonus *= 0.70
@@ -458,6 +474,8 @@ struct BotTurnCandidateRankingService {
         threat: Double,
         move: Move,
         leadControlReserveAfterMove: Double = 0.0,
+        leadPreferredControlSuitAfterMove: Suit? = nil,
+        leadPreferredControlSuitStrengthAfterMove: Double = 0.0,
         context: UtilityContext
     ) -> Double {
         let strategy = tuning.turnStrategy
@@ -483,6 +501,8 @@ struct BotTurnCandidateRankingService {
         utility += leadJokerDeclarationUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             leadControlReserveAfterMove: leadControlReserveAfterMove,
+            leadPreferredControlSuitAfterMove: leadPreferredControlSuitAfterMove,
+            leadPreferredControlSuitStrengthAfterMove: leadPreferredControlSuitStrengthAfterMove,
             move: move,
             context: context
         )
@@ -573,6 +593,8 @@ struct BotTurnCandidateRankingService {
         trickDeltaToBidBeforeMove: Int = 0,
         chasePressure: Double,
         leadControlReserveAfterMove: Double = 0.0,
+        leadPreferredControlSuitAfterMove: Suit? = nil,
+        leadPreferredControlSuitStrengthAfterMove: Double = 0.0,
         isBlindRound: Bool = false,
         matchContext: BotMatchContext? = nil
     ) -> Double {
@@ -582,6 +604,8 @@ struct BotTurnCandidateRankingService {
             threat: threat,
             move: move,
             leadControlReserveAfterMove: leadControlReserveAfterMove,
+            leadPreferredControlSuitAfterMove: leadPreferredControlSuitAfterMove,
+            leadPreferredControlSuitStrengthAfterMove: leadPreferredControlSuitStrengthAfterMove,
             context: .init(
                 trick: .init(trickNode: trickNode),
                 trump: trump,
