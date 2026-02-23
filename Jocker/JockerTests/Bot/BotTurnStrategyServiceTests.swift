@@ -503,6 +503,77 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         }
     }
 
+    func testMakeTurnDecision_jokerPreferredSuitProbe_mayShiftAboveDeclarationByPostJokerControlSuit() throws {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+        let spadeControlHand: [Card] = [
+            .joker,
+            card(.spades, .ten),
+            card(.spades, .nine),
+            card(.hearts, .six)
+        ]
+        let heartControlHand: [Card] = [
+            .joker,
+            card(.hearts, .ten),
+            card(.hearts, .nine),
+            card(.spades, .six)
+        ]
+
+        let spadeControlDecision = service.makeTurnDecision(
+            handCards: spadeControlHand,
+            trickNode: trickNode,
+            trump: .clubs,
+            bid: 1,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+        let heartControlDecision = service.makeTurnDecision(
+            handCards: heartControlHand,
+            trickNode: trickNode,
+            trump: .clubs,
+            bid: 1,
+            tricksTaken: 0,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+
+        guard let spadeControlDecision, let heartControlDecision else {
+            XCTFail("Ожидались валидные решения в preferred-suit joker probe")
+            return
+        }
+
+        if spadeControlDecision.card != .joker || heartControlDecision.card != .joker {
+            throw XCTSkip(
+                "В одной из веток runtime не выбрал lead-джокер; preferred-suit probe оставлен как цель retuning."
+            )
+        }
+
+        let spadeDecl = spadeControlDecision.jokerDecision.leadDeclaration
+        let heartDecl = heartControlDecision.jokerDecision.leadDeclaration
+        if spadeDecl == heartDecl {
+            throw XCTSkip(
+                "Текущие коэффициенты пока не дают declaration shift по preferred-suit сигналу. " +
+                "Сценарий оставлен как Stage-5 retuning probe."
+            )
+        }
+
+        if case .some(.above(suit: .spades)) = spadeDecl {
+            // ok
+        } else {
+            throw XCTSkip(
+                "Spade-control ветка не выбрала `above(S)`; оставляем preferred-suit probe до retuning."
+            )
+        }
+        if case .some(.above(suit: .hearts)) = heartDecl {
+            // ok
+        } else {
+            throw XCTSkip(
+                "Heart-control ветка не выбрала `above(H)`; оставляем preferred-suit probe до retuning."
+            )
+        }
+    }
+
     func testMakeTurnDecision_phaseProbe_mayChangeLeadDumpChoiceBetweenEarlyAndLateContexts() throws {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()

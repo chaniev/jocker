@@ -540,6 +540,39 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-013
+
+```json
+{
+  "id": "JOKER-013",
+  "stateType": "runtimeTurnDecision-compare-probe",
+  "inputs": {
+    "sharedTemplate": {
+      "trick": [],
+      "trump": "C",
+      "bid": 1,
+      "tricksTaken": 0,
+      "cardsInRound": 8,
+      "playerCount": 4
+    },
+    "variants": [
+      {
+        "label": "spadePreferredControlAfterJoker",
+        "handCards": ["JOKER", "S-10", "S-9", "H-6"]
+      },
+      {
+        "label": "heartPreferredControlAfterJoker",
+        "handCards": ["JOKER", "H-10", "H-9", "S-6"]
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "runtime lead-joker declaration may shift from above(S) to above(H) by preferred post-joker control suit",
+    "diagnostic": "if runtime chooses non-joker or same declaration, keep as Stage-5 retuning probe"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

@@ -132,6 +132,7 @@
   - добавлен suit-specific control signal (`preferred control suit after lead-joker`) и plumbing из `Evaluator` в `Ranking`;
   - `leadJokerDeclarationUtility` начал учитывать совпадение объявления с preferred suit (boost для `above` в chase, penalty для `takes` в dump);
   - добавлены unit-тесты на влияние preferred-suit сигнала и сценарный draft `JOKER-012`.
+  - добавлен runtime `Strategy` probe на preferred-suit-aware lead-joker declaration (`JOKER-013`) как цель retuning/стабилизации.
 
 ### Ограничение валидации (текущее окружение)
 
