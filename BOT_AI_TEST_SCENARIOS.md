@@ -573,6 +573,48 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-014
+
+```json
+{
+  "id": "JOKER-014",
+  "stateType": "runtimeTurnDecision-assert",
+  "inputs": {
+    "handCards": ["JOKER", "S-A", "S-K", "S-Q"],
+    "trick": [],
+    "trump": "S",
+    "bid": 0,
+    "tricksTaken": 1,
+    "cardsInRound": 8,
+    "playerCount": 4,
+    "matchContext": {
+      "block": 4,
+      "roundIndexInBlock": 7,
+      "totalRoundsInBlock": 8,
+      "totalScores": [100, 100, 100, 100],
+      "playerIndex": 0,
+      "dealerIndex": 2,
+      "premium": {
+        "completedRoundsInBlock": 7,
+        "remainingRoundsInBlock": 1,
+        "isPremiumCandidateSoFar": true,
+        "isZeroPremiumRelevantInBlock": false,
+        "isZeroPremiumCandidateSoFar": false,
+        "leftNeighborIsPremiumCandidateSoFar": false,
+        "isPenaltyTargetRiskSoFar": false,
+        "premiumCandidatesThreateningPenaltyCount": 0,
+        "opponentPremiumCandidatesSoFarCount": 0
+      }
+    }
+  },
+  "expected": {
+    "card": "JOKER",
+    "leadDeclaration": "takes(non-trump)",
+    "reason": "early overbid dump with own-premium protection should prefer controlled-loss lead-joker over risky trump leads"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

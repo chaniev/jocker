@@ -334,6 +334,56 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertNotEqual(suit, .spades)
     }
 
+    func testMakeTurnDecision_whenEarlyOverbidDumpAndOwnPremiumProtection_prefersLeadJokerTakesNonTrump() {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+        let handCards: [Card] = [
+            .joker,
+            card(.spades, .ace),
+            card(.spades, .king),
+            card(.spades, .queen)
+        ]
+        let ownPremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: true,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: false,
+                isPenaltyTargetRiskSoFar: false,
+                premiumCandidatesThreateningPenaltyCount: 0,
+                opponentPremiumCandidatesSoFarCount: 0
+            )
+        )
+
+        let decision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 0,
+            tricksTaken: 1, // overbid: controlled-loss lead becomes especially valuable
+            cardsInRound: 8,
+            playerCount: 4,
+            matchContext: ownPremiumContext
+        )
+
+        XCTAssertEqual(decision?.card, .joker)
+        guard case .some(.takes(let suit)) = decision?.jokerDecision.leadDeclaration else {
+            XCTFail("Ожидалось объявление takes в early overbid dump при own-premium protection")
+            return
+        }
+        XCTAssertNotEqual(suit, .spades)
+    }
+
     func testMakeTurnDecision_jokerControlReserveProbe_mayShiftLeadJokerDeclarationInEarlyChase() throws {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
