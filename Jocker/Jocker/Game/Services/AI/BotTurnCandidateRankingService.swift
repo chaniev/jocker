@@ -276,6 +276,7 @@ struct BotTurnCandidateRankingService {
     /// На первом шаге даём отдельный utility для `wish/above/takes` без сложного моделирования ответов соперников.
     private func leadJokerDeclarationUtilityAdjustment(
         immediateWinProbability: Double,
+        leadControlReserveAfterMove: Double,
         move: Move,
         context: UtilityContext
     ) -> Double {
@@ -290,6 +291,8 @@ struct BotTurnCandidateRankingService {
         let isFinalTrick = context.tricksRemainingIncludingCurrent <= 1
         let isAllInChase = context.shouldChaseTrick &&
             context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
+        let controlReserve = min(1.0, max(0.0, leadControlReserveAfterMove))
+        let lowReserveNeedForImmediateControl = 1.0 - controlReserve
 
         switch declaration {
         case .wish:
@@ -302,7 +305,8 @@ struct BotTurnCandidateRankingService {
                 let controlLossPenalty = (8.0 + 8.0 * earlyPhaseWeight) * blindMultiplier
                 let pressureRelief = 1.0 - 0.35 * context.chasePressure
                 let noTrumpRelief = context.trump == nil ? 0.80 : 1.0
-                return -controlLossPenalty * pressureRelief * noTrumpRelief
+                let lowReserveAmplifier = 0.85 + 0.35 * lowReserveNeedForImmediateControl
+                return -controlLossPenalty * pressureRelief * noTrumpRelief * lowReserveAmplifier
             }
 
             // В dump-режиме `wish` часто менее "контролирующий", чем `above`.
@@ -322,7 +326,8 @@ struct BotTurnCandidateRankingService {
                 if isAllInChase {
                     bonus *= 0.70
                 }
-                return bonus * (0.65 + 0.35 * immediateWinProbability)
+                let lowReserveAmplifier = 0.90 + 0.30 * lowReserveNeedForImmediateControl
+                return bonus * (0.65 + 0.35 * immediateWinProbability) * lowReserveAmplifier
             }
 
             var penalty = (3.0 + 5.0 * earlyPhaseWeight) * blindMultiplier
@@ -350,7 +355,8 @@ struct BotTurnCandidateRankingService {
                 if isFinalTrick {
                     penalty *= 0.75
                 }
-                return -penalty * (0.65 + 0.35 * immediateWinProbability)
+                let lowReserveAmplifier = 0.90 + 0.25 * lowReserveNeedForImmediateControl
+                return -penalty * (0.65 + 0.35 * immediateWinProbability) * lowReserveAmplifier
             }
 
             // В dump `takes` часто полезен как controlled-loss lead.
@@ -368,7 +374,8 @@ struct BotTurnCandidateRankingService {
                 // В anti-premium/penalty-aware контексте controlled-loss lead чуть ценнее.
                 bonus += 1.5
             }
-            return bonus * (0.80 + 0.20 * (1.0 - immediateWinProbability))
+            let lowReserveAmplifier = 0.90 + 0.25 * lowReserveNeedForImmediateControl
+            return bonus * (0.80 + 0.20 * (1.0 - immediateWinProbability)) * lowReserveAmplifier
         }
     }
 
@@ -426,6 +433,7 @@ struct BotTurnCandidateRankingService {
         immediateWinProbability: Double,
         threat: Double,
         move: Move,
+        leadControlReserveAfterMove: Double = 0.0,
         context: UtilityContext
     ) -> Double {
         let strategy = tuning.turnStrategy
@@ -450,6 +458,7 @@ struct BotTurnCandidateRankingService {
         )
         utility += leadJokerDeclarationUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
+            leadControlReserveAfterMove: leadControlReserveAfterMove,
             move: move,
             context: context
         )
@@ -539,6 +548,7 @@ struct BotTurnCandidateRankingService {
         tricksRemainingIncludingCurrent: Int,
         trickDeltaToBidBeforeMove: Int = 0,
         chasePressure: Double,
+        leadControlReserveAfterMove: Double = 0.0,
         isBlindRound: Bool = false,
         matchContext: BotMatchContext? = nil
     ) -> Double {
@@ -547,6 +557,7 @@ struct BotTurnCandidateRankingService {
             immediateWinProbability: immediateWinProbability,
             threat: threat,
             move: move,
+            leadControlReserveAfterMove: leadControlReserveAfterMove,
             context: .init(
                 trick: .init(trickNode: trickNode),
                 trump: trump,

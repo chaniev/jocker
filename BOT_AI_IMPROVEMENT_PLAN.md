@@ -120,6 +120,10 @@
   - helper расширен на MVP scoring для `takes` (chase-пенальти / dump controlled-loss бонус, c учётом trump и фазы);
   - добавлены unit-тесты на `takes(non-trump)` vs `takes(trump)` и `above(trump)` vs `takes(trump)`, а также strict evaluator-тест на выбор `takes(non-trump)` в forced lead-joker dump.
   - добавлены сценарные drafts `JOKER-003/004/005` для utility/evaluator/runtime сравнения объявлений.
+  - добавлен runtime `Strategy` probe для `takes` в раннем dump-сценарии с "опасной" trump-рукой (`JOKER-006`) как цель retuning.
+  - в `Evaluator` добавлен plumbing сигнала `remaining control in hand after move` для lead-joker declaration scoring (`wish/above/takes`);
+  - `leadJokerDeclarationUtility` начал учитывать `remaining control reserve` (низкий reserve сильнее смещает к немедленному контролю в early chase);
+  - добавлены unit-тесты на влияние `control reserve` в utility и сценарный draft `JOKER-007`.
 
 ### Ограничение валидации (текущее окружение)
 

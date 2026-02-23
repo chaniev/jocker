@@ -308,6 +308,62 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: JOKER-006
+
+```json
+{
+  "id": "JOKER-006",
+  "stateType": "runtimeTurnDecision-probe",
+  "inputs": {
+    "handCards": ["JOKER", "S-A", "S-K", "S-Q"],
+    "trick": [],
+    "trump": "S",
+    "bid": 0,
+    "tricksTaken": 1,
+    "cardsInRound": 8,
+    "playerCount": 4
+  },
+  "expected": {
+    "relationship": "runtime may prefer lead-joker + takes(non-trump) in early dump over risky non-joker trump leads",
+    "diagnostic": "if runtime still chooses non-joker, keep as Stage-5 retuning probe"
+  }
+}
+```
+
+### Case Draft: JOKER-007
+
+```json
+{
+  "id": "JOKER-007",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "shared": {
+      "trick": [],
+      "trump": "S",
+      "projectedScore": 30,
+      "immediateWinProbability": 0.95,
+      "threat": 100,
+      "shouldChaseTrick": true,
+      "tricksNeededToMatchBid": 1,
+      "tricksRemainingIncludingCurrent": 4,
+      "chasePressure": 0.25
+    },
+    "moveVariants": [
+      { "label": "wish", "move": { "card": "JOKER", "decision": { "style": "faceUp", "leadDeclaration": "wish" } } },
+      { "label": "aboveTrump", "move": { "card": "JOKER", "decision": { "style": "faceUp", "leadDeclaration": "above(S)" } } }
+    ],
+    "reserveVariants": [
+      { "label": "lowReserve", "leadControlReserveAfterMove": 0.0 },
+      { "label": "highReserve", "leadControlReserveAfterMove": 1.0 }
+    ]
+  },
+  "expected": {
+    "relationship": "advantage(aboveTrump over wish) should be stronger under lowReserve than highReserve",
+    "reason": "low remaining control after lead-joker should increase immediate-control preference in early chase"
+  }
+}
+```
+
 ### Case Draft: PHASE-002
 
 ```json

@@ -258,6 +258,47 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(allInDecl, .wish)
     }
 
+    func testMakeTurnDecision_jokerTakesProbe_mayPreferLeadJokerTakesInEarlyDumpWhenNonJokerLeadsAreRisky() throws {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+        let handCards: [Card] = [
+            .joker,
+            card(.spades, .ace),
+            card(.spades, .king),
+            card(.spades, .queen)
+        ]
+
+        let dumpDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .spades,
+            bid: 0,
+            tricksTaken: 1, // overbid: усиливаем мотивацию controlled-loss в dump
+            cardsInRound: 8,
+            playerCount: 4
+        )
+
+        guard let dumpDecision else {
+            XCTFail("Ожидалось валидное решение в takes probe dump-сценарии")
+            return
+        }
+
+        guard dumpDecision.card == .joker else {
+            throw XCTSkip(
+                "Текущий runtime ещё не выбирает lead-джокер в этом раннем dump-сценарии. " +
+                "Probe оставлен как цель retuning для Stage 5 (`takes`)."
+            )
+        }
+
+        guard case .some(.takes(let suit)) = dumpDecision.jokerDecision.leadDeclaration else {
+            throw XCTSkip(
+                "Runtime выбрал lead-джокер, но не `takes`; probe оставлен как цель retuning Stage 5."
+            )
+        }
+
+        XCTAssertNotEqual(suit, .spades)
+    }
+
     func testMakeTurnDecision_phaseProbe_mayChangeLeadDumpChoiceBetweenEarlyAndLateContexts() throws {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
