@@ -1202,6 +1202,37 @@ Expected behavior:
 - при `chase` повышается приоритет гарантированного взятия
 - при `dump` повышается приоритет гарантированного проигрыша взятки
 
+## JOKER Regression Pack (v1, Stage 5 Retuning Prep)
+
+Ниже собран текущий пакет `JOKER-*` кейсов для ретюнинга `Этапа 5`.
+Цель пакета: отделить уже "зажатые" invariants (`strict`) от сценариев-целей для калибровки (`probe`).
+
+| ID | Layer | Status | Focus |
+|----|-------|--------|-------|
+| `JOKER-001` | scenario-draft | `draft` | blind: не тратить джокер рано без необходимости |
+| `JOKER-002` | scenario-draft | `draft` | общий контекстный выбор `wish/above/takes` |
+| `JOKER-003` | ranking utility | `strict` | `above(trump)` vs `above(non-trump)` в `chase` |
+| `JOKER-004` | runtime strategy | `probe` + `strict` (`JOKER-009`) | flip `above -> wish` по срочности добора |
+| `JOKER-005` | evaluator/ranking | `strict` | `takes(non-trump)` в `dump`, `above(trump)` в `chase` |
+| `JOKER-006` | runtime strategy | `probe` | `takes(non-trump)` в раннем `dump` с опасной trump-рукой |
+| `JOKER-007` | ranking utility | `strict` | `remaining control reserve` (low/high) |
+| `JOKER-008` | runtime strategy | `probe` | declaration shift по `control reserve` |
+| `JOKER-009` | runtime strategy | `strict` | weak-hand all-in chase: `above(trump)` -> `wish` |
+| `JOKER-010` | ranking utility | `strict` | premium-aware declaration scoring (`own premium` / anti-premium) |
+| `JOKER-011` | runtime strategy | `probe` | anti-premium pressure в all-in chase (`wish -> above`) |
+| `JOKER-012` | ranking utility | `strict` | preferred post-joker control suit (`above`/`takes`) |
+| `JOKER-013` | runtime strategy | `probe` | runtime shift `above(S)` vs `above(H)` по preferred suit |
+| `JOKER-014` | runtime strategy | `strict` | early overbid dump + own premium -> `takes(non-trump)` |
+| `JOKER-015` | evaluator | `strict` | `above(preferredSuit)` для suit-dominant post-joker hands |
+
+### Stage 5 Retuning Priorities (JOKER Pack)
+
+- `P0`: стабилизировать `probe -> strict` для `JOKER-006` (`takes` runtime).
+- `P0`: стабилизировать `probe -> strict` для `JOKER-011` (premium-aware all-in chase).
+- `P1`: стабилизировать `probe -> strict` для `JOKER-013` (preferred-suit runtime shift).
+- `P1`: перепроверить, что `JOKER-009` и `JOKER-014` сохраняются после ретюнинга (guardrails).
+- `P2`: расширить `JOKER-002` в поднабор точных serialized runtime asserts после retuning.
+
 ## Next Fill-In Tasks
 
 - Добавить точные сериализованные состояния для первых 8 кейсов.
