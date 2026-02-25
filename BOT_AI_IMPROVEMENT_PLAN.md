@@ -68,7 +68,23 @@
 - Этапы 2 и 3 теперь должны меняться преимущественно в `BotTurnRoundProjectionService`, `BotTurnCandidateRankingService`, `BotTurnCandidateEvaluatorService`, `BotTurnCardHeuristicsService`, а не только в `BotTurnStrategyService`.
 - Этап 2.5 теперь про расширение уже существующего `BotTurnDecisionContext`, а не про ввод context-API с нуля.
 
-## Статус выполнения (зафиксировано на 2026-02-22)
+## Статус выполнения (актуализировано на 2026-02-25)
+
+### Краткая матрица этапов (0–7)
+
+| Этап | Статус | Ближайший следующий шаг |
+|------|--------|--------------------------|
+| 0 (Baseline) | частично | собрать baseline-метрики на фиксированных seed и зафиксировать воспроизводимый `baseline vs candidate` прогон |
+| 1 (Blind fix) | выполнен | держать как regression baseline; менять только при retuning/регрессе |
+| 2 (Blind-aware play) | выполнен | проверять в retuning + guardrail-сценариях `BLIND-*` |
+| 2.5 (Blind plumbing в flow) | выполнен | поддерживать совместимость сигнатур при дальнейших AI-изменениях |
+| 3 (Phase-aware threat) | в процессе (MVP) | завершить retuning и перевести ключевые runtime/probe проверки в стабильные strict-asserts |
+| 4a (Базовый контекст блока) | выполнен по коду | использовать как стабильную базу для 4b/4c/6 utility-интеграции |
+| 4b (Premium utility) | в процессе (MVP) | стабилизировать коэффициенты premium-aware utility и расширить strict coverage `PREMIUM-*` |
+| 4c (Opponent premium / penalty-aware) | в процессе (fallback MVP) | усилить/дотюнить anti-premium и penalty-aware utility, сократить probe-зависимость |
+| 5 (Joker logic) | в процессе (MVP+, частично стабилизирован) | закрыть оставшиеся runtime probe/retuning задачи (в первую очередь `JOKER-004` / runtime strict coverage) |
+| 6 (Opponent model MVP) | в процессе (Stage 6a plumbing) | перейти к Stage 6b: интеграция `opponents` в runtime utility/decision ranking без резкого регресса |
+| 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и фиксации baseline-метрик |
 
 - Этап 0 (baseline): частично
   - добавлен черновик `BOT_AI_TEST_SCENARIOS.md` (есть группы `BLIND/PREMIUM/JOKER/PHASE` и concrete drafts v0);
@@ -88,7 +104,7 @@
   - `cardThreat(...)` стал phase-aware (ранняя/поздняя фаза);
   - phase-context протянут из `BotTurnCandidateEvaluatorService`;
   - добавлены phase tests (`Heuristics`) и probe test (`Strategy`, допускает `XCTSkip` до retuning).
-- Этап 4a (базовый контекст блока): начат
+- Этап 4a (базовый контекст блока): выполнен по коду (plumbing-база для 4b/4c/6a)
   - добавлен plumbing type `BotMatchContext`;
   - выполнен runtime/bidding plumbing контекста без изменения поведения (feature plumbing first);
   - turn-stack plumbing расширен до `BotTurnCandidateRankingService` / `BotTurnRoundProjectionService`;
@@ -145,12 +161,14 @@
   - добавлен `BotOpponentModel` (MVP snapshot) для наблюдаемых паттернов соперников по текущему блоку: blind-rate, exact/over/underbid rates, средняя агрессивность заказа;
   - `BotMatchContext` расширен полем `opponents` и `GameScene.botMatchContext(...)` начал собирать opponent snapshots из `ScoreManager.currentBlockRoundResults`;
   - добавлены flow-тесты на построение opponent model snapshot (observed rounds и zero-evidence старт блока);
+  - восстановлена интеграция в сборку Xcode: `BotMatchContext.swift` и `BotOpponentModel.swift` подключены в target (`project.pbxproj`), устранен build-break `cannot find type ... in scope`;
   - поведение runtime AI на этом подшаге пока не меняется (feature-plumbing перед Stage 6 utility integration).
 
 ### Ограничение валидации (текущее окружение)
 
-- Полный `xcodebuild test`/`xcodebuild build` в текущем окружении не проходит из-за проблем с `CoreSimulatorService` и отсутствующего runtime/SDK (`iOS 17.2 Platform Not Installed` в `ibtool`).
-- Локально выполнялась синтаксическая проверка измененных Swift-файлов через `swiftc -frontend -parse`.
+- На 2026-02-25 локально подтвержден `xcodebuild build` для схемы `Jocker` (через `xcodebuild ... build` с локальным `-derivedDataPath`).
+- В sandbox-режиме по-прежнему возможны ложные падения `ibtool/actool` (`CoreSimulatorService`, `iOS 17.2 Platform Not Installed`), поэтому для полной проверки сборки может требоваться unrestricted запуск.
+- `xcodebuild test` в рамках последней актуализации плана не перепроверялся; статус тестов следует считать неполностью подтвержденным для текущего коммита.
 
 ## Метрики и baseline (этап 0)
 
