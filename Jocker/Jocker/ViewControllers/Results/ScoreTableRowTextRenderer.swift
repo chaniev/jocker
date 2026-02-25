@@ -30,12 +30,12 @@ struct ScoreTableRowTextRenderer {
 
     private let playerCount: Int
     private let playerDisplayOrder: [Int]
-    private let rowMappings: [ScoreTableView.RowMapping]
+    private let rowMappings: [ScoreTableLayout.RowMapping]
 
     init(
         playerCount: Int,
         playerDisplayOrder: [Int],
-        rowMappings: [ScoreTableView.RowMapping]
+        rowMappings: [ScoreTableLayout.RowMapping]
     ) {
         self.playerCount = playerCount
         self.playerDisplayOrder = playerDisplayOrder

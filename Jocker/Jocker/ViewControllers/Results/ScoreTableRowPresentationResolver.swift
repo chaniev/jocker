@@ -13,14 +13,14 @@ struct ScoreTableRowPresentationResolver {
         case summary
     }
 
-    func cardsLabelText(for rowKind: ScoreTableView.RowKind) -> String {
+    func cardsLabelText(for rowKind: ScoreTableLayout.RowKind) -> String {
         if case let .deal(cards) = rowKind {
             return "\(cards)"
         }
         return ""
     }
 
-    func pointsLabelStyle(for rowKind: ScoreTableView.RowKind) -> PointsLabelStyle {
+    func pointsLabelStyle(for rowKind: ScoreTableLayout.RowKind) -> PointsLabelStyle {
         switch rowKind {
         case .deal:
             return .regular

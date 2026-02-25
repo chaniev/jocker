@@ -13,12 +13,12 @@ struct ScoreTableTapTargetResolver {
         let roundIndex: Int
     }
 
-    private let rowMappings: [ScoreTableView.RowMapping]
+    private let rowMappings: [ScoreTableLayout.RowMapping]
     private let headerHeight: CGFloat
     private let rowHeight: CGFloat
 
     init(
-        rowMappings: [ScoreTableView.RowMapping],
+        rowMappings: [ScoreTableLayout.RowMapping],
         headerHeight: CGFloat,
         rowHeight: CGFloat
     ) {

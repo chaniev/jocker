@@ -8,7 +8,7 @@
 import Foundation
 
 struct ScoreTableRowNavigationResolver {
-    private typealias RowMapping = ScoreTableView.RowMapping
+    typealias RowMapping = ScoreTableLayout.RowMapping
     private typealias DealRow = (rowIndex: Int, roundIndex: Int)
 
     private let dealRowsByBlock: [Int: [DealRow]]

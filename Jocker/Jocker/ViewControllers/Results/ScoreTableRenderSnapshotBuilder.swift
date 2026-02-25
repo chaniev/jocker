@@ -42,13 +42,13 @@ struct ScoreTableRenderSnapshotBuilder {
     }
 
     private let playerCount: Int
-    private let rowMappings: [ScoreTableView.RowMapping]
+    private let rowMappings: [ScoreTableLayout.RowMapping]
     private let summaryRowRangeByBlock: [Int: ClosedRange<Int>]
     private let maxBlockIndex: Int
 
     init(
         playerCount: Int,
-        rowMappings: [ScoreTableView.RowMapping]
+        rowMappings: [ScoreTableLayout.RowMapping]
     ) {
         self.playerCount = playerCount
         self.rowMappings = rowMappings
@@ -188,7 +188,7 @@ struct ScoreTableRenderSnapshotBuilder {
     }
 
     private static func buildSummaryRowRanges(
-        rowMappings: [ScoreTableView.RowMapping]
+        rowMappings: [ScoreTableLayout.RowMapping]
     ) -> [Int: ClosedRange<Int>] {
         var ranges: [Int: ClosedRange<Int>] = [:]
 

@@ -20,11 +20,11 @@ struct ScoreTableInProgressRoundSnapshotProvider {
     }
 
     private let playerCount: Int
-    private let rowMappings: [ScoreTableView.RowMapping]
+    private let rowMappings: [ScoreTableLayout.RowMapping]
 
     init(
         playerCount: Int,
-        rowMappings: [ScoreTableView.RowMapping]
+        rowMappings: [ScoreTableLayout.RowMapping]
     ) {
         self.playerCount = playerCount
         self.rowMappings = rowMappings
