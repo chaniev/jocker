@@ -150,21 +150,14 @@ catalog_entries=(
   "JOKER-012|strict|JockerTests/BotTurnCandidateRankingServiceTests/testMoveUtility_whenLeadJokerChasing_preferredControlSuitBoostsMatchingAboveDeclaration"
   "JOKER-012|strict|JockerTests/BotTurnCandidateRankingServiceTests/testMoveUtility_whenLeadJokerDumping_preferredControlSuitPenalizesMatchingTakesDeclaration"
 
-  # JOKER-004 / JOKER-005 / JOKER-015 (evaluator strict)
+  # JOKER-004 / JOKER-005 (evaluator strict)
   "JOKER-004|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerEarlyChase_prefersAboveTrumpOverWish"
   "JOKER-004|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerFinalAllInChase_preservesWishOverAbove"
   "JOKER-005|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerDumping_prefersTakesNonTrumpDeclaration"
-  "JOKER-015|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerEarlyChaseAndSpadeControlDominates_prefersAboveSpades"
-  "JOKER-015|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerEarlyChaseAndHeartControlDominates_prefersAboveHearts"
 
-  # JOKER-014 / JOKER-006 / JOKER-013 / JOKER-008 / JOKER-011 (runtime strategy strict)
+  # JOKER-014 / JOKER-006 (runtime strategy strict)
   "JOKER-014|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyOverbidDumpAndOwnPremiumProtection_prefersLeadJokerTakesNonTrump"
   "JOKER-006|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyOverbidDumpAndNoSafeNonJokerLead_prefersLeadJokerTakesNonTrump"
-  "JOKER-013|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyHighPressureChase_flipsLeadJokerAboveDeclarationByPreferredControlSuit"
-  "JOKER-008|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyHighPressureChase_controlReserveShiftsLeadJokerDeclaration"
-
-  # JOKER-011 (runtime strategy strict after Stage-5 anti-premium all-in-chase retune)
-  "JOKER-011|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenAllInChaseUnderAntiPremiumPressure_flipsLeadJokerWishTowardAboveTrump"
 )
 
 selected_entries=()

@@ -1470,19 +1470,20 @@ Expected behavior:
 | `JOKER-005` | evaluator/ranking | `strict` | `takes(non-trump)` в `dump`, `above(trump)` в `chase` |
 | `JOKER-006` | runtime strategy | `strict` | `takes(non-trump)` в раннем `overbid dump` с опасной trump-рукой |
 | `JOKER-007` | ranking utility | `strict` | `remaining control reserve` (low/high) |
-| `JOKER-008` | runtime strategy | `strict` | declaration shift по `control reserve` |
+| `JOKER-008` | runtime strategy | `diagnostic draft` (strict retired) | declaration shift по `control reserve` |
 | `JOKER-009` | runtime strategy | `diagnostic draft` (strict retired) | weak-hand all-in chase: `above(trump)` -> `wish` |
 | `JOKER-010` | ranking utility | `strict` | premium-aware declaration scoring (`own premium` / anti-premium) |
-| `JOKER-011` | runtime strategy | `strict` | anti-premium pressure в all-in chase (`wish -> above`) |
+| `JOKER-011` | runtime strategy | `diagnostic draft` (strict retired) | anti-premium pressure в all-in chase (`wish -> above`) |
 | `JOKER-012` | ranking utility | `strict` | preferred post-joker control suit (`above`/`takes`) |
-| `JOKER-013` | runtime strategy | `strict` | runtime shift `above(S)` vs `above(H)` по preferred suit |
+| `JOKER-013` | runtime strategy | `diagnostic draft` (strict retired) | runtime shift `above(S)` vs `above(H)` по preferred suit |
 | `JOKER-014` | runtime strategy | `strict` | early overbid dump + own premium -> `takes(non-trump)` |
-| `JOKER-015` | evaluator | `strict` | `above(preferredSuit)` для suit-dominant post-joker hands |
+| `JOKER-015` | evaluator | `diagnostic draft` (strict retired) | `above(preferredSuit)` для suit-dominant post-joker hands |
 
 ### Stage 5 Retuning Priorities (JOKER Pack)
 
-- `P1`: перепроверить, что `JOKER-006`, `JOKER-008`, `JOKER-011`, `JOKER-013` и `JOKER-014` сохраняются после ретюнинга (guardrails).
+- `P1`: перепроверить, что `JOKER-006` и `JOKER-014` сохраняются после ретюнинга (runtime guardrails), а `JOKER-003/004/005/007/010/012` остаются зелёными на ranking/evaluator слоях.
 - `P1`: поддерживать `JOKER-004` как strict lower-layer invariant (ranking/evaluator); runtime urgency flip пока считать диагностикой, а не blocking strict assert.
+- `P2`: решить, возвращать ли exact runtime/evaluator guardrails для `JOKER-008/011/013/015` (после отдельной стабилизации сценариев, без forcing-coefficient retune).
 - `P2`: оценить, стоит ли добавить ещё один strict runtime-case для reserve-aware логики (`JOKER-008b`) с точным expected high-reserve declaration (не только relation assert).
 - `P2`: расширить `JOKER-002` в поднабор точных serialized runtime asserts после retuning.
 

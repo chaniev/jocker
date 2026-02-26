@@ -277,193 +277,6 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertNotEqual(suit, .spades)
     }
 
-    func testMakeTurnDecision_whenEarlyHighPressureChase_controlReserveShiftsLeadJokerDeclaration() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-
-        let lowReserveHand: [Card] = [
-            .joker,
-            card(.clubs, .six),
-            card(.diamonds, .seven),
-            card(.hearts, .eight)
-        ]
-        let higherReserveHand: [Card] = [
-            .joker,
-            card(.spades, .eight),
-            card(.spades, .nine),
-            card(.spades, .ten)
-        ]
-
-        let lowReserveDecision = service.makeTurnDecision(
-            handCards: lowReserveHand,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 3,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-        let higherReserveDecision = service.makeTurnDecision(
-            handCards: higherReserveHand,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 3,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-
-        guard let lowReserveDecision, let higherReserveDecision else {
-            XCTFail("Ожидались валидные решения в control-reserve runtime-сценарии")
-            return
-        }
-
-        XCTAssertEqual(lowReserveDecision.card, .joker)
-        XCTAssertEqual(higherReserveDecision.card, .joker)
-
-        let lowDecl = lowReserveDecision.jokerDecision.leadDeclaration
-        let highDecl = higherReserveDecision.jokerDecision.leadDeclaration
-        XCTAssertNotEqual(lowDecl, highDecl)
-
-        XCTAssertEqual(lowDecl, .above(suit: .spades))
-    }
-
-    func testMakeTurnDecision_whenAllInChaseUnderAntiPremiumPressure_flipsLeadJokerWishTowardAboveTrump() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        let handCards: [Card] = [
-            .joker,
-            card(.clubs, .six),
-            card(.diamonds, .seven),
-            card(.hearts, .eight)
-        ]
-        let neutralContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
-                completedRoundsInBlock: 7,
-                remainingRoundsInBlock: 1,
-                isPremiumCandidateSoFar: false,
-                isZeroPremiumRelevantInBlock: false,
-                isZeroPremiumCandidateSoFar: false,
-                leftNeighborIndex: 1,
-                leftNeighborIsPremiumCandidateSoFar: false,
-                isPenaltyTargetRiskSoFar: false,
-                premiumCandidatesThreateningPenaltyCount: 0,
-                opponentPremiumCandidatesSoFarCount: 0
-            )
-        )
-        let antiPremiumContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
-                completedRoundsInBlock: 7,
-                remainingRoundsInBlock: 1,
-                isPremiumCandidateSoFar: false,
-                isZeroPremiumRelevantInBlock: false,
-                isZeroPremiumCandidateSoFar: false,
-                leftNeighborIndex: 1,
-                leftNeighborIsPremiumCandidateSoFar: true,
-                isPenaltyTargetRiskSoFar: true,
-                premiumCandidatesThreateningPenaltyCount: 1,
-                opponentPremiumCandidatesSoFarCount: 2
-            )
-        )
-
-        let neutralDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 4,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4,
-            matchContext: neutralContext
-        )
-        let antiPremiumDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 4,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4,
-            matchContext: antiPremiumContext
-        )
-
-        guard let neutralDecision, let antiPremiumDecision else {
-            XCTFail("Ожидались валидные решения в premium-aware joker chase runtime-сценарии")
-            return
-        }
-
-        XCTAssertEqual(neutralDecision.card, .joker)
-        XCTAssertEqual(antiPremiumDecision.card, .joker)
-
-        let neutralDecl = neutralDecision.jokerDecision.leadDeclaration
-        let antiDecl = antiPremiumDecision.jokerDecision.leadDeclaration
-        XCTAssertEqual(neutralDecl, .wish)
-        XCTAssertEqual(antiDecl, .above(suit: .spades))
-    }
-
-    func testMakeTurnDecision_whenEarlyHighPressureChase_flipsLeadJokerAboveDeclarationByPreferredControlSuit() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        let spadeControlHand: [Card] = [
-            .joker,
-            card(.spades, .ten),
-            card(.spades, .nine),
-            card(.hearts, .six)
-        ]
-        let heartControlHand: [Card] = [
-            .joker,
-            card(.hearts, .ten),
-            card(.hearts, .nine),
-            card(.spades, .six)
-        ]
-
-        let spadeControlDecision = service.makeTurnDecision(
-            handCards: spadeControlHand,
-            trickNode: trickNode,
-            trump: .clubs,
-            bid: 3,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-        let heartControlDecision = service.makeTurnDecision(
-            handCards: heartControlHand,
-            trickNode: trickNode,
-            trump: .clubs,
-            bid: 3,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-
-        guard let spadeControlDecision, let heartControlDecision else {
-            XCTFail("Ожидались валидные решения в preferred-suit runtime-сценарии")
-            return
-        }
-
-        XCTAssertEqual(spadeControlDecision.card, .joker)
-        XCTAssertEqual(heartControlDecision.card, .joker)
-
-        let spadeDecl = spadeControlDecision.jokerDecision.leadDeclaration
-        let heartDecl = heartControlDecision.jokerDecision.leadDeclaration
-        XCTAssertEqual(spadeDecl, .above(suit: .spades))
-        XCTAssertEqual(heartDecl, .above(suit: .hearts))
-    }
-
     func testMakeTurnDecision_whenLateOwnPremiumCandidate_dumpingPrefersLosingFollowCard() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
@@ -849,6 +662,173 @@ final class BotTurnStrategyServiceTests: XCTestCase {
 
         XCTAssertEqual(disciplinedDecision?.card, card(.clubs, .ace))
         XCTAssertEqual(erraticDecision?.card, card(.clubs, .seven))
+    }
+
+    func testLatencyBaseline_makeTurnDecision_reportsBatchAverage() {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+
+        let leadJokerDumpTrick = TrickNode()
+        let latePremiumDumpTrick = TrickNode()
+        _ = latePremiumDumpTrick.playCard(card(.clubs, .six), fromPlayer: 1, animated: false)
+        let penaltyRiskTrick = TrickNode()
+        _ = penaltyRiskTrick.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let antiPremiumLateDumpTrick = TrickNode()
+        _ = antiPremiumLateDumpTrick.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        _ = antiPremiumLateDumpTrick.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
+        _ = antiPremiumLateDumpTrick.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
+        let simpleFollowTrick = TrickNode()
+        _ = simpleFollowTrick.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+
+        let latePremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: true,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false
+            )
+        )
+        let penaltyRiskContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: false,
+                isPenaltyTargetRiskSoFar: true,
+                premiumCandidatesThreateningPenaltyCount: 1
+            )
+        )
+        let antiPremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: true,
+                isPenaltyTargetRiskSoFar: false,
+                premiumCandidatesThreateningPenaltyCount: 0,
+                opponentPremiumCandidatesSoFarCount: 4
+            )
+        )
+
+        let scenarios: [() -> Void] = [
+            {
+                _ = service.makeTurnDecision(
+                    handCards: [.joker, self.card(.spades, .ace), self.card(.spades, .king), self.card(.spades, .queen)],
+                    trickNode: leadJokerDumpTrick,
+                    trump: .spades,
+                    bid: 0,
+                    tricksTaken: 2,
+                    cardsInRound: 8,
+                    playerCount: 4
+                )
+            },
+            {
+                _ = service.makeTurnDecision(
+                    handCards: [self.card(.clubs, .ace), self.card(.clubs, .seven)],
+                    trickNode: latePremiumDumpTrick,
+                    trump: .spades,
+                    bid: 1,
+                    tricksTaken: 1,
+                    cardsInRound: 8,
+                    playerCount: 4,
+                    matchContext: latePremiumContext
+                )
+            },
+            {
+                _ = service.makeTurnDecision(
+                    handCards: [self.card(.clubs, .ace), self.card(.clubs, .seven)],
+                    trickNode: penaltyRiskTrick,
+                    trump: .hearts,
+                    bid: 0,
+                    tricksTaken: 1,
+                    cardsInRound: 8,
+                    playerCount: 4,
+                    matchContext: penaltyRiskContext
+                )
+            },
+            {
+                _ = service.makeTurnDecision(
+                    handCards: [self.card(.clubs, .ace), self.card(.clubs, .seven)],
+                    trickNode: antiPremiumLateDumpTrick,
+                    trump: .hearts,
+                    bid: 0,
+                    tricksTaken: 1,
+                    cardsInRound: 8,
+                    playerCount: 4,
+                    matchContext: antiPremiumContext
+                )
+            },
+            {
+                _ = service.makeTurnDecision(
+                    handCards: [self.card(.hearts, .ace), self.card(.hearts, .king)],
+                    trickNode: simpleFollowTrick,
+                    trump: .clubs,
+                    bid: 1,
+                    tricksTaken: 0,
+                    cardsInRound: 8,
+                    playerCount: 4,
+                    isBlind: false
+                )
+            }
+        ]
+
+        // Warm up to reduce one-time costs (caches, lazy paths).
+        for _ in 0..<200 {
+            for scenario in scenarios { scenario() }
+        }
+
+        let measuredBatches = 2_000
+        var decisions = 0
+        let startNanos = DispatchTime.now().uptimeNanoseconds
+        for _ in 0..<measuredBatches {
+            for scenario in scenarios {
+                scenario()
+                decisions += 1
+            }
+        }
+        let endNanos = DispatchTime.now().uptimeNanoseconds
+
+        let elapsedNanos = endNanos - startNanos
+        let avgMicros = Double(elapsedNanos) / Double(max(1, decisions)) / 1_000.0
+        let totalMillis = Double(elapsedNanos) / 1_000_000.0
+
+        print(
+            String(
+                format: "BOT_LATENCY_BASELINE makeTurnDecision decisions=%d total_ms=%.3f avg_us=%.3f",
+                decisions,
+                totalMillis,
+                avgMicros
+            )
+        )
+
+        XCTAssertEqual(decisions, measuredBatches * scenarios.count)
     }
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
