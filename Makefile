@@ -7,11 +7,13 @@ SHELL := /bin/bash
 	bt-hard-fullgame-smoke bt-hard-fullgame-balanced bt-hard-fullgame-battle bt-hard-final \
 	bt-hard-fullgame-balanced-esab bt-hard-fullgame-battle-esab bt-hard-final-esab \
 	joker-pack joker-pack-all joker-pack-list joker-pack-dry \
+	stage6b-pack stage6b-pack-list stage6b-pack-dry \
 	bot-baseline bot-baseline-smoke bot-baseline-list bot-baseline-dry \
 	bot-compare bot-compare-smoke bot-compare-list bot-compare-dry
 
 TRAIN_SCRIPT := ./scripts/train_bot_tuning.sh
 JOKER_REGRESSION_SCRIPT := ./scripts/run_joker_regression_pack.sh
+STAGE6B_RANKING_GUARDRAILS_SCRIPT := ./scripts/run_stage6b_ranking_guardrails.sh
 BOT_BASELINE_SCRIPT := ./scripts/run_bot_baseline_snapshot.sh
 BOT_AB_COMPARE_SCRIPT := ./scripts/run_bot_ab_comparison_snapshot.sh
 SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate 4 --rounds-per-game 3 --player-count 4 --cards-min 2 --cards-max 6 --elite-count 1 --mutation-chance 0.30 --mutation-magnitude 0.12 --selection-pool-ratio 0.50 --use-full-match-rules false --rotate-candidate-across-seats false --fitness-underbid-loss-weight 0.0
@@ -40,6 +42,15 @@ joker-pack-list:
 
 joker-pack-dry:
 	@$(JOKER_REGRESSION_SCRIPT) --include-probes --dry-run
+
+stage6b-pack:
+	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT)
+
+stage6b-pack-list:
+	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT) --list
+
+stage6b-pack-dry:
+	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT) --dry-run
 
 bot-baseline:
 	@$(BOT_BASELINE_SCRIPT)

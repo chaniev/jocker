@@ -192,6 +192,8 @@ enum BotSelfPlayEvolutionEngine {
         let bestBlindBidWhenLeadingRate: Double
         let baselineEarlyLeadWishJokerRate: Double
         let bestEarlyLeadWishJokerRate: Double
+        let baselineLeftNeighborPremiumAssistRate: Double
+        let bestLeftNeighborPremiumAssistRate: Double
 
         var improvement: Double {
             return bestFitness - baselineFitness
@@ -220,6 +222,7 @@ enum BotSelfPlayEvolutionEngine {
         let blindBidWhenBehindRate: Double
         let blindBidWhenLeadingRate: Double
         let earlyLeadWishJokerRate: Double
+        let leftNeighborPremiumAssistRate: Double
     }
 
     /// Событие прогресса эволюции self-play.
@@ -509,7 +512,9 @@ enum BotSelfPlayEvolutionEngine {
             baselineBlindBidWhenLeadingRate: baselineBreakdown.blindBidWhenLeadingRate,
             bestBlindBidWhenLeadingRate: bestBreakdown.blindBidWhenLeadingRate,
             baselineEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
-            bestEarlyLeadWishJokerRate: bestBreakdown.earlyLeadWishJokerRate
+            bestEarlyLeadWishJokerRate: bestBreakdown.earlyLeadWishJokerRate,
+            baselineLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate,
+            bestLeftNeighborPremiumAssistRate: bestBreakdown.leftNeighborPremiumAssistRate
         )
     }
 
@@ -539,6 +544,7 @@ enum BotSelfPlayEvolutionEngine {
         let blindBidWhenBehindRate: Double
         let blindBidWhenLeadingRate: Double
         let earlyLeadWishJokerRate: Double
+        let leftNeighborPremiumAssistRate: Double
 
         static let zero = FitnessBreakdown(
             fitness: 0.0,
@@ -560,7 +566,8 @@ enum BotSelfPlayEvolutionEngine {
             averageBlindBidSize: 0.0,
             blindBidWhenBehindRate: 0.0,
             blindBidWhenLeadingRate: 0.0,
-            earlyLeadWishJokerRate: 0.0
+            earlyLeadWishJokerRate: 0.0,
+            leftNeighborPremiumAssistRate: 0.0
         )
     }
 
@@ -656,6 +663,7 @@ enum BotSelfPlayEvolutionEngine {
         let blindBidWhenBehindRate: Double
         let blindBidWhenLeadingRate: Double
         let earlyLeadWishJokerRate: Double
+        let leftNeighborPremiumAssistRate: Double
     }
 
     private struct FitnessAccumulator {
@@ -678,6 +686,7 @@ enum BotSelfPlayEvolutionEngine {
         private var totalBlindBidWhenBehindRate = 0.0
         private var totalBlindBidWhenLeadingRate = 0.0
         private var totalEarlyLeadWishJokerRate = 0.0
+        private var totalLeftNeighborPremiumAssistRate = 0.0
         private var samplesCount = 0
 
         mutating func append(_ metrics: CandidateSeatMetrics) {
@@ -700,6 +709,7 @@ enum BotSelfPlayEvolutionEngine {
             totalBlindBidWhenBehindRate += metrics.blindBidWhenBehindRate
             totalBlindBidWhenLeadingRate += metrics.blindBidWhenLeadingRate
             totalEarlyLeadWishJokerRate += metrics.earlyLeadWishJokerRate
+            totalLeftNeighborPremiumAssistRate += metrics.leftNeighborPremiumAssistRate
             samplesCount += 1
         }
 
@@ -726,6 +736,7 @@ enum BotSelfPlayEvolutionEngine {
             let blindBidWhenBehindRate = totalBlindBidWhenBehindRate / denominator
             let blindBidWhenLeadingRate = totalBlindBidWhenLeadingRate / denominator
             let earlyLeadWishJokerRate = totalEarlyLeadWishJokerRate / denominator
+            let leftNeighborPremiumAssistRate = totalLeftNeighborPremiumAssistRate / denominator
             let fitness = fitnessScoring.fitness(
                 winRate: averageWinRate,
                 averageScoreDiff: averageScoreDiff,
@@ -756,7 +767,8 @@ enum BotSelfPlayEvolutionEngine {
                 averageBlindBidSize: averageBlindBidSize,
                 blindBidWhenBehindRate: blindBidWhenBehindRate,
                 blindBidWhenLeadingRate: blindBidWhenLeadingRate,
-                earlyLeadWishJokerRate: earlyLeadWishJokerRate
+                earlyLeadWishJokerRate: earlyLeadWishJokerRate,
+                leftNeighborPremiumAssistRate: leftNeighborPremiumAssistRate
             )
         }
     }
@@ -850,7 +862,11 @@ enum BotSelfPlayEvolutionEngine {
             averageBlindBidSize: doubleMetricValue(gameOutcome.averageBlindBidSizes, at: candidateSeat),
             blindBidWhenBehindRate: doubleMetricValue(gameOutcome.blindBidWhenBehindRates, at: candidateSeat),
             blindBidWhenLeadingRate: doubleMetricValue(gameOutcome.blindBidWhenLeadingRates, at: candidateSeat),
-            earlyLeadWishJokerRate: doubleMetricValue(gameOutcome.earlyLeadWishJokerRates, at: candidateSeat)
+            earlyLeadWishJokerRate: doubleMetricValue(gameOutcome.earlyLeadWishJokerRates, at: candidateSeat),
+            leftNeighborPremiumAssistRate: doubleMetricValue(
+                gameOutcome.leftNeighborPremiumAssistRates,
+                at: candidateSeat
+            )
         )
     }
 
@@ -917,7 +933,8 @@ enum BotSelfPlayEvolutionEngine {
             averageBlindBidSize: breakdown.averageBlindBidSize,
             blindBidWhenBehindRate: breakdown.blindBidWhenBehindRate,
             blindBidWhenLeadingRate: breakdown.blindBidWhenLeadingRate,
-            earlyLeadWishJokerRate: breakdown.earlyLeadWishJokerRate
+            earlyLeadWishJokerRate: breakdown.earlyLeadWishJokerRate,
+            leftNeighborPremiumAssistRate: breakdown.leftNeighborPremiumAssistRate
         )
     }
 
@@ -1066,6 +1083,7 @@ enum BotSelfPlayEvolutionEngine {
         let blindBidWhenBehindRates: [Double]
         let blindBidWhenLeadingRates: [Double]
         let earlyLeadWishJokerRates: [Double]
+        let leftNeighborPremiumAssistRates: [Double]
     }
 
     private struct SeatServiceBundle {
@@ -1101,6 +1119,8 @@ enum BotSelfPlayEvolutionEngine {
         private var blindChosenWhenBehindCount: [Int]
         private var blindOpportunitiesWhenLeadingCount: [Int]
         private var blindChosenWhenLeadingCount: [Int]
+        private var leftNeighborPremiumEventsCount: [Int]
+        private var assistedLeftNeighborPremiumCount: [Int]
 
         init(playerCount: Int) {
             self.totalScores = Array(repeating: 0, count: playerCount)
@@ -1129,6 +1149,8 @@ enum BotSelfPlayEvolutionEngine {
             self.blindChosenWhenBehindCount = Array(repeating: 0, count: playerCount)
             self.blindOpportunitiesWhenLeadingCount = Array(repeating: 0, count: playerCount)
             self.blindChosenWhenLeadingCount = Array(repeating: 0, count: playerCount)
+            self.leftNeighborPremiumEventsCount = Array(repeating: 0, count: playerCount)
+            self.assistedLeftNeighborPremiumCount = Array(repeating: 0, count: playerCount)
         }
 
         mutating func evaluateRound(
@@ -1291,9 +1313,10 @@ enum BotSelfPlayEvolutionEngine {
             playerCount: Int
         ) {
             let boundedPlayerCount = min(playerCount, totalBlocksCount.count)
+            let premiumPlayersSet = Set(blockOutcome.allPremiumPlayers)
             for playerIndex in 0..<boundedPlayerCount {
                 totalBlocksCount[playerIndex] += 1
-                if blockOutcome.allPremiumPlayers.contains(playerIndex) {
+                if premiumPlayersSet.contains(playerIndex) {
                     premiumCapturedBlocksCount[playerIndex] += 1
                 }
                 let penalty = blockOutcome.premiumPenalties.indices.contains(playerIndex)
@@ -1301,6 +1324,14 @@ enum BotSelfPlayEvolutionEngine {
                     : 0
                 if penalty > 0 {
                     penaltyTargetBlocksCount[playerIndex] += 1
+                }
+
+                let leftNeighbor = PremiumRules.leftNeighbor(of: playerIndex, playerCount: boundedPlayerCount)
+                if premiumPlayersSet.contains(leftNeighbor) {
+                    leftNeighborPremiumEventsCount[playerIndex] += 1
+                    if !premiumPlayersSet.contains(playerIndex) {
+                        assistedLeftNeighborPremiumCount[playerIndex] += 1
+                    }
                 }
             }
             BotSelfPlayEvolutionEngine.accumulatePremiumSupportLosses(
@@ -1385,6 +1416,12 @@ enum BotSelfPlayEvolutionEngine {
                     Double(totalRoundsCount[playerIndex])
                 )
             }
+            let leftNeighborPremiumAssistRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(assistedLeftNeighborPremiumCount[playerIndex]),
+                    Double(leftNeighborPremiumEventsCount[playerIndex])
+                )
+            }
 
             return SimulatedGameOutcome(
                 totalScores: totalScores,
@@ -1404,7 +1441,8 @@ enum BotSelfPlayEvolutionEngine {
                 averageBlindBidSizes: averageBlindBidSizes,
                 blindBidWhenBehindRates: blindBidWhenBehindRates,
                 blindBidWhenLeadingRates: blindBidWhenLeadingRates,
-                earlyLeadWishJokerRates: earlyLeadWishJokerRates
+                earlyLeadWishJokerRates: earlyLeadWishJokerRates,
+                leftNeighborPremiumAssistRates: leftNeighborPremiumAssistRates
             )
         }
     }

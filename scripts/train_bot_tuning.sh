@@ -794,6 +794,8 @@ func logABValidationSet(
     let aVbBlindBidWhenLeadingRateValues = runs.map { \$0.aVsB.blindBidWhenLeadingRate }
     let bVaEarlyLeadWishJokerRateValues = runs.map { \$0.bVsA.earlyLeadWishJokerRate }
     let aVbEarlyLeadWishJokerRateValues = runs.map { \$0.aVsB.earlyLeadWishJokerRate }
+    let bVaLeftNeighborPremiumAssistRateValues = runs.map { \$0.bVsA.leftNeighborPremiumAssistRate }
+    let aVbLeftNeighborPremiumAssistRateValues = runs.map { \$0.aVsB.leftNeighborPremiumAssistRate }
     let fitnessDeltaValues = zip(bVaFitnessValues, aVbFitnessValues).map { pair in pair.0 - pair.1 }
     let winRateDeltaValues = zip(bVaWinRateValues, aVbWinRateValues).map { pair in pair.0 - pair.1 }
     let scoreDiffDeltaValues = zip(bVaScoreDiffValues, aVbScoreDiffValues).map { pair in pair.0 - pair.1 }
@@ -814,6 +816,7 @@ func logABValidationSet(
     let blindBidWhenBehindRateDeltaValues = zip(bVaBlindBidWhenBehindRateValues, aVbBlindBidWhenBehindRateValues).map { pair in pair.0 - pair.1 }
     let blindBidWhenLeadingRateDeltaValues = zip(bVaBlindBidWhenLeadingRateValues, aVbBlindBidWhenLeadingRateValues).map { pair in pair.0 - pair.1 }
     let earlyLeadWishJokerRateDeltaValues = zip(bVaEarlyLeadWishJokerRateValues, aVbEarlyLeadWishJokerRateValues).map { pair in pair.0 - pair.1 }
+    let leftNeighborPremiumAssistRateDeltaValues = zip(bVaLeftNeighborPremiumAssistRateValues, aVbLeftNeighborPremiumAssistRateValues).map { pair in pair.0 - pair.1 }
 
     var fitnessBWins = 0
     var fitnessAWins = 0
@@ -886,6 +889,7 @@ func logABValidationSet(
     print("summary.mean blindBidWhenBehindRate BvA=\\(fmt(average(bVaBlindBidWhenBehindRateValues))) AvB=\\(fmt(average(aVbBlindBidWhenBehindRateValues))) Badv=\\(fmt(average(blindBidWhenBehindRateDeltaValues)))")
     print("summary.mean blindBidWhenLeadingRate BvA=\\(fmt(average(bVaBlindBidWhenLeadingRateValues))) AvB=\\(fmt(average(aVbBlindBidWhenLeadingRateValues))) Badv=\\(fmt(average(blindBidWhenLeadingRateDeltaValues)))")
     print("summary.mean earlyLeadWishJokerRate BvA=\\(fmt(average(bVaEarlyLeadWishJokerRateValues))) AvB=\\(fmt(average(aVbEarlyLeadWishJokerRateValues))) Badv=\\(fmt(average(earlyLeadWishJokerRateDeltaValues)))")
+    print("summary.mean leftNeighborPremiumAssistRate BvA=\\(fmt(average(bVaLeftNeighborPremiumAssistRateValues))) AvB=\\(fmt(average(aVbLeftNeighborPremiumAssistRateValues))) Badv=\\(fmt(average(leftNeighborPremiumAssistRateDeltaValues)))")
     print("winsBySeed fitness B/A/tie=\\(fitnessBWins)/\\(fitnessAWins)/\\(fitnessTies)")
     print("winsBySeed winRate B/A/tie=\\(winRateBWins)/\\(winRateAWins)/\\(winRateTies)")
     print("winsBySeed scoreDiff B/A/tie=\\(scoreDiffBWins)/\\(scoreDiffAWins)/\\(scoreDiffTies)")
@@ -1046,6 +1050,7 @@ if seedRuns.count > 1 {
     print("ensembleAverageBestBlindBidWhenBehindRate=\\(fmt(average(seedRuns.map { \$0.result.bestBlindBidWhenBehindRate })))")
     print("ensembleAverageBestBlindBidWhenLeadingRate=\\(fmt(average(seedRuns.map { \$0.result.bestBlindBidWhenLeadingRate })))")
     print("ensembleAverageBestEarlyLeadWishJokerRate=\\(fmt(average(seedRuns.map { \$0.result.bestEarlyLeadWishJokerRate })))")
+    print("ensembleAverageBestLeftNeighborPremiumAssistRate=\\(fmt(average(seedRuns.map { \$0.result.bestLeftNeighborPremiumAssistRate })))")
 }
 print("selectedSeed=\\(selectedRun.seed)")
 print("baselineFitness=\\(fmt(selectedRun.result.baselineFitness))")
@@ -1091,6 +1096,8 @@ print("baselineBlindBidWhenLeadingRate=\\(fmt(selectedRun.result.baselineBlindBi
 print("bestBlindBidWhenLeadingRate=\\(fmt(selectedRun.result.bestBlindBidWhenLeadingRate))")
 print("baselineEarlyLeadWishJokerRate=\\(fmt(selectedRun.result.baselineEarlyLeadWishJokerRate))")
 print("bestEarlyLeadWishJokerRate=\\(fmt(selectedRun.result.bestEarlyLeadWishJokerRate))")
+print("baselineLeftNeighborPremiumAssistRate=\\(fmt(selectedRun.result.baselineLeftNeighborPremiumAssistRate))")
+print("bestLeftNeighborPremiumAssistRate=\\(fmt(selectedRun.result.bestLeftNeighborPremiumAssistRate))")
 print("generationBestFitness=[\\(selectedRun.result.generationBestFitness.map(fmt).joined(separator: ", "))]")
 print("")
 print("=== Suggested Tuned Values ===")

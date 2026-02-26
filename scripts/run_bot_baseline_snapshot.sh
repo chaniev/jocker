@@ -356,6 +356,7 @@ baseline_average_blind_bid_size="$(metric_or_empty 'ensembleAverageBestAverageBl
 baseline_blind_bid_when_behind_rate="$(metric_or_empty 'ensembleAverageBestBlindBidWhenBehindRate' "$log_path")"
 baseline_blind_bid_when_leading_rate="$(metric_or_empty 'ensembleAverageBestBlindBidWhenLeadingRate' "$log_path")"
 baseline_early_lead_wish_joker_rate="$(metric_or_empty 'ensembleAverageBestEarlyLeadWishJokerRate' "$log_path")"
+baseline_left_neighbor_premium_assist_rate="$(metric_or_empty 'ensembleAverageBestLeftNeighborPremiumAssistRate' "$log_path")"
 
 if [[ -z "$baseline_win_rate" ]]; then
   metric_source="baseline(single-seed)"
@@ -376,6 +377,7 @@ if [[ -z "$baseline_win_rate" ]]; then
   baseline_blind_bid_when_behind_rate="$(metric_or_empty 'baselineBlindBidWhenBehindRate' "$log_path")"
   baseline_blind_bid_when_leading_rate="$(metric_or_empty 'baselineBlindBidWhenLeadingRate' "$log_path")"
   baseline_early_lead_wish_joker_rate="$(metric_or_empty 'baselineEarlyLeadWishJokerRate' "$log_path")"
+  baseline_left_neighbor_premium_assist_rate="$(metric_or_empty 'baselineLeftNeighborPremiumAssistRate' "$log_path")"
 fi
 
 {
@@ -398,8 +400,9 @@ fi
   echo "blindBidWhenBehindRate=${baseline_blind_bid_when_behind_rate:-}"
   echo "blindBidWhenLeadingRate=${baseline_blind_bid_when_leading_rate:-}"
   echo "earlyLeadWishJokerRate=${baseline_early_lead_wish_joker_rate:-}"
-  echo "supported_metrics=winRate,averageScoreDiff,averageUnderbidLoss,averagePremiumAssistLoss,averagePremiumPenaltyTargetLoss,premiumCaptureRate,blindSuccessRate,jokerWishWinRate,earlyJokerSpendRate,penaltyTargetRate,bidAccuracyRate,overbidRate,blindBidRateBlock4,averageBlindBidSize,blindBidWhenBehindRate,blindBidWhenLeadingRate,earlyLeadWishJokerRate"
-  echo "pending_stage0_metrics=leftNeighborPremiumAssistRate"
+  echo "leftNeighborPremiumAssistRate=${baseline_left_neighbor_premium_assist_rate:-}"
+  echo "supported_metrics=winRate,averageScoreDiff,averageUnderbidLoss,averagePremiumAssistLoss,averagePremiumPenaltyTargetLoss,premiumCaptureRate,blindSuccessRate,jokerWishWinRate,earlyJokerSpendRate,penaltyTargetRate,bidAccuracyRate,overbidRate,blindBidRateBlock4,averageBlindBidSize,blindBidWhenBehindRate,blindBidWhenLeadingRate,earlyLeadWishJokerRate,leftNeighborPremiumAssistRate"
+  echo "pending_stage0_metrics="
 } > "$metrics_path"
 
 cat > "$summary_path" <<EOF

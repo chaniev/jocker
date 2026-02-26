@@ -1514,7 +1514,13 @@ Expected behavior:
 
 ### Harness Commands (Stage 6b Ranking Guardrails)
 
-- Текущий минимальный guardrail (все ranking-level Stage 6b проверки входят в один класс):
+- Отдельный Stage 6b pack (ranking-level opponent-aware guardrails):
+  - `scripts/run_stage6b_ranking_guardrails.sh --list`
+  - `scripts/run_stage6b_ranking_guardrails.sh`
+  - `make stage6b-pack-list`
+  - `make stage6b-pack`
+- Артефакты сохраняются в `.derivedData/stage6b-ranking-runs/<timestamp>/` (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`).
+- Fallback-команда (если нужен точечный локальный прогон всего класса вместо pack):
   - `xcodebuild -quiet -project Jocker/Jocker.xcodeproj -scheme Jocker -destination 'id=4F592A52-148C-4540-BB72-590B8C44BD43' -derivedDataPath .derivedData CODE_SIGNING_ALLOWED=NO test-without-building -only-testing:JockerTests/BotTurnCandidateRankingServiceTests`
 - Для локальных прогонов использовать `iPhone 15 (17.2)` destination, пока `iPhone 15 Pro (17.2)` может зависать после `Testing started` в текущем окружении.
 
@@ -1522,5 +1528,5 @@ Expected behavior:
 
 - Добавить точные сериализованные состояния для первых 8 кейсов.
 - Привязать каждый кейс к автоматическому тесту или harness-команде (JOKER pack CLI/Makefile entrypoints добавлены; осталось расширить mapping для draft-кейсов).
-- Выделить отдельный `Stage 6b` pack/harness (или расширить общий AI harness), чтобы запускать opponent-aware guardrails отдельно от полного `BotTurnCandidateRankingServiceTests`.
+- Выделенный `Stage 6b` pack/harness добавлен (`scripts/run_stage6b_ranking_guardrails.sh`, `make stage6b-pack*`); следующий шаг по этому контуру — при необходимости расширить на non-ranking / cross-service guardrails.
 - Зафиксировать финальный seed-набор baseline для этапа 0.
