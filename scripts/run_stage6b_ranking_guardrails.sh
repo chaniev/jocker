@@ -9,10 +9,11 @@ usage() {
 Назначение:
   Запускает Stage 6b opponent-aware ranking guardrails (unit tests) и сохраняет
   артефакты прогона в отдельную папку. Опционально может включать cross-service
-  plumbing guardrails для построения `BotOpponentModel` в flow.
+  guardrails (flow plumbing + evaluator/strategy no-evidence neutrality checks).
 
 Параметры:
-  --include-flow-plumbing      Добавить flow-level opponent-model plumbing guardrails
+  --include-flow-plumbing      Добавить cross-service Stage 6 guardrails
+                              (flow plumbing + evaluator/strategy no-evidence)
   --list                      Показать выбранные тесты и выйти
   --dry-run                   Напечатать команду xcodebuild и выбранные тесты без запуска
   --project <path>            Путь до .xcodeproj (по умолчанию: Jocker/Jocker.xcodeproj)
@@ -151,6 +152,8 @@ ranking_catalog_entries=(
 flow_plumbing_catalog_entries=(
   "FLOW-OPP-001|flow plumbing|JockerTests/GameScenePlayingFlowTests/testBotMatchContext_buildsOpponentModelSnapshotFromObservedRounds"
   "FLOW-OPP-002|flow plumbing|JockerTests/GameScenePlayingFlowTests/testBotMatchContext_buildsOpponentModelWithZeroEvidenceAtBlockStart"
+  "EVAL-OPP-001|evaluator no-evidence|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenLeadJokerAntiPremiumContext_andOpponentModelHasNoEvidence_keepsDecisionUnchanged"
+  "STRAT-OPP-001|strategy no-evidence|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenAllInChaseAntiPremiumContext_andOpponentModelHasNoEvidence_keepsDecisionUnchanged"
 )
 
 catalog_entries=()
@@ -231,7 +234,7 @@ cmd+=(test)
 
 echo "=== Stage 6b ranking guardrails pack ==="
 echo "Mode: $mode_label"
-echo "Selected tests: ${#selected_tests[@]} (ranking=$ranking_tests_count, flow=$flow_tests_count)"
+echo "Selected tests: ${#selected_tests[@]} (ranking=$ranking_tests_count, optional=$flow_tests_count)"
 
 if [[ "$dry_run" == true ]]; then
   printf 'Command:'
@@ -275,6 +278,7 @@ selected_tests_count=${#selected_tests[@]}
 mode=$mode_label
 ranking_tests_count=$ranking_tests_count
 flow_tests_count=$flow_tests_count
+optional_tests_count=$flow_tests_count
 project=$project_abs
 scheme=$scheme
 configuration=$configuration
