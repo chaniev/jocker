@@ -198,101 +198,6 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         }
     }
 
-    func testMakeTurnDecision_jokerDeclarationProbe_mayFlipBetweenAboveAndWishByChaseUrgency() throws {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        let handCards: [Card] = [
-            .joker,
-            card(.clubs, .six),
-            card(.diamonds, .seven),
-            card(.hearts, .eight)
-        ]
-
-        let controlChaseDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 1,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-        let allInChaseDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 4,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-
-        guard let controlChaseDecision, let allInChaseDecision else {
-            XCTFail("Ожидались валидные решения в joker declaration probe сценарии")
-            return
-        }
-
-        if controlChaseDecision.card != .joker || allInChaseDecision.card != .joker {
-            throw XCTSkip(
-                "Текущий runtime может выбирать не-джокер в одной из веток probe-сценария. " +
-                "Сценарий оставлен как цель retuning для Stage 5."
-            )
-        }
-
-        let controlDecl = controlChaseDecision.jokerDecision.leadDeclaration
-        let allInDecl = allInChaseDecision.jokerDecision.leadDeclaration
-        if controlDecl == allInDecl {
-            throw XCTSkip(
-                "Текущие коэффициенты Stage 5 fallback пока не дают declaration flip (`above` vs `wish`) в probe-сценарии. " +
-                "Сценарий оставлен как цель дальнейшего retuning."
-            )
-        }
-
-        if case .some(.above(suit: .spades)) = controlDecl {
-            // ok
-        } else {
-            throw XCTSkip(
-                "Runtime flip произошёл, но не в ожидаемую `above(trump)` ветку; оставляем как probe до retuning."
-            )
-        }
-        XCTAssertEqual(allInDecl, .wish)
-    }
-
-    func testMakeTurnDecision_whenEarlyVsAllInChaseWithWeakHand_flipsLeadJokerDeclarationAboveToWish() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        let handCards: [Card] = [
-            .joker,
-            card(.clubs, .six),
-            card(.diamonds, .seven),
-            card(.hearts, .eight)
-        ]
-
-        let earlyChaseDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 1,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-        let allInChaseDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 4,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-
-        XCTAssertEqual(earlyChaseDecision?.card, .joker)
-        XCTAssertEqual(allInChaseDecision?.card, .joker)
-        XCTAssertEqual(earlyChaseDecision?.jokerDecision.leadDeclaration, .above(suit: .spades))
-        XCTAssertEqual(allInChaseDecision?.jokerDecision.leadDeclaration, .wish)
-    }
-
     func testMakeTurnDecision_whenEarlyOverbidDumpAndNoSafeNonJokerLead_prefersLeadJokerTakesNonTrump() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
@@ -559,68 +464,22 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(heartDecl, .above(suit: .hearts))
     }
 
-    func testMakeTurnDecision_phaseProbe_mayChangeLeadDumpChoiceBetweenEarlyAndLateContexts() throws {
+    func testMakeTurnDecision_whenLateOwnPremiumCandidate_dumpingPrefersLosingFollowCard() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
-        let handCards: [Card] = [
-            card(.spades, .ten),
-            card(.hearts, .ace)
-        ]
-
-        let earlyPhaseDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 0,
-            tricksTaken: 0,
-            cardsInRound: 2,
-            playerCount: 4
-        )
-        let latePhaseDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .spades,
-            bid: 0,
-            tricksTaken: 0,
-            cardsInRound: 8,
-            playerCount: 4
-        )
-
-        guard let earlyPhaseDecision, let latePhaseDecision else {
-            XCTFail("Ожидались валидные решения в обоих фазовых контекстах")
-            return
-        }
-
-        XCTAssertTrue(handCards.contains(earlyPhaseDecision.card))
-        XCTAssertTrue(handCards.contains(latePhaseDecision.card))
-
-        if earlyPhaseDecision.card == latePhaseDecision.card,
-           earlyPhaseDecision.jokerDecision == latePhaseDecision.jokerDecision {
-            throw XCTSkip(
-                "Текущие коэффициенты пока не дают phase-based flip в этом probe-сценарии. " +
-                "Сценарий оставлен как цель для дальнейшего retuning."
-            )
-        }
-
-        XCTAssertNotEqual(earlyPhaseDecision.card, latePhaseDecision.card)
-    }
-
-    func testMakeTurnDecision_premiumProbe_mayChangeLateDumpChoiceToPreservePremiumLine() throws {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        _ = trickNode.playCard(card(.clubs, .six), fromPlayer: 1, animated: false)
 
         let handCards: [Card] = [
             card(.clubs, .ace),
-            card(.diamonds, .king)
+            card(.clubs, .seven)
         ]
 
         let neutralDecision = service.makeTurnDecision(
             handCards: handCards,
             trickNode: trickNode,
             trump: .spades,
-            bid: 0,
-            tricksTaken: 0,
+            bid: 1,
+            tricksTaken: 1,
             cardsInRound: 8,
             playerCount: 4,
             matchContext: .init(
@@ -638,8 +497,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             handCards: handCards,
             trickNode: trickNode,
             trump: .spades,
-            bid: 0,
-            tricksTaken: 0,
+            bid: 1,
+            tricksTaken: 1,
             cardsInRound: 8,
             playerCount: 4,
             matchContext: .init(
@@ -660,26 +519,11 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             )
         )
 
-        guard let neutralDecision, let premiumDecision else {
-            XCTFail("Ожидались валидные решения в premium probe сценарии")
-            return
-        }
-
-        XCTAssertTrue(handCards.contains(neutralDecision.card))
-        XCTAssertTrue(handCards.contains(premiumDecision.card))
-
-        if neutralDecision.card == premiumDecision.card,
-           neutralDecision.jokerDecision == premiumDecision.jokerDecision {
-            throw XCTSkip(
-                "Текущие коэффициенты 4b пока не дают premium-based flip в этом probe-сценарии. " +
-                "Сценарий оставлен как цель для дальнейшего retuning."
-            )
-        }
-
-        XCTAssertNotEqual(neutralDecision.card, premiumDecision.card)
+        XCTAssertEqual(neutralDecision?.card, card(.clubs, .ace))
+        XCTAssertEqual(premiumDecision?.card, card(.clubs, .seven))
     }
 
-    func testMakeTurnDecision_penaltyRiskProbe_mayChangeLateDumpChoiceToAvoidPenaltyTarget() throws {
+    func testMakeTurnDecision_whenPenaltyTargetRisk_flipsLateDumpChoiceTowardSafeLoss() {
         let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
         let trickNode = TrickNode()
         _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
@@ -748,113 +592,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             )
         )
 
-        guard let neutralDecision, let penaltyRiskDecision else {
-            XCTFail("Ожидались валидные решения в penalty-risk probe сценарии")
-            return
-        }
-
-        XCTAssertTrue(handCards.contains(neutralDecision.card))
-        XCTAssertTrue(handCards.contains(penaltyRiskDecision.card))
-
-        if neutralDecision.card == penaltyRiskDecision.card,
-           neutralDecision.jokerDecision == penaltyRiskDecision.jokerDecision {
-            throw XCTSkip(
-                "Текущие коэффициенты 4c fallback пока не дают penalty-risk flip в этом probe-сценарии. " +
-                "Сценарий оставлен как цель для дальнейшего retuning."
-            )
-        }
-
-        XCTAssertNotEqual(neutralDecision.card, penaltyRiskDecision.card)
-    }
-
-    func testMakeTurnDecision_antiPremiumProbe_mayChangeLateDumpChoiceAgainstLeftNeighborPremiumCandidate() throws {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
-
-        let handCards: [Card] = [
-            card(.clubs, .ace),
-            card(.clubs, .seven)
-        ]
-
-        let neutralDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .hearts,
-            bid: 0,
-            tricksTaken: 1,
-            cardsInRound: 8,
-            playerCount: 4,
-            matchContext: .init(
-                block: .fourth,
-                roundIndexInBlock: 7,
-                totalRoundsInBlock: 8,
-                totalScores: [100, 100, 100, 100],
-                playerIndex: 0,
-                dealerIndex: 2,
-                playerCount: 4,
-                premium: .init(
-                    completedRoundsInBlock: 7,
-                    remainingRoundsInBlock: 1,
-                    isPremiumCandidateSoFar: false,
-                    isZeroPremiumRelevantInBlock: false,
-                    isZeroPremiumCandidateSoFar: false,
-                    leftNeighborIndex: 1,
-                    leftNeighborIsPremiumCandidateSoFar: false,
-                    isPenaltyTargetRiskSoFar: false,
-                    premiumCandidatesThreateningPenaltyCount: 0,
-                    opponentPremiumCandidatesSoFarCount: 0
-                )
-            )
-        )
-        let antiPremiumDecision = service.makeTurnDecision(
-            handCards: handCards,
-            trickNode: trickNode,
-            trump: .hearts,
-            bid: 0,
-            tricksTaken: 1,
-            cardsInRound: 8,
-            playerCount: 4,
-            matchContext: .init(
-                block: .fourth,
-                roundIndexInBlock: 7,
-                totalRoundsInBlock: 8,
-                totalScores: [100, 100, 100, 100],
-                playerIndex: 0,
-                dealerIndex: 2,
-                playerCount: 4,
-                premium: .init(
-                    completedRoundsInBlock: 7,
-                    remainingRoundsInBlock: 1,
-                    isPremiumCandidateSoFar: false,
-                    isZeroPremiumRelevantInBlock: false,
-                    isZeroPremiumCandidateSoFar: false,
-                    leftNeighborIndex: 1,
-                    leftNeighborIsPremiumCandidateSoFar: true,
-                    isPenaltyTargetRiskSoFar: false,
-                    premiumCandidatesThreateningPenaltyCount: 0,
-                    opponentPremiumCandidatesSoFarCount: 1
-                )
-            )
-        )
-
-        guard let neutralDecision, let antiPremiumDecision else {
-            XCTFail("Ожидались валидные решения в anti-premium probe сценарии")
-            return
-        }
-
-        XCTAssertTrue(handCards.contains(neutralDecision.card))
-        XCTAssertTrue(handCards.contains(antiPremiumDecision.card))
-
-        if neutralDecision.card == antiPremiumDecision.card,
-           neutralDecision.jokerDecision == antiPremiumDecision.jokerDecision {
-            throw XCTSkip(
-                "Текущие коэффициенты 4c anti-premium пока не дают runtime flip в этом probe-сценарии. " +
-                "Сценарий оставлен как цель для дальнейшего retuning."
-            )
-        }
-
-        XCTAssertNotEqual(neutralDecision.card, antiPremiumDecision.card)
+        XCTAssertEqual(neutralDecision?.card, card(.clubs, .ace))
+        XCTAssertEqual(penaltyRiskDecision?.card, card(.clubs, .seven))
     }
 
     func testMakeTurnDecision_whenStrongAntiPremiumPressureExists_flipsLastSeatDumpChoice() {

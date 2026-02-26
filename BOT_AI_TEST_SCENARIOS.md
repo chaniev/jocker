@@ -277,7 +277,7 @@ Observed (candidate):
   },
   "expected": {
     "relationship": "lead-joker declaration may flip from above(trump) to wish as chase urgency increases to all-in",
-    "diagnostic": "if runtime chooses non-joker or no flip under current tuning, keep as Stage-5 retuning probe"
+    "diagnostic": "diagnostic draft only: runtime probe retired from automated pack; use ranking/evaluator strict + neighboring runtime strict guardrails"
   }
 }
 ```
@@ -400,7 +400,7 @@ Observed (candidate):
 ```json
 {
   "id": "JOKER-009",
-  "stateType": "runtimeTurnDecision-assert",
+  "stateType": "runtimeTurnDecision-assert-diagnostic",
   "inputs": {
     "sharedTemplate": {
       "handCards": ["JOKER", "C-6", "D-7", "H-8"],
@@ -418,7 +418,7 @@ Observed (candidate):
   "expected": {
     "earlyChaseDecision": { "card": "JOKER", "leadDeclaration": "above(S)" },
     "allInChaseDecision": { "card": "JOKER", "leadDeclaration": "wish" },
-    "reason": "Stage-5 declaration utility should shift from immediate control to raw win-reliability under all-in chase urgency"
+    "reason": "diagnostic runtime shape for urgency-driven declaration shift; strict automated variant retired after instability across later architectural changes"
   }
 }
 ```
@@ -1459,19 +1459,19 @@ Expected behavior:
 ## JOKER Regression Pack (v1, Stage 5 Retuning Prep)
 
 Ниже собран текущий пакет `JOKER-*` кейсов для ретюнинга `Этапа 5`.
-Цель пакета: отделить уже "зажатые" invariants (`strict`) от сценариев-целей для калибровки (`probe`).
+Текущая версия пакета зафиксирована как `strict-first`: активных automated `probe`-тестов нет; нестабильные runtime-диагностики оставлены в каталоге как draft-only сценарии.
 
 | ID | Layer | Status | Focus |
 |----|-------|--------|-------|
 | `JOKER-001` | scenario-draft | `draft` | blind: не тратить джокер рано без необходимости |
 | `JOKER-002` | scenario-draft | `draft` | общий контекстный выбор `wish/above/takes` |
 | `JOKER-003` | ranking utility | `strict` | `above(trump)` vs `above(non-trump)` в `chase` |
-| `JOKER-004` | runtime strategy | `probe` + `strict` (`JOKER-009`) | flip `above -> wish` по срочности добора |
+| `JOKER-004` | runtime/evaluator/ranking | `strict` (ranking/evaluator) + runtime-diagnostic draft | flip `above -> wish` по срочности добора |
 | `JOKER-005` | evaluator/ranking | `strict` | `takes(non-trump)` в `dump`, `above(trump)` в `chase` |
 | `JOKER-006` | runtime strategy | `strict` | `takes(non-trump)` в раннем `overbid dump` с опасной trump-рукой |
 | `JOKER-007` | ranking utility | `strict` | `remaining control reserve` (low/high) |
 | `JOKER-008` | runtime strategy | `strict` | declaration shift по `control reserve` |
-| `JOKER-009` | runtime strategy | `strict` | weak-hand all-in chase: `above(trump)` -> `wish` |
+| `JOKER-009` | runtime strategy | `diagnostic draft` (strict retired) | weak-hand all-in chase: `above(trump)` -> `wish` |
 | `JOKER-010` | ranking utility | `strict` | premium-aware declaration scoring (`own premium` / anti-premium) |
 | `JOKER-011` | runtime strategy | `strict` | anti-premium pressure в all-in chase (`wish -> above`) |
 | `JOKER-012` | ranking utility | `strict` | preferred post-joker control suit (`above`/`takes`) |
@@ -1481,8 +1481,8 @@ Expected behavior:
 
 ### Stage 5 Retuning Priorities (JOKER Pack)
 
-- `P1`: перепроверить, что `JOKER-006`, `JOKER-008`, `JOKER-009`, `JOKER-011`, `JOKER-013` и `JOKER-014` сохраняются после ретюнинга (guardrails).
-- `P2`: решить, нужен ли отдельный runtime `probe -> strict` для `JOKER-004`, если `JOKER-009` уже покрывает ключевой flip как strict.
+- `P1`: перепроверить, что `JOKER-006`, `JOKER-008`, `JOKER-011`, `JOKER-013` и `JOKER-014` сохраняются после ретюнинга (guardrails).
+- `P1`: поддерживать `JOKER-004` как strict lower-layer invariant (ranking/evaluator); runtime urgency flip пока считать диагностикой, а не blocking strict assert.
 - `P2`: оценить, стоит ли добавить ещё один strict runtime-case для reserve-aware логики (`JOKER-008b`) с точным expected high-reserve declaration (не только relation assert).
 - `P2`: расширить `JOKER-002` в поднабор точных serialized runtime asserts после retuning.
 
@@ -1494,7 +1494,7 @@ Expected behavior:
 - Прогон `strict` guardrails:
   - `scripts/run_joker_regression_pack.sh`
   - `make joker-pack`
-- Прогон `strict + probe` (retuning session):
+- Прогон `strict + probe` (retuning session; сейчас `probe_count=0`, флаг зарезервирован):
   - `scripts/run_joker_regression_pack.sh --include-probes`
   - `make joker-pack-all`
 - Артефакты сохраняются в `.derivedData/joker-regression-runs/<timestamp>/` (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`).

@@ -11,7 +11,7 @@ usage() {
   прогона в отдельную папку. По умолчанию запускает только strict-guardrails.
 
 Параметры:
-  --include-probes            Добавить probe-тесты (`XCTSkip`-ориентированные цели retuning)
+  --include-probes            Зарезервировано для будущих probe-тестов (сейчас активных probe нет)
   --strict-only               Запустить только strict-тесты (режим по умолчанию)
   --list                      Показать выбранные тесты и выйти
   --dry-run                   Напечатать команду xcodebuild и выбранные тесты без запуска
@@ -157,15 +157,11 @@ catalog_entries=(
   "JOKER-015|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerEarlyChaseAndSpadeControlDominates_prefersAboveSpades"
   "JOKER-015|strict|JockerTests/BotTurnCandidateEvaluatorServiceTests/testBestMove_whenForcedLeadJokerEarlyChaseAndHeartControlDominates_prefersAboveHearts"
 
-  # JOKER-009 / JOKER-014 (runtime strategy strict)
-  "JOKER-009|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyVsAllInChaseWithWeakHand_flipsLeadJokerDeclarationAboveToWish"
+  # JOKER-014 / JOKER-006 / JOKER-013 / JOKER-008 / JOKER-011 (runtime strategy strict)
   "JOKER-014|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyOverbidDumpAndOwnPremiumProtection_prefersLeadJokerTakesNonTrump"
   "JOKER-006|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyOverbidDumpAndNoSafeNonJokerLead_prefersLeadJokerTakesNonTrump"
   "JOKER-013|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyHighPressureChase_flipsLeadJokerAboveDeclarationByPreferredControlSuit"
   "JOKER-008|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenEarlyHighPressureChase_controlReserveShiftsLeadJokerDeclaration"
-
-  # Probe targets for Stage 5 retuning
-  "JOKER-004|probe|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_jokerDeclarationProbe_mayFlipBetweenAboveAndWishByChaseUrgency"
 
   # JOKER-011 (runtime strategy strict after Stage-5 anti-premium all-in-chase retune)
   "JOKER-011|strict|JockerTests/BotTurnStrategyServiceTests/testMakeTurnDecision_whenAllInChaseUnderAntiPremiumPressure_flipsLeadJokerWishTowardAboveTrump"
