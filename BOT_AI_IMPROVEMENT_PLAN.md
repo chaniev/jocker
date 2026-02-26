@@ -168,6 +168,7 @@
   - после интеграции Stage 6b устранены 4 регрессии в `BotTurnCandidateRankingServiceTests` (ранний `matchCatchUp`, конфликт `premium+zeroPremium`, `leftNeighbor` premium-deny guard, double-count anti-premium для lead-joker declaration); полный класс `BotTurnCandidateRankingServiceTests` снова проходит локально.
   - продолжена Stage 6b runtime-интеграция в `leadJokerDeclarationUtility` (anti-premium chase branch): anti-premium shift для `wish/above` теперь мягко калибруется по `BotOpponentModel` (через ослабленный multiplier), добавлены unit-тесты на `disciplined vs erratic` и `zero-evidence -> neutral`; `BotTurnCandidateRankingServiceTests` повторно подтвержден зелёным на `iPhone 15 (17.2)`.
   - расширена Stage 6b калибровка на `leadJokerDeclarationUtility` в dump-ветке (`takes` controlled-loss lead при anti-premium/penalty-aware контексте): бонус `takes` теперь мягко масштабируется по `BotOpponentModel`; добавлены unit-тесты на `disciplined vs erratic` и `zero-evidence -> neutral`, полный `BotTurnCandidateRankingServiceTests` снова подтвержден зелёным на `iPhone 15 (17.2)`.
+  - добавлена очень мягкая Stage 6b калибровка в `matchCatchUpUtility` (score-based catch-up urgency в chase слегка масштабируется по `BotOpponentModel`, с late-block weighting); добавлены unit-тесты на late-block deficit (`disciplined vs erratic`, `zero-evidence -> neutral`), полный `BotTurnCandidateRankingServiceTests` сохраняется зелёным на `iPhone 15 (17.2)`.
 
 ### Ограничение валидации (текущее окружение)
 

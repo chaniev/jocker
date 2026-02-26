@@ -117,8 +117,9 @@ struct BotTurnCandidateRankingService {
         let finalTrickUrgencyBonus = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
             ? 8.0
             : 0.0
+        let opponentUrgencyMultiplier = opponentMatchCatchUpUrgencyMultiplier(from: context.matchContext)
 
-        return riskBias * (chaseAggressionSignal + finalTrickUrgencyBonus)
+        return riskBias * opponentUrgencyMultiplier * (chaseAggressionSignal + finalTrickUrgencyBonus)
     }
 
     /// Этап 4b (MVP): защита собственной премиальной траектории без моделирования соперников.
@@ -339,6 +340,15 @@ struct BotTurnCandidateRankingService {
         guard let matchContext else { return 1.0 }
         let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
         return 1.0 + (denyPressureMultiplier - 1.0) * 0.60
+    }
+
+    /// Stage 6b: очень мягкая калибровка match catch-up urgency по opponent-style сигналу.
+    /// Нам важно не сломать score-based bias, а только слегка усилить/ослабить его поздно в блоке.
+    private func opponentMatchCatchUpUrgencyMultiplier(from matchContext: BotMatchContext?) -> Double {
+        guard let matchContext else { return 1.0 }
+        let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
+        let lateBlockWeight = 0.20 + 0.80 * matchContext.blockProgressFraction
+        return 1.0 + (denyPressureMultiplier - 1.0) * 0.35 * lateBlockWeight
     }
 
     /// Этап 5 (MVP): контекстная оценка объявления ведущего джокера.
