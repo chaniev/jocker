@@ -72,19 +72,69 @@
 
 ### Краткая матрица этапов (0–7)
 
-| Этап | Статус | Ближайший следующий шаг |
-|------|--------|--------------------------|
-| 0 (Baseline) | выполнен (baseline/compare + operational metrics зафиксированы) | использовать baseline-report и holdout-gap как acceptance guardrail перед Stage 7 retuning |
-| 1 (Blind fix) | выполнен | держать как regression baseline; менять только при retuning/регрессе |
-| 2 (Blind-aware play) | выполнен | проверять в retuning + guardrail-сценариях `BLIND-*` |
-| 2.5 (Blind plumbing в flow) | выполнен | поддерживать совместимость сигнатур при дальнейших AI-изменениях |
-| 3 (Phase-aware threat) | в процессе (MVP) | завершить retuning и перевести ключевые runtime/probe проверки в стабильные strict-asserts |
-| 4a (Базовый контекст блока) | выполнен по коду | использовать как стабильную базу для 4b/4c/6 utility-интеграции |
-| 4b (Premium utility) | в процессе (MVP) | стабилизировать коэффициенты premium-aware utility и расширить strict coverage `PREMIUM-*` |
-| 4c (Opponent premium / penalty-aware) | в процессе (fallback MVP) | усилить/дотюнить anti-premium и penalty-aware utility, сократить probe-зависимость |
-| 5 (Joker logic) | в процессе (MVP+, частично стабилизирован) | закрыть оставшиеся runtime probe/retuning задачи (в первую очередь `JOKER-004` / runtime strict coverage) |
-| 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage; использовать `stage6b-pack`/`stage6b-pack-all` (`18` tests, ranking + cross-service) как быстрые guardrails и держать зелёным `BotTurnCandidateRankingServiceTests` |
-| 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и подготовки воспроизводимого `baseline vs candidate` сравнения |
+| Этап | Статус (macro) | Что осталось до закрытия |
+|------|----------------|--------------------------|
+| 0 (Baseline) | готово | использовать baseline-report и holdout-gap как acceptance guardrail для Stage 7 |
+| 1 (Blind fix) | готово | только regression-поддержка (без новых изменений без причины) |
+| 2 (Blind-aware play) | готово | только regression-поддержка + `BLIND-*` guardrails |
+| 2.5 (Blind plumbing в flow) | готово | поддерживать совместимость сигнатур/передачи контекста |
+| 3 (Phase-aware threat) | MVP есть | довести runtime coverage до `strict`, закрыть phase-related probe-долги |
+| 4a (Базовый контекст блока) | готово (plumbing) | использовать как стабильную базу; не ломать runtime-передачу контекста |
+| 4b (Premium utility) | MVP есть | расширить `PREMIUM-*` strict coverage и стабилизировать поведение до “stable” |
+| 4c (Opponent premium / penalty-aware) | fallback MVP есть | закрыть strict/runtime coverage по penalty/assist кейсам и подтвердить acceptance по premium-loss метрикам |
+| 5 (Joker logic) | MVP+ частично стабилизирован | закрыть оставшиеся runtime probe-задачи (в первую очередь `JOKER-004`) и довести joker runtime coverage до `strict` |
+| 6 (Opponent model MVP) | MVP есть (6a done, 6b guardrails ready) | зафиксировать границы Stage 6b, удерживать зелёным `stage6b-pack-all` (`18` tests) и `BotTurnCandidateRankingServiceTests` |
+| 7 (Self-play retuning) | не начат системно | заморозить архитектурный scope и зафиксировать acceptance/stop/rollback protocol для итерации тюнинга |
+
+### Macro-долги до Stage 7 (диаграмма)
+
+```mermaid
+flowchart TD
+    subgraph DONE["Уже готово (foundation)"]
+      F0["Stage 0 (Baseline)<br/>baseline/compare/metrics/report"]
+      F1["Stages 1, 2, 2.5<br/>blind fix + blind-aware + flow plumbing"]
+      F4a["Stage 4a<br/>match/block context plumbing"]
+      F6g["Stage 6b guardrails<br/>stage6b-pack-all = 18/18"]
+    end
+
+    subgraph DEBT["Macro-долги до системного Stage 7"]
+      D3["Stage 3<br/>Phase-aware threat: MVP -> stable<br/>probe -> strict runtime coverage<br/>(чек-листы 555/823/832)"]
+      D4b["Stage 4b<br/>Premium utility: MVP -> stable<br/>PREMIUM-* strict coverage"]
+      D4c["Stage 4c<br/>Penalty/anti-premium: acceptance-ready<br/>strict/runtime coverage + premium-loss acceptance"]
+      D5["Stage 5<br/>Joker runtime coverage -> strict<br/>закрыть остаточный probe (JOKER-004)"]
+      D6freeze["Stage 6<br/>Зафиксировать границы 6b (MVP-ready)<br/>не расширять scope, держать gate зелёным"]
+      D7proto["Stage 7 protocol<br/>acceptance + stop criteria + rollback<br/>(чек-листы 788/791/839/842)"]
+      Lat["Операционный долг<br/>замер latency baseline<br/>(чек-лист 828)"]
+      Run7["Stage 7<br/>Systematic self-play retuning"]
+    end
+
+    F1 --> D3
+    F4a --> D4b
+    F6g --> D6freeze
+    F0 --> D7proto
+
+    D3 --> D4b
+    D4b --> D4c
+    D3 --> D5
+    D4b --> D5
+    D4c -. желательно до финализации Stage 5 .-> D5
+
+    D4c --> D6freeze
+    D5 --> D6freeze
+    D6freeze --> D7proto
+    D7proto --> Lat
+    Lat --> Run7
+
+    classDef done fill:#d9f2e6,stroke:#1b5e20,color:#1b5e20;
+    classDef gate fill:#e8f1ff,stroke:#1e4fa3,color:#1e3a8a;
+    classDef debt fill:#fff4d6,stroke:#8a6d1f,color:#6a4f00;
+    classDef target fill:#fde2e2,stroke:#9f1d1d,color:#7a1111;
+
+    class F0,F1,F4a done;
+    class F6g gate;
+    class D3,D4b,D4c,D5,D6freeze,D7proto,Lat debt;
+    class Run7 target;
+```
 
 - Этап 0 (baseline): выполнен
   - добавлен черновик `BOT_AI_TEST_SCENARIOS.md` (есть группы `BLIND/PREMIUM/JOKER/PHASE` и concrete drafts v0);
