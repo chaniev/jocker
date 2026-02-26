@@ -259,7 +259,11 @@ struct BotTurnCandidateRankingService {
             premium.opponentPremiumCandidatesSoFarCount - (premium.leftNeighborIsPremiumCandidateSoFar ? 1 : 0)
         )
         let otherOpponentsWeight = min(1.4, Double(otherOpponentCandidates) * 0.55)
-        let denyWeight = (leftNeighborWeight + otherOpponentsWeight) * evidenceWeight * endBlockWeight
+        let opponentStyleMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
+        let denyWeight = (leftNeighborWeight + otherOpponentsWeight) *
+            evidenceWeight *
+            endBlockWeight *
+            opponentStyleMultiplier
         guard denyWeight > 0 else { return 0.0 }
         let overbidRelaxation = context.trickDeltaToBidBeforeMove > 0 ? 1.20 : 1.0
 
@@ -270,6 +274,55 @@ struct BotTurnCandidateRankingService {
         // В dump-режиме уменьшаем привлекательность "безопасного проигрыша взятки",
         // если это может сохранять премиальную линию соседа слева.
         return -(1.0 - immediateWinProbability) * 12.0 * denyWeight * overbidRelaxation
+    }
+
+    /// Этап 6b (MVP): лёгкая калибровка anti-premium давления по наблюдаемому стилю.
+    /// Положительный multiplier усиливает `premiumDenyUtility` против дисциплинированного/
+    /// агрессивного соперника; при нулевой/слабой evidence эффект нейтральный.
+    private func opponentPremiumDenyPressureMultiplier(from matchContext: BotMatchContext) -> Double {
+        guard let opponents = matchContext.opponents else { return 1.0 }
+
+        let prioritizedSnapshots: [BotOpponentModel.OpponentSnapshot]
+        if let leftNeighborIndex = opponents.leftNeighborIndex,
+           let leftNeighborSnapshot = opponents.snapshot(for: leftNeighborIndex) {
+            prioritizedSnapshots = [leftNeighborSnapshot]
+        } else {
+            prioritizedSnapshots = opponents.snapshots
+        }
+        guard !prioritizedSnapshots.isEmpty else { return 1.0 }
+
+        let evidenceSaturationRounds = Double(max(1, min(matchContext.totalRoundsInBlock, 4)))
+        var weightedStyleSignal = 0.0
+        var totalWeight = 0.0
+
+        for snapshot in prioritizedSnapshots {
+            let observedRounds = max(0, snapshot.observedRounds)
+            guard observedRounds > 0 else { continue }
+
+            let evidenceWeight = min(1.0, Double(observedRounds) / evidenceSaturationRounds)
+            guard evidenceWeight > 0 else { continue }
+
+            let exact = min(1.0, max(0.0, snapshot.exactBidRate))
+            let over = min(1.0, max(0.0, snapshot.overbidRate))
+            let under = min(1.0, max(0.0, snapshot.underbidRate))
+            let blind = min(1.0, max(0.0, snapshot.blindBidRate))
+            let aggression = min(1.0, max(0.0, snapshot.averageBidAggression))
+
+            let disciplineSignal = exact - 0.5 * (over + under)
+            let aggressionSignal = aggression - 0.45
+            let blindPressureSignal = blind - 0.20
+            let styleSignal =
+                disciplineSignal * 0.22 +
+                aggressionSignal * 0.10 +
+                blindPressureSignal * 0.04
+
+            weightedStyleSignal += styleSignal * evidenceWeight
+            totalWeight += evidenceWeight
+        }
+
+        guard totalWeight > 0 else { return 1.0 }
+        let normalizedSignal = weightedStyleSignal / totalWeight
+        return min(1.25, max(0.85, 1.0 + normalizedSignal))
     }
 
     /// Этап 5 (MVP): контекстная оценка объявления ведущего джокера.
