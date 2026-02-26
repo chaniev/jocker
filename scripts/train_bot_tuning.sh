@@ -770,6 +770,30 @@ func logABValidationSet(
     let aVbPremiumAssistValues = runs.map { \$0.aVsB.averagePremiumAssistLoss }
     let bVaPremiumPenaltyValues = runs.map { \$0.bVsA.averagePremiumPenaltyTargetLoss }
     let aVbPremiumPenaltyValues = runs.map { \$0.aVsB.averagePremiumPenaltyTargetLoss }
+    let bVaPremiumCaptureRateValues = runs.map { \$0.bVsA.premiumCaptureRate }
+    let aVbPremiumCaptureRateValues = runs.map { \$0.aVsB.premiumCaptureRate }
+    let bVaBlindSuccessRateValues = runs.map { \$0.bVsA.blindSuccessRate }
+    let aVbBlindSuccessRateValues = runs.map { \$0.aVsB.blindSuccessRate }
+    let bVaJokerWishWinRateValues = runs.map { \$0.bVsA.jokerWishWinRate }
+    let aVbJokerWishWinRateValues = runs.map { \$0.aVsB.jokerWishWinRate }
+    let bVaEarlyJokerSpendRateValues = runs.map { \$0.bVsA.earlyJokerSpendRate }
+    let aVbEarlyJokerSpendRateValues = runs.map { \$0.aVsB.earlyJokerSpendRate }
+    let bVaPenaltyTargetRateValues = runs.map { \$0.bVsA.penaltyTargetRate }
+    let aVbPenaltyTargetRateValues = runs.map { \$0.aVsB.penaltyTargetRate }
+    let bVaBidAccuracyRateValues = runs.map { \$0.bVsA.bidAccuracyRate }
+    let aVbBidAccuracyRateValues = runs.map { \$0.aVsB.bidAccuracyRate }
+    let bVaOverbidRateValues = runs.map { \$0.bVsA.overbidRate }
+    let aVbOverbidRateValues = runs.map { \$0.aVsB.overbidRate }
+    let bVaBlindBidRateBlock4Values = runs.map { \$0.bVsA.blindBidRateBlock4 }
+    let aVbBlindBidRateBlock4Values = runs.map { \$0.aVsB.blindBidRateBlock4 }
+    let bVaAverageBlindBidSizeValues = runs.map { \$0.bVsA.averageBlindBidSize }
+    let aVbAverageBlindBidSizeValues = runs.map { \$0.aVsB.averageBlindBidSize }
+    let bVaBlindBidWhenBehindRateValues = runs.map { \$0.bVsA.blindBidWhenBehindRate }
+    let aVbBlindBidWhenBehindRateValues = runs.map { \$0.aVsB.blindBidWhenBehindRate }
+    let bVaBlindBidWhenLeadingRateValues = runs.map { \$0.bVsA.blindBidWhenLeadingRate }
+    let aVbBlindBidWhenLeadingRateValues = runs.map { \$0.aVsB.blindBidWhenLeadingRate }
+    let bVaEarlyLeadWishJokerRateValues = runs.map { \$0.bVsA.earlyLeadWishJokerRate }
+    let aVbEarlyLeadWishJokerRateValues = runs.map { \$0.aVsB.earlyLeadWishJokerRate }
     let fitnessDeltaValues = zip(bVaFitnessValues, aVbFitnessValues).map { pair in pair.0 - pair.1 }
     let winRateDeltaValues = zip(bVaWinRateValues, aVbWinRateValues).map { pair in pair.0 - pair.1 }
     let scoreDiffDeltaValues = zip(bVaScoreDiffValues, aVbScoreDiffValues).map { pair in pair.0 - pair.1 }
@@ -778,6 +802,18 @@ func logABValidationSet(
     let noTrumpControlDeltaValues = zip(bVaNoTrumpControlValues, aVbNoTrumpControlValues).map { pair in pair.0 - pair.1 }
     let premiumAssistDeltaValues = zip(bVaPremiumAssistValues, aVbPremiumAssistValues).map { pair in pair.0 - pair.1 }
     let premiumPenaltyDeltaValues = zip(bVaPremiumPenaltyValues, aVbPremiumPenaltyValues).map { pair in pair.0 - pair.1 }
+    let premiumCaptureRateDeltaValues = zip(bVaPremiumCaptureRateValues, aVbPremiumCaptureRateValues).map { pair in pair.0 - pair.1 }
+    let blindSuccessRateDeltaValues = zip(bVaBlindSuccessRateValues, aVbBlindSuccessRateValues).map { pair in pair.0 - pair.1 }
+    let jokerWishWinRateDeltaValues = zip(bVaJokerWishWinRateValues, aVbJokerWishWinRateValues).map { pair in pair.0 - pair.1 }
+    let earlyJokerSpendRateDeltaValues = zip(bVaEarlyJokerSpendRateValues, aVbEarlyJokerSpendRateValues).map { pair in pair.0 - pair.1 }
+    let penaltyTargetRateDeltaValues = zip(bVaPenaltyTargetRateValues, aVbPenaltyTargetRateValues).map { pair in pair.0 - pair.1 }
+    let bidAccuracyRateDeltaValues = zip(bVaBidAccuracyRateValues, aVbBidAccuracyRateValues).map { pair in pair.0 - pair.1 }
+    let overbidRateDeltaValues = zip(bVaOverbidRateValues, aVbOverbidRateValues).map { pair in pair.0 - pair.1 }
+    let blindBidRateBlock4DeltaValues = zip(bVaBlindBidRateBlock4Values, aVbBlindBidRateBlock4Values).map { pair in pair.0 - pair.1 }
+    let averageBlindBidSizeDeltaValues = zip(bVaAverageBlindBidSizeValues, aVbAverageBlindBidSizeValues).map { pair in pair.0 - pair.1 }
+    let blindBidWhenBehindRateDeltaValues = zip(bVaBlindBidWhenBehindRateValues, aVbBlindBidWhenBehindRateValues).map { pair in pair.0 - pair.1 }
+    let blindBidWhenLeadingRateDeltaValues = zip(bVaBlindBidWhenLeadingRateValues, aVbBlindBidWhenLeadingRateValues).map { pair in pair.0 - pair.1 }
+    let earlyLeadWishJokerRateDeltaValues = zip(bVaEarlyLeadWishJokerRateValues, aVbEarlyLeadWishJokerRateValues).map { pair in pair.0 - pair.1 }
 
     var fitnessBWins = 0
     var fitnessAWins = 0
@@ -838,6 +874,18 @@ func logABValidationSet(
     print("summary.mean noTrumpControlUnderbidLoss BvA=\\(fmt(average(bVaNoTrumpControlValues))) AvB=\\(fmt(average(aVbNoTrumpControlValues))) Badv=\\(fmt(average(noTrumpControlDeltaValues)))")
     print("summary.mean premiumAssistLoss BvA=\\(fmt(average(bVaPremiumAssistValues))) AvB=\\(fmt(average(aVbPremiumAssistValues))) Badv=\\(fmt(average(premiumAssistDeltaValues)))")
     print("summary.mean premiumPenaltyTargetLoss BvA=\\(fmt(average(bVaPremiumPenaltyValues))) AvB=\\(fmt(average(aVbPremiumPenaltyValues))) Badv=\\(fmt(average(premiumPenaltyDeltaValues)))")
+    print("summary.mean premiumCaptureRate BvA=\\(fmt(average(bVaPremiumCaptureRateValues))) AvB=\\(fmt(average(aVbPremiumCaptureRateValues))) Badv=\\(fmt(average(premiumCaptureRateDeltaValues)))")
+    print("summary.mean blindSuccessRate BvA=\\(fmt(average(bVaBlindSuccessRateValues))) AvB=\\(fmt(average(aVbBlindSuccessRateValues))) Badv=\\(fmt(average(blindSuccessRateDeltaValues)))")
+    print("summary.mean jokerWishWinRate BvA=\\(fmt(average(bVaJokerWishWinRateValues))) AvB=\\(fmt(average(aVbJokerWishWinRateValues))) Badv=\\(fmt(average(jokerWishWinRateDeltaValues)))")
+    print("summary.mean earlyJokerSpendRate BvA=\\(fmt(average(bVaEarlyJokerSpendRateValues))) AvB=\\(fmt(average(aVbEarlyJokerSpendRateValues))) Badv=\\(fmt(average(earlyJokerSpendRateDeltaValues)))")
+    print("summary.mean penaltyTargetRate BvA=\\(fmt(average(bVaPenaltyTargetRateValues))) AvB=\\(fmt(average(aVbPenaltyTargetRateValues))) Badv=\\(fmt(average(penaltyTargetRateDeltaValues)))")
+    print("summary.mean bidAccuracyRate BvA=\\(fmt(average(bVaBidAccuracyRateValues))) AvB=\\(fmt(average(aVbBidAccuracyRateValues))) Badv=\\(fmt(average(bidAccuracyRateDeltaValues)))")
+    print("summary.mean overbidRate BvA=\\(fmt(average(bVaOverbidRateValues))) AvB=\\(fmt(average(aVbOverbidRateValues))) Badv=\\(fmt(average(overbidRateDeltaValues)))")
+    print("summary.mean blindBidRateBlock4 BvA=\\(fmt(average(bVaBlindBidRateBlock4Values))) AvB=\\(fmt(average(aVbBlindBidRateBlock4Values))) Badv=\\(fmt(average(blindBidRateBlock4DeltaValues)))")
+    print("summary.mean averageBlindBidSize BvA=\\(fmt(average(bVaAverageBlindBidSizeValues))) AvB=\\(fmt(average(aVbAverageBlindBidSizeValues))) Badv=\\(fmt(average(averageBlindBidSizeDeltaValues)))")
+    print("summary.mean blindBidWhenBehindRate BvA=\\(fmt(average(bVaBlindBidWhenBehindRateValues))) AvB=\\(fmt(average(aVbBlindBidWhenBehindRateValues))) Badv=\\(fmt(average(blindBidWhenBehindRateDeltaValues)))")
+    print("summary.mean blindBidWhenLeadingRate BvA=\\(fmt(average(bVaBlindBidWhenLeadingRateValues))) AvB=\\(fmt(average(aVbBlindBidWhenLeadingRateValues))) Badv=\\(fmt(average(blindBidWhenLeadingRateDeltaValues)))")
+    print("summary.mean earlyLeadWishJokerRate BvA=\\(fmt(average(bVaEarlyLeadWishJokerRateValues))) AvB=\\(fmt(average(aVbEarlyLeadWishJokerRateValues))) Badv=\\(fmt(average(earlyLeadWishJokerRateDeltaValues)))")
     print("winsBySeed fitness B/A/tie=\\(fitnessBWins)/\\(fitnessAWins)/\\(fitnessTies)")
     print("winsBySeed winRate B/A/tie=\\(winRateBWins)/\\(winRateAWins)/\\(winRateTies)")
     print("winsBySeed scoreDiff B/A/tie=\\(scoreDiffBWins)/\\(scoreDiffAWins)/\\(scoreDiffTies)")
@@ -986,6 +1034,18 @@ if seedRuns.count > 1 {
     print("ensembleAverageBestNoTrumpControlUnderbidLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAverageNoTrumpControlUnderbidLoss })))")
     print("ensembleAverageBestPremiumAssistLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAveragePremiumAssistLoss })))")
     print("ensembleAverageBestPremiumPenaltyTargetLoss=\\(fmt(average(seedRuns.map { \$0.result.bestAveragePremiumPenaltyTargetLoss })))")
+    print("ensembleAverageBestPremiumCaptureRate=\\(fmt(average(seedRuns.map { \$0.result.bestPremiumCaptureRate })))")
+    print("ensembleAverageBestBlindSuccessRate=\\(fmt(average(seedRuns.map { \$0.result.bestBlindSuccessRate })))")
+    print("ensembleAverageBestJokerWishWinRate=\\(fmt(average(seedRuns.map { \$0.result.bestJokerWishWinRate })))")
+    print("ensembleAverageBestEarlyJokerSpendRate=\\(fmt(average(seedRuns.map { \$0.result.bestEarlyJokerSpendRate })))")
+    print("ensembleAverageBestPenaltyTargetRate=\\(fmt(average(seedRuns.map { \$0.result.bestPenaltyTargetRate })))")
+    print("ensembleAverageBestBidAccuracyRate=\\(fmt(average(seedRuns.map { \$0.result.bestBidAccuracyRate })))")
+    print("ensembleAverageBestOverbidRate=\\(fmt(average(seedRuns.map { \$0.result.bestOverbidRate })))")
+    print("ensembleAverageBestBlindBidRateBlock4=\\(fmt(average(seedRuns.map { \$0.result.bestBlindBidRateBlock4 })))")
+    print("ensembleAverageBestAverageBlindBidSize=\\(fmt(average(seedRuns.map { \$0.result.bestAverageBlindBidSize })))")
+    print("ensembleAverageBestBlindBidWhenBehindRate=\\(fmt(average(seedRuns.map { \$0.result.bestBlindBidWhenBehindRate })))")
+    print("ensembleAverageBestBlindBidWhenLeadingRate=\\(fmt(average(seedRuns.map { \$0.result.bestBlindBidWhenLeadingRate })))")
+    print("ensembleAverageBestEarlyLeadWishJokerRate=\\(fmt(average(seedRuns.map { \$0.result.bestEarlyLeadWishJokerRate })))")
 }
 print("selectedSeed=\\(selectedRun.seed)")
 print("baselineFitness=\\(fmt(selectedRun.result.baselineFitness))")
@@ -1007,6 +1067,30 @@ print("baselineAveragePremiumAssistLoss=\\(fmt(selectedRun.result.baselineAverag
 print("bestAveragePremiumAssistLoss=\\(fmt(selectedRun.result.bestAveragePremiumAssistLoss))")
 print("baselineAveragePremiumPenaltyTargetLoss=\\(fmt(selectedRun.result.baselineAveragePremiumPenaltyTargetLoss))")
 print("bestAveragePremiumPenaltyTargetLoss=\\(fmt(selectedRun.result.bestAveragePremiumPenaltyTargetLoss))")
+print("baselinePremiumCaptureRate=\\(fmt(selectedRun.result.baselinePremiumCaptureRate))")
+print("bestPremiumCaptureRate=\\(fmt(selectedRun.result.bestPremiumCaptureRate))")
+print("baselineBlindSuccessRate=\\(fmt(selectedRun.result.baselineBlindSuccessRate))")
+print("bestBlindSuccessRate=\\(fmt(selectedRun.result.bestBlindSuccessRate))")
+print("baselineJokerWishWinRate=\\(fmt(selectedRun.result.baselineJokerWishWinRate))")
+print("bestJokerWishWinRate=\\(fmt(selectedRun.result.bestJokerWishWinRate))")
+print("baselineEarlyJokerSpendRate=\\(fmt(selectedRun.result.baselineEarlyJokerSpendRate))")
+print("bestEarlyJokerSpendRate=\\(fmt(selectedRun.result.bestEarlyJokerSpendRate))")
+print("baselinePenaltyTargetRate=\\(fmt(selectedRun.result.baselinePenaltyTargetRate))")
+print("bestPenaltyTargetRate=\\(fmt(selectedRun.result.bestPenaltyTargetRate))")
+print("baselineBidAccuracyRate=\\(fmt(selectedRun.result.baselineBidAccuracyRate))")
+print("bestBidAccuracyRate=\\(fmt(selectedRun.result.bestBidAccuracyRate))")
+print("baselineOverbidRate=\\(fmt(selectedRun.result.baselineOverbidRate))")
+print("bestOverbidRate=\\(fmt(selectedRun.result.bestOverbidRate))")
+print("baselineBlindBidRateBlock4=\\(fmt(selectedRun.result.baselineBlindBidRateBlock4))")
+print("bestBlindBidRateBlock4=\\(fmt(selectedRun.result.bestBlindBidRateBlock4))")
+print("baselineAverageBlindBidSize=\\(fmt(selectedRun.result.baselineAverageBlindBidSize))")
+print("bestAverageBlindBidSize=\\(fmt(selectedRun.result.bestAverageBlindBidSize))")
+print("baselineBlindBidWhenBehindRate=\\(fmt(selectedRun.result.baselineBlindBidWhenBehindRate))")
+print("bestBlindBidWhenBehindRate=\\(fmt(selectedRun.result.bestBlindBidWhenBehindRate))")
+print("baselineBlindBidWhenLeadingRate=\\(fmt(selectedRun.result.baselineBlindBidWhenLeadingRate))")
+print("bestBlindBidWhenLeadingRate=\\(fmt(selectedRun.result.bestBlindBidWhenLeadingRate))")
+print("baselineEarlyLeadWishJokerRate=\\(fmt(selectedRun.result.baselineEarlyLeadWishJokerRate))")
+print("bestEarlyLeadWishJokerRate=\\(fmt(selectedRun.result.bestEarlyLeadWishJokerRate))")
 print("generationBestFitness=[\\(selectedRun.result.generationBestFitness.map(fmt).joined(separator: ", "))]")
 print("")
 print("=== Suggested Tuned Values ===")

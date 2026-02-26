@@ -168,6 +168,30 @@ enum BotSelfPlayEvolutionEngine {
         let bestAveragePremiumAssistLoss: Double
         let baselineAveragePremiumPenaltyTargetLoss: Double
         let bestAveragePremiumPenaltyTargetLoss: Double
+        let baselinePremiumCaptureRate: Double
+        let bestPremiumCaptureRate: Double
+        let baselineBlindSuccessRate: Double
+        let bestBlindSuccessRate: Double
+        let baselineJokerWishWinRate: Double
+        let bestJokerWishWinRate: Double
+        let baselineEarlyJokerSpendRate: Double
+        let bestEarlyJokerSpendRate: Double
+        let baselinePenaltyTargetRate: Double
+        let bestPenaltyTargetRate: Double
+        let baselineBidAccuracyRate: Double
+        let bestBidAccuracyRate: Double
+        let baselineOverbidRate: Double
+        let bestOverbidRate: Double
+        let baselineBlindBidRateBlock4: Double
+        let bestBlindBidRateBlock4: Double
+        let baselineAverageBlindBidSize: Double
+        let bestAverageBlindBidSize: Double
+        let baselineBlindBidWhenBehindRate: Double
+        let bestBlindBidWhenBehindRate: Double
+        let baselineBlindBidWhenLeadingRate: Double
+        let bestBlindBidWhenLeadingRate: Double
+        let baselineEarlyLeadWishJokerRate: Double
+        let bestEarlyLeadWishJokerRate: Double
 
         var improvement: Double {
             return bestFitness - baselineFitness
@@ -184,6 +208,18 @@ enum BotSelfPlayEvolutionEngine {
         let averageNoTrumpControlUnderbidLoss: Double
         let averagePremiumAssistLoss: Double
         let averagePremiumPenaltyTargetLoss: Double
+        let premiumCaptureRate: Double
+        let blindSuccessRate: Double
+        let jokerWishWinRate: Double
+        let earlyJokerSpendRate: Double
+        let penaltyTargetRate: Double
+        let bidAccuracyRate: Double
+        let overbidRate: Double
+        let blindBidRateBlock4: Double
+        let averageBlindBidSize: Double
+        let blindBidWhenBehindRate: Double
+        let blindBidWhenLeadingRate: Double
+        let earlyLeadWishJokerRate: Double
     }
 
     /// Событие прогресса эволюции self-play.
@@ -449,7 +485,31 @@ enum BotSelfPlayEvolutionEngine {
             baselineAveragePremiumAssistLoss: baselineBreakdown.averagePremiumAssistLoss,
             bestAveragePremiumAssistLoss: bestBreakdown.averagePremiumAssistLoss,
             baselineAveragePremiumPenaltyTargetLoss: baselineBreakdown.averagePremiumPenaltyTargetLoss,
-            bestAveragePremiumPenaltyTargetLoss: bestBreakdown.averagePremiumPenaltyTargetLoss
+            bestAveragePremiumPenaltyTargetLoss: bestBreakdown.averagePremiumPenaltyTargetLoss,
+            baselinePremiumCaptureRate: baselineBreakdown.premiumCaptureRate,
+            bestPremiumCaptureRate: bestBreakdown.premiumCaptureRate,
+            baselineBlindSuccessRate: baselineBreakdown.blindSuccessRate,
+            bestBlindSuccessRate: bestBreakdown.blindSuccessRate,
+            baselineJokerWishWinRate: baselineBreakdown.jokerWishWinRate,
+            bestJokerWishWinRate: bestBreakdown.jokerWishWinRate,
+            baselineEarlyJokerSpendRate: baselineBreakdown.earlyJokerSpendRate,
+            bestEarlyJokerSpendRate: bestBreakdown.earlyJokerSpendRate,
+            baselinePenaltyTargetRate: baselineBreakdown.penaltyTargetRate,
+            bestPenaltyTargetRate: bestBreakdown.penaltyTargetRate,
+            baselineBidAccuracyRate: baselineBreakdown.bidAccuracyRate,
+            bestBidAccuracyRate: bestBreakdown.bidAccuracyRate,
+            baselineOverbidRate: baselineBreakdown.overbidRate,
+            bestOverbidRate: bestBreakdown.overbidRate,
+            baselineBlindBidRateBlock4: baselineBreakdown.blindBidRateBlock4,
+            bestBlindBidRateBlock4: bestBreakdown.blindBidRateBlock4,
+            baselineAverageBlindBidSize: baselineBreakdown.averageBlindBidSize,
+            bestAverageBlindBidSize: bestBreakdown.averageBlindBidSize,
+            baselineBlindBidWhenBehindRate: baselineBreakdown.blindBidWhenBehindRate,
+            bestBlindBidWhenBehindRate: bestBreakdown.blindBidWhenBehindRate,
+            baselineBlindBidWhenLeadingRate: baselineBreakdown.blindBidWhenLeadingRate,
+            bestBlindBidWhenLeadingRate: bestBreakdown.blindBidWhenLeadingRate,
+            baselineEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
+            bestEarlyLeadWishJokerRate: bestBreakdown.earlyLeadWishJokerRate
         )
     }
 
@@ -467,6 +527,18 @@ enum BotSelfPlayEvolutionEngine {
         let averageNoTrumpControlUnderbidLoss: Double
         let averagePremiumAssistLoss: Double
         let averagePremiumPenaltyTargetLoss: Double
+        let premiumCaptureRate: Double
+        let blindSuccessRate: Double
+        let jokerWishWinRate: Double
+        let earlyJokerSpendRate: Double
+        let penaltyTargetRate: Double
+        let bidAccuracyRate: Double
+        let overbidRate: Double
+        let blindBidRateBlock4: Double
+        let averageBlindBidSize: Double
+        let blindBidWhenBehindRate: Double
+        let blindBidWhenLeadingRate: Double
+        let earlyLeadWishJokerRate: Double
 
         static let zero = FitnessBreakdown(
             fitness: 0.0,
@@ -476,7 +548,19 @@ enum BotSelfPlayEvolutionEngine {
             averageTrumpDensityUnderbidLoss: 0.0,
             averageNoTrumpControlUnderbidLoss: 0.0,
             averagePremiumAssistLoss: 0.0,
-            averagePremiumPenaltyTargetLoss: 0.0
+            averagePremiumPenaltyTargetLoss: 0.0,
+            premiumCaptureRate: 0.0,
+            blindSuccessRate: 0.0,
+            jokerWishWinRate: 0.0,
+            earlyJokerSpendRate: 0.0,
+            penaltyTargetRate: 0.0,
+            bidAccuracyRate: 0.0,
+            overbidRate: 0.0,
+            blindBidRateBlock4: 0.0,
+            averageBlindBidSize: 0.0,
+            blindBidWhenBehindRate: 0.0,
+            blindBidWhenLeadingRate: 0.0,
+            earlyLeadWishJokerRate: 0.0
         )
     }
 
@@ -560,6 +644,18 @@ enum BotSelfPlayEvolutionEngine {
         let noTrumpControlUnderbidLoss: Double
         let premiumAssistLoss: Double
         let premiumPenaltyTargetLoss: Double
+        let premiumCaptureRate: Double
+        let blindSuccessRate: Double
+        let jokerWishWinRate: Double
+        let earlyJokerSpendRate: Double
+        let penaltyTargetRate: Double
+        let bidAccuracyRate: Double
+        let overbidRate: Double
+        let blindBidRateBlock4: Double
+        let averageBlindBidSize: Double
+        let blindBidWhenBehindRate: Double
+        let blindBidWhenLeadingRate: Double
+        let earlyLeadWishJokerRate: Double
     }
 
     private struct FitnessAccumulator {
@@ -570,6 +666,18 @@ enum BotSelfPlayEvolutionEngine {
         private var totalNoTrumpControlUnderbidLoss = 0.0
         private var totalPremiumAssistLoss = 0.0
         private var totalPremiumPenaltyTargetLoss = 0.0
+        private var totalPremiumCaptureRate = 0.0
+        private var totalBlindSuccessRate = 0.0
+        private var totalJokerWishWinRate = 0.0
+        private var totalEarlyJokerSpendRate = 0.0
+        private var totalPenaltyTargetRate = 0.0
+        private var totalBidAccuracyRate = 0.0
+        private var totalOverbidRate = 0.0
+        private var totalBlindBidRateBlock4 = 0.0
+        private var totalAverageBlindBidSize = 0.0
+        private var totalBlindBidWhenBehindRate = 0.0
+        private var totalBlindBidWhenLeadingRate = 0.0
+        private var totalEarlyLeadWishJokerRate = 0.0
         private var samplesCount = 0
 
         mutating func append(_ metrics: CandidateSeatMetrics) {
@@ -580,6 +688,18 @@ enum BotSelfPlayEvolutionEngine {
             totalNoTrumpControlUnderbidLoss += metrics.noTrumpControlUnderbidLoss
             totalPremiumAssistLoss += metrics.premiumAssistLoss
             totalPremiumPenaltyTargetLoss += metrics.premiumPenaltyTargetLoss
+            totalPremiumCaptureRate += metrics.premiumCaptureRate
+            totalBlindSuccessRate += metrics.blindSuccessRate
+            totalJokerWishWinRate += metrics.jokerWishWinRate
+            totalEarlyJokerSpendRate += metrics.earlyJokerSpendRate
+            totalPenaltyTargetRate += metrics.penaltyTargetRate
+            totalBidAccuracyRate += metrics.bidAccuracyRate
+            totalOverbidRate += metrics.overbidRate
+            totalBlindBidRateBlock4 += metrics.blindBidRateBlock4
+            totalAverageBlindBidSize += metrics.averageBlindBidSize
+            totalBlindBidWhenBehindRate += metrics.blindBidWhenBehindRate
+            totalBlindBidWhenLeadingRate += metrics.blindBidWhenLeadingRate
+            totalEarlyLeadWishJokerRate += metrics.earlyLeadWishJokerRate
             samplesCount += 1
         }
 
@@ -594,6 +714,18 @@ enum BotSelfPlayEvolutionEngine {
             let averageNoTrumpControlUnderbidLoss = totalNoTrumpControlUnderbidLoss / denominator
             let averagePremiumAssistLoss = totalPremiumAssistLoss / denominator
             let averagePremiumPenaltyTargetLoss = totalPremiumPenaltyTargetLoss / denominator
+            let premiumCaptureRate = totalPremiumCaptureRate / denominator
+            let blindSuccessRate = totalBlindSuccessRate / denominator
+            let jokerWishWinRate = totalJokerWishWinRate / denominator
+            let earlyJokerSpendRate = totalEarlyJokerSpendRate / denominator
+            let penaltyTargetRate = totalPenaltyTargetRate / denominator
+            let bidAccuracyRate = totalBidAccuracyRate / denominator
+            let overbidRate = totalOverbidRate / denominator
+            let blindBidRateBlock4 = totalBlindBidRateBlock4 / denominator
+            let averageBlindBidSize = totalAverageBlindBidSize / denominator
+            let blindBidWhenBehindRate = totalBlindBidWhenBehindRate / denominator
+            let blindBidWhenLeadingRate = totalBlindBidWhenLeadingRate / denominator
+            let earlyLeadWishJokerRate = totalEarlyLeadWishJokerRate / denominator
             let fitness = fitnessScoring.fitness(
                 winRate: averageWinRate,
                 averageScoreDiff: averageScoreDiff,
@@ -612,7 +744,19 @@ enum BotSelfPlayEvolutionEngine {
                 averageTrumpDensityUnderbidLoss: averageTrumpDensityUnderbidLoss,
                 averageNoTrumpControlUnderbidLoss: averageNoTrumpControlUnderbidLoss,
                 averagePremiumAssistLoss: averagePremiumAssistLoss,
-                averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+                averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss,
+                premiumCaptureRate: premiumCaptureRate,
+                blindSuccessRate: blindSuccessRate,
+                jokerWishWinRate: jokerWishWinRate,
+                earlyJokerSpendRate: earlyJokerSpendRate,
+                penaltyTargetRate: penaltyTargetRate,
+                bidAccuracyRate: bidAccuracyRate,
+                overbidRate: overbidRate,
+                blindBidRateBlock4: blindBidRateBlock4,
+                averageBlindBidSize: averageBlindBidSize,
+                blindBidWhenBehindRate: blindBidWhenBehindRate,
+                blindBidWhenLeadingRate: blindBidWhenLeadingRate,
+                earlyLeadWishJokerRate: earlyLeadWishJokerRate
             )
         }
     }
@@ -658,6 +802,11 @@ enum BotSelfPlayEvolutionEngine {
         return values[index]
     }
 
+    private static func ratio(_ numerator: Double, _ denominator: Double) -> Double {
+        guard denominator > 0 else { return 0.0 }
+        return numerator / denominator
+    }
+
     private static func candidateSeatMetrics(
         from gameOutcome: SimulatedGameOutcome,
         candidateSeat: Int,
@@ -689,7 +838,19 @@ enum BotSelfPlayEvolutionEngine {
             premiumPenaltyTargetLoss: doubleMetricValue(
                 gameOutcome.premiumPenaltyTargetLosses,
                 at: candidateSeat
-            )
+            ),
+            premiumCaptureRate: doubleMetricValue(gameOutcome.premiumCaptureRates, at: candidateSeat),
+            blindSuccessRate: doubleMetricValue(gameOutcome.blindSuccessRates, at: candidateSeat),
+            jokerWishWinRate: doubleMetricValue(gameOutcome.jokerWishWinRates, at: candidateSeat),
+            earlyJokerSpendRate: doubleMetricValue(gameOutcome.earlyJokerSpendRates, at: candidateSeat),
+            penaltyTargetRate: doubleMetricValue(gameOutcome.penaltyTargetRates, at: candidateSeat),
+            bidAccuracyRate: doubleMetricValue(gameOutcome.bidAccuracyRates, at: candidateSeat),
+            overbidRate: doubleMetricValue(gameOutcome.overbidRates, at: candidateSeat),
+            blindBidRateBlock4: doubleMetricValue(gameOutcome.blindBidRatesBlock4, at: candidateSeat),
+            averageBlindBidSize: doubleMetricValue(gameOutcome.averageBlindBidSizes, at: candidateSeat),
+            blindBidWhenBehindRate: doubleMetricValue(gameOutcome.blindBidWhenBehindRates, at: candidateSeat),
+            blindBidWhenLeadingRate: doubleMetricValue(gameOutcome.blindBidWhenLeadingRates, at: candidateSeat),
+            earlyLeadWishJokerRate: doubleMetricValue(gameOutcome.earlyLeadWishJokerRates, at: candidateSeat)
         )
     }
 
@@ -744,7 +905,19 @@ enum BotSelfPlayEvolutionEngine {
             averageTrumpDensityUnderbidLoss: breakdown.averageTrumpDensityUnderbidLoss,
             averageNoTrumpControlUnderbidLoss: breakdown.averageNoTrumpControlUnderbidLoss,
             averagePremiumAssistLoss: breakdown.averagePremiumAssistLoss,
-            averagePremiumPenaltyTargetLoss: breakdown.averagePremiumPenaltyTargetLoss
+            averagePremiumPenaltyTargetLoss: breakdown.averagePremiumPenaltyTargetLoss,
+            premiumCaptureRate: breakdown.premiumCaptureRate,
+            blindSuccessRate: breakdown.blindSuccessRate,
+            jokerWishWinRate: breakdown.jokerWishWinRate,
+            earlyJokerSpendRate: breakdown.earlyJokerSpendRate,
+            penaltyTargetRate: breakdown.penaltyTargetRate,
+            bidAccuracyRate: breakdown.bidAccuracyRate,
+            overbidRate: breakdown.overbidRate,
+            blindBidRateBlock4: breakdown.blindBidRateBlock4,
+            averageBlindBidSize: breakdown.averageBlindBidSize,
+            blindBidWhenBehindRate: breakdown.blindBidWhenBehindRate,
+            blindBidWhenLeadingRate: breakdown.blindBidWhenLeadingRate,
+            earlyLeadWishJokerRate: breakdown.earlyLeadWishJokerRate
         )
     }
 
@@ -868,6 +1041,10 @@ enum BotSelfPlayEvolutionEngine {
     private struct PreDealBlindContext {
         let lockedBids: [Int]
         let blindSelections: [Bool]
+        let eligibleWhenBehind: [Bool]
+        let chosenWhenBehind: [Bool]
+        let eligibleWhenLeading: [Bool]
+        let chosenWhenLeading: [Bool]
     }
 
     private struct SimulatedGameOutcome {
@@ -877,6 +1054,18 @@ enum BotSelfPlayEvolutionEngine {
         let noTrumpControlUnderbidLosses: [Double]
         let premiumAssistLosses: [Double]
         let premiumPenaltyTargetLosses: [Double]
+        let premiumCaptureRates: [Double]
+        let blindSuccessRates: [Double]
+        let jokerWishWinRates: [Double]
+        let earlyJokerSpendRates: [Double]
+        let penaltyTargetRates: [Double]
+        let bidAccuracyRates: [Double]
+        let overbidRates: [Double]
+        let blindBidRatesBlock4: [Double]
+        let averageBlindBidSizes: [Double]
+        let blindBidWhenBehindRates: [Double]
+        let blindBidWhenLeadingRates: [Double]
+        let earlyLeadWishJokerRates: [Double]
     }
 
     private struct SeatServiceBundle {
@@ -892,6 +1081,26 @@ enum BotSelfPlayEvolutionEngine {
         private(set) var noTrumpControlUnderbidLosses: [Double]
         private(set) var premiumAssistLosses: [Double]
         private(set) var premiumPenaltyTargetLosses: [Double]
+        private var totalRoundsCount: [Int]
+        private var exactBidRoundsCount: [Int]
+        private var overbidRoundsCount: [Int]
+        private var totalBlindRoundsCount: [Int]
+        private var successfulBlindRoundsCount: [Int]
+        private var totalBlocksCount: [Int]
+        private var premiumCapturedBlocksCount: [Int]
+        private var penaltyTargetBlocksCount: [Int]
+        private var totalWishLeadDeclarationCounts: [Int]
+        private var winningWishLeadDeclarationCounts: [Int]
+        private var totalJokerPlayCounts: [Int]
+        private var earlyJokerPlayCounts: [Int]
+        private var totalEarlyLeadWishCounts: [Int]
+        private var totalDealsBlock4Count: [Int]
+        private var blindDealsBlock4Count: [Int]
+        private var totalBlindBidAmount: [Int]
+        private var blindOpportunitiesWhenBehindCount: [Int]
+        private var blindChosenWhenBehindCount: [Int]
+        private var blindOpportunitiesWhenLeadingCount: [Int]
+        private var blindChosenWhenLeadingCount: [Int]
 
         init(playerCount: Int) {
             self.totalScores = Array(repeating: 0, count: playerCount)
@@ -900,6 +1109,26 @@ enum BotSelfPlayEvolutionEngine {
             self.noTrumpControlUnderbidLosses = Array(repeating: 0.0, count: playerCount)
             self.premiumAssistLosses = Array(repeating: 0.0, count: playerCount)
             self.premiumPenaltyTargetLosses = Array(repeating: 0.0, count: playerCount)
+            self.totalRoundsCount = Array(repeating: 0, count: playerCount)
+            self.exactBidRoundsCount = Array(repeating: 0, count: playerCount)
+            self.overbidRoundsCount = Array(repeating: 0, count: playerCount)
+            self.totalBlindRoundsCount = Array(repeating: 0, count: playerCount)
+            self.successfulBlindRoundsCount = Array(repeating: 0, count: playerCount)
+            self.totalBlocksCount = Array(repeating: 0, count: playerCount)
+            self.premiumCapturedBlocksCount = Array(repeating: 0, count: playerCount)
+            self.penaltyTargetBlocksCount = Array(repeating: 0, count: playerCount)
+            self.totalWishLeadDeclarationCounts = Array(repeating: 0, count: playerCount)
+            self.winningWishLeadDeclarationCounts = Array(repeating: 0, count: playerCount)
+            self.totalJokerPlayCounts = Array(repeating: 0, count: playerCount)
+            self.earlyJokerPlayCounts = Array(repeating: 0, count: playerCount)
+            self.totalEarlyLeadWishCounts = Array(repeating: 0, count: playerCount)
+            self.totalDealsBlock4Count = Array(repeating: 0, count: playerCount)
+            self.blindDealsBlock4Count = Array(repeating: 0, count: playerCount)
+            self.totalBlindBidAmount = Array(repeating: 0, count: playerCount)
+            self.blindOpportunitiesWhenBehindCount = Array(repeating: 0, count: playerCount)
+            self.blindChosenWhenBehindCount = Array(repeating: 0, count: playerCount)
+            self.blindOpportunitiesWhenLeadingCount = Array(repeating: 0, count: playerCount)
+            self.blindChosenWhenLeadingCount = Array(repeating: 0, count: playerCount)
         }
 
         mutating func evaluateRound(
@@ -930,6 +1159,35 @@ enum BotSelfPlayEvolutionEngine {
                     isBlind: isBlind
                 )
                 roundResults.append(roundResult)
+
+                totalRoundsCount[playerIndex] += 1
+                if roundResult.bidMatched {
+                    exactBidRoundsCount[playerIndex] += 1
+                } else if roundResult.tricksTaken > roundResult.bid {
+                    overbidRoundsCount[playerIndex] += 1
+                }
+                if isBlind {
+                    totalBlindRoundsCount[playerIndex] += 1
+                    totalBlindBidAmount[playerIndex] += roundResult.bid
+                    if roundResult.bidMatched {
+                        successfulBlindRoundsCount[playerIndex] += 1
+                    }
+                }
+                if playOutcome.totalWishLeadDeclarationCounts.indices.contains(playerIndex) {
+                    totalWishLeadDeclarationCounts[playerIndex] += playOutcome.totalWishLeadDeclarationCounts[playerIndex]
+                }
+                if playOutcome.winningWishLeadDeclarationCounts.indices.contains(playerIndex) {
+                    winningWishLeadDeclarationCounts[playerIndex] += playOutcome.winningWishLeadDeclarationCounts[playerIndex]
+                }
+                if playOutcome.totalJokerPlayCounts.indices.contains(playerIndex) {
+                    totalJokerPlayCounts[playerIndex] += playOutcome.totalJokerPlayCounts[playerIndex]
+                }
+                if playOutcome.earlyJokerPlayCounts.indices.contains(playerIndex) {
+                    earlyJokerPlayCounts[playerIndex] += playOutcome.earlyJokerPlayCounts[playerIndex]
+                }
+                if playOutcome.nonFinalLeadWishCounts.indices.contains(playerIndex) {
+                    totalEarlyLeadWishCounts[playerIndex] += playOutcome.nonFinalLeadWishCounts[playerIndex]
+                }
 
                 underbidLosses[playerIndex] += BotSelfPlayEvolutionEngine.underbidLoss(
                     cardsInRound: cardsInRound,
@@ -984,10 +1242,67 @@ enum BotSelfPlayEvolutionEngine {
             }
         }
 
+        mutating func recordBlock4BlindExposure(
+            blindSelections: [Bool]
+        ) {
+            let playerCount = min(blindSelections.count, totalDealsBlock4Count.count)
+            for playerIndex in 0..<playerCount {
+                totalDealsBlock4Count[playerIndex] += 1
+                if blindSelections[playerIndex] {
+                    blindDealsBlock4Count[playerIndex] += 1
+                }
+            }
+        }
+
+        mutating func recordBlindChoiceContext(
+            eligibleWhenBehind: [Bool],
+            chosenWhenBehind: [Bool],
+            eligibleWhenLeading: [Bool],
+            chosenWhenLeading: [Bool]
+        ) {
+            let counts = [
+                eligibleWhenBehind.count,
+                chosenWhenBehind.count,
+                eligibleWhenLeading.count,
+                chosenWhenLeading.count,
+                blindOpportunitiesWhenBehindCount.count
+            ]
+            let playerCount = counts.min() ?? 0
+            guard playerCount > 0 else { return }
+
+            for playerIndex in 0..<playerCount {
+                if eligibleWhenBehind[playerIndex] {
+                    blindOpportunitiesWhenBehindCount[playerIndex] += 1
+                }
+                if chosenWhenBehind[playerIndex] {
+                    blindChosenWhenBehindCount[playerIndex] += 1
+                }
+                if eligibleWhenLeading[playerIndex] {
+                    blindOpportunitiesWhenLeadingCount[playerIndex] += 1
+                }
+                if chosenWhenLeading[playerIndex] {
+                    blindChosenWhenLeadingCount[playerIndex] += 1
+                }
+            }
+        }
+
         mutating func accumulatePremiumSupportLosses(
             blockOutcome: PremiumRules.BlockFinalizationOutcome,
             playerCount: Int
         ) {
+            let boundedPlayerCount = min(playerCount, totalBlocksCount.count)
+            for playerIndex in 0..<boundedPlayerCount {
+                totalBlocksCount[playerIndex] += 1
+                if blockOutcome.allPremiumPlayers.contains(playerIndex) {
+                    premiumCapturedBlocksCount[playerIndex] += 1
+                }
+                let penalty = blockOutcome.premiumPenalties.indices.contains(playerIndex)
+                    ? blockOutcome.premiumPenalties[playerIndex]
+                    : 0
+                if penalty > 0 {
+                    penaltyTargetBlocksCount[playerIndex] += 1
+                }
+            }
             BotSelfPlayEvolutionEngine.accumulatePremiumSupportLosses(
                 premiumAssistLosses: &premiumAssistLosses,
                 premiumPenaltyTargetLosses: &premiumPenaltyTargetLosses,
@@ -997,13 +1312,99 @@ enum BotSelfPlayEvolutionEngine {
         }
 
         func makeOutcome() -> SimulatedGameOutcome {
+            let playerCount = totalScores.count
+            let premiumCaptureRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(premiumCapturedBlocksCount[playerIndex]),
+                    Double(totalBlocksCount[playerIndex])
+                )
+            }
+            let blindSuccessRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(successfulBlindRoundsCount[playerIndex]),
+                    Double(totalBlindRoundsCount[playerIndex])
+                )
+            }
+            let jokerWishWinRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(winningWishLeadDeclarationCounts[playerIndex]),
+                    Double(totalWishLeadDeclarationCounts[playerIndex])
+                )
+            }
+            let earlyJokerSpendRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(earlyJokerPlayCounts[playerIndex]),
+                    Double(totalJokerPlayCounts[playerIndex])
+                )
+            }
+            let penaltyTargetRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(penaltyTargetBlocksCount[playerIndex]),
+                    Double(totalBlocksCount[playerIndex])
+                )
+            }
+            let bidAccuracyRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(exactBidRoundsCount[playerIndex]),
+                    Double(totalRoundsCount[playerIndex])
+                )
+            }
+            let overbidRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(overbidRoundsCount[playerIndex]),
+                    Double(totalRoundsCount[playerIndex])
+                )
+            }
+            let blindBidRatesBlock4 = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(blindDealsBlock4Count[playerIndex]),
+                    Double(totalDealsBlock4Count[playerIndex])
+                )
+            }
+            let averageBlindBidSizes = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(totalBlindBidAmount[playerIndex]),
+                    Double(totalBlindRoundsCount[playerIndex])
+                )
+            }
+            let blindBidWhenBehindRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(blindChosenWhenBehindCount[playerIndex]),
+                    Double(blindOpportunitiesWhenBehindCount[playerIndex])
+                )
+            }
+            let blindBidWhenLeadingRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(blindChosenWhenLeadingCount[playerIndex]),
+                    Double(blindOpportunitiesWhenLeadingCount[playerIndex])
+                )
+            }
+            let earlyLeadWishJokerRates = (0..<playerCount).map { playerIndex in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(totalEarlyLeadWishCounts[playerIndex]),
+                    Double(totalRoundsCount[playerIndex])
+                )
+            }
+
             return SimulatedGameOutcome(
                 totalScores: totalScores,
                 underbidLosses: underbidLosses,
                 trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
                 noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
                 premiumAssistLosses: premiumAssistLosses,
-                premiumPenaltyTargetLosses: premiumPenaltyTargetLosses
+                premiumPenaltyTargetLosses: premiumPenaltyTargetLosses,
+                premiumCaptureRates: premiumCaptureRates,
+                blindSuccessRates: blindSuccessRates,
+                jokerWishWinRates: jokerWishWinRates,
+                earlyJokerSpendRates: earlyJokerSpendRates,
+                penaltyTargetRates: penaltyTargetRates,
+                bidAccuracyRates: bidAccuracyRates,
+                overbidRates: overbidRates,
+                blindBidRatesBlock4: blindBidRatesBlock4,
+                averageBlindBidSizes: averageBlindBidSizes,
+                blindBidWhenBehindRates: blindBidWhenBehindRates,
+                blindBidWhenLeadingRates: blindBidWhenLeadingRates,
+                earlyLeadWishJokerRates: earlyLeadWishJokerRates
             )
         }
     }
@@ -1794,13 +2195,28 @@ enum BotSelfPlayEvolutionEngine {
                 } else {
                     blindContext = PreDealBlindContext(
                         lockedBids: Array(repeating: 0, count: playerCount),
-                        blindSelections: Array(repeating: false, count: playerCount)
+                        blindSelections: Array(repeating: false, count: playerCount),
+                        eligibleWhenBehind: Array(repeating: false, count: playerCount),
+                        chosenWhenBehind: Array(repeating: false, count: playerCount),
+                        eligibleWhenLeading: Array(repeating: false, count: playerCount),
+                        chosenWhenLeading: Array(repeating: false, count: playerCount)
                     )
                 }
 
                 let noTrumpControlEmphasisMultiplier =
                     (blockNumber == GameBlock.first.rawValue ||
                      blockNumber == GameBlock.third.rawValue) ? 1.0 : 0.55
+                if blockNumber == GameBlock.fourth.rawValue {
+                    metrics.recordBlindChoiceContext(
+                        eligibleWhenBehind: blindContext.eligibleWhenBehind,
+                        chosenWhenBehind: blindContext.chosenWhenBehind,
+                        eligibleWhenLeading: blindContext.eligibleWhenLeading,
+                        chosenWhenLeading: blindContext.chosenWhenLeading
+                    )
+                    metrics.recordBlock4BlindExposure(
+                        blindSelections: blindContext.blindSelections
+                    )
+                }
                 let roundSimulation = simulateScoredRound(
                     RoundSimulationInput(
                         hands: hands,
@@ -1863,6 +2279,11 @@ enum BotSelfPlayEvolutionEngine {
     ) -> PreDealBlindContext {
         var lockedBids = Array(repeating: 0, count: playerCount)
         var blindSelections = Array(repeating: false, count: playerCount)
+        var eligibleWhenBehind = Array(repeating: false, count: playerCount)
+        var chosenWhenBehind = Array(repeating: false, count: playerCount)
+        var eligibleWhenLeading = Array(repeating: false, count: playerCount)
+        var chosenWhenLeading = Array(repeating: false, count: playerCount)
+        let maxScore = totalScoresIncludingCurrentBlock.max() ?? 0
 
         for playerIndex in biddingOrder(dealer: dealer, playerCount: playerCount) {
             guard canChooseBlindBid(
@@ -1882,6 +2303,17 @@ enum BotSelfPlayEvolutionEngine {
             )
             guard !allowedBlindBids.isEmpty else { continue }
 
+            let playerScore = totalScoresIncludingCurrentBlock.indices.contains(playerIndex)
+                ? totalScoresIncludingCurrentBlock[playerIndex]
+                : 0
+            let isLeading = playerScore == maxScore
+            let isBehind = playerScore < maxScore
+            if isLeading {
+                eligibleWhenLeading[playerIndex] = true
+            } else if isBehind {
+                eligibleWhenBehind[playerIndex] = true
+            }
+
             let blindBid = biddingServices[playerIndex].makePreDealBlindBid(
                 playerIndex: playerIndex,
                 dealerIndex: dealer,
@@ -1897,11 +2329,20 @@ enum BotSelfPlayEvolutionEngine {
                 : (allowedBlindBids.first ?? 0)
             blindSelections[playerIndex] = true
             lockedBids[playerIndex] = resolvedBlindBid
+            if isLeading {
+                chosenWhenLeading[playerIndex] = true
+            } else if isBehind {
+                chosenWhenBehind[playerIndex] = true
+            }
         }
 
         return PreDealBlindContext(
             lockedBids: lockedBids,
-            blindSelections: blindSelections
+            blindSelections: blindSelections,
+            eligibleWhenBehind: eligibleWhenBehind,
+            chosenWhenBehind: chosenWhenBehind,
+            eligibleWhenLeading: eligibleWhenLeading,
+            chosenWhenLeading: chosenWhenLeading
         )
     }
 
@@ -2207,6 +2648,10 @@ enum BotSelfPlayEvolutionEngine {
         let playerCount = hands.count
         var tricksTaken = Array(repeating: 0, count: playerCount)
         var nonFinalLeadWishCounts = Array(repeating: 0, count: playerCount)
+        var totalWishLeadDeclarationCounts = Array(repeating: 0, count: playerCount)
+        var winningWishLeadDeclarationCounts = Array(repeating: 0, count: playerCount)
+        var totalJokerPlayCounts = Array(repeating: 0, count: playerCount)
+        var earlyJokerPlayCounts = Array(repeating: 0, count: playerCount)
         var mutableHands = hands
         var trickLeader = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
 
@@ -2253,9 +2698,30 @@ enum BotSelfPlayEvolutionEngine {
                     nonFinalLeadWishCounts[player] += 1
                 }
 
+                let isLeadMove = trickNode.playedCards.isEmpty
+                if move.card.isJoker {
+                    totalJokerPlayCounts[player] += 1
+                    if trickIndex + 1 < cardsInRound {
+                        earlyJokerPlayCounts[player] += 1
+                    }
+                    if isLeadMove, move.decision.leadDeclaration == .wish {
+                        totalWishLeadDeclarationCounts[player] += 1
+                    }
+                }
+
                 if let removeIndex = mutableHands[player].firstIndex(of: move.card) {
                     mutableHands[player].remove(at: removeIndex)
                 } else if let fallbackCard = mutableHands[player].first {
+                    let isLeadFallback = trickNode.playedCards.isEmpty
+                    if fallbackCard.isJoker {
+                        totalJokerPlayCounts[player] += 1
+                        if trickIndex + 1 < cardsInRound {
+                            earlyJokerPlayCounts[player] += 1
+                        }
+                        if isLeadFallback {
+                            totalWishLeadDeclarationCounts[player] += 1
+                        }
+                    }
                     mutableHands[player].removeFirst()
                     _ = trickNode.playCard(
                         fallbackCard,
@@ -2286,18 +2752,34 @@ enum BotSelfPlayEvolutionEngine {
             ) ?? trickLeader
 
             tricksTaken[winner] += 1
+            if
+                let winnerMove = trickNode.playedCards.first(where: { $0.playerIndex == winner + 1 }),
+                winnerMove.card.isJoker,
+                winnerMove.jokerLeadDeclaration == .wish,
+                trickNode.playedCards.first?.playerIndex == winner + 1
+            {
+                winningWishLeadDeclarationCounts[winner] += 1
+            }
             trickLeader = winner
         }
 
         return RoundPlayOutcome(
             tricksTaken: tricksTaken,
-            nonFinalLeadWishCounts: nonFinalLeadWishCounts
+            nonFinalLeadWishCounts: nonFinalLeadWishCounts,
+            totalWishLeadDeclarationCounts: totalWishLeadDeclarationCounts,
+            winningWishLeadDeclarationCounts: winningWishLeadDeclarationCounts,
+            totalJokerPlayCounts: totalJokerPlayCounts,
+            earlyJokerPlayCounts: earlyJokerPlayCounts
         )
     }
 
     private struct RoundPlayOutcome {
         let tricksTaken: [Int]
         let nonFinalLeadWishCounts: [Int]
+        let totalWishLeadDeclarationCounts: [Int]
+        let winningWishLeadDeclarationCounts: [Int]
+        let totalJokerPlayCounts: [Int]
+        let earlyJokerPlayCounts: [Int]
     }
 
     private struct RoundSimulationInput {
