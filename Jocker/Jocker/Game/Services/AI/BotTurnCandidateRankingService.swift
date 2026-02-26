@@ -333,6 +333,14 @@ struct BotTurnCandidateRankingService {
         return min(1.25, max(0.85, 1.0 + normalizedSignal))
     }
 
+    /// Stage 6b: более мягкая версия style-signal для lead-joker anti-premium корректировок.
+    /// Нам нужен заметный, но не "ломающий" JOKER-эвристику сдвиг.
+    private func opponentLeadJokerAntiPremiumMultiplier(from matchContext: BotMatchContext?) -> Double {
+        guard let matchContext else { return 1.0 }
+        let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
+        return 1.0 + (denyPressureMultiplier - 1.0) * 0.60
+    }
+
     /// Этап 5 (MVP): контекстная оценка объявления ведущего джокера.
     /// На первом шаге даём отдельный utility для `wish/above/takes` без сложного моделирования ответов соперников.
     private func leadJokerDeclarationUtilityAdjustment(
@@ -367,6 +375,9 @@ struct BotTurnCandidateRankingService {
                 $0.isPenaltyTargetRiskSoFar ||
                 $0.opponentPremiumCandidatesSoFarCount > 0
         } ?? false
+        let antiPremiumStyleMultiplier = antiPremiumPressureContext
+            ? opponentLeadJokerAntiPremiumMultiplier(from: context.matchContext)
+            : 1.0
 
         switch declaration {
         case .wish:
@@ -376,7 +387,7 @@ struct BotTurnCandidateRankingService {
                     // в all-in chase полезнее смещать выбор к немедленному контролю (`above`).
                     var bonus = 4.0 * (0.6 + 0.4 * immediateWinProbability)
                     if isAllInChase && !isFinalTrick && antiPremiumPressureContext {
-                        bonus -= 2.5
+                        bonus -= 2.5 * antiPremiumStyleMultiplier
                     }
                     return bonus
                 }
@@ -421,9 +432,9 @@ struct BotTurnCandidateRankingService {
                     bonus *= 0.70
                 }
                 if antiPremiumPressureContext {
-                    bonus += 2.5
+                    bonus += 2.5 * antiPremiumStyleMultiplier
                     if isAllInChase && !isFinalTrick {
-                        bonus += 2.0
+                        bonus += 2.0 * antiPremiumStyleMultiplier
                     }
                 }
                 let lowReserveAmplifier = 0.90 + 0.30 * lowReserveNeedForImmediateControl

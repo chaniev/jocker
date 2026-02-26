@@ -1086,6 +1086,187 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         XCTAssertGreaterThan(aboveAntiPremium - wishAntiPremium, aboveNeutral - wishNeutral)
     }
 
+    func testMoveUtility_whenLeadJokerAllInChaseAndDisciplinedObservedLeftNeighbor_strengthensAntiPremiumShift() {
+        let trickNode = TrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+        let aboveTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .above(suit: .spades))
+        )
+        let premium = BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: 7,
+            remainingRoundsInBlock: 1,
+            isPremiumCandidateSoFar: false,
+            isZeroPremiumRelevantInBlock: false,
+            isZeroPremiumCandidateSoFar: false,
+            leftNeighborIndex: 1,
+            leftNeighborIsPremiumCandidateSoFar: true,
+            isPenaltyTargetRiskSoFar: true,
+            premiumCandidatesThreateningPenaltyCount: 1,
+            opponentPremiumCandidatesSoFarCount: 2
+        )
+        let disciplinedContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 4,
+                    blindBidRate: 0.50,
+                    exactBidRate: 0.75,
+                    overbidRate: 0.10,
+                    underbidRate: 0.15,
+                    averageBidAggression: 0.72
+                ),
+                others: []
+            )
+        )
+        let erraticContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 4,
+                    blindBidRate: 0.0,
+                    exactBidRate: 0.20,
+                    overbidRate: 0.45,
+                    underbidRate: 0.35,
+                    averageBidAggression: 0.35
+                ),
+                others: []
+            )
+        )
+
+        func utility(_ move: BotTurnCandidateRankingService.Move, context: BotMatchContext) -> Double {
+            service.moveUtility(
+                projectedScore: 32,
+                immediateWinProbability: 0.96,
+                threat: move.decision.leadDeclaration == .wish ? 115 : 96,
+                move: move,
+                trickNode: trickNode,
+                trump: .spades,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 4,
+                tricksRemainingIncludingCurrent: 4,
+                chasePressure: 1.0,
+                matchContext: context
+            )
+        }
+
+        let wishDisciplined = utility(wish, context: disciplinedContext)
+        let aboveDisciplined = utility(aboveTrump, context: disciplinedContext)
+        let wishErratic = utility(wish, context: erraticContext)
+        let aboveErratic = utility(aboveTrump, context: erraticContext)
+
+        XCTAssertLessThan(wishDisciplined, wishErratic)
+        XCTAssertGreaterThan(aboveDisciplined, aboveErratic)
+        XCTAssertGreaterThan(aboveDisciplined - wishDisciplined, aboveErratic - wishErratic)
+    }
+
+    func testMoveUtility_whenLeadJokerAntiPremiumContext_andOpponentModelHasNoEvidence_keepsShiftUnchanged() {
+        let trickNode = TrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+        let aboveTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .above(suit: .spades))
+        )
+        let premium = BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: 7,
+            remainingRoundsInBlock: 1,
+            isPremiumCandidateSoFar: false,
+            isZeroPremiumRelevantInBlock: false,
+            isZeroPremiumCandidateSoFar: false,
+            leftNeighborIndex: 1,
+            leftNeighborIsPremiumCandidateSoFar: true,
+            isPenaltyTargetRiskSoFar: true,
+            premiumCandidatesThreateningPenaltyCount: 1,
+            opponentPremiumCandidatesSoFarCount: 2
+        )
+        let withoutOpponents = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: nil
+        )
+        let noEvidenceOpponents = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 0,
+                    blindBidRate: 1.0,
+                    exactBidRate: 1.0,
+                    overbidRate: 0.0,
+                    underbidRate: 0.0,
+                    averageBidAggression: 1.0
+                ),
+                others: []
+            )
+        )
+
+        func utility(_ move: BotTurnCandidateRankingService.Move, context: BotMatchContext) -> Double {
+            service.moveUtility(
+                projectedScore: 32,
+                immediateWinProbability: 0.96,
+                threat: move.decision.leadDeclaration == .wish ? 115 : 96,
+                move: move,
+                trickNode: trickNode,
+                trump: .spades,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 4,
+                tricksRemainingIncludingCurrent: 4,
+                chasePressure: 1.0,
+                matchContext: context
+            )
+        }
+
+        let wishWithoutOpponents = utility(wish, context: withoutOpponents)
+        let aboveWithoutOpponents = utility(aboveTrump, context: withoutOpponents)
+        let wishNoEvidence = utility(wish, context: noEvidenceOpponents)
+        let aboveNoEvidence = utility(aboveTrump, context: noEvidenceOpponents)
+
+        XCTAssertEqual(wishNoEvidence, wishWithoutOpponents, accuracy: 0.0001)
+        XCTAssertEqual(aboveNoEvidence, aboveWithoutOpponents, accuracy: 0.0001)
+    }
+
     func testMoveUtility_whenLeadJokerChasing_preferredControlSuitBoostsMatchingAboveDeclaration() {
         let trickNode = TrickNode()
         let abovePreferred = BotTurnCandidateRankingService.Move(
