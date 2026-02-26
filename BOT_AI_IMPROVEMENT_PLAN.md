@@ -190,6 +190,8 @@
   - расширенный `stage6b-pack-all` (ranking + flow plumbing) подтвержден end-to-end на `iPhone 15 (17.2)`: `14/14`, `exit 0`; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-170616`.
   - в `stage6b-pack-all` добавлены strict cross-service guardrails для `no-evidence -> neutral` в `Evaluator` и `Strategy` (anti-premium lead-joker all-in chase), чтобы Stage 6b coverage доходил до decision-level runtime path.
   - обновленный `stage6b-pack-all` подтвержден end-to-end на `iPhone 15 (17.2)`: `16/16`, `exit 0`; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-172441`.
+  - `stage6b-pack-all` расширен positive-style cross-service guardrails (`disciplined vs erratic`) для moderate premium-deny dump scenario в `Evaluator` и `Strategy` (decision-level style-shift до runtime path).
+  - обновленный `stage6b-pack-all` (с positive-style cross-service guardrails) подтвержден end-to-end на `iPhone 15 (17.2)`: `18/18`, `exit 0`; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-173543`.
 
 ### Ограничение валидации (текущее окружение)
 
@@ -201,6 +203,7 @@
 - Для cross-service проверки Stage 6 (ranking + flow plumbing) доступен `stage6b-pack-all`; используется тот же рабочий destination `iPhone 15 (17.2)`.
 - Локально подтвержден успешный runtime-прогон `stage6b-pack-all` на `iPhone 15 (17.2)` (`14/14`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-170616`).
 - `stage6b-pack-all` расширен до `16` тестов (добавлены `Evaluator` + `Strategy` no-evidence guardrails) и повторно подтвержден на `iPhone 15 (17.2)` (`16/16`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-172441`).
+- `stage6b-pack-all` расширен до `18` тестов (добавлены `Evaluator` + `Strategy` positive-style guardrails `disciplined vs erratic` для moderate premium-deny dump scenario) и подтвержден на `iPhone 15 (17.2)` (`18/18`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-173543`).
 - Локальный simulator destination `iPhone 15 Pro (17.2)` может зависать после `Testing started` до старта `xctest` (destination-specific issue); для рабочих прогонов пока использовать `iPhone 15 (17.2)`.
 - Полный `xcodebuild test` по всей схеме `Jocker` в рамках последней актуализации плана не перепроверялся; статус считается частично подтвержденным (build + targeted AI-suite).
 

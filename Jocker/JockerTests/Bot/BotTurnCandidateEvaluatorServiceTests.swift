@@ -262,8 +262,8 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
 
     func testBestMove_whenLeadJokerAntiPremiumContext_andOpponentModelHasNoEvidence_keepsDecisionUnchanged() {
         let premium = BotMatchContext.PremiumSnapshot(
-            completedRoundsInBlock: 7,
-            remainingRoundsInBlock: 1,
+            completedRoundsInBlock: 5,
+            remainingRoundsInBlock: 3,
             isPremiumCandidateSoFar: false,
             isZeroPremiumRelevantInBlock: false,
             isZeroPremiumCandidateSoFar: false,
@@ -331,6 +331,96 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         XCTAssertEqual(noEvidence?.card, baseline?.card)
         XCTAssertEqual(noEvidence?.jokerDecision, baseline?.jokerDecision)
         XCTAssertEqual(baseline?.jokerDecision.leadDeclaration, .above(suit: .spades))
+    }
+
+    func testBestMove_whenModeratePremiumDenyContext_andDisciplinedObservedLeftNeighborFlipsDumpChoiceComparedToErratic() {
+        let premium = BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: 7,
+            remainingRoundsInBlock: 1,
+            isPremiumCandidateSoFar: false,
+            isZeroPremiumRelevantInBlock: false,
+            isZeroPremiumCandidateSoFar: false,
+            leftNeighborIndex: 1,
+            leftNeighborIsPremiumCandidateSoFar: true,
+            isPenaltyTargetRiskSoFar: false,
+            premiumCandidatesThreateningPenaltyCount: 0,
+            opponentPremiumCandidatesSoFarCount: 1
+        )
+        let disciplinedOpponents = makeOpponentModel(
+            leftNeighborIndex: 1,
+            leftNeighbor: .init(
+                playerIndex: 1,
+                observedRounds: 4,
+                blindBidRate: 0.50,
+                exactBidRate: 0.75,
+                overbidRate: 0.10,
+                underbidRate: 0.15,
+                averageBidAggression: 0.72
+            ),
+            others: []
+        )
+        let erraticOpponents = makeOpponentModel(
+            leftNeighborIndex: 1,
+            leftNeighbor: .init(
+                playerIndex: 1,
+                observedRounds: 4,
+                blindBidRate: 0.0,
+                exactBidRate: 0.20,
+                overbidRate: 0.45,
+                underbidRate: 0.35,
+                averageBidAggression: 0.35
+            ),
+            others: []
+        )
+        let disciplinedContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 5,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: disciplinedOpponents
+        )
+        let erraticContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 5,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: erraticOpponents
+        )
+
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        _ = trickNode.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
+        _ = trickNode.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
+        let hand = [card(.clubs, .ace), card(.clubs, .seven)]
+
+        func bestMove(matchContext: BotMatchContext) -> (card: Card, jokerDecision: JokerPlayDecision)? {
+            evaluator.bestMove(
+                legalCards: hand,
+                handCards: hand,
+                trickNode: trickNode,
+                trump: .hearts,
+                targetBid: 0,
+                currentTricks: 1,
+                cardsInRound: 8,
+                playerCount: 4,
+                isBlind: false,
+                matchContext: matchContext
+            )
+        }
+
+        let disciplinedDecision = bestMove(matchContext: disciplinedContext)
+        let erraticDecision = bestMove(matchContext: erraticContext)
+
+        XCTAssertEqual(disciplinedDecision?.card, card(.clubs, .ace))
+        XCTAssertEqual(erraticDecision?.card, card(.clubs, .seven))
     }
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {

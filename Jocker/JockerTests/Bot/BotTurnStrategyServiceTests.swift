@@ -946,8 +946,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             card(.hearts, .eight)
         ]
         let premium = BotMatchContext.PremiumSnapshot(
-            completedRoundsInBlock: 7,
-            remainingRoundsInBlock: 1,
+            completedRoundsInBlock: 5,
+            remainingRoundsInBlock: 3,
             isPremiumCandidateSoFar: false,
             isZeroPremiumRelevantInBlock: false,
             isZeroPremiumCandidateSoFar: false,
@@ -1016,6 +1016,100 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         XCTAssertEqual(noEvidenceDecision?.card, baselineDecision?.card)
         XCTAssertEqual(noEvidenceDecision?.jokerDecision, baselineDecision?.jokerDecision)
         XCTAssertEqual(baselineDecision?.jokerDecision.leadDeclaration, .above(suit: .spades))
+    }
+
+    func testMakeTurnDecision_whenModeratePremiumDenyContext_andDisciplinedObservedLeftNeighborFlipsDumpChoiceComparedToErratic() {
+        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        _ = trickNode.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
+        _ = trickNode.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
+        let handCards: [Card] = [
+            card(.clubs, .ace),
+            card(.clubs, .seven)
+        ]
+        let premium = BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: 7,
+            remainingRoundsInBlock: 1,
+            isPremiumCandidateSoFar: false,
+            isZeroPremiumRelevantInBlock: false,
+            isZeroPremiumCandidateSoFar: false,
+            leftNeighborIndex: 1,
+            leftNeighborIsPremiumCandidateSoFar: true,
+            isPenaltyTargetRiskSoFar: false,
+            premiumCandidatesThreateningPenaltyCount: 0,
+            opponentPremiumCandidatesSoFarCount: 1
+        )
+        let disciplinedContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 5,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 4,
+                    blindBidRate: 0.50,
+                    exactBidRate: 0.75,
+                    overbidRate: 0.10,
+                    underbidRate: 0.15,
+                    averageBidAggression: 0.72
+                ),
+                others: []
+            )
+        )
+        let erraticContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 5,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 4,
+                    blindBidRate: 0.0,
+                    exactBidRate: 0.20,
+                    overbidRate: 0.45,
+                    underbidRate: 0.35,
+                    averageBidAggression: 0.35
+                ),
+                others: []
+            )
+        )
+
+        let disciplinedDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .hearts,
+            bid: 0,
+            tricksTaken: 1,
+            cardsInRound: 8,
+            playerCount: 4,
+            matchContext: disciplinedContext
+        )
+        let erraticDecision = service.makeTurnDecision(
+            handCards: handCards,
+            trickNode: trickNode,
+            trump: .hearts,
+            bid: 0,
+            tricksTaken: 1,
+            cardsInRound: 8,
+            playerCount: 4,
+            matchContext: erraticContext
+        )
+
+        XCTAssertEqual(disciplinedDecision?.card, card(.clubs, .ace))
+        XCTAssertEqual(erraticDecision?.card, card(.clubs, .seven))
     }
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {

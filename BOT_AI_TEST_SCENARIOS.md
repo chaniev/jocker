@@ -1525,7 +1525,9 @@ Expected behavior:
 - Текущий состав `stage6b-pack-all` (cross-service optional subset):
   - `FLOW-OPP-001/002`: `GameScenePlayingFlowTests` (построение `BotOpponentModel` из observed rounds / zero-evidence start)
   - `EVAL-OPP-001`: `BotTurnCandidateEvaluatorServiceTests` (`no-evidence -> neutral` в anti-premium lead-joker all-in chase)
+  - `EVAL-OPP-002`: `BotTurnCandidateEvaluatorServiceTests` (`disciplined vs erratic` style-shift в moderate premium-deny dump scenario, last-seat club dump choice)
   - `STRAT-OPP-001`: `BotTurnStrategyServiceTests` (`no-evidence -> neutral` в runtime anti-premium lead-joker all-in chase)
+  - `STRAT-OPP-002`: `BotTurnStrategyServiceTests` (runtime `disciplined vs erratic` style-shift в moderate premium-deny dump scenario)
 - Артефакты сохраняются в `.derivedData/stage6b-ranking-runs/<timestamp>/` (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`).
 - Fallback-команда (если нужен точечный локальный прогон всего класса вместо pack):
   - `xcodebuild -quiet -project Jocker/Jocker.xcodeproj -scheme Jocker -destination 'id=4F592A52-148C-4540-BB72-590B8C44BD43' -derivedDataPath .derivedData CODE_SIGNING_ALLOWED=NO test-without-building -only-testing:JockerTests/BotTurnCandidateRankingServiceTests`
@@ -1535,5 +1537,5 @@ Expected behavior:
 
 - Добавить точные сериализованные состояния для первых 8 кейсов.
 - Привязать каждый кейс к автоматическому тесту или harness-команде (JOKER pack CLI/Makefile entrypoints добавлены; осталось расширить mapping для draft-кейсов).
-- Выделенный `Stage 6b` pack/harness добавлен (`scripts/run_stage6b_ranking_guardrails.sh`, `make stage6b-pack*`); расширенный режим `--include-flow-plumbing` / `make stage6b-pack-all` теперь покрывает cross-service opponent-model guardrails (flow plumbing + evaluator/strategy no-evidence neutrality).
+- Выделенный `Stage 6b` pack/harness добавлен (`scripts/run_stage6b_ranking_guardrails.sh`, `make stage6b-pack*`); расширенный режим `--include-flow-plumbing` / `make stage6b-pack-all` теперь покрывает cross-service opponent-model guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift guardrails).
 - Зафиксировать финальный seed-набор baseline для этапа 0.
