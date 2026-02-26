@@ -351,6 +351,15 @@ struct BotTurnCandidateRankingService {
         return 1.0 + (denyPressureMultiplier - 1.0) * 0.35 * lateBlockWeight
     }
 
+    /// Stage 6b: очень мягкая blind-chase калибровка.
+    /// Усиливает награду за "боевой" blind-chase против дисциплинированных/агрессивных соперников.
+    private func opponentBlindChaseContestMultiplier(from matchContext: BotMatchContext?) -> Double {
+        guard let matchContext else { return 1.0 }
+        let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
+        let lateBlockWeight = 0.15 + 0.85 * matchContext.blockProgressFraction
+        return 1.0 + (denyPressureMultiplier - 1.0) * 0.25 * lateBlockWeight
+    }
+
     /// Этап 5 (MVP): контекстная оценка объявления ведущего джокера.
     /// На первом шаге даём отдельный utility для `wish/above/takes` без сложного моделирования ответов соперников.
     private func leadJokerDeclarationUtilityAdjustment(
@@ -621,7 +630,10 @@ struct BotTurnCandidateRankingService {
             move: move,
             context: context
         )
-        let blindRewardMultiplier = context.isBlindRound ? 1.55 : 1.0
+        let blindChaseOpponentMultiplier = (context.isBlindRound && context.shouldChaseTrick)
+            ? opponentBlindChaseContestMultiplier(from: context.matchContext)
+            : 1.0
+        let blindRewardMultiplier = context.isBlindRound ? 1.55 * blindChaseOpponentMultiplier : 1.0
         let blindRiskMultiplier = context.isBlindRound ? 1.30 : 1.0
         let isLeadJoker = move.card.isJoker && context.trick.playedCards.isEmpty
         let isNonFinalLeadWishJoker: Bool

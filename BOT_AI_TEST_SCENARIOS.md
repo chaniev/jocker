@@ -1072,6 +1072,264 @@ Observed (candidate):
 }
 ```
 
+### Case Draft: BLIND-004
+
+```json
+{
+  "id": "BLIND-004",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "mode": "chase",
+    "isBlindRound": true,
+    "sameMoveMetrics": {
+      "projectedScore": 10,
+      "immediateWinProbability": 0.85,
+      "threat": 6
+    },
+    "move": "regular winning non-joker",
+    "variants": [
+      {
+        "label": "disciplinedObservedLeftNeighbor",
+        "matchContext": {
+          "block": 4,
+          "roundIndexInBlock": 7,
+          "opponents": {
+            "leftNeighbor": {
+              "observedRounds": 4,
+              "blindBidRate": 0.50,
+              "exactBidRate": 0.75,
+              "overbidRate": 0.10,
+              "underbidRate": 0.15,
+              "averageBidAggression": 0.72
+            }
+          }
+        }
+      },
+      {
+        "label": "erraticObservedLeftNeighbor",
+        "matchContext": {
+          "block": 4,
+          "roundIndexInBlock": 7,
+          "opponents": {
+            "leftNeighbor": {
+              "observedRounds": 4,
+              "blindBidRate": 0.0,
+              "exactBidRate": 0.20,
+              "overbidRate": 0.45,
+              "underbidRate": 0.35,
+              "averageBidAggression": 0.35
+            }
+          }
+        }
+      },
+      {
+        "label": "noEvidenceObservedLeftNeighbor",
+        "matchContext": {
+          "block": 4,
+          "roundIndexInBlock": 7,
+          "opponents": {
+            "leftNeighbor": {
+              "observedRounds": 0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "utility(disciplinedObservedLeftNeighbor) > utility(erraticObservedLeftNeighbor)",
+    "neutralityGuardrail": "utility(noEvidenceObservedLeftNeighbor) ~= utility(noOpponentsContext)",
+    "reason": "Stage-6b blind-chase reward scaling should react to opponent style only when evidence exists"
+  }
+}
+```
+
+### Case Draft: PREMIUM-010
+
+```json
+{
+  "id": "PREMIUM-010",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "mode": "dump",
+    "targetSignal": "premiumDenyUtility (left-neighbor premium candidate)",
+    "sameMoveMetrics": {
+      "projectedScore": 40,
+      "immediateWinProbability": 0.20,
+      "threat": 5
+    },
+    "variants": [
+      {
+        "label": "disciplinedObservedLeftNeighbor",
+        "premium": {
+          "leftNeighborIsPremiumCandidateSoFar": true,
+          "opponentPremiumCandidatesSoFarCount": 1
+        },
+        "opponents": { "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.75, "overbidRate": 0.10, "underbidRate": 0.15, "blindBidRate": 0.50, "averageBidAggression": 0.72 } }
+      },
+      {
+        "label": "erraticObservedLeftNeighbor",
+        "premium": {
+          "leftNeighborIsPremiumCandidateSoFar": true,
+          "opponentPremiumCandidatesSoFarCount": 1
+        },
+        "opponents": { "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.20, "overbidRate": 0.45, "underbidRate": 0.35, "blindBidRate": 0.0, "averageBidAggression": 0.35 } }
+      },
+      {
+        "label": "noEvidenceObservedLeftNeighbor",
+        "premium": {
+          "leftNeighborIsPremiumCandidateSoFar": true,
+          "opponentPremiumCandidatesSoFarCount": 1
+        },
+        "opponents": { "leftNeighbor": { "observedRounds": 0 } }
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "utility(disciplinedObservedLeftNeighbor) < utility(erraticObservedLeftNeighbor)",
+    "neutralityGuardrail": "utility(noEvidenceObservedLeftNeighbor) ~= utility(noOpponentsContext)",
+    "reason": "Stage-6b premiumDeny calibration should strengthen anti-premium pressure only under observed evidence"
+  }
+}
+```
+
+### Case Draft: PREMIUM-011
+
+```json
+{
+  "id": "PREMIUM-011",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "mode": "dump",
+    "targetSignal": "penaltyAvoidUtility (penaltyTargetRisk)",
+    "sameMoveMetrics": {
+      "projectedScore": 140,
+      "immediateWinProbability": 0.25,
+      "threat": 5
+    },
+    "premium": {
+      "isPenaltyTargetRiskSoFar": true,
+      "premiumCandidatesThreateningPenaltyCount": 1
+    },
+    "variants": [
+      {
+        "label": "disciplinedObservedLeftNeighbor",
+        "opponents": { "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.75, "overbidRate": 0.10, "underbidRate": 0.15, "blindBidRate": 0.50, "averageBidAggression": 0.72 } }
+      },
+      {
+        "label": "erraticObservedLeftNeighbor",
+        "opponents": { "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.20, "overbidRate": 0.45, "underbidRate": 0.35, "blindBidRate": 0.0, "averageBidAggression": 0.35 } }
+      },
+      {
+        "label": "noEvidenceObservedLeftNeighbor",
+        "opponents": { "leftNeighbor": { "observedRounds": 0 } }
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "utility(disciplinedObservedLeftNeighbor) < utility(erraticObservedLeftNeighbor)",
+    "neutralityGuardrail": "utility(noEvidenceObservedLeftNeighbor) ~= utility(noOpponentsContext)",
+    "reason": "Stage-6b penaltyAvoid calibration should only increase caution when opponent evidence is present"
+  }
+}
+```
+
+### Case Draft: PHASE-003
+
+```json
+{
+  "id": "PHASE-003",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "mode": "chase",
+    "targetSignal": "matchCatchUpUtility (late-block score deficit)",
+    "sameMoveMetrics": {
+      "projectedScore": 10,
+      "immediateWinProbability": 0.86,
+      "threat": 40
+    },
+    "matchContextBase": {
+      "block": 4,
+      "roundIndexInBlock": 7,
+      "totalScores": [80, 160, 150, 140]
+    },
+    "variants": [
+      {
+        "label": "disciplinedObservedLeftNeighbor",
+        "opponents": { "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.75, "overbidRate": 0.10, "underbidRate": 0.15, "blindBidRate": 0.50, "averageBidAggression": 0.72 } }
+      },
+      {
+        "label": "erraticObservedLeftNeighbor",
+        "opponents": { "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.20, "overbidRate": 0.45, "underbidRate": 0.35, "blindBidRate": 0.0, "averageBidAggression": 0.35 } }
+      },
+      {
+        "label": "noEvidenceObservedLeftNeighbor",
+        "opponents": { "leftNeighbor": { "observedRounds": 0 } }
+      }
+    ]
+  },
+  "expected": {
+    "relationship": "utility(disciplinedObservedLeftNeighbor) > utility(noOpponentsContext) > utility(erraticObservedLeftNeighbor)",
+    "neutralityGuardrail": "utility(noEvidenceObservedLeftNeighbor) ~= utility(noOpponentsContext)",
+    "reason": "Stage-6b catch-up urgency should be slightly stronger against disciplined/contested opponents late in block"
+  }
+}
+```
+
+### Case Draft: JOKER-016
+
+```json
+{
+  "id": "JOKER-016",
+  "stateType": "rankingUtility-compare",
+  "inputs": {
+    "shared": {
+      "trick": [],
+      "trump": "S",
+      "cardsInRound": 8,
+      "roundIndexInBlock": 7,
+      "block": 4
+    },
+    "subcases": [
+      {
+        "label": "leadJokerAntiPremiumChase",
+        "shouldChaseTrick": true,
+        "isBlindRound": false,
+        "moves": ["wish", "above(trump)"],
+        "premiumContext": {
+          "leftNeighborIsPremiumCandidateSoFar": true,
+          "isPenaltyTargetRiskSoFar": true,
+          "premiumCandidatesThreateningPenaltyCount": 1,
+          "opponentPremiumCandidatesSoFarCount": 2
+        },
+        "expectation": "disciplined observed left neighbor increases anti-premium advantage of above(trump) over wish"
+      },
+      {
+        "label": "leadJokerAntiPremiumDump",
+        "shouldChaseTrick": false,
+        "moves": ["takes(non-trump)"],
+        "premiumContext": {
+          "leftNeighborIsPremiumCandidateSoFar": true,
+          "isPenaltyTargetRiskSoFar": false,
+          "opponentPremiumCandidatesSoFarCount": 1
+        },
+        "expectation": "disciplined observed left neighbor increases utility of takes(non-trump) controlled-loss lead"
+      }
+    ],
+    "opponentVariants": [
+      { "label": "disciplinedObservedLeftNeighbor", "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.75, "overbidRate": 0.10, "underbidRate": 0.15, "blindBidRate": 0.50, "averageBidAggression": 0.72 } },
+      { "label": "erraticObservedLeftNeighbor", "leftNeighbor": { "observedRounds": 4, "exactBidRate": 0.20, "overbidRate": 0.45, "underbidRate": 0.35, "blindBidRate": 0.0, "averageBidAggression": 0.35 } },
+      { "label": "noEvidenceObservedLeftNeighbor", "leftNeighbor": { "observedRounds": 0 } }
+    ]
+  },
+  "expected": {
+    "relationship": "disciplined > erratic effect magnitude in both subcases",
+    "neutralityGuardrail": "noEvidence ~= noOpponentsContext",
+    "reason": "Stage-6b joker declaration anti-premium tuning must stay evidence-gated and monotonic"
+  }
+}
+```
+
 ## BLIND Scenarios
 
 ### BLIND-001 (Leader should avoid unnecessary blind)
@@ -1241,8 +1499,28 @@ Expected behavior:
   - `make joker-pack-all`
 - Артефакты сохраняются в `.derivedData/joker-regression-runs/<timestamp>/` (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`).
 
+## Stage 6b Opponent-Aware Ranking Guardrails (Draft Mapping)
+
+Ниже зафиксирован текущий mapping Stage 6b (ranking-level) сценариев к unit-тестам.
+Это отдельный guardrail-контур и он пока намеренно не смешивается с `JOKER` pack (Stage 5).
+
+| ID | Area | Layer | Status | Current Automated Mapping |
+|----|------|-------|--------|---------------------------|
+| `BLIND-004` | blind chase | ranking utility | `strict` | `BotTurnCandidateRankingServiceTests`: `testMoveUtility_whenBlindChasing_andDisciplinedObservedLeftNeighbor_increasesBlindContestUtility`, `...andOpponentModelHasNoEvidence_keepsBlindContestUtilityUnchanged` |
+| `PREMIUM-010` | premium deny | ranking utility | `strict` | `BotTurnCandidateRankingServiceTests`: `testMoveUtility_whenLeftNeighborPremiumCandidate_andDisciplinedLeftNeighborObserved_strengthensDenyPressure`, `testMoveUtility_whenOpponentModelHasNoEvidence_keepsDenyPressureUnchanged` |
+| `PREMIUM-011` | penalty avoid | ranking utility | `strict` | `BotTurnCandidateRankingServiceTests`: `testMoveUtility_whenPenaltyTargetRisk_andDisciplinedObservedOpponent_strengthensPenaltyAvoidAdjustment`, `testMoveUtility_whenPenaltyTargetRisk_andOpponentModelHasNoEvidence_keepsPenaltyAvoidAdjustmentUnchanged` |
+| `PHASE-003` | late-block catch-up | ranking utility | `strict` | `BotTurnCandidateRankingServiceTests`: `testMoveUtility_withLateBlockScoreDeficit_andDisciplinedObservedLeftNeighbor_increasesCatchUpUtility`, `...andOpponentModelHasNoEvidence_keepsCatchUpUtilityUnchanged` |
+| `JOKER-016` | lead-joker anti-premium | ranking utility | `strict` | `BotTurnCandidateRankingServiceTests`: chase (`...DisciplinedObservedLeftNeighbor_strengthensAntiPremiumShift`, `...NoEvidence_keepsShiftUnchanged`) + dump (`...DumpingAntiPremiumContext_andDisciplined...`, `...DumpingAntiPremiumContext_andOpponentModelHasNoEvidence...`) |
+
+### Harness Commands (Stage 6b Ranking Guardrails)
+
+- Текущий минимальный guardrail (все ranking-level Stage 6b проверки входят в один класс):
+  - `xcodebuild -quiet -project Jocker/Jocker.xcodeproj -scheme Jocker -destination 'id=4F592A52-148C-4540-BB72-590B8C44BD43' -derivedDataPath .derivedData CODE_SIGNING_ALLOWED=NO test-without-building -only-testing:JockerTests/BotTurnCandidateRankingServiceTests`
+- Для локальных прогонов использовать `iPhone 15 (17.2)` destination, пока `iPhone 15 Pro (17.2)` может зависать после `Testing started` в текущем окружении.
+
 ## Next Fill-In Tasks
 
 - Добавить точные сериализованные состояния для первых 8 кейсов.
 - Привязать каждый кейс к автоматическому тесту или harness-команде (JOKER pack CLI/Makefile entrypoints добавлены; осталось расширить mapping для draft-кейсов).
+- Выделить отдельный `Stage 6b` pack/harness (или расширить общий AI harness), чтобы запускать opponent-aware guardrails отдельно от полного `BotTurnCandidateRankingServiceTests`.
 - Зафиксировать финальный seed-набор baseline для этапа 0.

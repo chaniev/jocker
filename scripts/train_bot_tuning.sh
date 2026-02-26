@@ -1070,30 +1070,29 @@ if abValidate {
 }
 SWIFT
 
+model_sources=()
+while IFS= read -r source_file; do
+  model_sources+=("$source_file")
+done < <(find "$repo_root/Jocker/Jocker/Models" -type f -name '*.swift' | sort)
+
+scoring_sources=()
+while IFS= read -r source_file; do
+  scoring_sources+=("$source_file")
+done < <(find "$repo_root/Jocker/Jocker/Scoring" -type f -name '*.swift' | sort)
+
+ai_sources=()
+while IFS= read -r source_file; do
+  ai_sources+=("$source_file")
+done < <(find "$repo_root/Jocker/Jocker/Game/Services/AI" -type f -name '*.swift' | sort)
+
 swift_sources=(
   "$runner_main"
   "$repo_root/Jocker/Jocker/Core/GameColors.swift"
-  "$repo_root/Jocker/Jocker/Models/Cards/CardColor.swift"
-  "$repo_root/Jocker/Jocker/Models/Cards/Suit.swift"
-  "$repo_root/Jocker/Jocker/Models/Cards/Rank.swift"
-  "$repo_root/Jocker/Jocker/Models/Cards/Card.swift"
-  "$repo_root/Jocker/Jocker/Models/Cards/Deck.swift"
-  "$repo_root/Jocker/Jocker/Models/Joker/PlayedTrickCard.swift"
-  "$repo_root/Jocker/Jocker/Models/Joker/JokerLeadDeclaration.swift"
-  "$repo_root/Jocker/Jocker/Models/Joker/JokerPlayStyle.swift"
-  "$repo_root/Jocker/Jocker/Models/Joker/JokerPlayDecision.swift"
-  "$repo_root/Jocker/Jocker/Models/Gameplay/GameBlock.swift"
-  "$repo_root/Jocker/Jocker/Models/Gameplay/GameConstants.swift"
-  "$repo_root/Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift"
-  "$repo_root/Jocker/Jocker/Models/Bot/BotDifficulty.swift"
-  "$repo_root/Jocker/Jocker/Models/Bot/BotTuning.swift"
-  "$repo_root/Jocker/Jocker/Models/Gameplay/RoundResult.swift"
-  "$repo_root/Jocker/Jocker/Scoring/ScoreCalculator.swift"
   "$repo_root/Jocker/Jocker/Game/Nodes/CardNode.swift"
   "$repo_root/Jocker/Jocker/Game/Nodes/TrickNode.swift"
-  "$repo_root/Jocker/Jocker/Game/Services/AI/BotBiddingService.swift"
-  "$repo_root/Jocker/Jocker/Game/Services/AI/BotTrumpSelectionService.swift"
-  "$repo_root/Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift"
+  "${model_sources[@]}"
+  "${scoring_sources[@]}"
+  "${ai_sources[@]}"
 )
 
 echo "Compiling bot training runner..."

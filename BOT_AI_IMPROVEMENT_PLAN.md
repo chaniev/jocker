@@ -74,7 +74,7 @@
 
 | Этап | Статус | Ближайший следующий шаг |
 |------|--------|--------------------------|
-| 0 (Baseline) | частично | собрать baseline-метрики на фиксированных seed и зафиксировать воспроизводимый `baseline vs candidate` прогон |
+| 0 (Baseline) | частично (baseline snapshot собран) | добавить воспроизводимое сравнение `baseline vs candidate` (A/B harness/команда) и заполнить candidate-колонку таблицы |
 | 1 (Blind fix) | выполнен | держать как regression baseline; менять только при retuning/регрессе |
 | 2 (Blind-aware play) | выполнен | проверять в retuning + guardrail-сценариях `BLIND-*` |
 | 2.5 (Blind plumbing в flow) | выполнен | поддерживать совместимость сигнатур при дальнейших AI-изменениях |
@@ -84,12 +84,15 @@
 | 4c (Opponent premium / penalty-aware) | в процессе (fallback MVP) | усилить/дотюнить anti-premium и penalty-aware utility, сократить probe-зависимость |
 | 5 (Joker logic) | в процессе (MVP+, частично стабилизирован) | закрыть оставшиеся runtime probe/retuning задачи (в первую очередь `JOKER-004` / runtime strict coverage) |
 | 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage и удерживать зелёный `BotTurnCandidateRankingServiceTests` как guardrail |
-| 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и фиксации baseline-метрик |
+| 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и подготовки воспроизводимого `baseline vs candidate` сравнения |
 
 - Этап 0 (baseline): частично
   - добавлен черновик `BOT_AI_TEST_SCENARIOS.md` (есть группы `BLIND/PREMIUM/JOKER/PHASE` и concrete drafts v0);
   - зафиксированы шаблоны метрик/seed/команд;
-  - baseline-метрики еще не собраны.
+  - добавлен Stage-0 baseline harness `scripts/run_bot_baseline_snapshot.sh` (+ `make bot-baseline*`) с артефактами прогона (`summary.txt`, `baseline-metrics.txt`, `command.txt`, log);
+  - починен `scripts/train_bot_tuning.sh` как dependency Stage-0 baseline (self-play runner теперь собирает `swift_sources` автоматически из `Models/`, `Scoring/`, `Game/Services/AI/`, чтобы не ломаться при расширении AI-слоя);
+  - smoke baseline snapshot успешно прогнан на фиксированных seed (`20260220,20260221`) как проверка harness.
+  - финальный baseline snapshot (`baseline-v1`) собран на фиксированных seed (`20260220...20260225`) через `make bot-baseline`; артефакты: `.derivedData/bot-baseline-runs/20260226-153653`, извлечены базовые self-play метрики (`winRate`, `averageScoreDiff`, `averageUnderbidLoss`, `averagePremiumAssistLoss`, `averagePremiumPenaltyTargetLoss`).
 - Этап 1 (Blind fix): выполнен по коду и unit-тестам
   - `makePreDealBlindBid(...)` переведен на risk-score;
   - `blindSafeLeadThreshold` влияет на решение;
@@ -169,6 +172,8 @@
   - продолжена Stage 6b runtime-интеграция в `leadJokerDeclarationUtility` (anti-premium chase branch): anti-premium shift для `wish/above` теперь мягко калибруется по `BotOpponentModel` (через ослабленный multiplier), добавлены unit-тесты на `disciplined vs erratic` и `zero-evidence -> neutral`; `BotTurnCandidateRankingServiceTests` повторно подтвержден зелёным на `iPhone 15 (17.2)`.
   - расширена Stage 6b калибровка на `leadJokerDeclarationUtility` в dump-ветке (`takes` controlled-loss lead при anti-premium/penalty-aware контексте): бонус `takes` теперь мягко масштабируется по `BotOpponentModel`; добавлены unit-тесты на `disciplined vs erratic` и `zero-evidence -> neutral`, полный `BotTurnCandidateRankingServiceTests` снова подтвержден зелёным на `iPhone 15 (17.2)`.
   - добавлена очень мягкая Stage 6b калибровка в `matchCatchUpUtility` (score-based catch-up urgency в chase слегка масштабируется по `BotOpponentModel`, с late-block weighting); добавлены unit-тесты на late-block deficit (`disciplined vs erratic`, `zero-evidence -> neutral`), полный `BotTurnCandidateRankingServiceTests` сохраняется зелёным на `iPhone 15 (17.2)`.
+  - добавлена очень мягкая Stage 6b калибровка blind-chase (`isBlindRound && shouldChaseTrick`) в `moveUtility`: blind reward multiplier слегка масштабируется по `BotOpponentModel`; добавлены unit-тесты на blind-контекст (`disciplined vs erratic`, `zero-evidence -> neutral`) и сохранён существующий blind guardrail, полный `BotTurnCandidateRankingServiceTests` остаётся зелёным на `iPhone 15 (17.2)`.
+  - возвращение к "первоначальному" плановому контуру валидации: в `BOT_AI_TEST_SCENARIOS.md` добавлены Stage 6b draft-кейсы и guardrail-mapping для opponent-aware ranking (`BLIND-004`, `PREMIUM-010/011`, `PHASE-003`, `JOKER-016`) с harness-командой для локального прогона на `iPhone 15 (17.2)`.
 
 ### Ограничение валидации (текущее окружение)
 
@@ -180,7 +185,7 @@
 
 ## Метрики и baseline (этап 0)
 
-До внесения логики нужно зафиксировать baseline.
+Self-play baseline (`baseline-v1`) уже зафиксирован; ниже перечислены целевые метрики и оставшиеся Stage-0 шаги для сравнения `baseline vs candidate`.
 
 ### Основные матчевые метрики
 
@@ -223,11 +228,28 @@
 - Краткий отчет с выводами по слабым местам текущего бота.
 - Зафиксированные seed и команды запуска для повторяемости.
 
+### Зафиксированный baseline snapshot (`baseline-v1`, 2026-02-26)
+
+- Команда: `make bot-baseline` (wrapper `scripts/run_bot_baseline_snapshot.sh`, `generations=0`, `ab_validate=false`)
+- Конфигурация: `difficulty=hard`, `seed_list=20260220,20260221,20260222,20260223,20260224,20260225`, `games_per_candidate=8`, `rounds_per_game=24`
+- Артефакты: `.derivedData/bot-baseline-runs/20260226-153653`
+- Источник метрик: `ensembleAverageBest*` (для `generations=0` трактуется как baseline multi-seed aggregate)
+
+| Метрика | Baseline (`baseline-v1`) | Candidate |
+|---------|---------------------------|-----------|
+| `winRate` | `0.250000` | `TBD` |
+| `averageScoreDiff` | `0.000000` | `TBD` |
+| `averageUnderbidLoss` | `2449.375000` | `TBD` |
+| `averagePremiumAssistLoss` | `26.250000` | `TBD` |
+| `averagePremiumPenaltyTargetLoss` | `4.947917` | `TBD` |
+
+- Расширенные Stage-0 операционные метрики пока не собираются текущим harness (`premiumCaptureRate`, `blindSuccessRate`, `jokerWishWinRate`, и др.) и остаются отдельным подпунктом Stage 0.
+
 ### Готовность к завершению Этапа 0
 
-- [ ] Метрики baseline собраны на фиксированном наборе seed.
+- [x] Метрики baseline собраны на фиксированном наборе seed (`baseline-v1`, `20260220...20260225`).
 - [x] Создан черновик `BOT_AI_TEST_SCENARIOS.md` с детерминированными кейсами.
-- [ ] Добавлены/обновлены тесты-инструменты для расчета метрик (если нужны).
+- [x] Добавлены/обновлены тесты-инструменты для расчета метрик (если нужны) (`scripts/run_bot_baseline_snapshot.sh`).
 - [ ] Есть воспроизводимый способ сравнения `baseline vs candidate`.
 
 ## Ориентировочная оценка трудозатрат (часы)
