@@ -68,7 +68,7 @@
 - Этапы 2 и 3 теперь должны меняться преимущественно в `BotTurnRoundProjectionService`, `BotTurnCandidateRankingService`, `BotTurnCandidateEvaluatorService`, `BotTurnCardHeuristicsService`, а не только в `BotTurnStrategyService`.
 - Этап 2.5 теперь про расширение уже существующего `BotTurnDecisionContext`, а не про ввод context-API с нуля.
 
-## Статус выполнения (актуализировано на 2026-02-25)
+## Статус выполнения (актуализировано на 2026-02-26)
 
 ### Краткая матрица этапов (0–7)
 
@@ -83,7 +83,7 @@
 | 4b (Premium utility) | в процессе (MVP) | стабилизировать коэффициенты premium-aware utility и расширить strict coverage `PREMIUM-*` |
 | 4c (Opponent premium / penalty-aware) | в процессе (fallback MVP) | усилить/дотюнить anti-premium и penalty-aware utility, сократить probe-зависимость |
 | 5 (Joker logic) | в процессе (MVP+, частично стабилизирован) | закрыть оставшиеся runtime probe/retuning задачи (в первую очередь `JOKER-004` / runtime strict coverage) |
-| 6 (Opponent model MVP) | в процессе (Stage 6a plumbing) | перейти к Stage 6b: интеграция `opponents` в runtime utility/decision ranking без резкого регресса |
+| 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage и удерживать зелёный `BotTurnCandidateRankingServiceTests` как guardrail |
 | 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и фиксации baseline-метрик |
 
 - Этап 0 (baseline): частично
@@ -165,12 +165,15 @@
   - начата Stage 6b runtime-интеграция: `BotTurnCandidateRankingService.premiumDenyUtility` получил лёгкую калибровку anti-premium pressure по `BotOpponentModel` (приоритет наблюдений левого соседа, нейтральность при zero-evidence);
   - добавлены unit-тесты на направление эффекта (дисциплинированный vs erratic левый сосед) и на отсутствие эффекта при `observedRounds == 0`.
   - расширена Stage 6b калибровка на `penaltyAvoidUtility` (тот же осторожный style-signal multiplier), добавлены отдельные unit-тесты на penalty-risk контекст (`disciplined vs erratic`, `zero-evidence -> neutral`).
+  - после интеграции Stage 6b устранены 4 регрессии в `BotTurnCandidateRankingServiceTests` (ранний `matchCatchUp`, конфликт `premium+zeroPremium`, `leftNeighbor` premium-deny guard, double-count anti-premium для lead-joker declaration); полный класс `BotTurnCandidateRankingServiceTests` снова проходит локально.
 
 ### Ограничение валидации (текущее окружение)
 
-- На 2026-02-25 локально подтвержден `xcodebuild build` для схемы `Jocker` (через `xcodebuild ... build` с локальным `-derivedDataPath`).
+- На 2026-02-26 локально подтверждены `xcodebuild build` и `xcodebuild build-for-testing` для схемы `Jocker` (через `xcodebuild ... build` / `... build-for-testing` с локальным `-derivedDataPath`).
 - В sandbox-режиме по-прежнему возможны ложные падения `ibtool/actool` (`CoreSimulatorService`, `iOS 17.2 Platform Not Installed`), поэтому для полной проверки сборки может требоваться unrestricted запуск.
-- `xcodebuild test` в рамках последней актуализации плана не перепроверялся; статус тестов следует считать неполностью подтвержденным для текущего коммита.
+- Локально подтвержден запуск `xcodebuild test-without-building` для `JockerTests/BotTurnCandidateRankingServiceTests` на simulator destination `iPhone 15 (17.2)`; полный класс проходит после фикса Stage 6b регрессий.
+- Локальный simulator destination `iPhone 15 Pro (17.2)` может зависать после `Testing started` до старта `xctest` (destination-specific issue); для рабочих прогонов пока использовать `iPhone 15 (17.2)`.
+- Полный `xcodebuild test` по всей схеме `Jocker` в рамках последней актуализации плана не перепроверялся; статус считается частично подтвержденным (build + targeted AI-suite).
 
 ## Метрики и baseline (этап 0)
 

@@ -90,7 +90,8 @@ struct BotTurnCandidateRankingService {
         let scoreScale = matchContext.block == .fourth ? 180.0 : 260.0
         let behindSignal = min(1.0, Double(behindLeader) / scoreScale)
         let leadSignal = min(1.0, Double(safeLead) / scoreScale)
-        let progressWeight = 0.20 + 0.80 * matchContext.blockProgressFraction
+        // На старте блока матчевый catch-up сигнал должен почти не влиять на локальный выбор хода.
+        let progressWeight = 0.02 + 0.98 * matchContext.blockProgressFraction
         let blockWeight = matchContext.block == .fourth ? 1.15 : 1.0
 
         return (behindSignal - leadSignal) * progressWeight * blockWeight
@@ -158,10 +159,14 @@ struct BotTurnCandidateRankingService {
                 )
                 let mustWinAllRemaining = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
                 let trajectoryMultiplier = mustWinAllRemaining ? 1.30 : 1.0
+                // Если одновременно релевантен zero-premium, избегаем ситуации, где обычный
+                // premium-chase бонус полностью "перебивает" zero-premium осторожность.
+                let zeroPremiumConflictDampener = premium.isZeroPremiumCandidateSoFar ? 0.94 : 1.0
                 adjustment += immediateWinProbability *
                     (10.0 + 12.0 * deficitUrgency) *
                     progressWeight *
-                    trajectoryMultiplier
+                    trajectoryMultiplier *
+                    zeroPremiumConflictDampener
             } else {
                 let exactBidPreserveMultiplier = isExactlyOnBidBeforeMove ? 1.45 : 1.0
                 let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? 0.15 : 1.0
@@ -241,7 +246,9 @@ struct BotTurnCandidateRankingService {
     ) -> Double {
         guard let matchContext = context.matchContext else { return 0.0 }
         guard let premium = matchContext.premium else { return 0.0 }
-        guard premium.opponentPremiumCandidatesSoFarCount > 0 else { return 0.0 }
+        guard premium.leftNeighborIsPremiumCandidateSoFar || premium.opponentPremiumCandidatesSoFarCount > 0 else {
+            return 0.0
+        }
 
         // Приоритет защиты своей премии/zero-premium остаётся за этапом 4b.
         if premium.isPremiumCandidateSoFar || premium.isZeroPremiumCandidateSoFar {
@@ -557,6 +564,11 @@ struct BotTurnCandidateRankingService {
         context: UtilityContext
     ) -> Double {
         let strategy = tuning.turnStrategy
+        let isLeadFaceUpDeclaredJoker =
+            move.card.isJoker &&
+            context.trick.playedCards.isEmpty &&
+            move.decision.style == .faceUp &&
+            move.decision.leadDeclaration != nil
         var utility = projectedScore
         utility += matchCatchUpUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
@@ -567,15 +579,19 @@ struct BotTurnCandidateRankingService {
             immediateWinProbability: immediateWinProbability,
             context: context
         )
-        utility += penaltyAvoidUtilityAdjustment(
-            projectedScore: projectedScore,
-            immediateWinProbability: immediateWinProbability,
-            context: context
-        )
-        utility += premiumDenyUtilityAdjustment(
-            immediateWinProbability: immediateWinProbability,
-            context: context
-        )
+        if !isLeadFaceUpDeclaredJoker {
+            // Stage 5 already models anti-premium declaration shifts for lead face-up joker.
+            // Skipping generic anti-premium utilities here avoids double-counting the same signal.
+            utility += penaltyAvoidUtilityAdjustment(
+                projectedScore: projectedScore,
+                immediateWinProbability: immediateWinProbability,
+                context: context
+            )
+            utility += premiumDenyUtilityAdjustment(
+                immediateWinProbability: immediateWinProbability,
+                context: context
+            )
+        }
         utility += leadJokerDeclarationUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             leadControlReserveAfterMove: leadControlReserveAfterMove,
