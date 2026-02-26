@@ -7,7 +7,7 @@ SHELL := /bin/bash
 	bt-hard-fullgame-smoke bt-hard-fullgame-balanced bt-hard-fullgame-battle bt-hard-final \
 	bt-hard-fullgame-balanced-esab bt-hard-fullgame-battle-esab bt-hard-final-esab \
 	joker-pack joker-pack-all joker-pack-list joker-pack-dry \
-	stage6b-pack stage6b-pack-list stage6b-pack-dry \
+	stage6b-pack stage6b-pack-all stage6b-pack-list stage6b-pack-dry \
 	bot-baseline bot-baseline-smoke bot-baseline-list bot-baseline-dry \
 	bot-compare bot-compare-smoke bot-compare-list bot-compare-dry
 
@@ -45,6 +45,9 @@ joker-pack-dry:
 
 stage6b-pack:
 	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT)
+
+stage6b-pack-all:
+	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT) --include-flow-plumbing
 
 stage6b-pack-list:
 	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT) --list

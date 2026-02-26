@@ -1519,6 +1519,9 @@ Expected behavior:
   - `scripts/run_stage6b_ranking_guardrails.sh`
   - `make stage6b-pack-list`
   - `make stage6b-pack`
+- Расширенный режим (`ranking + flow-plumbing` для cross-service opponent-model guardrails):
+  - `scripts/run_stage6b_ranking_guardrails.sh --include-flow-plumbing`
+  - `make stage6b-pack-all`
 - Артефакты сохраняются в `.derivedData/stage6b-ranking-runs/<timestamp>/` (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`).
 - Fallback-команда (если нужен точечный локальный прогон всего класса вместо pack):
   - `xcodebuild -quiet -project Jocker/Jocker.xcodeproj -scheme Jocker -destination 'id=4F592A52-148C-4540-BB72-590B8C44BD43' -derivedDataPath .derivedData CODE_SIGNING_ALLOWED=NO test-without-building -only-testing:JockerTests/BotTurnCandidateRankingServiceTests`
@@ -1528,5 +1531,5 @@ Expected behavior:
 
 - Добавить точные сериализованные состояния для первых 8 кейсов.
 - Привязать каждый кейс к автоматическому тесту или harness-команде (JOKER pack CLI/Makefile entrypoints добавлены; осталось расширить mapping для draft-кейсов).
-- Выделенный `Stage 6b` pack/harness добавлен (`scripts/run_stage6b_ranking_guardrails.sh`, `make stage6b-pack*`); следующий шаг по этому контуру — при необходимости расширить на non-ranking / cross-service guardrails.
+- Выделенный `Stage 6b` pack/harness добавлен (`scripts/run_stage6b_ranking_guardrails.sh`, `make stage6b-pack*`); добавлен расширенный режим `--include-flow-plumbing` / `make stage6b-pack-all` для cross-service opponent-model guardrails.
 - Зафиксировать финальный seed-набор baseline для этапа 0.

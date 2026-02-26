@@ -8,9 +8,11 @@ usage() {
 
 Назначение:
   Запускает Stage 6b opponent-aware ranking guardrails (unit tests) и сохраняет
-  артефакты прогона в отдельную папку.
+  артефакты прогона в отдельную папку. Опционально может включать cross-service
+  plumbing guardrails для построения `BotOpponentModel` в flow.
 
 Параметры:
+  --include-flow-plumbing      Добавить flow-level opponent-model plumbing guardrails
   --list                      Показать выбранные тесты и выйти
   --dry-run                   Напечатать команду xcodebuild и выбранные тесты без запуска
   --project <path>            Путь до .xcodeproj (по умолчанию: Jocker/Jocker.xcodeproj)
@@ -27,6 +29,7 @@ usage() {
 Примеры:
   scripts/run_stage6b_ranking_guardrails.sh --list
   scripts/run_stage6b_ranking_guardrails.sh --dry-run
+  scripts/run_stage6b_ranking_guardrails.sh --include-flow-plumbing
   scripts/run_stage6b_ranking_guardrails.sh --destination "platform=iOS Simulator,name=iPhone 15,OS=17.2"
 EOF
 }
@@ -66,9 +69,14 @@ output_root=".derivedData/stage6b-ranking-runs"
 derived_data_path=".derivedData/xcode-stage6b-ranking-tests"
 list_only=false
 dry_run=false
+include_flow_plumbing=false
 
 while (($# > 0)); do
   case "$1" in
+    --include-flow-plumbing)
+      include_flow_plumbing=true
+      shift
+      ;;
     --list)
       list_only=true
       shift
@@ -125,7 +133,7 @@ project_abs="$(resolve_abs_path "$project_path" "$repo_root")"
 output_root_abs="$(resolve_abs_path "$output_root" "$repo_root")"
 derived_data_abs="$(resolve_abs_path "$derived_data_path" "$repo_root")"
 
-catalog_entries=(
+ranking_catalog_entries=(
   "BLIND-004|blind chase|JockerTests/BotTurnCandidateRankingServiceTests/testMoveUtility_whenBlindChasing_andDisciplinedObservedLeftNeighbor_increasesBlindContestUtility"
   "BLIND-004|blind chase|JockerTests/BotTurnCandidateRankingServiceTests/testMoveUtility_whenBlindChasing_andOpponentModelHasNoEvidence_keepsBlindContestUtilityUnchanged"
   "PREMIUM-010|premium deny|JockerTests/BotTurnCandidateRankingServiceTests/testMoveUtility_whenLeftNeighborPremiumCandidate_andDisciplinedLeftNeighborObserved_strengthensDenyPressure"
@@ -140,6 +148,17 @@ catalog_entries=(
   "JOKER-016|lead-joker dump|JockerTests/BotTurnCandidateRankingServiceTests/testMoveUtility_whenLeadJokerDumpingAntiPremiumContext_andOpponentModelHasNoEvidence_keepsTakesUtilityUnchanged"
 )
 
+flow_plumbing_catalog_entries=(
+  "FLOW-OPP-001|flow plumbing|JockerTests/GameScenePlayingFlowTests/testBotMatchContext_buildsOpponentModelSnapshotFromObservedRounds"
+  "FLOW-OPP-002|flow plumbing|JockerTests/GameScenePlayingFlowTests/testBotMatchContext_buildsOpponentModelWithZeroEvidenceAtBlockStart"
+)
+
+catalog_entries=()
+catalog_entries+=("${ranking_catalog_entries[@]}")
+if [[ "$include_flow_plumbing" == true ]]; then
+  catalog_entries+=("${flow_plumbing_catalog_entries[@]}")
+fi
+
 selected_tests=()
 for entry in "${catalog_entries[@]}"; do
   IFS='|' read -r _id _area target <<<"$entry"
@@ -148,6 +167,11 @@ done
 
 if [[ "$list_only" == true ]]; then
   echo "Stage 6b ranking guardrails pack"
+  if [[ "$include_flow_plumbing" == true ]]; then
+    echo "Mode: ranking+flow-plumbing"
+  else
+    echo "Mode: ranking-only"
+  fi
   echo "Selected tests: ${#selected_tests[@]}"
   print_entries "${catalog_entries[@]}"
   exit 0
@@ -179,6 +203,15 @@ result_bundle_path="$run_dir/TestResults.xcresult"
 summary_path="$run_dir/summary.txt"
 selected_tests_path="$run_dir/selected-tests.txt"
 start_iso="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+mode_label="ranking-only"
+if [[ "$include_flow_plumbing" == true ]]; then
+  mode_label="ranking+flow-plumbing"
+fi
+ranking_tests_count="${#ranking_catalog_entries[@]}"
+flow_tests_count=0
+if [[ "$include_flow_plumbing" == true ]]; then
+  flow_tests_count="${#flow_plumbing_catalog_entries[@]}"
+fi
 
 cmd=(
   xcodebuild
@@ -197,7 +230,8 @@ done
 cmd+=(test)
 
 echo "=== Stage 6b ranking guardrails pack ==="
-echo "Selected tests: ${#selected_tests[@]}"
+echo "Mode: $mode_label"
+echo "Selected tests: ${#selected_tests[@]} (ranking=$ranking_tests_count, flow=$flow_tests_count)"
 
 if [[ "$dry_run" == true ]]; then
   printf 'Command:'
@@ -238,6 +272,9 @@ exit_code=$test_exit_code
 started_at_utc=$start_iso
 finished_at_utc=$end_iso
 selected_tests_count=${#selected_tests[@]}
+mode=$mode_label
+ranking_tests_count=$ranking_tests_count
+flow_tests_count=$flow_tests_count
 project=$project_abs
 scheme=$scheme
 configuration=$configuration

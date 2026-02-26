@@ -83,7 +83,7 @@
 | 4b (Premium utility) | в процессе (MVP) | стабилизировать коэффициенты premium-aware utility и расширить strict coverage `PREMIUM-*` |
 | 4c (Opponent premium / penalty-aware) | в процессе (fallback MVP) | усилить/дотюнить anti-premium и penalty-aware utility, сократить probe-зависимость |
 | 5 (Joker logic) | в процессе (MVP+, частично стабилизирован) | закрыть оставшиеся runtime probe/retuning задачи (в первую очередь `JOKER-004` / runtime strict coverage) |
-| 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage; использовать `stage6b-pack` как быстрый guardrail и держать зелёным `BotTurnCandidateRankingServiceTests` |
+| 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage; использовать `stage6b-pack`/`stage6b-pack-all` как быстрые guardrails и держать зелёным `BotTurnCandidateRankingServiceTests` |
 | 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и подготовки воспроизводимого `baseline vs candidate` сравнения |
 
 - Этап 0 (baseline): выполнен
@@ -186,6 +186,8 @@
   - возвращение к "первоначальному" плановому контуру валидации: в `BOT_AI_TEST_SCENARIOS.md` добавлены Stage 6b draft-кейсы и guardrail-mapping для opponent-aware ranking (`BLIND-004`, `PREMIUM-010/011`, `PHASE-003`, `JOKER-016`) с harness-командой для локального прогона на `iPhone 15 (17.2)`.
   - добавлен отдельный Stage 6b guardrail pack: `scripts/run_stage6b_ranking_guardrails.sh` + `make stage6b-pack*` (`list`/`dry`/`run`) с сохранением артефактов (`summary.txt`, `selected-tests.txt`, `xcodebuild.log`, `TestResults.xcresult`) в `.derivedData/stage6b-ranking-runs/<timestamp>/`.
   - Stage 6b guardrail pack подтвержден end-to-end на `iPhone 15 (17.2)`: `12/12` тестов `BotTurnCandidateRankingServiceTests` (оппонент-aware ranking subset) проходят; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-165924`.
+  - pack расширен опциональным cross-service режимом `--include-flow-plumbing` / `make stage6b-pack-all` (добавляет flow-тесты построения `BotOpponentModel` из `GameScenePlayingFlowTests` к ranking-level subset).
+  - расширенный `stage6b-pack-all` (ranking + flow plumbing) подтвержден end-to-end на `iPhone 15 (17.2)`: `14/14`, `exit 0`; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-170616`.
 
 ### Ограничение валидации (текущее окружение)
 
@@ -194,6 +196,8 @@
 - Локально подтвержден запуск `xcodebuild test-without-building` для `JockerTests/BotTurnCandidateRankingServiceTests` на simulator destination `iPhone 15 (17.2)`; полный класс проходит после фикса Stage 6b регрессий.
 - Добавлен отдельный automation entrypoint для Stage 6b ranking guardrails (`make stage6b-pack` / `scripts/run_stage6b_ranking_guardrails.sh`) вместо запуска всего `BotTurnCandidateRankingServiceTests`; runtime-прогон pack требует того же рабочего destination (`iPhone 15 (17.2)`) в текущем окружении.
 - Локально подтвержден успешный runtime-прогон `stage6b-pack` на `iPhone 15 (17.2)` (`12/12`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-165924`).
+- Для cross-service проверки Stage 6 (ranking + flow plumbing) доступен `stage6b-pack-all`; используется тот же рабочий destination `iPhone 15 (17.2)`.
+- Локально подтвержден успешный runtime-прогон `stage6b-pack-all` на `iPhone 15 (17.2)` (`14/14`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-170616`).
 - Локальный simulator destination `iPhone 15 Pro (17.2)` может зависать после `Testing started` до старта `xctest` (destination-specific issue); для рабочих прогонов пока использовать `iPhone 15 (17.2)`.
 - Полный `xcodebuild test` по всей схеме `Jocker` в рамках последней актуализации плана не перепроверялся; статус считается частично подтвержденным (build + targeted AI-suite).
 
