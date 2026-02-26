@@ -62,6 +62,12 @@ enum BotSelfPlayEvolutionEngine {
         let earlyStoppingMinImprovement: Double
         /// Минимальное число завершённых поколений перед проверкой early stopping.
         let earlyStoppingWarmupGenerations: Int
+        /// Разрешить эволюции менять веса `turnStrategy`.
+        let tuneTurnStrategy: Bool
+        /// Разрешить эволюции менять веса `bidding` (включая blind sub-weights).
+        let tuneBidding: Bool
+        /// Разрешить эволюции менять веса `trumpSelection`.
+        let tuneTrumpSelection: Bool
 
         init(
             populationSize: Int = 16,
@@ -91,7 +97,10 @@ enum BotSelfPlayEvolutionEngine {
             premiumPenaltyTargetNormalization: Double = 1600.0,
             earlyStoppingPatience: Int = 0,
             earlyStoppingMinImprovement: Double = 0.0,
-            earlyStoppingWarmupGenerations: Int = 0
+            earlyStoppingWarmupGenerations: Int = 0,
+            tuneTurnStrategy: Bool = true,
+            tuneBidding: Bool = true,
+            tuneTrumpSelection: Bool = true
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -136,6 +145,9 @@ enum BotSelfPlayEvolutionEngine {
             self.earlyStoppingPatience = max(0, earlyStoppingPatience)
             self.earlyStoppingMinImprovement = max(0.0, earlyStoppingMinImprovement)
             self.earlyStoppingWarmupGenerations = max(0, earlyStoppingWarmupGenerations)
+            self.tuneTurnStrategy = tuneTurnStrategy
+            self.tuneBidding = tuneBidding
+            self.tuneTrumpSelection = tuneTrumpSelection
         }
 
         private static func clamp(
@@ -287,12 +299,15 @@ enum BotSelfPlayEvolutionEngine {
 
         var population: [EvolutionGenome] = [.identity]
         while population.count < populationSize {
-            let randomGenome = randomGenome(
-                around: .identity,
-                magnitude: max(config.mutationMagnitude, 0.08),
-                using: &rng
+            let seededGenome = applyingEvolutionScopeMask(
+                randomGenome(
+                    around: .identity,
+                    magnitude: max(config.mutationMagnitude, 0.08),
+                    using: &rng
+                ),
+                config: config
             )
-            population.append(randomGenome)
+            population.append(seededGenome)
         }
 
         let runStartedAt = Date()
@@ -457,7 +472,12 @@ enum BotSelfPlayEvolutionEngine {
                     magnitude: config.mutationMagnitude,
                     using: &rng
                 )
-                nextPopulation.append(mutatedChild)
+                nextPopulation.append(
+                    applyingEvolutionScopeMask(
+                        mutatedChild,
+                        config: config
+                    )
+                )
             }
 
             population = nextPopulation
@@ -1455,6 +1475,55 @@ enum BotSelfPlayEvolutionEngine {
             biddingServices: tuningsBySeat.map { BotBiddingService(tuning: $0) },
             trumpServices: tuningsBySeat.map { BotTrumpSelectionService(tuning: $0) }
         )
+    }
+
+    private static func applyingEvolutionScopeMask(
+        _ genome: EvolutionGenome,
+        config: SelfPlayEvolutionConfig
+    ) -> EvolutionGenome {
+        if config.tuneTurnStrategy && config.tuneBidding && config.tuneTrumpSelection {
+            return genome
+        }
+
+        var masked = genome
+
+        if !config.tuneTurnStrategy {
+            masked.chaseWinProbabilityScale = 1.0
+            masked.chaseThreatPenaltyScale = 1.0
+            masked.chaseSpendJokerPenaltyScale = 1.0
+            masked.dumpAvoidWinScale = 1.0
+            masked.dumpThreatRewardScale = 1.0
+            masked.dumpSpendJokerPenaltyScale = 1.0
+            masked.holdDistributionScale = 1.0
+            masked.futureTricksScale = 1.0
+            masked.futureJokerPowerScale = 1.0
+            masked.threatPreservationScale = 1.0
+        }
+
+        if !config.tuneBidding {
+            masked.biddingJokerPowerScale = 1.0
+            masked.biddingRankWeightScale = 1.0
+            masked.biddingTrumpBaseBonusScale = 1.0
+            masked.biddingTrumpRankWeightScale = 1.0
+            masked.biddingHighRankBonusScale = 1.0
+            masked.biddingLongSuitBonusScale = 1.0
+            masked.biddingTrumpDensityBonusScale = 1.0
+            masked.biddingNoTrumpHighCardBonusScale = 1.0
+            masked.biddingNoTrumpJokerSynergyScale = 1.0
+            masked.blindDesperateBehindThresholdScale = 1.0
+            masked.blindCatchUpBehindThresholdScale = 1.0
+            masked.blindSafeLeadThresholdScale = 1.0
+            masked.blindDesperateTargetShareScale = 1.0
+            masked.blindCatchUpTargetShareScale = 1.0
+            masked.blindCatchUpConservativeTargetShareScale = 1.0
+        }
+
+        if !config.tuneTrumpSelection {
+            masked.trumpCardBasePowerScale = 1.0
+            masked.trumpThresholdScale = 1.0
+        }
+
+        return masked
     }
 
     private static func randomGenome(

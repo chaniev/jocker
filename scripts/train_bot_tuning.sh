@@ -40,6 +40,10 @@ usage() {
   --selection-pool-ratio <double>   Доля лучших кандидатов для выбора родителей;
                                      в коде ограничивается диапазоном [0.2..1.0]
                                      (по умолчанию: 0.55).
+  --tuning-scope <all|turnStrategy-only>
+                                     Ограничить пространство эволюции:
+                                     `all` (по умолчанию) или только `turnStrategy`
+                                     без изменения `bidding`/`trumpSelection`.
   --use-full-match-rules <true|false>
                                      Включить симуляцию полной партии по блокам 1..4
                                      с blind и премиями (по умолчанию: true).
@@ -182,6 +186,7 @@ elite_count="3"
 mutation_chance="0.34"
 mutation_magnitude="0.16"
 selection_pool_ratio="0.55"
+tuning_scope="all"
 use_full_match_rules="true"
 rotate_candidate_across_seats="true"
 fitness_win_rate_weight="1.0"
@@ -268,6 +273,10 @@ while (($# > 0)); do
       ;;
     --selection-pool-ratio)
       selection_pool_ratio="${2:-}"
+      shift 2
+      ;;
+    --tuning-scope)
+      tuning_scope="${2:-}"
       shift 2
       ;;
     --use-full-match-rules)
@@ -405,6 +414,13 @@ require_int "$elite_count" "--elite-count"
 require_double "$mutation_chance" "--mutation-chance"
 require_double "$mutation_magnitude" "--mutation-magnitude"
 require_double "$selection_pool_ratio" "--selection-pool-ratio"
+case "$tuning_scope" in
+  all|turnStrategy-only) ;;
+  *)
+    echo "Invalid value for --tuning-scope: $tuning_scope (use all|turnStrategy-only)" >&2
+    exit 1
+    ;;
+esac
 require_bool "$use_full_match_rules" "--use-full-match-rules"
 require_bool "$rotate_candidate_across_seats" "--rotate-candidate-across-seats"
 require_double "$fitness_win_rate_weight" "--fitness-win-rate-weight"
@@ -443,6 +459,16 @@ case "$ensemble_method" in
   *)
     echo "Invalid ensemble method: $ensemble_method (use median|mean)" >&2
     exit 1
+    ;;
+esac
+
+tune_turn_strategy="true"
+tune_bidding="true"
+tune_trump_selection="true"
+case "$tuning_scope" in
+  turnStrategy-only)
+    tune_bidding="false"
+    tune_trump_selection="false"
     ;;
 esac
 
@@ -637,7 +663,10 @@ let config = BotTuning.SelfPlayEvolutionConfig(
     premiumPenaltyTargetNormalization: $premium_penalty_target_normalization,
     earlyStoppingPatience: $early_stop_patience,
     earlyStoppingMinImprovement: $early_stop_min_improvement,
-    earlyStoppingWarmupGenerations: $early_stop_warmup_generations
+    earlyStoppingWarmupGenerations: $early_stop_warmup_generations,
+    tuneTurnStrategy: $tune_turn_strategy,
+    tuneBidding: $tune_bidding,
+    tuneTrumpSelection: $tune_trump_selection
 )
 
 let seed: UInt64 = $seed
@@ -645,6 +674,7 @@ let seedListRaw = "$seed_list"
 let ensembleMethod = "$ensemble_method"
 let showProgress = $show_progress
 let progressCandidateStep = max(1, $progress_candidate_step)
+let tuningScope = "$tuning_scope"
 let abValidate = $ab_validate
 let abValidationSeedListRaw = "$ab_validation_seed_list"
 let abValidationHoldoutSeedListRaw = "$ab_validation_holdout_seed_list"
@@ -692,7 +722,10 @@ let abValidationConfig = BotTuning.SelfPlayEvolutionConfig(
     premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization,
     earlyStoppingPatience: 0,
     earlyStoppingMinImprovement: 0.0,
-    earlyStoppingWarmupGenerations: 0
+    earlyStoppingWarmupGenerations: 0,
+    tuneTurnStrategy: config.tuneTurnStrategy,
+    tuneBidding: config.tuneBidding,
+    tuneTrumpSelection: config.tuneTrumpSelection
 )
 
 struct SeedRun {
@@ -1005,6 +1038,13 @@ if seedRuns.count == 1 {
 }
 print("useFullMatchRules=\\(config.useFullMatchRules)")
 print("rotateCandidateAcrossSeats=\\(config.rotateCandidateAcrossSeats)")
+print("tuningScope=\\(tuningScope)")
+print(
+    "tuningScopeFlags " +
+    "turnStrategy=\\(config.tuneTurnStrategy) " +
+    "bidding=\\(config.tuneBidding) " +
+    "trumpSelection=\\(config.tuneTrumpSelection)"
+)
 print("fitnessWinRateWeight=\\(fmt(config.fitnessWinRateWeight))")
 print("fitnessScoreDiffWeight=\\(fmt(config.fitnessScoreDiffWeight))")
 print("fitnessUnderbidLossWeight=\\(fmt(config.fitnessUnderbidLossWeight))")
