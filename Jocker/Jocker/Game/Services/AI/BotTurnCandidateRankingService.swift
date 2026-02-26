@@ -495,7 +495,7 @@ struct BotTurnCandidateRankingService {
             if let premium = context.matchContext?.premium,
                premium.leftNeighborIsPremiumCandidateSoFar || premium.isPenaltyTargetRiskSoFar {
                 // В anti-premium/penalty-aware контексте controlled-loss lead чуть ценнее.
-                bonus += 1.5
+                bonus += 1.5 * antiPremiumStyleMultiplier
             }
             if ownPremiumProtectionContext {
                 bonus += 2.0
