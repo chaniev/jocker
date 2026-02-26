@@ -218,6 +218,9 @@ struct BotTurnCandidateRankingService {
         let endBlockWeight = 0.20 + 1.00 * matchContext.blockProgressFraction
         let opponentStyleMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
         let riskWeight = threatCountWeight * evidenceWeight * endBlockWeight * opponentStyleMultiplier
+        // Retune (Stage 4c/6): усиливаем penalty-avoid в поздней части блока,
+        // чтобы реже сохранять штрафоопасную траекторию соперников.
+        let lateBlockPenaltyAvoidBoost = 1.0 + 0.18 * matchContext.blockProgressFraction
 
         var adjustment = 0.0
         let positiveProjectedScore = max(0.0, projectedScore)
@@ -228,11 +231,11 @@ struct BotTurnCandidateRankingService {
         if context.shouldChaseTrick {
             if context.trickDeltaToBidBeforeMove > 0 {
                 // Уже вышли в overbid и продолжаем добирать: при риске штрафа это особенно плохо.
-                adjustment -= immediateWinProbability * 18.0 * riskWeight
+                adjustment -= immediateWinProbability * 18.0 * riskWeight * lateBlockPenaltyAvoidBoost
             }
         } else {
             // В режиме dump под риском штрафа чуть сильнее поощряем безопасный проигрыш взятки.
-            adjustment += (1.0 - immediateWinProbability) * 10.0 * riskWeight
+            adjustment += (1.0 - immediateWinProbability) * 10.8 * riskWeight * lateBlockPenaltyAvoidBoost
         }
 
         return adjustment

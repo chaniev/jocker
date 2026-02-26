@@ -83,7 +83,7 @@
 | 4b (Premium utility) | в процессе (MVP) | стабилизировать коэффициенты premium-aware utility и расширить strict coverage `PREMIUM-*` |
 | 4c (Opponent premium / penalty-aware) | в процессе (fallback MVP) | усилить/дотюнить anti-premium и penalty-aware utility, сократить probe-зависимость |
 | 5 (Joker logic) | в процессе (MVP+, частично стабилизирован) | закрыть оставшиеся runtime probe/retuning задачи (в первую очередь `JOKER-004` / runtime strict coverage) |
-| 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage; использовать `stage6b-pack`/`stage6b-pack-all` как быстрые guardrails (ranking + cross-service no-evidence) и держать зелёным `BotTurnCandidateRankingServiceTests` |
+| 6 (Opponent model MVP) | в процессе (Stage 6a completed, Stage 6b MVP в работе) | продолжить Stage 6b retuning/coverage; использовать `stage6b-pack`/`stage6b-pack-all` (`18` tests, ranking + cross-service) как быстрые guardrails и держать зелёным `BotTurnCandidateRankingServiceTests` |
 | 7 (Self-play retuning) | не начат системно | запустить после стабилизации 3/4b/4c/5/6 и подготовки воспроизводимого `baseline vs candidate` сравнения |
 
 - Этап 0 (baseline): выполнен
@@ -103,6 +103,7 @@
   - `baseline-v1` повторно прогнан после добавления `leftNeighborPremiumAssistRate`; актуальный baseline artifact: `.derivedData/bot-baseline-runs/20260226-164733`, `pending_stage0_metrics` пустой.
   - `compare-v1` self-play candidate (`ensembleAverageBest*`) показал рост `winRate`/`scoreDiff` и снижение `underbidLoss` против baseline, но ухудшение `premiumAssistLoss`/`premiumPenaltyTargetLoss` (см. таблицу `baseline vs candidate` ниже).
   - `compare-v1` A/B summary (`tunedOutput` vs `basePreset`) смешанный: `primary` положительный по `fitness/winRate/scoreDiff`, но `holdout` отрицательный по `fitness/winRate/scoreDiff` (возможный overfit/нестабильность, несмотря на улучшение части loss-метрик).
+  - после микро-ретюна `penaltyAvoidUtility` (Stage 4c/6) полный `compare-v1` повторно прогнан для проверки чувствительности aggregate self-play/A-B метрик; артефакты: `.derivedData/bot-ab-runs/20260226-174435`. На текущем профиле `compare-v1` измеримого сдвига не зафиксировано (candidate/primary/holdout aggregate summary совпали с предыдущим snapshot).
 - Этап 1 (Blind fix): выполнен по коду и unit-тестам
   - `makePreDealBlindBid(...)` переведен на risk-score;
   - `blindSafeLeadThreshold` влияет на решение;
@@ -192,6 +193,8 @@
   - обновленный `stage6b-pack-all` подтвержден end-to-end на `iPhone 15 (17.2)`: `16/16`, `exit 0`; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-172441`.
   - `stage6b-pack-all` расширен positive-style cross-service guardrails (`disciplined vs erratic`) для moderate premium-deny dump scenario в `Evaluator` и `Strategy` (decision-level style-shift до runtime path).
   - обновленный `stage6b-pack-all` (с positive-style cross-service guardrails) подтвержден end-to-end на `iPhone 15 (17.2)`: `18/18`, `exit 0`; артефакты прогона: `.derivedData/stage6b-ranking-runs/20260226-173543`.
+  - начата retuning-итерация по `п.2`: выполнен микро-ретюн `penaltyAvoidUtility` (усилен late-block penalty-avoid boost для chase/dump penalty-risk веток) в `BotTurnCandidateRankingService`; post-retune gate `stage6b-pack-all` повторно подтвержден на `iPhone 15 (17.2)` (`18/18`, `exit 0`; артефакты: `.derivedData/stage6b-ranking-runs/20260226-174417`).
+  - полный `compare-v1` после этого микро-ретюна повторно прогнан (`.derivedData/bot-ab-runs/20260226-174435`), но агрегатные self-play/A-B метрики не показали измеримого сдвига относительно текущего snapshot `compare-v1`; используем это как сигнал для следующей, более адресной retuning-итерации.
 
 ### Ограничение валидации (текущее окружение)
 
@@ -204,6 +207,7 @@
 - Локально подтвержден успешный runtime-прогон `stage6b-pack-all` на `iPhone 15 (17.2)` (`14/14`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-170616`).
 - `stage6b-pack-all` расширен до `16` тестов (добавлены `Evaluator` + `Strategy` no-evidence guardrails) и повторно подтвержден на `iPhone 15 (17.2)` (`16/16`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-172441`).
 - `stage6b-pack-all` расширен до `18` тестов (добавлены `Evaluator` + `Strategy` positive-style guardrails `disciplined vs erratic` для moderate premium-deny dump scenario) и подтвержден на `iPhone 15 (17.2)` (`18/18`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-173543`).
+- После микро-ретюна `penaltyAvoidUtility` (`Stage 4c/6`) `stage6b-pack-all` повторно подтвержден на `iPhone 15 (17.2)` (`18/18`, `exit 0`, артефакты в `.derivedData/stage6b-ranking-runs/20260226-174417`); быстрый gate остается обязательным между retuning-итерациями.
 - Локальный simulator destination `iPhone 15 Pro (17.2)` может зависать после `Testing started` до старта `xctest` (destination-specific issue); для рабочих прогонов пока использовать `iPhone 15 (17.2)`.
 - Полный `xcodebuild test` по всей схеме `Jocker` в рамках последней актуализации плана не перепроверялся; статус считается частично подтвержденным (build + targeted AI-suite).
 
