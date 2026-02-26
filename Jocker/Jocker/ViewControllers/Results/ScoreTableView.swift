@@ -9,6 +9,8 @@ import UIKit
 
 /// Таблица очков — координирует компоненты: layout, лейблы, сетку, декорации.
 final class ScoreTableView: UIView, UIScrollViewDelegate {
+    typealias RowKind = ScoreTableLayout.RowKind
+    typealias RowMapping = ScoreTableLayout.RowMapping
 
     private typealias ScoreDataSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDataSnapshot
     private typealias ScoreDecorationsSnapshot = ScoreTableRenderSnapshotBuilder.ScoreDecorationsSnapshot
