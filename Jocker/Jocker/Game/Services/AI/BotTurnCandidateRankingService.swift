@@ -210,7 +210,8 @@ struct BotTurnCandidateRankingService {
                 Double(max(1, matchContext.totalRoundsInBlock - 1))
         )
         let endBlockWeight = 0.20 + 1.00 * matchContext.blockProgressFraction
-        let riskWeight = threatCountWeight * evidenceWeight * endBlockWeight
+        let opponentStyleMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
+        let riskWeight = threatCountWeight * evidenceWeight * endBlockWeight * opponentStyleMultiplier
 
         var adjustment = 0.0
         let positiveProjectedScore = max(0.0, projectedScore)

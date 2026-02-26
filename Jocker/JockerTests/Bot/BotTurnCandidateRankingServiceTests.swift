@@ -1843,6 +1843,223 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         XCTAssertLessThan(penaltyRisk, noPenaltyRisk)
     }
 
+    func testMoveUtility_whenPenaltyTargetRisk_andDisciplinedObservedOpponent_strengthensPenaltyAvoidAdjustment() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let params = commonUtilityParams(
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: true
+        )
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.clubs, .seven),
+            decision: .defaultNonLead
+        )
+        let premium = BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: 7,
+            remainingRoundsInBlock: 1,
+            isPremiumCandidateSoFar: false,
+            isZeroPremiumRelevantInBlock: false,
+            isZeroPremiumCandidateSoFar: false,
+            leftNeighborIndex: 1,
+            leftNeighborIsPremiumCandidateSoFar: false,
+            isPenaltyTargetRiskSoFar: true,
+            premiumCandidatesThreateningPenaltyCount: 1,
+            opponentPremiumCandidatesSoFarCount: 0
+        )
+
+        let disciplinedContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 4,
+                    blindBidRate: 0.50,
+                    exactBidRate: 0.75,
+                    overbidRate: 0.10,
+                    underbidRate: 0.15,
+                    averageBidAggression: 0.72
+                ),
+                others: []
+            )
+        )
+        let erraticContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 4,
+                    blindBidRate: 0.0,
+                    exactBidRate: 0.20,
+                    overbidRate: 0.45,
+                    underbidRate: 0.35,
+                    averageBidAggression: 0.35
+                ),
+                others: []
+            )
+        )
+
+        let disciplinedUtility = service.moveUtility(
+            projectedScore: 140,
+            immediateWinProbability: 0.25,
+            threat: params.threat,
+            move: move,
+            trickNode: params.trickNode,
+            trump: params.trump,
+            shouldChaseTrick: params.shouldChaseTrick,
+            hasWinningNonJoker: params.hasWinningNonJoker,
+            hasLosingNonJoker: params.hasLosingNonJoker,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 2,
+            trickDeltaToBidBeforeMove: 1,
+            chasePressure: params.chasePressure,
+            matchContext: disciplinedContext
+        )
+        let erraticUtility = service.moveUtility(
+            projectedScore: 140,
+            immediateWinProbability: 0.25,
+            threat: params.threat,
+            move: move,
+            trickNode: params.trickNode,
+            trump: params.trump,
+            shouldChaseTrick: params.shouldChaseTrick,
+            hasWinningNonJoker: params.hasWinningNonJoker,
+            hasLosingNonJoker: params.hasLosingNonJoker,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 2,
+            trickDeltaToBidBeforeMove: 1,
+            chasePressure: params.chasePressure,
+            matchContext: erraticContext
+        )
+
+        XCTAssertLessThan(disciplinedUtility, erraticUtility)
+    }
+
+    func testMoveUtility_whenPenaltyTargetRisk_andOpponentModelHasNoEvidence_keepsPenaltyAvoidAdjustmentUnchanged() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let params = commonUtilityParams(
+            trickNode: trickNode,
+            trump: .spades,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: true
+        )
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.clubs, .seven),
+            decision: .defaultNonLead
+        )
+        let premium = BotMatchContext.PremiumSnapshot(
+            completedRoundsInBlock: 7,
+            remainingRoundsInBlock: 1,
+            isPremiumCandidateSoFar: false,
+            isZeroPremiumRelevantInBlock: false,
+            isZeroPremiumCandidateSoFar: false,
+            leftNeighborIndex: 1,
+            leftNeighborIsPremiumCandidateSoFar: false,
+            isPenaltyTargetRiskSoFar: true,
+            premiumCandidatesThreateningPenaltyCount: 1,
+            opponentPremiumCandidatesSoFarCount: 0
+        )
+
+        let withoutOpponents = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: premium
+        )
+        let noEvidenceOpponents = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: premium,
+            opponents: makeOpponentModel(
+                leftNeighborIndex: 1,
+                leftNeighbor: .init(
+                    playerIndex: 1,
+                    observedRounds: 0,
+                    blindBidRate: 0,
+                    exactBidRate: 0,
+                    overbidRate: 0,
+                    underbidRate: 0,
+                    averageBidAggression: 0
+                ),
+                others: [
+                    .init(
+                        playerIndex: 2,
+                        observedRounds: 0,
+                        blindBidRate: 0,
+                        exactBidRate: 0,
+                        overbidRate: 0,
+                        underbidRate: 0,
+                        averageBidAggression: 0
+                    )
+                ]
+            )
+        )
+
+        let baselineUtility = service.moveUtility(
+            projectedScore: 140,
+            immediateWinProbability: 0.25,
+            threat: params.threat,
+            move: move,
+            trickNode: params.trickNode,
+            trump: params.trump,
+            shouldChaseTrick: params.shouldChaseTrick,
+            hasWinningNonJoker: params.hasWinningNonJoker,
+            hasLosingNonJoker: params.hasLosingNonJoker,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 2,
+            trickDeltaToBidBeforeMove: 1,
+            chasePressure: params.chasePressure,
+            matchContext: withoutOpponents
+        )
+        let noEvidenceUtility = service.moveUtility(
+            projectedScore: 140,
+            immediateWinProbability: 0.25,
+            threat: params.threat,
+            move: move,
+            trickNode: params.trickNode,
+            trump: params.trump,
+            shouldChaseTrick: params.shouldChaseTrick,
+            hasWinningNonJoker: params.hasWinningNonJoker,
+            hasLosingNonJoker: params.hasLosingNonJoker,
+            tricksNeededToMatchBid: 0,
+            tricksRemainingIncludingCurrent: 2,
+            trickDeltaToBidBeforeMove: 1,
+            chasePressure: params.chasePressure,
+            matchContext: noEvidenceOpponents
+        )
+
+        XCTAssertEqual(noEvidenceUtility, baselineUtility, accuracy: 0.0001)
+    }
+
     func testMoveUtility_whenLeftNeighborPremiumCandidate_dumpingBecomesLessAttractive() {
         let trickNode = TrickNode()
         _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)

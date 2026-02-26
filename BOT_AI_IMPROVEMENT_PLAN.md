@@ -164,6 +164,7 @@
   - восстановлена интеграция в сборку Xcode: `BotMatchContext.swift` и `BotOpponentModel.swift` подключены в target (`project.pbxproj`), устранен build-break `cannot find type ... in scope`;
   - начата Stage 6b runtime-интеграция: `BotTurnCandidateRankingService.premiumDenyUtility` получил лёгкую калибровку anti-premium pressure по `BotOpponentModel` (приоритет наблюдений левого соседа, нейтральность при zero-evidence);
   - добавлены unit-тесты на направление эффекта (дисциплинированный vs erratic левый сосед) и на отсутствие эффекта при `observedRounds == 0`.
+  - расширена Stage 6b калибровка на `penaltyAvoidUtility` (тот же осторожный style-signal multiplier), добавлены отдельные unit-тесты на penalty-risk контекст (`disciplined vs erratic`, `zero-evidence -> neutral`).
 
 ### Ограничение валидации (текущее окружение)
 
