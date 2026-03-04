@@ -8,9 +8,13 @@
 import XCTest
 @testable import Jocker
 
+#if canImport(JockerSelfPlayTools)
+@testable import JockerSelfPlayTools
+#endif
+
 final class BotTuningTests: XCTestCase {
     func testNormalPreset_matchesLegacyReferenceValues() {
-        let tuning = BotTuning(difficulty: .normal)
+        let tuning = Jocker.BotTuning(difficulty: .normal)
 
         XCTAssertEqual(tuning.turnStrategy.chaseWinProbabilityWeight, 50.0, accuracy: 0.000_1)
         XCTAssertEqual(tuning.turnStrategy.dumpSpendJokerPenalty, 70.0, accuracy: 0.000_1)
@@ -20,9 +24,9 @@ final class BotTuningTests: XCTestCase {
     }
 
     func testDifficultyPresets_changeAggressivenessAndTempo() {
-        let easy = BotTuning(difficulty: .easy)
-        let normal = BotTuning(difficulty: .normal)
-        let hard = BotTuning(difficulty: .hard)
+        let easy = Jocker.BotTuning(difficulty: .easy)
+        let normal = Jocker.BotTuning(difficulty: .normal)
+        let hard = Jocker.BotTuning(difficulty: .hard)
 
         XCTAssertLessThan(easy.turnStrategy.chaseSpendJokerPenalty, normal.turnStrategy.chaseSpendJokerPenalty)
         XCTAssertLessThan(normal.turnStrategy.chaseSpendJokerPenalty, hard.turnStrategy.chaseSpendJokerPenalty)
@@ -35,8 +39,8 @@ final class BotTuningTests: XCTestCase {
     }
 
     func testEasyPreset_matchesReferenceValues_andHardKeepsReasonableBounds() {
-        let easy = BotTuning(difficulty: .easy)
-        let hard = BotTuning(difficulty: .hard)
+        let easy = Jocker.BotTuning(difficulty: .easy)
+        let hard = Jocker.BotTuning(difficulty: .hard)
 
         XCTAssertEqual(easy.turnStrategy.chaseWinProbabilityWeight, 42.0, accuracy: 0.000_1)
         XCTAssertEqual(easy.bidding.expectedTrumpBaseBonus, 0.35, accuracy: 0.000_1)
@@ -49,9 +53,9 @@ final class BotTuningTests: XCTestCase {
     }
 
     func testCustomInitializer_keepsProvidedComponents() {
-        let base = BotTuning(difficulty: .easy)
+        let base = Jocker.BotTuning(difficulty: .easy)
 
-        let custom = BotTuning(
+        let custom = Jocker.BotTuning(
             difficulty: .hard,
             turnStrategy: base.turnStrategy,
             bidding: base.bidding,
@@ -66,9 +70,10 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(custom.timing.playingBotTurnDelay, base.timing.playingBotTurnDelay, accuracy: 0.000_1)
     }
 
+#if canImport(JockerSelfPlayTools)
     func testSelfPlayEvolution_withSameSeed_isDeterministic() {
-        let base = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
             populationSize: 4,
             generations: 2,
             gamesPerCandidate: 4,
@@ -81,12 +86,12 @@ final class BotTuningTests: XCTestCase {
             selectionPoolRatio: 0.5
         )
 
-        let firstRun = BotTuning.evolveViaSelfPlay(
+        let firstRun = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
             baseTuning: base,
             config: config,
             seed: 123_456
         )
-        let secondRun = BotTuning.evolveViaSelfPlay(
+        let secondRun = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
             baseTuning: base,
             config: config,
             seed: 123_456
@@ -116,8 +121,8 @@ final class BotTuningTests: XCTestCase {
     }
 
     func testSelfPlayEvolution_keepsBestNotWorseThanBaseline() {
-        let base = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
             populationSize: 6,
             generations: 3,
             gamesPerCandidate: 6,
@@ -130,7 +135,7 @@ final class BotTuningTests: XCTestCase {
             selectionPoolRatio: 0.6
         )
 
-        let result = BotTuning.evolveViaSelfPlay(
+        let result = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
             baseTuning: base,
             config: config,
             seed: 424_242
@@ -142,8 +147,8 @@ final class BotTuningTests: XCTestCase {
     }
 
     func testSelfPlayEvolution_runsTenRounds_reportsFitness() {
-        let base = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
             populationSize: 4,
             generations: 2,
             gamesPerCandidate: 4,
@@ -156,7 +161,7 @@ final class BotTuningTests: XCTestCase {
             selectionPoolRatio: 0.5
         )
 
-        let result = BotTuning.evolveViaSelfPlay(
+        let result = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
             baseTuning: base,
             config: config,
             seed: 10_000
@@ -187,8 +192,8 @@ final class BotTuningTests: XCTestCase {
     }
 
     func testSelfPlayEvolution_fullMatchAndSeatRotation_reportsFitnessComponents() {
-        let base = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
             populationSize: 4,
             generations: 2,
             gamesPerCandidate: 2,
@@ -208,7 +213,7 @@ final class BotTuningTests: XCTestCase {
             underbidLossNormalization: 6000.0
         )
 
-        let result = BotTuning.evolveViaSelfPlay(
+        let result = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
             baseTuning: base,
             config: config,
             seed: 2026_0221
@@ -232,4 +237,5 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.baselineAveragePremiumPenaltyTargetLoss, 0.0)
         XCTAssertGreaterThanOrEqual(result.bestAveragePremiumPenaltyTargetLoss, 0.0)
     }
+#endif
 }

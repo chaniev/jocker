@@ -46,7 +46,7 @@ This document is the source of truth for repository structure and file placement
     ├── Jocker/                    (main app target sources)
     ├── JockerTests/               (unit tests)
     ├── JockerUITests/             (UI tests)
-    └── Jocker.xcodeproj/          (Xcode project)
+    └── Jocker.xcodeproj/          (Xcode project: `Jocker`, `JockerSelfPlayTools`, `JockerTests`, `JockerUITests` targets)
 ```
 
 ## Key File Responsibilities
@@ -70,13 +70,13 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking helper for bot turns (utility calculation and deterministic tie-break policy).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`: low-level runtime card/trick heuristics for bot turns (joker decision variants, threat scoring, unseen-card modeling, and immediate trick-win probability).
 - `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`: runtime round projection helper for bot turns (bid normalization, future trick estimates, expected round score, and remaining-hand projection).
-- `Jocker/Jocker/Game/Services/AI/BotTuning+SelfPlayEvolution.swift`: thin `BotTuning` adapter over self-play evolution/head-to-head APIs (typealiases + forwarding methods).
-- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine.swift`: facade/namespace for self-play evolution; implementation is split across `BotSelfPlayEvolutionEngine+*.swift`.
-- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+PublicTypes.swift`: public API types for self-play evolution (config, results, progress event).
-- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Evolution.swift`: self-play evolution orchestration (top-level `evolveViaSelfPlay`, head-to-head evaluation, early stopping).
-- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Fitness.swift`: fitness scoring configuration, per-seat metric aggregation, and candidate tuning evaluation.
-- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Genome.swift`: genome model + mutation/crossover, evolution scope masking, and projection to `BotTuning`.
-- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Simulation.swift`: self-play match simulation (legacy + full-match rules), metrics accumulator, and debug helpers.
+- `Jocker/Jocker/Game/Services/AI/BotTuning+SelfPlayEvolution.swift`: thin `BotTuning` adapter over self-play evolution/head-to-head APIs (typealiases + forwarding methods), compiled in `JockerSelfPlayTools` (not in runtime app target).
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine.swift`: facade/namespace for self-play evolution; implementation is split across `BotSelfPlayEvolutionEngine+*.swift` and compiled in `JockerSelfPlayTools`.
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+PublicTypes.swift`: public API types for self-play evolution (config, results, progress event), compiled in `JockerSelfPlayTools`.
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Evolution.swift`: self-play evolution orchestration (top-level `evolveViaSelfPlay`, head-to-head evaluation, early stopping), compiled in `JockerSelfPlayTools`.
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Fitness.swift`: fitness scoring configuration, per-seat metric aggregation, and candidate tuning evaluation, compiled in `JockerSelfPlayTools`.
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Genome.swift`: genome model + mutation/crossover, evolution scope masking, and projection to `BotTuning`, compiled in `JockerSelfPlayTools`.
+- `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Simulation.swift`: self-play match simulation (legacy + full-match rules), metrics accumulator, and debug helpers, compiled in `JockerSelfPlayTools`.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`generations=0`) with persisted artifacts. `make bot-compare` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
 - `BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
 - `BOT_AI_IMPROVEMENT_PLAN_REVIEW.md`: review notes and critique of `BOT_AI_IMPROVEMENT_PLAN.md`.
@@ -91,6 +91,7 @@ This document is the source of truth for repository structure and file placement
 - `scripts/run_joker_regression_pack.sh`: developer CLI entrypoint for Stage-5 `JOKER` regression pack runs (selected `strict` tests and optional `probe` tests) with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, `summary.txt`, and `selected-tests.txt`) under `.derivedData/joker-regression-runs/<timestamp>/`.
 - `scripts/run_stage6b_ranking_guardrails.sh`: developer CLI entrypoint for Stage-6b opponent-aware ranking guardrails pack (selected `BotTurnCandidateRankingServiceTests` for `BLIND-004`, `PREMIUM-010/011`, `PHASE-003`, `JOKER-016`), with optional `--include-flow-plumbing` mode that adds cross-service Stage-6 guardrails (`GameScenePlayingFlowTests` opponent-model snapshot plumbing + evaluator/strategy `no-evidence` neutrality and style-shift checks); persists artifacts (`xcodebuild.log`, `TestResults.xcresult`, `summary.txt`, and `selected-tests.txt`) under `.derivedData/stage6b-ranking-runs/<timestamp>/`.
 - `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
+- `Jocker/Jocker.xcodeproj/project.pbxproj`: defines target boundaries; `JockerSelfPlayTools` (static library) owns self-play/training sources, while `Jocker` app target excludes them from runtime build.
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/AI/HandFeatureExtractor.swift`: shared hand-analysis extractor for bot AI services (regular cards, suit counts, joker/high-card counts) reused by bidding, trump selection, and round projection heuristics.

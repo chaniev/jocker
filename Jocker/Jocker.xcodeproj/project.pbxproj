@@ -63,6 +63,7 @@
 		B20000022F7900030037CA75 /* GamePlayersSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000122F7900030037CA75 /* GamePlayersSettingsStore.swift */; };
 		B20000032F7900030037CA75 /* GameParametersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000132F7900030037CA75 /* GameParametersViewController.swift */; };
 		C1F700012F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F700022F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift */; };
+		C2A1000B2F8A10010037CA75 /* libJockerSelfPlayTools.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */; };
 		B20000412F7900030037CA75 /* GamePlayersSettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */; };
 		B20000422F7900030037CA75 /* GameStatisticsTableViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000322F7900030037CA75 /* GameStatisticsTableViewTests.swift */; };
 		B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */; };
@@ -187,6 +188,13 @@
 			remoteGlobalIDString = 7E4AC9412F268D810037CA75;
 			remoteInfo = Jocker;
 		};
+		C2A100242F8A10010037CA75 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7E4AC93A2F268D810037CA75 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C2A100102F8A10010037CA75;
+			remoteInfo = JockerSelfPlayTools;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -250,6 +258,7 @@
 		B20000122F7900030037CA75 /* GamePlayersSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayersSettingsStore.swift; sourceTree = "<group>"; };
 		B20000132F7900030037CA75 /* GameParametersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameParametersViewController.swift; sourceTree = "<group>"; };
 		C1F700022F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstPlayerAnnouncementViewController.swift; sourceTree = "<group>"; };
+		C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libJockerSelfPlayTools.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayersSettingsStoreTests.swift; sourceTree = "<group>"; };
 		B20000322F7900030037CA75 /* GameStatisticsTableViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsTableViewTests.swift; sourceTree = "<group>"; };
 		B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsPresentationIntegrationTests.swift; sourceTree = "<group>"; };
@@ -370,10 +379,18 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C2A1000B2F8A10010037CA75 /* libJockerSelfPlayTools.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7E4AC9622F268D860037CA75 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C2A100122F8A10010037CA75 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -397,6 +414,7 @@
 			isa = PBXGroup;
 			children = (
 				7E4AC9422F268D810037CA75 /* Jocker.app */,
+				C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */,
 				7E4AC95B2F268D860037CA75 /* JockerTests.xctest */,
 				7E4AC9652F268D860037CA75 /* JockerUITests.xctest */,
 			);
@@ -887,6 +905,22 @@
 			productReference = 7E4AC9422F268D810037CA75 /* Jocker.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C2A100102F8A10010037CA75 /* JockerSelfPlayTools */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C2A100222F8A10010037CA75 /* Build configuration list for PBXNativeTarget "JockerSelfPlayTools" */;
+			buildPhases = (
+				C2A100112F8A10010037CA75 /* Sources */,
+				C2A100122F8A10010037CA75 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JockerSelfPlayTools;
+			productName = JockerSelfPlayTools;
+			productReference = C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		7E4AC95A2F268D860037CA75 /* JockerTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7E4AC9722F268D860037CA75 /* Build configuration list for PBXNativeTarget "JockerTests" */;
@@ -899,6 +933,7 @@
 			);
 			dependencies = (
 				7E4AC95D2F268D860037CA75 /* PBXTargetDependency */,
+				C2A100232F8A10010037CA75 /* PBXTargetDependency */,
 			);
 			name = JockerTests;
 			productName = JockerTests;
@@ -936,6 +971,9 @@
 					7E4AC9412F268D810037CA75 = {
 						CreatedOnToolsVersion = 15.2;
 					};
+					C2A100102F8A10010037CA75 = {
+						CreatedOnToolsVersion = 15.2;
+					};
 					7E4AC95A2F268D860037CA75 = {
 						CreatedOnToolsVersion = 15.2;
 						TestTargetID = 7E4AC9412F268D810037CA75;
@@ -960,6 +998,7 @@
 			projectRoot = "";
 			targets = (
 				7E4AC9412F268D810037CA75 /* Jocker */,
+				C2A100102F8A10010037CA75 /* JockerSelfPlayTools */,
 				7E4AC95A2F268D860037CA75 /* JockerTests */,
 				7E4AC9642F268D860037CA75 /* JockerUITests */,
 			);
@@ -1068,13 +1107,6 @@
 					D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,
 					7E141F4B2F4E2F7E00941285 /* ScoreTableLayout.swift in Sources */,
 						D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */,
-						D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */,
-					5373987F6D954589961BBD78 /* BotSelfPlayEvolutionEngine+PublicTypes.swift in Sources */,
-					94B6994742C640D8867530B7 /* BotSelfPlayEvolutionEngine+Fitness.swift in Sources */,
-					1D820245E0EB494587E51C4A /* BotSelfPlayEvolutionEngine+Genome.swift in Sources */,
-					55DBCC2AF3CB4CB5A8691B99 /* BotSelfPlayEvolutionEngine+Evolution.swift in Sources */,
-					CF3657CE446742EDB89D493C /* BotSelfPlayEvolutionEngine+Simulation.swift in Sources */,
-					D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */,
 					D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
 					C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
 					C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
@@ -1175,6 +1207,62 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C2A100112F8A10010037CA75 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC0000032F2800010037CA75 /* GameColors.swift in Sources */,
+				7E4AC9802F269A200037CA75 /* CardNode.swift in Sources */,
+				7E4AC9862F269A500037CA75 /* TrickNode.swift in Sources */,
+				7E4AC97C2F269A000037CA75 /* Card.swift in Sources */,
+				D3A000012F7600010037CA75 /* Suit.swift in Sources */,
+				D3A000022F7600010037CA75 /* CardColor.swift in Sources */,
+				D3A000032F7600010037CA75 /* Rank.swift in Sources */,
+				7E4AC97E2F269A100037CA75 /* Deck.swift in Sources */,
+				7E4AC9882F269A600037CA75 /* GameState.swift in Sources */,
+				D4C100012F8000010037CA75 /* BiddingRules.swift in Sources */,
+				C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */,
+				F10000022F4100010037CA75 /* TrickTakingResolver.swift in Sources */,
+				BB0000022F2800010037CA75 /* GamePhase.swift in Sources */,
+				BB0000042F2800010037CA75 /* GameBlock.swift in Sources */,
+				AA0000022F2800010037CA75 /* RoundResult.swift in Sources */,
+				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,
+				AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */,
+				CC0000012F2800010037CA75 /* GameConstants.swift in Sources */,
+				BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
+				F20000012F5200010037CA75 /* JokerLeadDeclaration.swift in Sources */,
+				F20000022F5200010037CA75 /* JokerPlayStyle.swift in Sources */,
+				F20000072F5200010037CA75 /* JokerPlayDecision.swift in Sources */,
+				F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
+				F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */,
+				B20000012F7900030037CA75 /* GamePlayersSettings.swift in Sources */,
+				F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */,
+				F40000022F5600010037CA75 /* BotTuning.swift in Sources */,
+				F40000092F5600010037CA75 /* BotMatchContext.swift in Sources */,
+				F400000A2F5600010037CA75 /* BotOpponentModel.swift in Sources */,
+				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
+				D4C100032F8000010037CA75 /* PremiumRules.swift in Sources */,
+				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
+				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
+				D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */,
+				D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */,
+				E009650331E84562AC4DA317 /* BotMatchContextBuilder.swift in Sources */,
+				D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */,
+				D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,
+				D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */,
+				D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
+				C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
+				C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
+				D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */,
+				5373987F6D954589961BBD78 /* BotSelfPlayEvolutionEngine+PublicTypes.swift in Sources */,
+				94B6994742C640D8867530B7 /* BotSelfPlayEvolutionEngine+Fitness.swift in Sources */,
+				1D820245E0EB494587E51C4A /* BotSelfPlayEvolutionEngine+Genome.swift in Sources */,
+				55DBCC2AF3CB4CB5A8691B99 /* BotSelfPlayEvolutionEngine+Evolution.swift in Sources */,
+				CF3657CE446742EDB89D493C /* BotSelfPlayEvolutionEngine+Simulation.swift in Sources */,
+				D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1187,6 +1275,11 @@
 			isa = PBXTargetDependency;
 			target = 7E4AC9412F268D810037CA75 /* Jocker */;
 			targetProxy = 7E4AC9662F268D860037CA75 /* PBXContainerItemProxy */;
+		};
+		C2A100232F8A10010037CA75 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C2A100102F8A10010037CA75 /* JockerSelfPlayTools */;
+			targetProxy = C2A100242F8A10010037CA75 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1387,6 +1480,30 @@
 			};
 			name = Release;
 		};
+		C2A100202F8A10010037CA75 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C2A100212F8A10010037CA75 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEFINES_MODULE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		7E4AC9732F268D860037CA75 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1480,6 +1597,15 @@
 			buildConfigurations = (
 				7E4AC9702F268D860037CA75 /* Debug */,
 				7E4AC9712F268D860037CA75 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C2A100222F8A10010037CA75 /* Build configuration list for PBXNativeTarget "JockerSelfPlayTools" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C2A100202F8A10010037CA75 /* Debug */,
+				C2A100212F8A10010037CA75 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

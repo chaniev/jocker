@@ -6,7 +6,9 @@
 //
 
 import XCTest
-@testable import Jocker
+
+#if canImport(JockerSelfPlayTools)
+@testable import JockerSelfPlayTools
 
 final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
@@ -107,3 +109,4 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         }
     }
 }
+#endif
