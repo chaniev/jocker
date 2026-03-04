@@ -1,18 +1,52 @@
 # Предложения по улучшению AI ботов (Unified)
 
 **Дата:** 2026-03-04  
-**Статус:** Черновик для обсуждения  
-**Версия:** 3.0 (unified: consolidated + mapped)
+**Статус:** Рабочий backlog (актуализирован под текущую структуру кода)  
+**Версия:** 3.1
 
-Документ объединяет лучшее из:
-- `BOT_AI_IMPROVEMENT_PROPOSALS_MAPPED.md` (runtime gaps taxonomy, mapping, определения метрик, уточнения формулировок).
-- `BOT_AI_IMPROVEMENT_PROPOSALS_CONSOLIDATED.md` (полный консолидированный backlog, приоритизация P0–P4, дорожная карта, зависимости/риски/тесты).
+Документ синхронизирован с актуальными источниками в репозитории:
+- `BOT_AI_IMPROVEMENT_PLAN.md` (stage-статусы и принятые guardrails),
+- `FOLDER_STRUCTURE_SPEC.md` (границы модулей/таргетов и размещение файлов),
+- текущие runtime/self-play реализации в `Jocker/Jocker/Game/Services/AI/` и harness-скрипты в `scripts/`.
 
 Цель: иметь один “мастер”-бэклог инициатив с:
 - явной моделью текущих проблем (runtime gaps),
 - понятной приоритизацией и зависимостями,
 - измеримостью (метрики с определениями),
 - минимальными gate-тестами для безопасной итерации.
+
+---
+
+## Актуальная структура AI-слоя (must-follow)
+
+### 1) Runtime (target `Jocker`)
+
+- Runtime-решение хода: `BotTurnStrategyService`, `BotTurnCandidateEvaluatorService`, `BotTurnCandidateRankingService`, `BotTurnCardHeuristicsService`, `BotTurnRoundProjectionService`.
+- Runtime-контекст матча: `BotMatchContext`, `BotOpponentModel`, `BotMatchContextBuilder`.
+- Runtime bidding/trump: `BotBiddingService`, `BotTrumpSelectionService`, `HandFeatureExtractor`, `BotRankNormalization`.
+
+### 2) Offline/self-play (target `JockerSelfPlayTools`)
+
+- Эволюция и метрики self-play вынесены из app runtime в отдельный таргет:
+  - `BotSelfPlayEvolutionEngine.swift`,
+  - `BotSelfPlayEvolutionEngine+PublicTypes.swift`,
+  - `BotSelfPlayEvolutionEngine+Evolution.swift`,
+  - `BotSelfPlayEvolutionEngine+Fitness.swift`,
+  - `BotSelfPlayEvolutionEngine+Genome.swift`,
+  - `BotSelfPlayEvolutionEngine+Simulation.swift`,
+  - `BotTuning+SelfPlayEvolution.swift`.
+- Runtime-target `Jocker` не должен получать прямых зависимостей на self-play engine.
+
+### 3) Тестовые и автоматизационные границы
+
+- Self-play unit-тесты используют условный импорт отдельного таргета:
+  - `Jocker/JockerTests/Bot/BotSelfPlayEvolutionEngineTests.swift` (`#if canImport(JockerSelfPlayTools)`),
+  - часть тестов в `Jocker/JockerTests/Bot/BotTuningTests.swift`.
+- Обязательные automation-гейты в репозитории:
+  - `make joker-pack`,
+  - `make stage6b-pack-all`,
+  - `make bot-baseline`,
+  - `make bot-compare`.
 
 ---
 
@@ -67,27 +101,53 @@
 
 ---
 
-## Backlog инициатив (13 шт.)
+## Backlog инициатив (13 шт., с текущим статусом)
 
-Состав: 8 инициатив из `BOT_AI_IMPROVEMENT_PROPOSALS.md` + 5 инициатив из `BOT_AI_RUNTIME_ALGORITHM_ANALYSIS.md`.
-
-| ID | Инициатива | Приоритет | Runtime gaps | Оценка |
-|---|------------|-----------|--------------|--------|
-| P0-1 | Belief state + legal-aware win probability | P0 | `RG-1`, `RG-2` | 12-16 ч |
-| P0-2 | Block-level planning | P0 | `RG-3`, `RG-6` | 4-6 ч |
-| P1-1 | Opponent intention modeling | P1 | `RG-1`, `RG-2`, `RG-3` | 12-16 ч |
-| P1-2 | Opponent bid/deficit pressure in utility | P1 | `RG-3`, `RG-6` | 6-10 ч |
-| P1-3 | Rollout для top-N кандидатов | P1 | `RG-4`, `RG-2` | 12-16 ч |
-| P2-1 | Composite utility model | P2 | `RG-6` | 8-12 ч |
-| P2-2 | Goal-oriented joker declaration | P2 | `RG-4`, `RG-6` | 16-20 ч |
-| P2-3 | Эндгейм-решатель | P2 | `RG-4` | 8-12 ч |
-| P3-1 | Monte-Carlo blind evaluation | P3 | `RG-7`, `RG-2` | 6-8 ч |
-| P3-2 | Context-aware card threat | P3 | `RG-8` | 4-6 ч |
-| P3-3 | Единый HandStrength model (bidding+projection) | P3 | `RG-5` | 6-8 ч |
-| P4-1 | Multi-factor trump selection | P4 | `RG-5` | 3-4 ч |
-| P4-2 | Forbidden-aware bidding | P4 | `RG-5` | 2-3 ч |
+| ID | Инициатива | Приоритет | Runtime gaps | Слой | Статус в коде | Оценка |
+|---|------------|-----------|--------------|------|---------------|--------|
+| P0-1 | Belief state + legal-aware win probability | P0 | `RG-1`, `RG-2` | Runtime | не начато | 12-16 ч |
+| P0-2 | Block-level planning | P0 | `RG-3`, `RG-6` | Runtime | частично (Stage 4b/4c MVP) | 4-6 ч |
+| P1-1 | Opponent intention modeling | P1 | `RG-1`, `RG-2`, `RG-3` | Runtime | частично (rates/style, без trick-level intent) | 12-16 ч |
+| P1-2 | Opponent bid/deficit pressure in utility | P1 | `RG-3`, `RG-6` | Runtime + Flow plumbing | не начато | 6-10 ч |
+| P1-3 | Rollout для top-N кандидатов | P1 | `RG-4`, `RG-2` | Runtime | не начато | 12-16 ч |
+| P2-1 | Composite utility model | P2 | `RG-6` | Runtime | частично (декомпозиция есть, композиция аддитивна) | 8-12 ч |
+| P2-2 | Goal-oriented joker declaration | P2 | `RG-4`, `RG-6` | Runtime | частично (эвристики + strict regression) | 16-20 ч |
+| P2-3 | Эндгейм-решатель | P2 | `RG-4` | Runtime | не начато | 8-12 ч |
+| P3-1 | Monte-Carlo blind evaluation | P3 | `RG-7`, `RG-2` | Runtime + Self-play | не начато | 6-8 ч |
+| P3-2 | Context-aware card threat | P3 | `RG-8` | Runtime | частично (phase-aware, без position/history context) | 4-6 ч |
+| P3-3 | Единый HandStrength model (bidding+projection) | P3 | `RG-5` | Runtime | частично (общий extractor есть, формулы разные) | 6-8 ч |
+| P4-1 | Multi-factor trump selection | P4 | `RG-5` | Runtime | частично (базовые multi-factor уже есть) | 3-4 ч |
+| P4-2 | Forbidden-aware bidding | P4 | `RG-5` | Runtime | частично (skip forbidden + tie-break, без utility cost) | 2-3 ч |
 
 ---
+
+## Mapping инициатив к текущим файлам
+
+- Runtime decision stack (основная точка изменений для `P0-1`, `P0-2`, `P1-1`, `P1-2`, `P1-3`, `P2-1`, `P2-2`, `P2-3`, `P3-2`):
+  - `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`
+- Match/opponent context plumbing (база для `P0-2`, `P1-1`, `P1-2`):
+  - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`
+  - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`
+  - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`
+  - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`
+- Bidding/trump/hand-consistency (`P3-1`, `P3-3`, `P4-1`, `P4-2`):
+  - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotTrumpSelectionService.swift`
+  - `Jocker/Jocker/Game/Services/AI/HandFeatureExtractor.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotRankNormalization.swift`
+- Self-play/harness слой (`P3-1` и проверка всех инициатив по метрикам):
+  - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+PublicTypes.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Fitness.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Simulation.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Evolution.swift`
+  - `scripts/train_bot_tuning.sh`
+  - `scripts/run_bot_baseline_snapshot.sh`
+  - `scripts/run_bot_ab_comparison_snapshot.sh`
 
 ## Детализация инициатив
 
@@ -103,9 +163,9 @@ MVP-решение:
 - оставить fallback на legacy-оценку (если belief state недоступен или budget ограничен).
 
 Integration touchpoints:
-- `BotTurnCardHeuristicsService` (вероятность/оценка перебития),
-- `BotTurnCandidateEvaluatorService` (передача контекста игроков/семплинг budget),
-- (опционально) новый сервис `BotBeliefStateService`.
+- `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift` (вероятность/оценка перебития),
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift` (передача контекста игроков/семплинг budget),
+- (опционально) новый pure helper `BotBeliefState` в `Jocker/Jocker/Game/Services/AI/` без зависимости на self-play target.
 
 Минимальные тесты/гейты:
 - Unit: infer void suit по сценарию “не ответил в масть”,
@@ -128,8 +188,8 @@ MVP-решение:
 - влиять на utility через понятные коэффициенты/мультипликаторы (risk budget, urgency).
 
 Integration touchpoints:
-- `BotTurnCandidateRankingService` (utility adjustment),
-- `BotMatchContext` (уже есть нужные поля).
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift` (utility adjustment),
+- `Jocker/Jocker/Models/Bot/BotMatchContext.swift` + `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`.
 
 Минимальные тесты/гейты:
 - Unit: plan creation invariants (remainingRounds, urgency weights),
@@ -148,9 +208,9 @@ MVP-решение:
 - выдавать компактный `OpponentIntentionModel`, используемый в utility как adjustment (не заменять всю систему).
 
 Integration touchpoints:
-- `BotOpponentModel` (как источник “rates”),
-- `BotMatchContext`/новый round-context (bids/tricks оппонентов),
-- `BotTurnCandidateRankingService` (utility adjustment).
+- `Jocker/Jocker/Models/Bot/BotOpponentModel.swift` (как источник “rates”),
+- `Jocker/Jocker/Models/Bot/BotMatchContext.swift` + `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift` (расширение round-state),
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift` (utility adjustment).
 
 Минимальные тесты/гейты:
 - Unit: no-evidence neutrality (при отсутствии evidence adjustment должен быть ~0),
@@ -171,8 +231,8 @@ MVP-решение:
   - в dump-режиме избегать “безопасных” ходов, которые отдают взятку игроку, который ровно добирает.
 
 Integration touchpoints:
-- Flow plumbing: `GameState`/`GameTurnService` -> `BotTurnStrategyService.BotTurnDecisionContext`,
-- `BotTurnCandidateRankingService`.
+- Flow plumbing: `GameState`/`GameTurnService`/`GameScene+PlayingFlow` -> `BotTurnStrategyService.BotTurnDecisionContext`,
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`.
 
 Минимальные тесты/гейты:
 - Unit: сценарий “opponent needs 1 trick” (utility shift в нужную сторону),
@@ -325,7 +385,7 @@ flowchart LR
 Фаза 1 (P0, “фундамент”):
 - P0-1 Belief + legal-aware probability
 - P0-2 Block planning
-- Gates: build-for-testing + joker-pack + stage6b-pack-all + compare-v1
+- Gates: `build-for-testing` (scheme `Jocker`) + build scheme `JockerSelfPlayTools` + `make joker-pack` + `make stage6b-pack-all` + `make bot-compare`
 
 Фаза 2 (P1, “opponent awareness + lookahead”):
 - P1-2 Opponent bid/deficit pressure (как быстрый win для RG-3)
@@ -365,10 +425,12 @@ Baseline ниже приведён как пример (обновлять по 
 ## Минимальный набор gate-тестов (policy)
 
 Перед любым “compare”:
-- `xcodebuild build-for-testing` (или эквивалент),
-- `joker-pack` (джокер-регрессии),
-- `stage6b-pack-all` (opponent-aware guardrails + flow plumbing),
-- затем `make bot-compare` / профиль `compare-v1`.
+- `xcodebuild -quiet -project Jocker/Jocker.xcodeproj -scheme Jocker -destination 'generic/platform=iOS Simulator' -derivedDataPath .derivedData CODE_SIGNING_ALLOWED=NO build-for-testing`,
+- `xcodebuild -quiet -project Jocker/Jocker.xcodeproj -scheme JockerSelfPlayTools -sdk iphonesimulator -derivedDataPath .derivedData CODE_SIGNING_ALLOWED=NO build`,
+- `make joker-pack` (джокер-регрессии),
+- `make stage6b-pack-all` (opponent-aware guardrails + flow plumbing),
+- `xcodebuild test-without-building` на `JockerTests/BotSelfPlayEvolutionEngineTests` для concrete simulator destination (например `iPhone 15`, id `4F592A52-148C-4540-BB72-590B8C44BD43`),
+- затем `make bot-compare` (профиль `compare-v1` по умолчанию).
 
 ---
 
@@ -377,4 +439,3 @@ Baseline ниже приведён как пример (обновлять по 
 - Производительность (rollout/MC): conditional apply, строгий budget, фиксированные seed.
 - Сложность отладки (belief state): поэтапное включение + строгие unit-тесты на обновление состояния.
 - Overfit: всегда держать holdout-гейт (compare-v1), продвигать только стабильные улучшения.
-
