@@ -135,12 +135,18 @@
 		D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */; };
 		D4DB00012F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DB00022F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift */; };
 		D4DC00012F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DC00022F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift */; };
-		D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */; };
-		D4DE00012F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */; };
-		D4DF00012F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */; };
-		D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */; };
-		D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E200022F8022010037CA75 /* BotRankNormalization.swift */; };
-		D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */; };
+			D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */; };
+			D4DE00012F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */; };
+			8B2EF0A1067045C69625FA3A /* BotTurnCandidateRankingServiceTestFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B64C0BA66645AFA8763BA1 /* BotTurnCandidateRankingServiceTestFixture.swift */; };
+			C0422D8632FE4C5F8B86D3CC /* BotTurnCandidateRankingServiceTests_TieBreak.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BBC35883B74718AD29948A /* BotTurnCandidateRankingServiceTests_TieBreak.swift */; };
+			AABA9F07FE3A4A578FB85D1D /* BotTurnCandidateRankingServiceTests_Blind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28191144B4F04F09BE02370E /* BotTurnCandidateRankingServiceTests_Blind.swift */; };
+			077CC349210649FB90C2541E /* BotTurnCandidateRankingServiceTests_JokerDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B69C746E2D48F5AFE48C88 /* BotTurnCandidateRankingServiceTests_JokerDeclaration.swift */; };
+			D14981948CA44632A0A0D620 /* BotTurnCandidateRankingServiceTests_PhaseThreat.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B9E7E6F2A04B6D9EDED536 /* BotTurnCandidateRankingServiceTests_PhaseThreat.swift */; };
+			E7364177A2894CC7AC6454E0 /* BotTurnCandidateRankingServiceTests_PremiumPenalty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FEE5FB679440B7ACB65437 /* BotTurnCandidateRankingServiceTests_PremiumPenalty.swift */; };
+			D4DF00012F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */; };
+			D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */; };
+			D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E200022F8022010037CA75 /* BotRankNormalization.swift */; };
+			D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */; };
 		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
 		E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */; };
 		E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000042F7400010037CA75 /* GameResultsViewController.swift */; };
@@ -311,12 +317,18 @@
 		D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingService.swift; sourceTree = "<group>"; };
 		D4DB00022F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCardHeuristicsServiceTests.swift; sourceTree = "<group>"; };
 		D4DC00022F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnRoundProjectionServiceTests.swift; sourceTree = "<group>"; };
-		D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateEvaluatorService.swift; sourceTree = "<group>"; };
-		D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests.swift; sourceTree = "<group>"; };
-		D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateEvaluatorServiceTests.swift; sourceTree = "<group>"; };
-		D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandFeatureExtractor.swift; sourceTree = "<group>"; };
-		D4E200022F8022010037CA75 /* BotRankNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRankNormalization.swift; sourceTree = "<group>"; };
-		D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRankNormalizationTests.swift; sourceTree = "<group>"; };
+			D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateEvaluatorService.swift; sourceTree = "<group>"; };
+			D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests.swift; sourceTree = "<group>"; };
+			23B64C0BA66645AFA8763BA1 /* BotTurnCandidateRankingServiceTestFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTestFixture.swift; sourceTree = "<group>"; };
+			02BBC35883B74718AD29948A /* BotTurnCandidateRankingServiceTests_TieBreak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests_TieBreak.swift; sourceTree = "<group>"; };
+			28191144B4F04F09BE02370E /* BotTurnCandidateRankingServiceTests_Blind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests_Blind.swift; sourceTree = "<group>"; };
+			21B69C746E2D48F5AFE48C88 /* BotTurnCandidateRankingServiceTests_JokerDeclaration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests_JokerDeclaration.swift; sourceTree = "<group>"; };
+			C7B9E7E6F2A04B6D9EDED536 /* BotTurnCandidateRankingServiceTests_PhaseThreat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests_PhaseThreat.swift; sourceTree = "<group>"; };
+			11FEE5FB679440B7ACB65437 /* BotTurnCandidateRankingServiceTests_PremiumPenalty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingServiceTests_PremiumPenalty.swift; sourceTree = "<group>"; };
+			D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateEvaluatorServiceTests.swift; sourceTree = "<group>"; };
+			D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandFeatureExtractor.swift; sourceTree = "<group>"; };
+			D4E200022F8022010037CA75 /* BotRankNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRankNormalization.swift; sourceTree = "<group>"; };
+			D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRankNormalizationTests.swift; sourceTree = "<group>"; };
 		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
 		E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummary.swift; sourceTree = "<group>"; };
 		E10000042F7400010037CA75 /* GameResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsViewController.swift; sourceTree = "<group>"; };
@@ -615,18 +627,24 @@
 			path = Statistics;
 			sourceTree = "<group>";
 		};
-		A91040012F7900010037CA75 /* Bot */ = {
-			isa = PBXGroup;
-			children = (
-				C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
-				D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */,
-				D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */,
-				D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */,
-				D4DB00022F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift */,
-				D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */,
-				C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
-				F40000082F5600010037CA75 /* BotTuningTests.swift */,
-				D4DC00022F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift */,
+			A91040012F7900010037CA75 /* Bot */ = {
+				isa = PBXGroup;
+				children = (
+					C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
+					D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */,
+					D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */,
+					D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */,
+					23B64C0BA66645AFA8763BA1 /* BotTurnCandidateRankingServiceTestFixture.swift */,
+					02BBC35883B74718AD29948A /* BotTurnCandidateRankingServiceTests_TieBreak.swift */,
+					28191144B4F04F09BE02370E /* BotTurnCandidateRankingServiceTests_Blind.swift */,
+					21B69C746E2D48F5AFE48C88 /* BotTurnCandidateRankingServiceTests_JokerDeclaration.swift */,
+					C7B9E7E6F2A04B6D9EDED536 /* BotTurnCandidateRankingServiceTests_PhaseThreat.swift */,
+					11FEE5FB679440B7ACB65437 /* BotTurnCandidateRankingServiceTests_PremiumPenalty.swift */,
+					D4DB00022F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift */,
+					D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */,
+					C0DE90042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift */,
+					F40000082F5600010037CA75 /* BotTuningTests.swift */,
+					D4DC00022F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift */,
 				C0DE80022F5400010037CA75 /* BotTurnStrategyServiceTests.swift */,
 			);
 			path = Bot;
@@ -1103,14 +1121,20 @@
 				B10000172F7500010037CA75 /* GameStatisticsStoreTests.swift in Sources */,
 				B20000412F7900030037CA75 /* GamePlayersSettingsStoreTests.swift in Sources */,
 				C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
-				D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */,
-				D4DF00012F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift in Sources */,
-				D4DE00012F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift in Sources */,
-				D4DB00012F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift in Sources */,
-				D4C400032F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift in Sources */,
-				D4DC00012F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift in Sources */,
-				C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
-				C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,
+					D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */,
+					D4DF00012F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift in Sources */,
+					D4DE00012F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift in Sources */,
+					8B2EF0A1067045C69625FA3A /* BotTurnCandidateRankingServiceTestFixture.swift in Sources */,
+					C0422D8632FE4C5F8B86D3CC /* BotTurnCandidateRankingServiceTests_TieBreak.swift in Sources */,
+					AABA9F07FE3A4A578FB85D1D /* BotTurnCandidateRankingServiceTests_Blind.swift in Sources */,
+					077CC349210649FB90C2541E /* BotTurnCandidateRankingServiceTests_JokerDeclaration.swift in Sources */,
+					D14981948CA44632A0A0D620 /* BotTurnCandidateRankingServiceTests_PhaseThreat.swift in Sources */,
+					E7364177A2894CC7AC6454E0 /* BotTurnCandidateRankingServiceTests_PremiumPenalty.swift in Sources */,
+					D4DB00012F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift in Sources */,
+					D4C400032F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift in Sources */,
+					D4DC00012F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift in Sources */,
+					C0DE70022F5400010037CA75 /* BotTurnStrategyServiceTests.swift in Sources */,
+					C0DE70032F5400010037CA75 /* AutoPlayFlowTests.swift in Sources */,
 				C0DE91042F5500010037CA75 /* BotTrumpSelectionServiceTests.swift in Sources */,
 				F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */,
 				A90001072F7700010037CA75 /* DealHistoryStoreTests.swift in Sources */,

@@ -1,51 +1,50 @@
 //
-//  BotTurnCandidateRankingServiceTests.swift
+//  BotTurnCandidateRankingServiceTestFixture.swift
 //  JockerTests
 //
-//  Created by Codex on 22.02.2026.
+//  Created by Codex on 04.03.2026.
 //
 
 import XCTest
 @testable import Jocker
 
-final class BotTurnCandidateRankingServiceTests: XCTestCase {
-    typealias Fixture = BotTurnCandidateRankingServiceTestFixture
-
-    let service = BotTurnCandidateRankingService(tuning: BotTuning(difficulty: .hard))
-
-    func makeTrickNode() -> TrickNode {
-        return Fixture.makeTrickNode()
+enum BotTurnCandidateRankingServiceTestFixture {
+    static func makeTrickNode() -> TrickNode {
+        return TrickNode(rendersCards: false)
     }
 
-    func play(
+    static func play(
         _ card: Card,
         fromPlayer playerNumber: Int = 1,
         into trickNode: TrickNode
     ) {
-        Fixture.play(card, fromPlayer: playerNumber, into: trickNode)
+        _ = trickNode.playCard(card, fromPlayer: playerNumber, animated: false)
     }
 
-    func evaluation(
+    static func evaluation(
         card: Card,
         decision: JokerPlayDecision = .defaultNonLead,
         utility: Double,
         immediateWinProbability: Double,
         threat: Double
     ) -> BotTurnCandidateRankingService.Evaluation {
-        return Fixture.evaluation(
-            card: card,
-            decision: decision,
+        return .init(
+            move: .init(card: card, decision: decision),
             utility: utility,
             immediateWinProbability: immediateWinProbability,
             threat: threat
         )
     }
 
-    func makeHand(_ cards: Card...) -> [Card] {
-        return Fixture.makeHand(cards)
+    static func makeHand(_ cards: Card...) -> [Card] {
+        return cards
     }
 
-    func makeContext(
+    static func makeHand(_ cards: [Card]) -> [Card] {
+        return cards
+    }
+
+    static func makeContext(
         block: GameBlock,
         roundIndexInBlock: Int,
         totalRoundsInBlock: Int,
@@ -56,7 +55,7 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         premium: BotMatchContext.PremiumSnapshot? = nil,
         opponents: BotOpponentModel? = nil
     ) -> BotMatchContext {
-        return Fixture.makeContext(
+        return BotMatchContext(
             block: block,
             roundIndexInBlock: roundIndexInBlock,
             totalRoundsInBlock: totalRoundsInBlock,
@@ -69,7 +68,7 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         )
     }
 
-    func commonUtilityParams(
+    static func commonUtilityParams(
         trickNode: TrickNode,
         trump: Suit?,
         shouldChaseTrick: Bool,
@@ -88,32 +87,53 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
         tricksRemainingIncludingCurrent: Int,
         chasePressure: Double
     ) {
-        return Fixture.commonUtilityParams(
+        return (
+            projectedScore: 10,
+            immediateWinProbability: shouldChaseTrick ? 0.85 : 0.15,
+            threat: 5,
             trickNode: trickNode,
             trump: trump,
             shouldChaseTrick: shouldChaseTrick,
             hasWinningNonJoker: hasWinningNonJoker,
-            hasLosingNonJoker: hasLosingNonJoker
+            hasLosingNonJoker: hasLosingNonJoker,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 2,
+            chasePressure: shouldChaseTrick ? 0.5 : 0.0
         )
     }
 
-    func card(_ suit: Suit, _ rank: Rank) -> Card {
-        return Fixture.card(suit, rank)
+    static func card(_ suit: Suit, _ rank: Rank) -> Card {
+        return .regular(suit: suit, rank: rank)
     }
 
-    func sampleMatchContext() -> BotMatchContext {
-        return Fixture.sampleMatchContext()
+    static func sampleMatchContext() -> BotMatchContext {
+        return makeContext(
+            block: .second,
+            roundIndexInBlock: 1,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: nil,
+            opponents: nil
+        )
     }
 
-    func makeOpponentModel(
+    static func makeOpponentModel(
         leftNeighborIndex: Int?,
         leftNeighbor: BotOpponentModel.OpponentSnapshot?,
         others: [BotOpponentModel.OpponentSnapshot]
     ) -> BotOpponentModel {
-        return Fixture.makeOpponentModel(
+        var snapshots = others
+        if let leftNeighbor {
+            snapshots.insert(leftNeighbor, at: 0)
+        }
+
+        return BotOpponentModel(
+            perspectivePlayerIndex: 0,
             leftNeighborIndex: leftNeighborIndex,
-            leftNeighbor: leftNeighbor,
-            others: others
+            snapshots: snapshots
         )
     }
 }

@@ -290,6 +290,12 @@ Jocker/JockerTests/
 │   ├── BotRankNormalizationTests.swift
 │   ├── BotTurnCandidateEvaluatorServiceTests.swift
 │   ├── BotTurnCandidateRankingServiceTests.swift
+│   ├── BotTurnCandidateRankingServiceTestFixture.swift
+│   ├── BotTurnCandidateRankingServiceTests_TieBreak.swift
+│   ├── BotTurnCandidateRankingServiceTests_Blind.swift
+│   ├── BotTurnCandidateRankingServiceTests_JokerDeclaration.swift
+│   ├── BotTurnCandidateRankingServiceTests_PhaseThreat.swift
+│   ├── BotTurnCandidateRankingServiceTests_PremiumPenalty.swift
 │   ├── BotTurnCardHeuristicsServiceTests.swift
 │   ├── BotSelfPlayEvolutionEngineTests.swift
 │   ├── BotTrumpSelectionServiceTests.swift
