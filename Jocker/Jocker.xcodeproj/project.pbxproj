@@ -98,13 +98,18 @@
 		D4C100012F8000010037CA75 /* BiddingRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C100022F8000010037CA75 /* BiddingRules.swift */; };
 		D4C100032F8000010037CA75 /* PremiumRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C100042F8000010037CA75 /* PremiumRules.swift */; };
 		D4C200012F8001010037CA75 /* BiddingRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C200022F8001010037CA75 /* BiddingRulesTests.swift */; };
-		D4C200032F8001010037CA75 /* PremiumRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C200042F8001010037CA75 /* PremiumRulesTests.swift */; };
-		D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */; };
-		D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */; };
-		D4C400032F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */; };
-		D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */; };
-		D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */; };
-		D4C600012F8005010037CA75 /* BidSelectionModalBaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C600022F8005010037CA75 /* BidSelectionModalBaseViewController.swift */; };
+			D4C200032F8001010037CA75 /* PremiumRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C200042F8001010037CA75 /* PremiumRulesTests.swift */; };
+			D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */; };
+			D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */; };
+			5373987F6D954589961BBD78 /* BotSelfPlayEvolutionEngine+PublicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35497B8001334DC0854B97A2 /* BotSelfPlayEvolutionEngine+PublicTypes.swift */; };
+			94B6994742C640D8867530B7 /* BotSelfPlayEvolutionEngine+Fitness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24624D49D8D64612975B72BD /* BotSelfPlayEvolutionEngine+Fitness.swift */; };
+			1D820245E0EB494587E51C4A /* BotSelfPlayEvolutionEngine+Genome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */; };
+			55DBCC2AF3CB4CB5A8691B99 /* BotSelfPlayEvolutionEngine+Evolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */; };
+			CF3657CE446742EDB89D493C /* BotSelfPlayEvolutionEngine+Simulation.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */; };
+			D4C400032F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */; };
+			D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */; };
+			D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */; };
+			D4C600012F8005010037CA75 /* BidSelectionModalBaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C600022F8005010037CA75 /* BidSelectionModalBaseViewController.swift */; };
 		D4C600032F8005010037CA75 /* PreDealBlindSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C600042F8005010037CA75 /* PreDealBlindSelectionViewController.swift */; };
 		D4C700012F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */; };
 		D4C700032F8006010037CA75 /* GameSceneInteractionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */; };
@@ -268,14 +273,19 @@
 		D3A000132F7600010037CA75 /* Rank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rank.swift; sourceTree = "<group>"; };
 		D4C100022F8000010037CA75 /* BiddingRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiddingRules.swift; sourceTree = "<group>"; };
 		D4C100042F8000010037CA75 /* PremiumRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumRules.swift; sourceTree = "<group>"; };
-		D4C200022F8001010037CA75 /* BiddingRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiddingRulesTests.swift; sourceTree = "<group>"; };
-		D4C200042F8001010037CA75 /* PremiumRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumRulesTests.swift; sourceTree = "<group>"; };
-		D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotTuning+SelfPlayEvolution.swift"; sourceTree = "<group>"; };
-		D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotSelfPlayEvolutionEngine.swift; sourceTree = "<group>"; };
-		D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotSelfPlayEvolutionEngineTests.swift; sourceTree = "<group>"; };
-		D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionBlockers.swift; sourceTree = "<group>"; };
-		D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionState.swift; sourceTree = "<group>"; };
-		D4C600022F8005010037CA75 /* BidSelectionModalBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidSelectionModalBaseViewController.swift; sourceTree = "<group>"; };
+			D4C200022F8001010037CA75 /* BiddingRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiddingRulesTests.swift; sourceTree = "<group>"; };
+			D4C200042F8001010037CA75 /* PremiumRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumRulesTests.swift; sourceTree = "<group>"; };
+			D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotTuning+SelfPlayEvolution.swift"; sourceTree = "<group>"; };
+			D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotSelfPlayEvolutionEngine.swift; sourceTree = "<group>"; };
+			35497B8001334DC0854B97A2 /* BotSelfPlayEvolutionEngine+PublicTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+PublicTypes.swift"; sourceTree = "<group>"; };
+			24624D49D8D64612975B72BD /* BotSelfPlayEvolutionEngine+Fitness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Fitness.swift"; sourceTree = "<group>"; };
+			3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Genome.swift"; sourceTree = "<group>"; };
+			44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Evolution.swift"; sourceTree = "<group>"; };
+			EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Simulation.swift"; sourceTree = "<group>"; };
+			D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotSelfPlayEvolutionEngineTests.swift; sourceTree = "<group>"; };
+			D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionBlockers.swift; sourceTree = "<group>"; };
+			D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionState.swift; sourceTree = "<group>"; };
+			D4C600022F8005010037CA75 /* BidSelectionModalBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BidSelectionModalBaseViewController.swift; sourceTree = "<group>"; };
 		D4C600042F8005010037CA75 /* PreDealBlindSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreDealBlindSelectionViewController.swift; sourceTree = "<group>"; };
 		D4C700022F8006010037CA75 /* ScoreTableRenderSnapshotBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreTableRenderSnapshotBuilder.swift; sourceTree = "<group>"; };
 		D4C700042F8006010037CA75 /* GameSceneInteractionStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionStateTests.swift; sourceTree = "<group>"; };
@@ -554,22 +564,27 @@
 			path = Statistics;
 			sourceTree = "<group>";
 		};
-		A91030012F7900010037CA75 /* AI */ = {
-			isa = PBXGroup;
-			children = (
-				C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
-				D4E200022F8022010037CA75 /* BotRankNormalization.swift */,
-				D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */,
-				D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */,
-				D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */,
-				D4D800022F8017010037CA75 /* BotTurnCardHeuristicsService.swift */,
-				D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */,
-				D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */,
-				D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */,
-				C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
-				C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
-			);
-			path = AI;
+			A91030012F7900010037CA75 /* AI */ = {
+				isa = PBXGroup;
+				children = (
+					C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
+					D4E200022F8022010037CA75 /* BotRankNormalization.swift */,
+					D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */,
+					D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */,
+					D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */,
+					D4D800022F8017010037CA75 /* BotTurnCardHeuristicsService.swift */,
+					D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */,
+					35497B8001334DC0854B97A2 /* BotSelfPlayEvolutionEngine+PublicTypes.swift */,
+					24624D49D8D64612975B72BD /* BotSelfPlayEvolutionEngine+Fitness.swift */,
+					3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */,
+					44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */,
+					EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */,
+					D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */,
+					D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */,
+					C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
+					C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
+				);
+				path = AI;
 			sourceTree = "<group>";
 		};
 		A91030022F7900010037CA75 /* Flow */ = {
@@ -1018,13 +1033,18 @@
 				D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */,
 				D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,
 				7E141F4B2F4E2F7E00941285 /* ScoreTableLayout.swift in Sources */,
-				D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */,
-				D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */,
-				D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */,
-				D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
-				C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
-				C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
-				B10000142F7500010037CA75 /* GameStatisticsStore.swift in Sources */,
+					D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */,
+					D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */,
+					5373987F6D954589961BBD78 /* BotSelfPlayEvolutionEngine+PublicTypes.swift in Sources */,
+					94B6994742C640D8867530B7 /* BotSelfPlayEvolutionEngine+Fitness.swift in Sources */,
+					1D820245E0EB494587E51C4A /* BotSelfPlayEvolutionEngine+Genome.swift in Sources */,
+					55DBCC2AF3CB4CB5A8691B99 /* BotSelfPlayEvolutionEngine+Evolution.swift in Sources */,
+					CF3657CE446742EDB89D493C /* BotSelfPlayEvolutionEngine+Simulation.swift in Sources */,
+					D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */,
+					D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
+					C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
+					C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
+					B10000142F7500010037CA75 /* GameStatisticsStore.swift in Sources */,
 				C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
 				C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
 				B20000022F7900030037CA75 /* GamePlayersSettingsStore.swift in Sources */,
