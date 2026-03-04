@@ -71,6 +71,7 @@
 		BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000052F2800010037CA75 /* PlayerInfo.swift */; };
 			BB0000082F2800010037CA75 /* GameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000072F2800010037CA75 /* GameButton.swift */; };
 			C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */; };
+			CD81814B49344F7A8CEC9784 /* GameSceneInputConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95DFAC64BB98415BBEBB2D9C /* GameSceneInputConfiguration.swift */; };
 			2D4CDAF8C5ED4354A7FA95D4 /* GameEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B251FD09B7E4CDEBEE61267 /* GameEnvironment.swift */; };
 			C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
 			C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
@@ -197,6 +198,7 @@
 		7E4AC9472F268D820037CA75 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
 		7E4AC9492F268D820037CA75 /* Actions.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Actions.sks; sourceTree = "<group>"; };
 		7E4AC94B2F268D820037CA75 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
+		95DFAC64BB98415BBEBB2D9C /* GameSceneInputConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInputConfiguration.swift; sourceTree = "<group>"; };
 		7E4AC94D2F268D820037CA75 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		7E4AC9502F268D820037CA75 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7E4AC9522F268D850037CA75 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -755,13 +757,14 @@
 			path = Game;
 			sourceTree = "<group>";
 		};
-		AA1000042F2800020037CA75 /* Scenes */ = {
-			isa = PBXGroup;
-			children = (
-				7E4AC94B2F268D820037CA75 /* GameScene.swift */,
-				D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */,
-				D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */,
-				D4C900022F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift */,
+			AA1000042F2800020037CA75 /* Scenes */ = {
+				isa = PBXGroup;
+				children = (
+					7E4AC94B2F268D820037CA75 /* GameScene.swift */,
+					95DFAC64BB98415BBEBB2D9C /* GameSceneInputConfiguration.swift */,
+					D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */,
+					D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */,
+					D4C900022F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift */,
 				D1A000012F7000010037CA75 /* GameScene+DealingFlow.swift */,
 				D1A000032F7000010037CA75 /* GameScene+BiddingFlow.swift */,
 				D1A000052F7000010037CA75 /* GameScene+PlayingFlow.swift */,
@@ -993,11 +996,12 @@
 		7E4AC93E2F268D810037CA75 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (
-				7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
-				D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */,
-				D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */,
-				D4C900012F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift in Sources */,
+				files = (
+					7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
+					CD81814B49344F7A8CEC9784 /* GameSceneInputConfiguration.swift in Sources */,
+					D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */,
+					D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */,
+					D4C900012F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift in Sources */,
 				D1A000022F7000010037CA75 /* GameScene+DealingFlow.swift in Sources */,
 				D1A000042F7000010037CA75 /* GameScene+BiddingFlow.swift in Sources */,
 				D1A000062F7000010037CA75 /* GameScene+PlayingFlow.swift in Sources */,

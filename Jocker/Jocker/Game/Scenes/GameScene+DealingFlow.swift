@@ -33,7 +33,7 @@ extension GameScene {
             return
         }
 
-        hasDealtAtLeastOnce = true
+        markDidDealAtLeastOnce()
         updateDealButtonState()
         updateGameInfoLabel()
         updateTurnUI(animated: false)

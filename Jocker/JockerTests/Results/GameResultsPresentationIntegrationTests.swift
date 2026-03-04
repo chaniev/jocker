@@ -12,8 +12,10 @@ import CoreGraphics
 final class GameResultsPresentationIntegrationTests: XCTestCase {
 
     func testRepeatedFullGameCycle_requestsGameResultsModalAgainAfterReset() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = GameScene(
+            size: CGSize(width: 1366, height: 768),
+            inputConfiguration: GameSceneInputConfiguration(playerCount: 4)
+        )
 
         var presentedGameResultsCount = 0
         scene.gameResultsModalPresenter = { playerSummaries in

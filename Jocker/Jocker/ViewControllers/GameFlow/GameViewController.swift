@@ -45,16 +45,19 @@ class GameViewController: UIViewController {
         skView.ignoresSiblingOrder = true
         
         // Подбираем размер сцены под текущее соотношение сторон, чтобы на iPad не резались края.
+        let inputConfiguration = GameSceneInputConfiguration(
+            playerCount: playerCount,
+            playerNames: playerNames,
+            playerControlTypes: playerControlTypes,
+            botDifficulty: botDifficulty,
+            botDifficultiesByPlayer: botDifficultiesByPlayer
+        )
         let scene = GameScene(
             size: adaptedSceneSize(for: skView.bounds.size),
+            inputConfiguration: inputConfiguration,
             environment: .live
         )
         scene.scaleMode = .aspectFill
-        scene.playerCount = playerCount
-        scene.playerNames = playerNames
-        scene.playerControlTypes = playerControlTypes
-        scene.botDifficulty = botDifficulty
-        scene.botDifficultiesByPlayer = botDifficultiesByPlayer
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
         }

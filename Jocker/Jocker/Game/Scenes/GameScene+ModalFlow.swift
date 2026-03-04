@@ -474,7 +474,7 @@ extension GameScene {
         guard !playerSummaries.isEmpty else { return }
         guard !scoreManager.completedBlocks.isEmpty else { return }
 
-        hasSavedGameStatistics = true
+        markGameStatisticsSaved()
         gameStatisticsStore.recordCompletedGame(
             playerCount: playerCount,
             playerSummaries: playerSummaries,

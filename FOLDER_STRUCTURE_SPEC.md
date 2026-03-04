@@ -51,7 +51,8 @@ This document is the source of truth for repository structure and file placement
 
 ## Key File Responsibilities
 
-- `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, and top-level touch routing).
+- `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, top-level touch routing, and runtime-only state orchestration).
+- `Jocker/Jocker/Game/Scenes/GameSceneInputConfiguration.swift`: explicit external setup configuration for `GameScene` (player count/names/control modes/bot difficulty settings) applied before scene presentation.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionBlockers.swift`: `OptionSet` for centralized interaction-blocking flags used by `GameScene` flow and modal gating.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionState.swift`: explicit high-level interaction state (primary flow + pending modal) derived from blockers, used for safer `GameScene` flow-state reasoning and conflict assertions.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionTransitionPolicy.swift`: pure blocker transition policy for setting/clearing high-level flow and pending-modal states while preserving unrelated blocker groups.
@@ -168,6 +169,7 @@ Jocker/Jocker/
 │   ├── Scenes/
 │   │   ├── CardDemoScene.swift
 │   │   ├── GameScene.swift
+│   │   ├── GameSceneInputConfiguration.swift
 │   │   ├── GameSceneInteractionBlockers.swift
 │   │   ├── GameSceneInteractionState.swift
 │   │   ├── GameSceneInteractionTransitionPolicy.swift

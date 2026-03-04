@@ -12,8 +12,7 @@ import UIKit
 
 final class GameScenePlayingFlowTests: XCTestCase {
     func testResetForNewGameSession_resetsResultPresentationAndScores() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame()
         scene.currentTrump = .hearts
         scene.trumpIndicator.setTrumpSuit(.hearts, animated: false)
@@ -23,14 +22,16 @@ final class GameScenePlayingFlowTests: XCTestCase {
             to: .zero,
             animated: false
         )
-        scene.hasPresentedGameResultsModal = true
-        scene.lastPresentedBlockResultsCount = 2
-        scene.hasSavedGameStatistics = true
-        scene.hasDealtAtLeastOnce = true
+        scene.seedSessionRuntimeStateForTesting(
+            hasPresentedGameResultsModal: true,
+            lastPresentedBlockResultsCount: 2,
+            hasSavedGameStatistics: true,
+            hasDealtAtLeastOnce: true,
+            pendingBids: [1, 0, 2, 0],
+            pendingBlindSelections: [true, false, false, true]
+        )
         scene.setPrimaryInteractionFlow(.trumpSelection)
         scene.setPendingInteractionModal(.humanTrumpChoice)
-        scene.pendingBids = [1, 0, 2, 0]
-        scene.pendingBlindSelections = [true, false, false, true]
 
         let playerNode = PlayerNode(
             playerNumber: 1,
@@ -84,8 +85,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testResetForNewGameSession_resetsCoordinatorDealingState() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame()
 
         scene.coordinator.markDidDeal()
@@ -172,9 +172,10 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testRoundBidInfoText_forHumanIncludesBidAndTakenTricks() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
-        scene.playerControlTypes = [.human, .bot, .bot, .bot]
+        let scene = makeScene(
+            playerCount: 4,
+            playerControlTypes: [.human, .bot, .bot, .bot]
+        )
         scene.gameState.startGame()
         scene.gameState.setBid(2, forPlayerAt: 0)
         scene.gameState.beginPlayingAfterBids()
@@ -184,9 +185,10 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testRoundBidInfoText_forBotShowsOnlyBid() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
-        scene.playerControlTypes = [.human, .bot, .bot, .bot]
+        let scene = makeScene(
+            playerCount: 4,
+            playerControlTypes: [.human, .bot, .bot, .bot]
+        )
         scene.gameState.startGame()
         scene.gameState.setBid(1, forPlayerAt: 1)
 
@@ -195,30 +197,28 @@ final class GameScenePlayingFlowTests: XCTestCase {
 
     func testCanDealCards_whenRoundInProgress_returnsFalse() {
         let scene = makeSceneInPlayingPhase(playerCount: 4)
-        scene.hasDealtAtLeastOnce = true
+        scene.markDidDealAtLeastOnce()
 
         XCTAssertFalse(scene.canDealCards)
     }
 
     func testCanDealCards_whenRoundEnded_returnsTrue() {
         let scene = makeSceneInPlayingPhase(playerCount: 4)
-        scene.hasDealtAtLeastOnce = true
+        scene.markDidDealAtLeastOnce()
         scene.gameState.completeRound()
 
         XCTAssertTrue(scene.canDealCards)
     }
 
     func testCanDealCards_beforeFirstDealInBidding_returnsTrue() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame()
 
         XCTAssertTrue(scene.canDealCards)
     }
 
     func testBotMatchContext_buildsBlockRoundScoreAndRelativeSeatData() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame(initialDealerIndex: 2)
 
         scene.scoreManager.recordRoundResults([
@@ -252,8 +252,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testBotMatchContext_buildsPremiumSnapshot_forZeroPremiumCandidateAtBlockStart() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame(initialDealerIndex: 0)
 
         guard let context = scene.botMatchContext(for: 0) else {
@@ -269,8 +268,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testBotMatchContext_premiumSnapshot_marksBrokenPremiumAndZeroPremiumCandidates() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame(initialDealerIndex: 0)
 
         scene.scoreManager.recordRoundResults([
@@ -292,8 +290,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testBotMatchContext_premiumSnapshot_marksPenaltyTargetRiskFromOpponentPremiumCandidate() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame(initialDealerIndex: 0)
 
         // Делаем premium-кандидатом только игрока 3.
@@ -319,8 +316,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testBotMatchContext_buildsOpponentModelSnapshotFromObservedRounds() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame(initialDealerIndex: 0)
 
         scene.scoreManager.recordRoundResults([
@@ -369,8 +365,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testBotMatchContext_buildsOpponentModelWithZeroEvidenceAtBlockStart() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame(initialDealerIndex: 0)
 
         guard let context = scene.botMatchContext(for: 0) else {
@@ -390,8 +385,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     func testBotMatchContext_invalidPlayer_returnsNil() {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = 4
+        let scene = makeScene(playerCount: 4)
         scene.gameState.startGame()
 
         XCTAssertNil(scene.botMatchContext(for: -1))
@@ -422,8 +416,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
     }
 
     private func makeSceneInPlayingPhase(playerCount: Int) -> GameScene {
-        let scene = GameScene(size: CGSize(width: 1366, height: 768))
-        scene.playerCount = playerCount
+        let scene = makeScene(playerCount: playerCount)
         scene.gameState.startGame()
         for playerIndex in 0..<playerCount {
             scene.gameState.setBid(0, forPlayerAt: playerIndex)
@@ -431,6 +424,19 @@ final class GameScenePlayingFlowTests: XCTestCase {
         scene.gameState.beginPlayingAfterBids()
         XCTAssertEqual(scene.gameState.phase, .playing)
         return scene
+    }
+
+    private func makeScene(
+        playerCount: Int,
+        playerControlTypes: [PlayerControlType] = []
+    ) -> GameScene {
+        return GameScene(
+            size: CGSize(width: 1366, height: 768),
+            inputConfiguration: GameSceneInputConfiguration(
+                playerCount: playerCount,
+                playerControlTypes: playerControlTypes
+            )
+        )
     }
 
     private func trumpHeaderText(in indicator: TrumpIndicator) -> String? {

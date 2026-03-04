@@ -36,26 +36,46 @@ class GameScene: SKScene {
         static let jokerLeadInfoTopInset: CGFloat = 22
     }
 
-    var playerCount: Int = 4
-    var playerNames: [String] = []
-    var playerControlTypes: [PlayerControlType] = []
+    private(set) var inputConfiguration = GameSceneInputConfiguration()
+    private var hasInitializedGameState = false
+
+    var playerCount: Int {
+        return inputConfiguration.playerCount
+    }
+
+    var playerNames: [String] {
+        return inputConfiguration.playerNames
+    }
+
+    var playerControlTypes: [PlayerControlType] {
+        return inputConfiguration.playerControlTypes
+    }
+
+    var botDifficulty: BotDifficulty {
+        return inputConfiguration.botDifficulty
+    }
+
+    var botDifficultiesByPlayer: [BotDifficulty] {
+        return inputConfiguration.botDifficultiesByPlayer
+    }
+
     var onScoreButtonTapped: (() -> Void)?
     var onJokerDecisionRequested: ((_ isLeadCard: Bool, _ completion: @escaping (JokerPlayDecision?) -> Void) -> Void)?
     var gameResultsModalPresenter: (([GameFinalPlayerSummary]) -> Bool)?
-    var pokerTable: PokerTableNode?
+    private var pokerTable: PokerTableNode?
     var players: [PlayerNode] = []
-    var dealButton: GameButton?
-    var scoreButton: GameButton?
-    var turnIndicator: TurnIndicatorNode?
+    private var dealButton: GameButton?
+    private var scoreButton: GameButton?
+    private var turnIndicator: TurnIndicatorNode?
 
     // UI элементы для отображения состояния игры
-    var gameInfoLabel: SKLabelNode?
-    var roundBidInfoPanel: SKShapeNode?
-    var roundBidInfoTitleLabel: SKLabelNode?
-    var roundBidInfoRowLabels: [SKLabelNode] = []
-    var jokerLeadInfoPanel: SKShapeNode?
-    var jokerLeadInfoPlayerLabel: SKLabelNode?
-    var jokerLeadInfoModeLabel: SKLabelNode?
+    private var gameInfoLabel: SKLabelNode?
+    private var roundBidInfoPanel: SKShapeNode?
+    private var roundBidInfoTitleLabel: SKLabelNode?
+    private var roundBidInfoRowLabels: [SKLabelNode] = []
+    private var jokerLeadInfoPanel: SKShapeNode?
+    private var jokerLeadInfoPlayerLabel: SKLabelNode?
+    private var jokerLeadInfoModeLabel: SKLabelNode?
 
     // Игровые компоненты
     var deck = Deck()
@@ -70,23 +90,22 @@ class GameScene: SKScene {
         return indicator
     }()
     var currentTrump: Suit?
-    lazy var gameState: GameState = {
+    lazy var gameState: GameState = { [unowned self] in
+        hasInitializedGameState = true
         return GameState(playerCount: playerCount)
     }()
     var firstDealerIndex: Int = 0
-    var botDifficulty: BotDifficulty = .hard
-    var botDifficultiesByPlayer: [BotDifficulty] = []
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     private(set) var environment: GameEnvironment = .live
-    var coordinator: GameSceneCoordinator = GameEnvironment.live.makeCoordinator()
+    private(set) var coordinator: GameSceneCoordinator = GameEnvironment.live.makeCoordinator()
     private var botTuningsByDifficulty: [BotDifficulty: BotTuning] = [:]
     private var botBiddingServicesByDifficulty: [BotDifficulty: BotBiddingService] = [:]
     private var botTrumpSelectionServicesByDifficulty: [BotDifficulty: BotTrumpSelectionService] = [:]
     private var botTurnServicesByDifficulty: [BotDifficulty: GameTurnService] = [:]
-    var gameStatisticsStore: GameStatisticsStore = GameEnvironment.live.makeGameStatisticsStore()
-    var dealHistoryStore: DealHistoryStore = GameEnvironment.live.makeDealHistoryStore()
-    var dealHistoryExportService: DealHistoryExportService = GameEnvironment.live.makeDealHistoryExportService()
-    let shouldRevealAllPlayersCards = false
+    private(set) var gameStatisticsStore: GameStatisticsStore = GameEnvironment.live.makeGameStatisticsStore()
+    private(set) var dealHistoryStore: DealHistoryStore = GameEnvironment.live.makeDealHistoryStore()
+    private(set) var dealHistoryExportService: DealHistoryExportService = GameEnvironment.live.makeDealHistoryExportService()
+    private let shouldRevealAllPlayersCards = false
     private var interactionBlockers: GameSceneInteractionBlockers = []
     private var interactionState = GameSceneInteractionState()
     var isSelectingFirstDealer: Bool {
@@ -123,15 +142,15 @@ class GameScene: SKScene {
     }
     var pendingBids: [Int] = []
     var pendingBlindSelections: [Bool] = []
-    var firstDealerAnnouncementNode: SKNode?
-    var firstDealerAnnouncementLabel: SKLabelNode?
-    var firstDealerSelectionCardsNode: SKNode?
-    var hasPresentedGameResultsModal = false
-    var lastPresentedBlockResultsCount = 0
-    var hasSavedGameStatistics = false
+    private var firstDealerAnnouncementNode: SKNode?
+    private var firstDealerAnnouncementLabel: SKLabelNode?
+    private var firstDealerSelectionCardsNode: SKNode?
+    private(set) var hasPresentedGameResultsModal = false
+    private(set) var lastPresentedBlockResultsCount = 0
+    private(set) var hasSavedGameStatistics = false
     var exportedBlockIndices: Set<Int> = []
-    var hasExportedFinalGameHistory = false
-    var hasDealtAtLeastOnce = false
+    private(set) var hasExportedFinalGameHistory = false
+    private(set) var hasDealtAtLeastOnce = false
     var isUITestMode: Bool {
         return ProcessInfo.processInfo.arguments.contains("-uiTestMode")
     }
@@ -145,8 +164,24 @@ class GameScene: SKScene {
         configureEnvironment(environment)
     }
 
+    convenience init(
+        size: CGSize,
+        inputConfiguration: GameSceneInputConfiguration,
+        environment: GameEnvironment = .live
+    ) {
+        self.init(size: size, environment: environment)
+        applyInputConfiguration(inputConfiguration)
+    }
+
+    func applyInputConfiguration(_ configuration: GameSceneInputConfiguration) {
+        assert(view == nil, "GameScene input configuration should be set before presenting the scene.")
+        assert(!hasInitializedGameState, "GameScene input configuration should be set before gameState initialization.")
+        inputConfiguration = configuration
+    }
+
     func configureEnvironment(_ environment: GameEnvironment) {
         assert(view == nil, "GameScene environment should be configured before presenting the scene.")
+        assert(!hasInitializedGameState, "GameScene environment should be configured before gameState initialization.")
         self.environment = environment
         coordinator = environment.makeCoordinator()
         gameStatisticsStore = environment.makeGameStatisticsStore()
@@ -156,6 +191,30 @@ class GameScene: SKScene {
         botBiddingServicesByDifficulty.removeAll()
         botTrumpSelectionServicesByDifficulty.removeAll()
         botTurnServicesByDifficulty.removeAll()
+    }
+
+    func markDidDealAtLeastOnce() {
+        hasDealtAtLeastOnce = true
+    }
+
+    func markGameStatisticsSaved() {
+        hasSavedGameStatistics = true
+    }
+
+    func seedSessionRuntimeStateForTesting(
+        hasPresentedGameResultsModal: Bool,
+        lastPresentedBlockResultsCount: Int,
+        hasSavedGameStatistics: Bool,
+        hasDealtAtLeastOnce: Bool,
+        pendingBids: [Int],
+        pendingBlindSelections: [Bool]
+    ) {
+        self.hasPresentedGameResultsModal = hasPresentedGameResultsModal
+        self.lastPresentedBlockResultsCount = lastPresentedBlockResultsCount
+        self.hasSavedGameStatistics = hasSavedGameStatistics
+        self.hasDealtAtLeastOnce = hasDealtAtLeastOnce
+        self.pendingBids = pendingBids
+        self.pendingBlindSelections = pendingBlindSelections
     }
 
     func setInteractionBlocker(
@@ -319,27 +378,31 @@ class GameScene: SKScene {
     }
 
     private func applyConfiguredPlayerNames() {
-        gameState.setPlayerNames(playerNames)
+        gameState.setPlayerNames(inputConfiguration.playerNames)
     }
 
     private func applyConfiguredPlayerControlTypes() {
-        if playerControlTypes.count != playerCount {
-            playerControlTypes = (0..<playerCount).map { index in
+        var resolved = inputConfiguration.playerControlTypes
+
+        if resolved.count != playerCount {
+            resolved = (0..<playerCount).map { index in
                 index == 0 ? .human : .bot
             }
         }
 
-        if !playerControlTypes.contains(.human), !playerControlTypes.isEmpty {
-            playerControlTypes[0] = .human
+        if !resolved.contains(.human), !resolved.isEmpty {
+            resolved[0] = .human
         }
+
+        inputConfiguration.playerControlTypes = resolved
     }
 
     private func applyConfiguredBotDifficulties() {
         var resolved = Array(repeating: BotDifficulty.hard, count: playerCount)
 
         for index in 0..<playerCount {
-            if botDifficultiesByPlayer.indices.contains(index) {
-                resolved[index] = botDifficultiesByPlayer[index]
+            if inputConfiguration.botDifficultiesByPlayer.indices.contains(index) {
+                resolved[index] = inputConfiguration.botDifficultiesByPlayer[index]
             }
         }
 
@@ -347,12 +410,12 @@ class GameScene: SKScene {
             resolved[0] = .hard
         }
 
-        botDifficultiesByPlayer = resolved
+        inputConfiguration.botDifficultiesByPlayer = resolved
     }
 
     func isHumanPlayer(_ index: Int) -> Bool {
-        guard playerControlTypes.indices.contains(index) else { return false }
-        return playerControlTypes[index] == .human
+        guard inputConfiguration.playerControlTypes.indices.contains(index) else { return false }
+        return inputConfiguration.playerControlTypes[index] == .human
     }
 
     func isBotPlayer(_ index: Int) -> Bool {
@@ -361,10 +424,10 @@ class GameScene: SKScene {
 
     func botDifficulty(for playerIndex: Int) -> BotDifficulty {
         guard isBotPlayer(playerIndex) else { return .hard }
-        guard botDifficultiesByPlayer.indices.contains(playerIndex) else {
-            return botDifficulty
+        guard inputConfiguration.botDifficultiesByPlayer.indices.contains(playerIndex) else {
+            return inputConfiguration.botDifficulty
         }
-        return botDifficultiesByPlayer[playerIndex]
+        return inputConfiguration.botDifficultiesByPlayer[playerIndex]
     }
 
     func botBiddingService(for playerIndex: Int) -> BotBiddingService {
