@@ -69,10 +69,11 @@
 		BB0000022F2800010037CA75 /* GamePhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000012F2800010037CA75 /* GamePhase.swift */; };
 		BB0000042F2800010037CA75 /* GameBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000032F2800010037CA75 /* GameBlock.swift */; };
 		BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000052F2800010037CA75 /* PlayerInfo.swift */; };
-		BB0000082F2800010037CA75 /* GameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000072F2800010037CA75 /* GameButton.swift */; };
-		C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */; };
-		C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
-		C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
+			BB0000082F2800010037CA75 /* GameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000072F2800010037CA75 /* GameButton.swift */; };
+			C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */; };
+			2D4CDAF8C5ED4354A7FA95D4 /* GameEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B251FD09B7E4CDEBEE61267 /* GameEnvironment.swift */; };
+			C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20022F5000010037CA75 /* GameRoundService.swift */; };
+			C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20032F5000010037CA75 /* GameTurnService.swift */; };
 		C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20042F5000010037CA75 /* GameAnimationService.swift */; };
 		C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20052F5300010037CA75 /* BotBiddingService.swift */; };
 		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
@@ -252,10 +253,11 @@
 		BB0000012F2800010037CA75 /* GamePhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePhase.swift; sourceTree = "<group>"; };
 		BB0000032F2800010037CA75 /* GameBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBlock.swift; sourceTree = "<group>"; };
 		BB0000052F2800010037CA75 /* PlayerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerInfo.swift; sourceTree = "<group>"; };
-		BB0000072F2800010037CA75 /* GameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameButton.swift; sourceTree = "<group>"; };
-		C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneCoordinator.swift; sourceTree = "<group>"; };
-		C0DE20022F5000010037CA75 /* GameRoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundService.swift; sourceTree = "<group>"; };
-		C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
+			BB0000072F2800010037CA75 /* GameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameButton.swift; sourceTree = "<group>"; };
+			C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneCoordinator.swift; sourceTree = "<group>"; };
+			6B251FD09B7E4CDEBEE61267 /* GameEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEnvironment.swift; sourceTree = "<group>"; };
+			C0DE20022F5000010037CA75 /* GameRoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundService.swift; sourceTree = "<group>"; };
+			C0DE20032F5000010037CA75 /* GameTurnService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnService.swift; sourceTree = "<group>"; };
 		C0DE20042F5000010037CA75 /* GameAnimationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAnimationService.swift; sourceTree = "<group>"; };
 		C0DE20052F5300010037CA75 /* BotBiddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingService.swift; sourceTree = "<group>"; };
 		C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
@@ -830,14 +832,15 @@
 			path = Players;
 			sourceTree = "<group>";
 		};
-		C0DE30012F5000010037CA75 /* Coordinator */ = {
-			isa = PBXGroup;
-			children = (
-				C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */,
-			);
-			path = Coordinator;
-			sourceTree = "<group>";
-		};
+			C0DE30012F5000010037CA75 /* Coordinator */ = {
+				isa = PBXGroup;
+				children = (
+					C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */,
+					6B251FD09B7E4CDEBEE61267 /* GameEnvironment.swift */,
+				);
+				path = Coordinator;
+				sourceTree = "<group>";
+			};
 		C0DE30022F5000010037CA75 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -1047,8 +1050,9 @@
 				C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */,
 				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 				C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
+				2D4CDAF8C5ED4354A7FA95D4 /* GameEnvironment.swift in Sources */,
 				C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,
-					C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
+				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
 					D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */,
 					D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */,
 					E009650331E84562AC4DA317 /* BotMatchContextBuilder.swift in Sources */,

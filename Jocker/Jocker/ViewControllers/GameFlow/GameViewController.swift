@@ -45,7 +45,10 @@ class GameViewController: UIViewController {
         skView.ignoresSiblingOrder = true
         
         // Подбираем размер сцены под текущее соотношение сторон, чтобы на iPad не резались края.
-        let scene = GameScene(size: adaptedSceneSize(for: skView.bounds.size))
+        let scene = GameScene(
+            size: adaptedSceneSize(for: skView.bounds.size),
+            environment: .live
+        )
         scene.scaleMode = .aspectFill
         scene.playerCount = playerCount
         scene.playerNames = playerNames

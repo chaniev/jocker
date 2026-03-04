@@ -77,40 +77,15 @@ class GameScene: SKScene {
     var botDifficulty: BotDifficulty = .hard
     var botDifficultiesByPlayer: [BotDifficulty] = []
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
-    lazy var coordinator: GameSceneCoordinator = {
-        return GameSceneCoordinator()
-    }()
-    private lazy var botTuningsByDifficulty: [BotDifficulty: BotTuning] = {
-        var map: [BotDifficulty: BotTuning] = [:]
-        for difficulty in BotDifficulty.allCases {
-            map[difficulty] = BotTuning(difficulty: difficulty)
-        }
-        return map
-    }()
-    private lazy var botBiddingServicesByDifficulty: [BotDifficulty: BotBiddingService] = {
-        var map: [BotDifficulty: BotBiddingService] = [:]
-        for difficulty in BotDifficulty.allCases {
-            map[difficulty] = BotBiddingService(tuning: tuning(for: difficulty))
-        }
-        return map
-    }()
-    private lazy var botTrumpSelectionServicesByDifficulty: [BotDifficulty: BotTrumpSelectionService] = {
-        var map: [BotDifficulty: BotTrumpSelectionService] = [:]
-        for difficulty in BotDifficulty.allCases {
-            map[difficulty] = BotTrumpSelectionService(tuning: tuning(for: difficulty))
-        }
-        return map
-    }()
-    private lazy var botTurnServicesByDifficulty: [BotDifficulty: GameTurnService] = {
-        var map: [BotDifficulty: GameTurnService] = [:]
-        for difficulty in BotDifficulty.allCases {
-            map[difficulty] = GameTurnService(tuning: tuning(for: difficulty))
-        }
-        return map
-    }()
-    let gameStatisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore()
-    let dealHistoryStore = DealHistoryStore()
-    let dealHistoryExportService = DealHistoryExportService()
+    private(set) var environment: GameEnvironment = .live
+    var coordinator: GameSceneCoordinator = GameEnvironment.live.makeCoordinator()
+    private var botTuningsByDifficulty: [BotDifficulty: BotTuning] = [:]
+    private var botBiddingServicesByDifficulty: [BotDifficulty: BotBiddingService] = [:]
+    private var botTrumpSelectionServicesByDifficulty: [BotDifficulty: BotTrumpSelectionService] = [:]
+    private var botTurnServicesByDifficulty: [BotDifficulty: GameTurnService] = [:]
+    var gameStatisticsStore: GameStatisticsStore = GameEnvironment.live.makeGameStatisticsStore()
+    var dealHistoryStore: DealHistoryStore = GameEnvironment.live.makeDealHistoryStore()
+    var dealHistoryExportService: DealHistoryExportService = GameEnvironment.live.makeDealHistoryExportService()
     let shouldRevealAllPlayersCards = false
     private var interactionBlockers: GameSceneInteractionBlockers = []
     private var interactionState = GameSceneInteractionState()
@@ -163,6 +138,24 @@ class GameScene: SKScene {
 
     var isInteractionBlocked: Bool {
         return coordinator.isInteractionLocked || interactionState.isBlockingInteraction
+    }
+
+    convenience init(size: CGSize, environment: GameEnvironment) {
+        self.init(size: size)
+        configureEnvironment(environment)
+    }
+
+    func configureEnvironment(_ environment: GameEnvironment) {
+        assert(view == nil, "GameScene environment should be configured before presenting the scene.")
+        self.environment = environment
+        coordinator = environment.makeCoordinator()
+        gameStatisticsStore = environment.makeGameStatisticsStore()
+        dealHistoryStore = environment.makeDealHistoryStore()
+        dealHistoryExportService = environment.makeDealHistoryExportService()
+        botTuningsByDifficulty.removeAll()
+        botBiddingServicesByDifficulty.removeAll()
+        botTrumpSelectionServicesByDifficulty.removeAll()
+        botTurnServicesByDifficulty.removeAll()
     }
 
     func setInteractionBlocker(
@@ -376,18 +369,32 @@ class GameScene: SKScene {
 
     func botBiddingService(for playerIndex: Int) -> BotBiddingService {
         let difficulty = botDifficulty(for: playerIndex)
-        return botBiddingServicesByDifficulty[difficulty] ?? BotBiddingService(tuning: tuning(for: difficulty))
+        if let service = botBiddingServicesByDifficulty[difficulty] {
+            return service
+        }
+        let service = environment.makeBotBiddingService(tuning(for: difficulty))
+        botBiddingServicesByDifficulty[difficulty] = service
+        return service
     }
 
     func botTrumpSelectionService(for playerIndex: Int) -> BotTrumpSelectionService {
         let difficulty = botDifficulty(for: playerIndex)
-        return botTrumpSelectionServicesByDifficulty[difficulty] ??
-            BotTrumpSelectionService(tuning: tuning(for: difficulty))
+        if let service = botTrumpSelectionServicesByDifficulty[difficulty] {
+            return service
+        }
+        let service = environment.makeBotTrumpSelectionService(tuning(for: difficulty))
+        botTrumpSelectionServicesByDifficulty[difficulty] = service
+        return service
     }
 
     func botTurnService(for playerIndex: Int) -> GameTurnService {
         let difficulty = botDifficulty(for: playerIndex)
-        return botTurnServicesByDifficulty[difficulty] ?? GameTurnService(tuning: tuning(for: difficulty))
+        if let service = botTurnServicesByDifficulty[difficulty] {
+            return service
+        }
+        let service = environment.makeBotTurnService(tuning(for: difficulty))
+        botTurnServicesByDifficulty[difficulty] = service
+        return service
     }
 
     func timing(for playerIndex: Int) -> BotTuning.Timing {
@@ -404,7 +411,12 @@ class GameScene: SKScene {
     }
 
     private func tuning(for difficulty: BotDifficulty) -> BotTuning {
-        return botTuningsByDifficulty[difficulty] ?? BotTuning(difficulty: difficulty)
+        if let resolved = botTuningsByDifficulty[difficulty] {
+            return resolved
+        }
+        let resolved = environment.makeBotTuning(difficulty)
+        botTuningsByDifficulty[difficulty] = resolved
+        return resolved
     }
 
     // MARK: - Покерный стол
@@ -904,7 +916,7 @@ class GameScene: SKScene {
         removeAction(forKey: ActionKey.firstDealerSelection)
         removeAction(forKey: ActionKey.botTurn)
         coordinator.cancelPendingTrickResolution(on: self)
-        coordinator = GameSceneCoordinator()
+        coordinator = environment.makeCoordinator()
 
         deck.reset()
         currentTrump = nil
