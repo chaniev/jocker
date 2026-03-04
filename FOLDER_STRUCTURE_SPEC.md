@@ -62,6 +62,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
+- `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`: pure builder mapping `GameState` + `ScoreManager` to `BotMatchContext` (premium snapshot + opponent model), keeping `GameScene` UI-focused.
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that resolves legal cards, round context, and fallback move selection.
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`: runtime evaluator loop for bot turns (candidate enumeration, heuristic scoring, round projections, and best-move selection).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking helper for bot turns (utility calculation and deterministic tie-break policy).
@@ -177,6 +178,7 @@ Jocker/Jocker/
 │       │   ├── BotBiddingService.swift
 │       │   ├── BotRankNormalization.swift
 │       │   ├── HandFeatureExtractor.swift
+│       │   ├── BotMatchContextBuilder.swift
 │       │   ├── BotTurnCandidateEvaluatorService.swift
 │       │   ├── BotTurnCandidateRankingService.swift
 │       │   ├── BotTurnCardHeuristicsService.swift
