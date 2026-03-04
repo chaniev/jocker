@@ -31,8 +31,11 @@ final class ScoreTableLabelManager {
     private let playerDisplayOrder: [Int]
     private let rowMappings: [ScoreTableLayout.RowMapping]
     private let rowPresentationResolver: ScoreTableRowPresentationResolver
-    private let labelFrameResolver: ScoreTableLabelFrameResolver
+    private var labelFrameResolver: ScoreTableLabelFrameResolver
     private let config: LabelConfig
+    private let headerHeight: CGFloat
+    private let rowHeight: CGFloat
+    private let pointsLabelTrailingInset: CGFloat
 
     private(set) var headerLabels: [UILabel] = []
     private(set) var cardsLabels: [UILabel] = []
@@ -56,6 +59,9 @@ final class ScoreTableLabelManager {
         self.playerDisplayOrder = playerDisplayOrder
         self.rowMappings = rowMappings
         self.rowPresentationResolver = ScoreTableRowPresentationResolver()
+        self.headerHeight = headerHeight
+        self.rowHeight = rowHeight
+        self.pointsLabelTrailingInset = pointsLabelTrailingInset
         self.labelFrameResolver = ScoreTableLabelFrameResolver(
             leftColumnWidth: leftColumnWidth,
             trickColumnWidth: trickColumnWidth,
@@ -242,8 +248,13 @@ final class ScoreTableLabelManager {
         trickColumnWidth: CGFloat,
         pointsColumnWidth: CGFloat
     ) {
-        // Note: frame resolver is immutable, so we can't update it here.
-        // This is handled by the parent view.
-        _ = (leftColumnWidth, trickColumnWidth, pointsColumnWidth)
+        labelFrameResolver = ScoreTableLabelFrameResolver(
+            leftColumnWidth: leftColumnWidth,
+            trickColumnWidth: trickColumnWidth,
+            pointsColumnWidth: pointsColumnWidth,
+            headerHeight: headerHeight,
+            rowHeight: rowHeight,
+            pointsLabelTrailingInset: pointsLabelTrailingInset
+        )
     }
 }

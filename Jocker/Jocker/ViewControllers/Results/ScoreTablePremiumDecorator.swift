@@ -26,9 +26,9 @@ final class ScoreTablePremiumDecorator {
     private let layout: ScoreTableLayout
     private let headerHeight: CGFloat
     private let rowHeight: CGFloat
-    private let leftColumnWidth: CGFloat
-    private let trickColumnWidth: CGFloat
-    private let pointsColumnWidth: CGFloat
+    private var leftColumnWidth: CGFloat
+    private var trickColumnWidth: CGFloat
+    private var pointsColumnWidth: CGFloat
 
     let premiumLossLayer: CAShapeLayer
     private var premiumScoreStrikeLayers: [CAShapeLayer] = []
@@ -220,7 +220,8 @@ final class ScoreTablePremiumDecorator {
         trickColumnWidth: CGFloat,
         pointsColumnWidth: CGFloat
     ) {
-        // Note: эти значения используются при рендеринге, но не хранятся явно
-        // Обновление происходит через параметры методов рендеринга
+        self.leftColumnWidth = leftColumnWidth
+        self.trickColumnWidth = trickColumnWidth
+        self.pointsColumnWidth = pointsColumnWidth
     }
 }

@@ -136,7 +136,18 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     override func layoutSubviews() {
         super.layoutSubviews()
         updateColumnWidths()
+        labelManager.updateColumnWidths(
+            leftColumnWidth: columnWidths.leftColumn,
+            trickColumnWidth: columnWidths.trickColumn,
+            pointsColumnWidth: columnWidths.pointsColumn
+        )
+        premiumDecorator.updateLayoutMetrics(
+            leftColumnWidth: columnWidths.leftColumn,
+            trickColumnWidth: columnWidths.trickColumn,
+            pointsColumnWidth: columnWidths.pointsColumn
+        )
         layoutScrollView()
+        labelManager.updateHeaderFrames()
         labelManager.updateRowFrames()
         labelManager.updatePinnedHeaderPosition(contentOffsetY: scrollView.contentOffset.y)
         updateGridLayers()

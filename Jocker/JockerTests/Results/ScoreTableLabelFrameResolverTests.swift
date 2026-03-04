@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import UIKit
 @testable import Jocker
 
 final class ScoreTableLabelFrameResolverTests: XCTestCase {
@@ -51,6 +52,72 @@ final class ScoreTableLabelFrameResolverTests: XCTestCase {
         )
     }
 
+    func testLabelManager_updateColumnWidths_rebuildsFramesForExpandedPointsColumn() {
+        let manager = ScoreTableLabelManager(
+            playerCount: 2,
+            playerDisplayOrder: [0, 1],
+            rowMappings: [ScoreTableView.RowMapping(kind: .deal(cards: 1), blockIndex: 0, roundIndex: 0)],
+            headerHeight: 28,
+            rowHeight: 24,
+            leftColumnWidth: 36,
+            trickColumnWidth: 44,
+            pointsColumnWidth: 64
+        )
+        let contentView = UIView()
+        manager.buildLabels(in: contentView)
+        manager.updateHeaderFrames()
+        manager.updateRowFrames()
+
+        XCTAssertEqual(manager.headerLabels[1].frame, CGRect(x: 144, y: 0, width: 108, height: 28))
+        XCTAssertEqual(manager.pointsLabels[0][1].frame, CGRect(x: 188, y: 28, width: 60, height: 24))
+
+        manager.updateColumnWidths(leftColumnWidth: 36, trickColumnWidth: 44, pointsColumnWidth: 200)
+        manager.updateHeaderFrames()
+        manager.updateRowFrames()
+
+        XCTAssertEqual(manager.headerLabels[1].frame, CGRect(x: 280, y: 0, width: 244, height: 28))
+        XCTAssertEqual(manager.pointsLabels[0][1].frame, CGRect(x: 324, y: 28, width: 196, height: 24))
+    }
+
+    func testPremiumDecorator_updateLayoutMetrics_movesTrophyMarkWithColumnWidth() {
+        let decorator = ScoreTablePremiumDecorator(
+            playerCount: 2,
+            displayIndexByPlayerIndex: [0: 0, 1: 1],
+            layout: ScoreTableLayout(playerCount: 2, headerHeight: 28, rowHeight: 24),
+            headerHeight: 28,
+            rowHeight: 24,
+            leftColumnWidth: 36,
+            trickColumnWidth: 44,
+            pointsColumnWidth: 64
+        )
+        let contentView = UIView(frame: CGRect(x: 0, y: 0, width: 640, height: 360))
+        decorator.addPremiumLossLayer(to: contentView)
+
+        let snapshot = ScoreTableRenderSnapshotBuilder.ScoreDecorationsSnapshot(
+            penaltyStrikeCells: [],
+            columnMarks: [
+                .init(
+                    playerIndex: 1,
+                    topSummaryRowIndex: 0,
+                    bottomSummaryRowIndex: 0,
+                    kind: .trophy
+                )
+            ]
+        )
+        let pointsLabels: [[UILabel]] = [[UILabel(), UILabel()]]
+
+        decorator.renderDecorations(from: snapshot, pointsLabels: pointsLabels, in: contentView)
+        let firstTrophyX = trophyX(in: contentView)
+
+        decorator.updateLayoutMetrics(leftColumnWidth: 36, trickColumnWidth: 44, pointsColumnWidth: 200)
+        decorator.renderDecorations(from: snapshot, pointsLabels: pointsLabels, in: contentView)
+        let secondTrophyX = trophyX(in: contentView)
+
+        XCTAssertEqual(firstTrophyX, 147, accuracy: 0.001)
+        XCTAssertEqual(secondTrophyX, 283, accuracy: 0.001)
+        XCTAssertGreaterThan(secondTrophyX, firstTrophyX)
+    }
+
     private func makeResolver() -> ScoreTableLabelFrameResolver {
         return ScoreTableLabelFrameResolver(
             leftColumnWidth: 32,
@@ -60,5 +127,15 @@ final class ScoreTableLabelFrameResolverTests: XCTestCase {
             rowHeight: 24,
             pointsLabelTrailingInset: 4
         )
+    }
+
+    private func trophyX(in contentView: UIView) -> CGFloat {
+        guard let trophyLabel = contentView.subviews
+            .compactMap({ $0 as? UILabel })
+            .first(where: { $0.text == "🏆" }) else {
+            XCTFail("Не удалось найти trophy label")
+            return .zero
+        }
+        return trophyLabel.frame.minX
     }
 }
