@@ -139,6 +139,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Bidding/PreDealBlindSelectionViewController.swift`: modal selector of pre-deal blind mode (`open after deal` vs `blind bid`) and blind bid amount list.
 - `Jocker/Jocker/ViewControllers/Bidding/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
 - `Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift`: full-screen settings form for all player names and per-bot difficulty controls.
+- `Jocker/Jocker/ViewControllers/GameFlow/FirstPlayerAnnouncementViewController.swift`: overlay modal that announces the first player and confirms continuation before the first deal.
 - `Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
 - `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player games, and 3-player games.
 - `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsTableView.swift`: grid-style statistics table where rows are metrics and columns are player seats.
@@ -261,6 +262,7 @@ Jocker/Jocker/
 │   │   ├── PreDealBlindSelectionViewController.swift
 │   │   └── TrumpSelectionViewController.swift
 │   ├── GameFlow/
+│   │   ├── FirstPlayerAnnouncementViewController.swift
 │   │   ├── GameParametersViewController.swift
 │   │   ├── GameViewController.swift
 │   │   └── PlayerSelectionViewController.swift
