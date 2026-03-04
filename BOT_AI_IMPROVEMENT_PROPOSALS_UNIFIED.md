@@ -386,16 +386,19 @@ flowchart LR
 - P0-1 Belief + legal-aware probability
 - P0-2 Block planning
 - Gates: `build-for-testing` (scheme `Jocker`) + build scheme `JockerSelfPlayTools` + `make joker-pack` + `make stage6b-pack-all` + `make bot-compare`
+- Self-play checkpoint: `SP-1` (smoke retune, `turnStrategy-only`, без promotion).
 
 Фаза 2 (P1, “opponent awareness + lookahead”):
 - P1-2 Opponent bid/deficit pressure (как быстрый win для RG-3)
 - P1-1 Opponent intention (если P0-1 уже даёт belief state)
 - P1-3 Rollout top-N (условно/точечно)
+- Self-play checkpoint: `SP-2` (`compare-v1`, `turnStrategy-only`, решение о promotion по holdout).
 
 Фаза 3 (P2, “ядро решения”):
 - P2-2 Goal-oriented joker (в связке с rollout)
 - P2-3 Endgame solver
 - P2-1 Composite utility (если стало сложно контролировать взаимодействия)
+- Self-play checkpoint: повтор `SP-2` после закрытия P2-пакета.
 
 Фаза 4 (P3–P4, “consistency + полировка”):
 - P3-3 HandStrength
@@ -403,6 +406,87 @@ flowchart LR
 - P3-2 Context-aware threat
 - P4-1 Trump
 - P4-2 Forbidden-aware bidding
+- Self-play checkpoint: `SP-3` (`compare-v1`, `tuning-scope=all`) + финальный `SP-4` (ensemble).
+
+---
+
+## Протокол самообучения (когда запускать и с какими параметрами)
+
+Правило: самообучение запускается только после зелёных runtime-gate тестов. Не запускаем эволюцию после каждого PR.
+
+### SP-0. Baseline refresh (до первой ретюнинг-итерации в ветке)
+
+Когда:
+- перед началом новой серии AI-изменений, если baseline в ветке устарел;
+- после изменения telemetry/fitness-метрик в self-play harness.
+
+Команда:
+- `make bot-baseline`
+
+Параметры:
+- профиль `baseline-v1` (из `scripts/run_bot_baseline_snapshot.sh`): seed-list `20260220...20260225`, `gamesPerCandidate=8`, `roundsPerGame=24`, `generations=0`.
+
+### SP-1. Smoke retune checkpoint (после закрытия Phase 1)
+
+Когда:
+- после завершения пакета `P0-1` + `P0-2`;
+- цель: быстро проверить направление эффекта, не продвигать коэффициенты в runtime.
+
+Команда:
+- `./scripts/run_bot_ab_comparison_snapshot.sh --profile smoke -- --tuning-scope turnStrategy-only --early-stop-patience 2 --early-stop-min-improvement 0.010 --early-stop-warmup-generations 1`
+
+Параметры:
+- `profile=smoke` (`population=4`, `generations=2`, `gamesPerCandidate=2`, `rounds=12`);
+- `tuning-scope=turnStrategy-only` для минимизации риска регрессий вне turn-stack.
+
+### SP-2. Promotion checkpoint для turn-stack (после Phase 2 и после Phase 3)
+
+Когда:
+- после закрытия `P1` пакета;
+- повторно после закрытия `P2` пакета;
+- использовать для решения, можно ли продвигать tuned snapshot.
+
+Команда:
+- `./scripts/run_bot_ab_comparison_snapshot.sh --profile compare-v1 -- --tuning-scope turnStrategy-only --early-stop-patience 4 --early-stop-min-improvement 0.010 --early-stop-warmup-generations 4`
+
+Параметры:
+- `profile=compare-v1` (seed-list `20260220...20260225`, holdout `20260226...20260303`, `population=10`, `generations=10`, `gamesPerCandidate=8`, `rounds=24`);
+- `tuning-scope=turnStrategy-only`.
+
+### SP-3. Promotion checkpoint для bidding/trump/hand model (после Phase 4)
+
+Когда:
+- после изменений в `P3-1`, `P3-3`, `P4-1`, `P4-2` (затрагивают `bidding`/`trumpSelection`/консистентность hand model).
+
+Команда:
+- `./scripts/run_bot_ab_comparison_snapshot.sh --profile compare-v1 -- --tuning-scope all --early-stop-patience 4 --early-stop-min-improvement 0.010 --early-stop-warmup-generations 4`
+
+Параметры:
+- те же, что `SP-2`, но `tuning-scope=all`.
+
+### SP-4. Финальный ensemble run (release-candidate)
+
+Когда:
+- после завершения всех целевых инициатив, перед финальным freeze tuning-коэффициентов.
+
+Команды:
+- `make bt-hard-final-esab`
+- `make bot-compare`
+
+Параметры:
+- `bt-hard-final-esab` использует multi-seed ensemble (`seed-list 20260220...20260225`, `ensemble=median`) и battle-профиль (`population=30`, `generations=48`, `gamesPerCandidate=40`, `rounds=24`) с early-stop + holdout A/B.
+
+### Решение по итогам самообучения (A/B/C)
+
+- `A: promote`:
+  - в `holdout` секции `fitness_Badv > 0`, `winRate_Badv > 0`, `scoreDiff_Badv > 0`;
+  - `joker-pack` и `stage6b-pack-all` остаются зелёными после применения tuned snapshot.
+- `B: iterate`:
+  - mixed результат (часть quality-core метрик положительная, часть около 0/слегка отрицательная);
+  - запускаем ещё одну итерацию с той же фазой/гипотезой.
+- `C: reject/rollback`:
+  - в `holdout` отрицательный quality-core (`fitness_Badv < 0` или одновременно `winRate_Badv < 0` и `scoreDiff_Badv < 0`);
+  - tuned snapshot не продвигаем, остаёмся на предыдущем promoted.
 
 ---
 
