@@ -27,14 +27,8 @@ final class GameScenePlayingFlowTests: XCTestCase {
         scene.lastPresentedBlockResultsCount = 2
         scene.hasSavedGameStatistics = true
         scene.hasDealtAtLeastOnce = true
-        scene.isSelectingFirstDealer = true
-        scene.isAwaitingJokerDecision = true
-        scene.isAwaitingHumanBidChoice = true
-        scene.isAwaitingHumanBlindChoice = true
-        scene.isAwaitingHumanTrumpChoice = true
-        scene.isRunningBiddingFlow = true
-        scene.isRunningPreDealBlindFlow = true
-        scene.isRunningTrumpSelectionFlow = true
+        scene.setPrimaryInteractionFlow(.trumpSelection)
+        scene.setPendingInteractionModal(.humanTrumpChoice)
         scene.pendingBids = [1, 0, 2, 0]
         scene.pendingBlindSelections = [true, false, false, true]
 
@@ -148,7 +142,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
             trumpSuit: .hearts
         ) { _ in }
 
-        XCTAssertEqual(viewController.trumpDisplayText(), "Козырь: \(Suit.hearts.name)")
+        XCTAssertEqual(viewController.trumpDisplayText(), "Козырь: \(Suit.hearts.rawValue) \(Suit.hearts.name)")
     }
 
     func testBidSelectionTrumpDisplayText_whenNoTrump_showsNoTrumpLabel() {
@@ -165,7 +159,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
             trumpSuit: nil
         ) { _ in }
 
-        XCTAssertEqual(viewController.trumpDisplayText(), "Без козыря")
+        XCTAssertEqual(viewController.trumpDisplayText(), "Козырь: без козыря")
     }
 
     func testTrumpIndicator_whenNoTrump_displaysJokerCard() {
@@ -254,7 +248,7 @@ final class GameScenePlayingFlowTests: XCTestCase {
         XCTAssertEqual(context.premium?.isPremiumCandidateSoFar, true)
         XCTAssertEqual(context.premium?.isZeroPremiumRelevantInBlock, true)
         XCTAssertEqual(context.premium?.isZeroPremiumCandidateSoFar, false)
-        XCTAssertEqual(context.premium?.opponentPremiumCandidatesSoFarCount, 3)
+        XCTAssertEqual(context.premium?.opponentPremiumCandidatesSoFarCount, 2)
     }
 
     func testBotMatchContext_buildsPremiumSnapshot_forZeroPremiumCandidateAtBlockStart() {

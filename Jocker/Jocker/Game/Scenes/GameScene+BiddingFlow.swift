@@ -62,12 +62,14 @@ extension GameScene {
         if isHumanPlayer(playerIndex) {
             let displayedBidsByPlayer = displayedBidsForBiddingModal(order: order, step: step)
             requestHumanBid(
-                forPlayer: playerIndex,
-                handCards: players[playerIndex].hand.cards,
-                allowedBids: allowedBids,
-                displayedBidsByPlayer: displayedBidsByPlayer,
-                biddingOrder: biddingOrder(),
-                forbiddenBid: forbidden
+                context: .init(
+                    playerIndex: playerIndex,
+                    handCards: players[playerIndex].hand.cards,
+                    allowedBids: allowedBids,
+                    displayedBidsByPlayer: displayedBidsByPlayer,
+                    biddingOrder: biddingOrder(),
+                    forbiddenBid: forbidden
+                )
             ) { [weak self] selectedBid in
                 guard let self = self else { return }
                 guard self.gameState.phase == .bidding else { return }

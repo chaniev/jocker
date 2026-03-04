@@ -9,6 +9,8 @@ import SpriteKit
 
 /// Координатор игровой сцены: склеивает сервисы раунда, хода и анимации.
 final class GameSceneCoordinator {
+    typealias BotTurnDecisionContext = GameTurnService.BotTurnDecisionContext
+
     private let roundService: GameRoundService
     private let turnService: GameTurnService
     private let animationService: GameAnimationService
@@ -109,6 +111,12 @@ final class GameSceneCoordinator {
     }
 
     func automaticTurnDecision(
+        context: BotTurnDecisionContext
+    ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
+        return turnService.automaticTurnDecision(context: context)
+    }
+
+    func automaticTurnDecision(
         for playerIndex: Int,
         players: [PlayerNode],
         trickNode: TrickNode,
@@ -120,16 +128,18 @@ final class GameSceneCoordinator {
         matchContext: BotMatchContext? = nil
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         guard players.indices.contains(playerIndex) else { return nil }
-        return turnService.automaticTurnDecision(
-            from: players[playerIndex].hand.cards,
-            trickNode: trickNode,
-            trump: trump,
-            bid: bid,
-            tricksTaken: tricksTaken,
-            cardsInRound: cardsInRound,
-            playerCount: players.count,
-            isBlind: isBlind,
-            matchContext: matchContext
+        return automaticTurnDecision(
+            context: .init(
+                handCards: players[playerIndex].hand.cards,
+                trickNode: trickNode,
+                trump: trump,
+                bid: bid,
+                tricksTaken: tricksTaken,
+                cardsInRound: cardsInRound,
+                playerCount: players.count,
+                isBlind: isBlind,
+                matchContext: matchContext
+            )
         )
     }
 

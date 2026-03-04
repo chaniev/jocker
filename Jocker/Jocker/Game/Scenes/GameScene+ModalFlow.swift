@@ -11,6 +11,26 @@ import UIKit
 extension GameScene {
     // MARK: - Modal Flow
 
+    struct TrumpChoiceContext {
+        let playerIndex: Int
+        let handCards: [Card]
+    }
+
+    struct BidChoiceContext {
+        let playerIndex: Int
+        let handCards: [Card]
+        let allowedBids: [Int]
+        let displayedBidsByPlayer: [Int?]
+        let biddingOrder: [Int]
+        let forbiddenBid: Int?
+    }
+
+    struct BlindChoiceContext {
+        let playerIndex: Int
+        let allowedBlindBids: [Int]
+        let canChooseBlind: Bool
+    }
+
     func presentFirstPlayerAnnouncementModal(firstPlayerName: String) {
         if isUITestMode {
             return
@@ -72,19 +92,32 @@ extension GameScene {
         handCards: [Card],
         completion: @escaping (Suit?) -> Void
     ) {
-        let fallbackTrump = botTrumpSelectionService(for: playerIndex).selectTrump(
-            from: handCards,
+        requestTrumpChoice(
+            context: .init(
+                playerIndex: playerIndex,
+                handCards: handCards
+            ),
+            completion: completion
+        )
+    }
+
+    func requestTrumpChoice(
+        context: TrumpChoiceContext,
+        completion: @escaping (Suit?) -> Void
+    ) {
+        let fallbackTrump = botTrumpSelectionService(for: context.playerIndex).selectTrump(
+            from: context.handCards,
             isPlayerChosenTrumpStage: true
         )
 
-        if isBotPlayer(playerIndex) {
+        if isBotPlayer(context.playerIndex) {
             completion(fallbackTrump)
             return
         }
 
-        let playerName = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].name
-            : "Игрок \(playerIndex + 1)"
+        let playerName = gameState.players.indices.contains(context.playerIndex)
+            ? gameState.players[context.playerIndex].name
+            : "Игрок \(context.playerIndex + 1)"
 
         presentPendingChoiceModal(
             .humanTrumpChoice,
@@ -93,7 +126,7 @@ extension GameScene {
         ) { resolve in
             TrumpSelectionViewController(
                 playerName: playerName,
-                handCards: handCards
+                handCards: context.handCards
             ) { selectedSuit in
                 resolve(selectedSuit)
             }
@@ -109,15 +142,32 @@ extension GameScene {
         forbiddenBid: Int?,
         completion: @escaping (Int) -> Void
     ) {
-        let normalizedAllowedBids = Array(Set(allowedBids)).sorted()
+        requestHumanBid(
+            context: .init(
+                playerIndex: playerIndex,
+                handCards: handCards,
+                allowedBids: allowedBids,
+                displayedBidsByPlayer: displayedBidsByPlayer,
+                biddingOrder: biddingOrder,
+                forbiddenBid: forbiddenBid
+            ),
+            completion: completion
+        )
+    }
+
+    func requestHumanBid(
+        context: BidChoiceContext,
+        completion: @escaping (Int) -> Void
+    ) {
+        let normalizedAllowedBids = Array(Set(context.allowedBids)).sorted()
         guard !normalizedAllowedBids.isEmpty else {
             completion(0)
             return
         }
 
-        let playerName = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].name
-            : "Игрок \(playerIndex + 1)"
+        let playerName = gameState.players.indices.contains(context.playerIndex)
+            ? gameState.players[context.playerIndex].name
+            : "Игрок \(context.playerIndex + 1)"
 
         presentPendingChoiceModal(
             .humanBidChoice,
@@ -126,14 +176,14 @@ extension GameScene {
         ) { resolve in
             BidSelectionViewController(
                 playerName: playerName,
-                handCards: handCards,
+                handCards: context.handCards,
                 allowedBids: normalizedAllowedBids,
                 maxBid: gameState.currentCardsPerPlayer,
                 playerNames: gameState.players.map { $0.name },
-                displayedBidsByPlayer: displayedBidsByPlayer,
-                biddingOrder: biddingOrder,
-                currentPlayerIndex: playerIndex,
-                forbiddenBid: forbiddenBid,
+                displayedBidsByPlayer: context.displayedBidsByPlayer,
+                biddingOrder: context.biddingOrder,
+                currentPlayerIndex: context.playerIndex,
+                forbiddenBid: context.forbiddenBid,
                 trumpSuit: currentTrump
             ) { selectedBid in
                 resolve(selectedBid)
@@ -147,11 +197,25 @@ extension GameScene {
         canChooseBlind: Bool,
         completion: @escaping (_ isBlind: Bool, _ bid: Int?) -> Void
     ) {
-        let normalizedAllowedBlindBids = Array(Set(allowedBlindBids)).sorted()
+        requestHumanPreDealBlindChoice(
+            context: .init(
+                playerIndex: playerIndex,
+                allowedBlindBids: allowedBlindBids,
+                canChooseBlind: canChooseBlind
+            ),
+            completion: completion
+        )
+    }
 
-        let playerName = gameState.players.indices.contains(playerIndex)
-            ? gameState.players[playerIndex].name
-            : "Игрок \(playerIndex + 1)"
+    func requestHumanPreDealBlindChoice(
+        context: BlindChoiceContext,
+        completion: @escaping (_ isBlind: Bool, _ bid: Int?) -> Void
+    ) {
+        let normalizedAllowedBlindBids = Array(Set(context.allowedBlindBids)).sorted()
+
+        let playerName = gameState.players.indices.contains(context.playerIndex)
+            ? gameState.players[context.playerIndex].name
+            : "Игрок \(context.playerIndex + 1)"
 
         presentPendingChoiceModal(
             .humanBlindChoice,
@@ -163,7 +227,7 @@ extension GameScene {
             PreDealBlindSelectionViewController(
                 playerName: playerName,
                 allowedBlindBids: normalizedAllowedBlindBids,
-                canChooseBlind: canChooseBlind
+                canChooseBlind: context.canChooseBlind
             ) { isBlind, bid in
                 resolve((isBlind, bid))
             }

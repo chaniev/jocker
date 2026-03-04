@@ -215,9 +215,11 @@ extension GameScene {
 
         if isHumanPlayer(playerIndex) {
             requestHumanPreDealBlindChoice(
-                forPlayer: playerIndex,
-                allowedBlindBids: allowedBlindBids,
-                canChooseBlind: canChooseBlind,
+                context: .init(
+                    playerIndex: playerIndex,
+                    allowedBlindBids: allowedBlindBids,
+                    canChooseBlind: canChooseBlind
+                ),
                 completion: applySelection
             )
             return
@@ -284,8 +286,10 @@ extension GameScene {
 
             self.updateTurnUI(animated: true)
             self.requestTrumpChoice(
-                forPlayer: chooserPlayerIndex,
-                handCards: chooserHand
+                context: .init(
+                    playerIndex: chooserPlayerIndex,
+                    handCards: chooserHand
+                )
             ) { [weak self] selectedTrump in
                 guard let self else { return }
                 self.currentTrump = selectedTrump
