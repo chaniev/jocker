@@ -68,20 +68,25 @@ struct BotTurnCandidateRankingService {
         self.tuning = tuning
     }
 
-    /// Этап 4b (MVP): score-only матчевый риск-сигнал.
-    /// Положительное значение => нужно агрессивнее догонять.
-    /// Отрицательное значение => выгоднее сохранять текущую позицию.
-    private func matchRiskBias(from matchContext: BotMatchContext?) -> Double {
-        guard let matchContext else { return 0.0 }
-        guard matchContext.playerCount > 1 else { return 0.0 }
-        guard matchContext.playerIndex >= 0, matchContext.playerIndex < matchContext.playerCount else { return 0.0 }
-        guard matchContext.totalScores.count >= matchContext.playerCount else { return 0.0 }
+    private struct BlockPlan {
+        let urgency: Double
+        let riskBudget: Double
+        let preserveOwnPremiumBias: Double
+        let denyOpponentPremiumBias: Double
+    }
+
+    /// Этап P0-2: компактный block-level план для управления агрессией/консервативностью.
+    private func blockPlan(from matchContext: BotMatchContext?) -> BlockPlan? {
+        guard let matchContext else { return nil }
+        guard matchContext.playerCount > 1 else { return nil }
+        guard matchContext.playerIndex >= 0, matchContext.playerIndex < matchContext.playerCount else { return nil }
+        guard matchContext.totalScores.count >= matchContext.playerCount else { return nil }
 
         let ownScore = matchContext.totalScores[matchContext.playerIndex]
         let opponentScores = matchContext.totalScores.enumerated()
             .filter { $0.offset != matchContext.playerIndex }
             .map(\.element)
-        guard let leaderScore = matchContext.totalScores.max(), !opponentScores.isEmpty else { return 0.0 }
+        guard let leaderScore = matchContext.totalScores.max(), !opponentScores.isEmpty else { return nil }
 
         let bestOpponentScore = opponentScores.max() ?? ownScore
         let behindLeader = max(0, leaderScore - ownScore)
@@ -90,36 +95,124 @@ struct BotTurnCandidateRankingService {
         let scoreScale = matchContext.block == .fourth ? 180.0 : 260.0
         let behindSignal = min(1.0, Double(behindLeader) / scoreScale)
         let leadSignal = min(1.0, Double(safeLead) / scoreScale)
-        // На старте блока матчевый catch-up сигнал должен почти не влиять на локальный выбор хода.
-        let progressWeight = 0.02 + 0.98 * matchContext.blockProgressFraction
         let blockWeight = matchContext.block == .fourth ? 1.15 : 1.0
 
-        return (behindSignal - leadSignal) * progressWeight * blockWeight
+        let premium = matchContext.premium
+        let preserveOwnPremiumBias: Double = {
+            guard let premium else { return 0.0 }
+            guard premium.isPremiumCandidateSoFar || premium.isZeroPremiumCandidateSoFar else { return 0.0 }
+            return 0.35 + 0.65 * matchContext.blockProgressFraction
+        }()
+        let denyOpponentPremiumBias: Double = {
+            guard let premium else { return 0.0 }
+            guard premium.leftNeighborIsPremiumCandidateSoFar ||
+                    premium.isPenaltyTargetRiskSoFar ||
+                    premium.opponentPremiumCandidatesSoFarCount > 0 else {
+                return 0.0
+            }
+            return 0.30 + 0.70 * matchContext.blockProgressFraction
+        }()
+
+        var riskBudget = (behindSignal - leadSignal) * blockWeight
+        let baseActivationWeight = 0.05 + 0.95 * matchContext.blockProgressFraction
+        let roundsRemainingForActivation = max(0, matchContext.totalRoundsInBlock - matchContext.roundIndexInBlock - 1)
+        let finalRoundsActivationBoost: Double
+        switch roundsRemainingForActivation {
+        case 0...1:
+            finalRoundsActivationBoost = 1.0
+        case 2:
+            finalRoundsActivationBoost = 0.75
+        default:
+            finalRoundsActivationBoost = baseActivationWeight
+        }
+        riskBudget *= min(1.0, max(0.0, finalRoundsActivationBoost))
+        riskBudget = min(1.0, max(-1.0, riskBudget))
+
+        let roundsRemaining: Int = {
+            if let premium {
+                return max(0, premium.remainingRoundsInBlock)
+            }
+            let estimated = matchContext.totalRoundsInBlock - matchContext.roundIndexInBlock - 1
+            return max(0, estimated)
+        }()
+        let endgameUrgency: Double
+        switch roundsRemaining {
+        case 0...1:
+            endgameUrgency = 1.0
+        case 2:
+            endgameUrgency = 0.82
+        case 3:
+            endgameUrgency = 0.68
+        default:
+            endgameUrgency = 0.42
+        }
+        let urgency = min(
+            1.0,
+            max(
+                0.0,
+                max(
+                    abs(riskBudget) * 0.75,
+                    endgameUrgency * 0.60 +
+                        matchContext.blockProgressFraction * 0.40 +
+                        max(preserveOwnPremiumBias, denyOpponentPremiumBias) * 0.12
+                )
+            )
+        )
+
+        return BlockPlan(
+            urgency: urgency,
+            riskBudget: riskBudget,
+            preserveOwnPremiumBias: preserveOwnPremiumBias,
+            denyOpponentPremiumBias: denyOpponentPremiumBias
+        )
     }
 
-    /// Этап 4b (MVP): стратегическая матч-надбавка по текущему счёту.
-    /// Пока без premium-кандидатства; это первый шаг `matchCatchUpUtility`.
+    /// Этап P0-2: block-level utility надбавка (risk budget + urgency).
     private func matchCatchUpUtilityAdjustment(
+        projectedScore: Double,
         immediateWinProbability: Double,
         threat: Double,
         context: UtilityContext
     ) -> Double {
-        let riskBias = matchRiskBias(from: context.matchContext)
-        guard abs(riskBias) > 0.000_001 else { return 0.0 }
-
-        // Пока применяем только в режиме добора, чтобы избежать резких сдвигов dump-логики.
-        guard context.shouldChaseTrick else { return 0.0 }
+        guard let plan = blockPlan(from: context.matchContext) else { return 0.0 }
+        guard abs(plan.riskBudget) > 0.000_001 else { return 0.0 }
 
         let chaseAggressionSignal =
             immediateWinProbability * 120.0 -
             threat * 0.05 +
             context.chasePressure * 18.0
-        let finalTrickUrgencyBonus = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
+        let finalTrickUrgencyBonus = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent && context.shouldChaseTrick
             ? 8.0
             : 0.0
         let opponentUrgencyMultiplier = opponentMatchCatchUpUrgencyMultiplier(from: context.matchContext)
+        let urgencyWeight = 0.20 + 0.80 * plan.urgency
 
-        return riskBias * opponentUrgencyMultiplier * (chaseAggressionSignal + finalTrickUrgencyBonus)
+        if context.shouldChaseTrick {
+            var adjustment = plan.riskBudget *
+                opponentUrgencyMultiplier *
+                (chaseAggressionSignal + finalTrickUrgencyBonus) *
+                urgencyWeight
+            if plan.preserveOwnPremiumBias > 0, context.trickDeltaToBidBeforeMove >= 0 {
+                adjustment -= immediateWinProbability * 3.0 * plan.preserveOwnPremiumBias
+            }
+            return adjustment
+        }
+
+        let conservativeDumpSignal =
+            (1.0 - immediateWinProbability) * 96.0 +
+            threat * 0.035 +
+            max(0.0, projectedScore) * 0.06
+        var adjustment = (-plan.riskBudget) *
+            opponentUrgencyMultiplier *
+            conservativeDumpSignal *
+            (0.12 + 0.55 * urgencyWeight)
+        if plan.denyOpponentPremiumBias > 0 {
+            adjustment -=
+                (1.0 - immediateWinProbability) *
+                2.5 *
+                plan.denyOpponentPremiumBias
+        }
+        return adjustment
     }
 
     /// Этап 4b (MVP): защита собственной премиальной траектории без моделирования соперников.
@@ -597,6 +690,16 @@ struct BotTurnCandidateRankingService {
         context: UtilityContext
     ) -> Double {
         let strategy = tuning.turnStrategy
+        let premiumSnapshot = context.matchContext?.premium
+        let isOwnPremiumProtectionContext = premiumSnapshot.map {
+            $0.isPremiumCandidateSoFar || $0.isZeroPremiumCandidateSoFar
+        } ?? false
+        let hasOpponentPremiumPressureContext = premiumSnapshot.map {
+            $0.leftNeighborIsPremiumCandidateSoFar || $0.opponentPremiumCandidatesSoFarCount > 0
+        } ?? false
+        let isPenaltyTargetRiskContext = premiumSnapshot.map {
+            $0.isPenaltyTargetRiskSoFar && $0.premiumCandidatesThreateningPenaltyCount > 0
+        } ?? false
         let isLeadFaceUpDeclaredJoker =
             move.card.isJoker &&
             context.trick.playedCards.isEmpty &&
@@ -604,6 +707,7 @@ struct BotTurnCandidateRankingService {
             move.decision.leadDeclaration != nil
         var utility = projectedScore
         utility += matchCatchUpUtilityAdjustment(
+            projectedScore: projectedScore,
             immediateWinProbability: immediateWinProbability,
             threat: threat,
             context: context
@@ -633,6 +737,27 @@ struct BotTurnCandidateRankingService {
             move: move,
             context: context
         )
+        if !context.shouldChaseTrick {
+            if isOwnPremiumProtectionContext && context.trickDeltaToBidBeforeMove == 0 {
+                // Late exact-bid premium/zero-premium: сильнее поощряем безопасный проигрыш взятки.
+                let lateBlockWeight = 0.5 + 0.5 * (context.matchContext?.blockProgressFraction ?? 0.0)
+                utility += (1.0 - immediateWinProbability) * 64.0 * lateBlockWeight
+            }
+
+            if context.trickDeltaToBidBeforeMove > 0 &&
+                !isOwnPremiumProtectionContext &&
+                !hasOpponentPremiumPressureContext &&
+                !isPenaltyTargetRiskContext {
+                // Уже ушли в overbid: в нейтральном контексте полезно добирать очки (K > V → K×10).
+                let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
+                utility += immediateWinProbability * 14.0 * overbidSeverity
+            }
+
+            if isPenaltyTargetRiskContext {
+                // Под штрафным риском наоборот приоритизируем controlled-loss dump.
+                utility += (1.0 - immediateWinProbability) * 8.0
+            }
+        }
         let blindChaseOpponentMultiplier = (context.isBlindRound && context.shouldChaseTrick)
             ? opponentBlindChaseContestMultiplier(from: context.matchContext)
             : 1.0
@@ -675,6 +800,7 @@ struct BotTurnCandidateRankingService {
 
         if context.shouldChaseTrick {
             let conservatism = max(0.0, 1.0 - context.chasePressure)
+            let mustWinAllRemaining = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
             utility += immediateWinProbability *
                 strategy.chaseWinProbabilityWeight *
                 (1.0 + context.chasePressure) *
@@ -688,7 +814,14 @@ struct BotTurnCandidateRankingService {
                 utility -= strategy.chaseSpendJokerPenalty * conservatism * blindRiskMultiplier
             }
 
-            if context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent {
+            if move.card.isJoker && context.hasWinningNonJoker && !mustWinAllRemaining {
+                // Дополнительная защита от раннего расхода джокера, когда есть рабочий non-joker.
+                utility -= strategy.chaseSpendJokerPenalty *
+                    (0.55 + 0.45 * context.chasePressure) *
+                    blindRiskMultiplier
+            }
+
+            if mustWinAllRemaining {
                 utility -= (1.0 - immediateWinProbability) *
                     strategy.chaseSpendJokerPenalty *
                     blindRiskMultiplier

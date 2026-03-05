@@ -1,8 +1,8 @@
 # Предложения по улучшению AI ботов (Unified)
 
-**Дата:** 2026-03-04  
+**Дата:** 2026-03-05  
 **Статус:** Рабочий backlog (актуализирован под текущую структуру кода)  
-**Версия:** 3.1
+**Версия:** 3.3
 
 Документ синхронизирован с актуальными источниками в репозитории:
 - `BOT_AI_IMPROVEMENT_PLAN.md` (stage-статусы и принятые guardrails),
@@ -105,8 +105,8 @@
 
 | ID | Инициатива | Приоритет | Runtime gaps | Слой | Статус в коде | Оценка |
 |---|------------|-----------|--------------|------|---------------|--------|
-| P0-1 | Belief state + legal-aware win probability | P0 | `RG-1`, `RG-2` | Runtime | не начато | 12-16 ч |
-| P0-2 | Block-level planning | P0 | `RG-3`, `RG-6` | Runtime | частично (Stage 4b/4c MVP) | 4-6 ч |
+| P0-1 | Belief state + legal-aware win probability | P0 | `RG-1`, `RG-2` | Runtime | выполнено (runtime + unit/regression гейты) | 12-16 ч |
+| P0-2 | Block-level planning | P0 | `RG-3`, `RG-6` | Runtime | выполнено (BlockPlan v1 + guardrails) | 4-6 ч |
 | P1-1 | Opponent intention modeling | P1 | `RG-1`, `RG-2`, `RG-3` | Runtime | частично (rates/style, без trick-level intent) | 12-16 ч |
 | P1-2 | Opponent bid/deficit pressure in utility | P1 | `RG-3`, `RG-6` | Runtime + Flow plumbing | не начато | 6-10 ч |
 | P1-3 | Rollout для top-N кандидатов | P1 | `RG-4`, `RG-2` | Runtime | не начато | 12-16 ч |
@@ -387,6 +387,24 @@ flowchart LR
 - P0-2 Block planning
 - Gates: `build-for-testing` (scheme `Jocker`) + build scheme `JockerSelfPlayTools` + `make joker-pack` + `make stage6b-pack-all` + `make bot-compare`
 - Self-play checkpoint: `SP-1` (smoke retune, `turnStrategy-only`, без promotion).
+
+### Статус Phase 1 (2026-03-05)
+
+- `P0-1` закрыт: введён `BotBeliefState`, легальность ответов соперников учитывается в `estimateImmediateWinProbability` через legal-aware симуляцию с budget-гейтингом.
+- `P0-2` закрыт: внедрён `BlockPlan` и обновлён `matchCatchUpUtilityAdjustment` с `riskBudget/urgency`.
+- Regression gates (финальный проход для formal close):
+  - `build-for-testing` (`Jocker`): pass.
+  - build scheme `JockerSelfPlayTools`: pass.
+  - `joker-pack` (strict): `16/16`, артефакты `.derivedData/joker-regression-runs/20260305-014146`.
+  - `stage6b-pack-all`: `18/18`, артефакты `.derivedData/stage6b-ranking-runs/20260305-014330`.
+  - `test-without-building` `BotSelfPlayEvolutionEngineTests`: pass (`iPhone 15`, id `4F592A52-148C-4540-BB72-590B8C44BD43`).
+  - `compare-v1` gate (`make bot-compare`): pass, артефакты `.derivedData/bot-ab-runs/20260305-014405`.
+- Self-play checkpoint `SP-1`:
+  - выполнен smoke retune (`turnStrategy-only`) по протоколу;
+  - артефакты `.derivedData/bot-ab-runs/20260305-012801`;
+  - `primary/holdout` по quality-core: `Badv = 0.000000` (нейтральный результат, без promotion).
+- Результат `compare-v1` (holdout, quality-core): `fitness_Badv=+0.865661`, `winRate_Badv=+0.010417`, `scoreDiff_Badv=+388.871528`.
+- `Phase 1` формально закрыта.
 
 Фаза 2 (P1, “opponent awareness + lookahead”):
 - P1-2 Opponent bid/deficit pressure (как быстрый win для RG-3)

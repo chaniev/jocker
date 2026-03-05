@@ -98,6 +98,7 @@ extension GameScene {
             ? gameState.players[playerIndex].isBlindBid
             : players[playerIndex].isBlindBid
         let matchContext = botMatchContext(for: playerIndex)
+        let completedTricksInRound = completedTricksInCurrentRound()
 
         guard let turnDecision = botTurnService(for: playerIndex).automaticTurnDecision(
             context: .init(
@@ -109,7 +110,9 @@ extension GameScene {
                 cardsInRound: gameState.currentCardsPerPlayer,
                 playerCount: playerCount,
                 isBlind: isBlindRound,
-                matchContext: matchContext
+                matchContext: matchContext,
+                actingPlayerIndex: playerIndex,
+                completedTricksInRound: completedTricksInRound
             )
         ) else {
             return
@@ -305,6 +308,25 @@ extension GameScene {
             x: center.x + normalizedX * horizontalRadius,
             y: center.y + normalizedY * verticalRadius
         )
+    }
+
+    private func completedTricksInCurrentRound() -> [[PlayedTrickCard]] {
+        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
+        let roundIndex = gameState.currentRoundInBlock
+        guard let history = dealHistoryStore.history(blockIndex: blockIndex, roundIndex: roundIndex) else {
+            return []
+        }
+
+        return history.tricks.map { trick in
+            trick.moves.map { move in
+                PlayedTrickCard(
+                    playerIndex: move.playerIndex,
+                    card: move.card,
+                    jokerPlayStyle: move.jokerPlayStyle,
+                    jokerLeadDeclaration: move.jokerLeadDeclaration
+                )
+            }
+        }
     }
 
     func runBotTurnIfNeeded() {

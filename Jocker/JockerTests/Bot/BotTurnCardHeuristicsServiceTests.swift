@@ -89,6 +89,89 @@ final class BotTurnCardHeuristicsServiceTests: XCTestCase {
         XCTAssertEqual(probability, 0)
     }
 
+    func testBeliefState_inferVoidSuit_whenPlayerDoesNotFollowLeadSuit() {
+        let completedTrick: [PlayedTrickCard] = [
+            PlayedTrickCard(playerIndex: 0, card: card(.hearts, .queen)),
+            PlayedTrickCard(playerIndex: 1, card: card(.clubs, .ace)),
+            PlayedTrickCard(playerIndex: 2, card: card(.hearts, .king))
+        ]
+
+        let belief = BotBeliefState.infer(
+            playerCount: 4,
+            completedTricks: [completedTrick],
+            currentTrick: [],
+            trump: .spades
+        )
+
+        XCTAssertTrue(belief.isVoid(.hearts, for: 1))
+        XCTAssertFalse(belief.isVoid(.hearts, for: 2))
+    }
+
+    func testBeliefState_inferTrumpVoid_whenPlayerCannotFollowLeadAndDoesNotPlayTrump() {
+        let completedTrick: [PlayedTrickCard] = [
+            PlayedTrickCard(playerIndex: 0, card: card(.hearts, .queen)),
+            PlayedTrickCard(playerIndex: 1, card: card(.clubs, .ace)),
+            PlayedTrickCard(playerIndex: 2, card: card(.spades, .king))
+        ]
+
+        let belief = BotBeliefState.infer(
+            playerCount: 4,
+            completedTricks: [completedTrick],
+            currentTrick: [],
+            trump: .spades
+        )
+
+        XCTAssertTrue(belief.isVoid(.spades, for: 1))
+        XCTAssertFalse(belief.isVoid(.spades, for: 2))
+    }
+
+    func testEstimateImmediateWinProbability_withBeliefVoidSuits_increasesHoldProbability() {
+        let trick = BotTurnCardHeuristicsService.TrickSnapshot(
+            playedCards: [
+                PlayedTrickCard(playerIndex: 0, card: card(.hearts, .queen))
+            ]
+        )
+        let unseenCards: [Card] = [
+            card(.hearts, .ace),
+            card(.hearts, .king),
+            card(.hearts, .jack),
+            card(.clubs, .ace),
+            card(.clubs, .ten),
+            card(.diamonds, .ace),
+            card(.diamonds, .ten),
+            card(.spades, .ace),
+            card(.spades, .ten)
+        ]
+        let noBelief = service.estimateImmediateWinProbability(
+            card: card(.hearts, .king),
+            decision: .defaultNonLead,
+            trick: trick,
+            trump: nil,
+            unseenCards: unseenCards,
+            opponentsRemaining: 2,
+            handSizeBeforeMove: 3
+        )
+        let belief = BotBeliefState(
+            voidSuitsByPlayerIndex: [
+                2: [.hearts],
+                3: [.hearts]
+            ]
+        )
+        let withBelief = service.estimateImmediateWinProbability(
+            card: card(.hearts, .king),
+            decision: .defaultNonLead,
+            trick: trick,
+            trump: nil,
+            unseenCards: unseenCards,
+            opponentsRemaining: 2,
+            handSizeBeforeMove: 3,
+            beliefState: belief,
+            remainingOpponentPlayerIndices: [2, 3]
+        )
+
+        XCTAssertGreaterThan(withBelief, noBelief)
+    }
+
     func testUnseenCards_excludesKnownCardsAndKeepsExpectedCount() {
         let hand = [.joker, card(.hearts, .ace)]
         let played = [.joker, card(.clubs, .king)]

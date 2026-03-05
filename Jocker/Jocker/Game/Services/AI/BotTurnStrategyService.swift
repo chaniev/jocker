@@ -19,6 +19,8 @@ final class BotTurnStrategyService {
         let playerCount: Int?
         let isBlind: Bool
         let matchContext: BotMatchContext?
+        let actingPlayerIndex: Int?
+        let completedTricksInRound: [[PlayedTrickCard]]
 
         init(
             handCards: [Card],
@@ -29,7 +31,9 @@ final class BotTurnStrategyService {
             cardsInRound: Int?,
             playerCount: Int?,
             isBlind: Bool = false,
-            matchContext: BotMatchContext? = nil
+            matchContext: BotMatchContext? = nil,
+            actingPlayerIndex: Int? = nil,
+            completedTricksInRound: [[PlayedTrickCard]] = []
         ) {
             self.handCards = handCards
             self.trickNode = trickNode
@@ -40,6 +44,8 @@ final class BotTurnStrategyService {
             self.playerCount = playerCount
             self.isBlind = isBlind
             self.matchContext = matchContext
+            self.actingPlayerIndex = actingPlayerIndex
+            self.completedTricksInRound = completedTricksInRound
         }
     }
 
@@ -86,7 +92,9 @@ final class BotTurnStrategyService {
         cardsInRound: Int? = nil,
         playerCount: Int? = nil,
         isBlind: Bool = false,
-        matchContext: BotMatchContext? = nil
+        matchContext: BotMatchContext? = nil,
+        actingPlayerIndex: Int? = nil,
+        completedTricksInRound: [[PlayedTrickCard]] = []
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         return makeTurnDecision(
             context: .init(
@@ -98,7 +106,9 @@ final class BotTurnStrategyService {
                 cardsInRound: cardsInRound,
                 playerCount: playerCount,
                 isBlind: isBlind,
-                matchContext: matchContext
+                matchContext: matchContext,
+                actingPlayerIndex: actingPlayerIndex,
+                completedTricksInRound: completedTricksInRound
             )
         )
     }
@@ -119,7 +129,9 @@ final class BotTurnStrategyService {
                 cardsInRound: resolvedContext.resolvedCardsInRound,
                 playerCount: resolvedContext.request.playerCount,
                 isBlind: resolvedContext.request.isBlind,
-                matchContext: resolvedContext.request.matchContext
+                matchContext: resolvedContext.request.matchContext,
+                actingPlayerIndex: resolvedContext.request.actingPlayerIndex,
+                completedTricksInRound: resolvedContext.request.completedTricksInRound
             )
         ) {
             return bestMove

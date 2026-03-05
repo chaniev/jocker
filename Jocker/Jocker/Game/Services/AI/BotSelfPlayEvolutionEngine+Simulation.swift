@@ -1056,6 +1056,7 @@ extension BotSelfPlayEvolutionEngine {
         var winningWishLeadDeclarationCounts = Array(repeating: 0, count: playerCount)
         var totalJokerPlayCounts = Array(repeating: 0, count: playerCount)
         var earlyJokerPlayCounts = Array(repeating: 0, count: playerCount)
+        var completedTricksInRound: [[PlayedTrickCard]] = []
         var mutableHands = hands
         var trickLeader = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
 
@@ -1076,7 +1077,9 @@ extension BotSelfPlayEvolutionEngine {
                         bid: bids[player],
                         tricksTaken: tricksTaken[player],
                         cardsInRound: cardsInRound,
-                        playerCount: playerCount
+                        playerCount: playerCount,
+                        actingPlayerIndex: player,
+                        completedTricksInRound: completedTricksInRound
                     )
                 )
 
@@ -1156,6 +1159,7 @@ extension BotSelfPlayEvolutionEngine {
             ) ?? trickLeader
 
             tricksTaken[winner] += 1
+            completedTricksInRound.append(trickNode.playedCards)
             if
                 let winnerMove = trickNode.playedCards.first(where: { $0.playerIndex == winner + 1 }),
                 winnerMove.card.isJoker,

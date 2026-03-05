@@ -21,6 +21,8 @@ struct BotTurnCandidateEvaluatorService {
         let playerCount: Int?
         let isBlind: Bool
         let matchContext: BotMatchContext?
+        let actingPlayerIndex: Int?
+        let completedTricksInRound: [[PlayedTrickCard]]
 
         init(
             legalCards: [Card],
@@ -32,7 +34,9 @@ struct BotTurnCandidateEvaluatorService {
             cardsInRound: Int,
             playerCount: Int?,
             isBlind: Bool = false,
-            matchContext: BotMatchContext? = nil
+            matchContext: BotMatchContext? = nil,
+            actingPlayerIndex: Int? = nil,
+            completedTricksInRound: [[PlayedTrickCard]] = []
         ) {
             self.legalCards = legalCards
             self.handCards = handCards
@@ -44,6 +48,8 @@ struct BotTurnCandidateEvaluatorService {
             self.playerCount = playerCount
             self.isBlind = isBlind
             self.matchContext = matchContext
+            self.actingPlayerIndex = actingPlayerIndex
+            self.completedTricksInRound = completedTricksInRound
         }
     }
 
@@ -74,7 +80,9 @@ struct BotTurnCandidateEvaluatorService {
         cardsInRound: Int,
         playerCount: Int?,
         isBlind: Bool = false,
-        matchContext: BotMatchContext? = nil
+        matchContext: BotMatchContext? = nil,
+        actingPlayerIndex: Int? = nil,
+        completedTricksInRound: [[PlayedTrickCard]] = []
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         return bestMove(
             context: .init(
@@ -87,7 +95,9 @@ struct BotTurnCandidateEvaluatorService {
                 cardsInRound: cardsInRound,
                 playerCount: playerCount,
                 isBlind: isBlind,
-                matchContext: matchContext
+                matchContext: matchContext,
+                actingPlayerIndex: actingPlayerIndex,
+                completedTricksInRound: completedTricksInRound
             )
         )
     }
@@ -112,6 +122,15 @@ struct BotTurnCandidateEvaluatorService {
         let opponentsRemaining = roundProjection.remainingOpponentsCount(
             playerCount: context.playerCount,
             cardsAlreadyOnTable: context.trick.playedCards.count
+        )
+        let remainingOpponentPlayerIndices = remainingOpponentOrder(
+            trick: context.trick,
+            playerCount: context.playerCount,
+            actingPlayerIndex: context.actingPlayerIndex
+        )
+        let resolvedOpponentsRemaining = remainingOpponentPlayerIndices?.count ?? opponentsRemaining
+        let beliefState = makeBeliefState(
+            context: context
         )
         let unseen = cardHeuristics.unseenCards(
             excluding: context.handCards,
@@ -172,8 +191,10 @@ struct BotTurnCandidateEvaluatorService {
                     trick: context.trick,
                     trump: context.trump,
                     unseenCards: unseen,
-                    opponentsRemaining: opponentsRemaining,
-                    handSizeBeforeMove: context.handCards.count
+                    opponentsRemaining: resolvedOpponentsRemaining,
+                    handSizeBeforeMove: context.handCards.count,
+                    beliefState: beliefState,
+                    remainingOpponentPlayerIndices: remainingOpponentPlayerIndices
                 )
                 let projectedFinalTricks = roundProjection.projectedFinalTricks(
                     currentTricks: context.currentTricks,
@@ -237,6 +258,59 @@ struct BotTurnCandidateEvaluatorService {
 
         guard let best else { return nil }
         return (card: best.move.card, jokerDecision: best.move.decision)
+    }
+
+    private func makeBeliefState(
+        context: DecisionContext
+    ) -> BotBeliefState? {
+        guard let playerCount = context.playerCount, playerCount > 1 else {
+            return nil
+        }
+        return BotBeliefState.infer(
+            playerCount: playerCount,
+            completedTricks: context.completedTricksInRound,
+            currentTrick: context.trick.playedCards,
+            trump: context.trump
+        )
+    }
+
+    private func remainingOpponentOrder(
+        trick: BotTurnCardHeuristicsService.TrickSnapshot,
+        playerCount: Int?,
+        actingPlayerIndex: Int?
+    ) -> [Int]? {
+        guard let playerCount, playerCount > 1 else { return nil }
+        let cardsAlreadyOnTable = trick.playedCards.count
+        guard cardsAlreadyOnTable < playerCount else { return [] }
+
+        let resolvedCurrentPlayer: Int
+        if let actingPlayerIndex {
+            resolvedCurrentPlayer = normalizedPlayerIndex(
+                actingPlayerIndex,
+                playerCount: playerCount
+            )
+        } else if let leadPlayer = trick.playedCards.first?.playerIndex {
+            resolvedCurrentPlayer = normalizedPlayerIndex(
+                leadPlayer + cardsAlreadyOnTable,
+                playerCount: playerCount
+            )
+        } else {
+            return nil
+        }
+
+        let remainingTurns = max(0, playerCount - cardsAlreadyOnTable - 1)
+        guard remainingTurns > 0 else { return [] }
+        return (1...remainingTurns).map { offset in
+            normalizedPlayerIndex(resolvedCurrentPlayer + offset, playerCount: playerCount)
+        }
+    }
+
+    private func normalizedPlayerIndex(
+        _ index: Int,
+        playerCount: Int
+    ) -> Int {
+        guard playerCount > 0 else { return 0 }
+        return ((index % playerCount) + playerCount) % playerCount
     }
 
     /// Этап 5: грубый сигнал "сколько контроля остаётся в руке после текущего хода".

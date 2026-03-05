@@ -125,7 +125,8 @@ final class GameSceneCoordinator {
         tricksTaken: Int?,
         cardsInRound: Int,
         isBlind: Bool = false,
-        matchContext: BotMatchContext? = nil
+        matchContext: BotMatchContext? = nil,
+        completedTricksInRound: [[PlayedTrickCard]] = []
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         guard players.indices.contains(playerIndex) else { return nil }
         return automaticTurnDecision(
@@ -138,7 +139,9 @@ final class GameSceneCoordinator {
                 cardsInRound: cardsInRound,
                 playerCount: players.count,
                 isBlind: isBlind,
-                matchContext: matchContext
+                matchContext: matchContext,
+                actingPlayerIndex: playerIndex,
+                completedTricksInRound: completedTricksInRound
             )
         )
     }

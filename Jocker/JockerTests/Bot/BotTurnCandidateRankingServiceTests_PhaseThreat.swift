@@ -305,6 +305,63 @@ extension BotTurnCandidateRankingServiceTests {
         XCTAssertEqual(noEvidenceUtility, baseUtility, accuracy: 0.0001)
     }
 
+    func testMoveUtility_withLateBlockLead_inDumpMode_prefersSaferLossTrajectory() {
+        let trickNode = makeTrickNode()
+        _ = trickNode.playCard(card(.hearts, .ace), fromPlayer: 1, animated: false)
+        let params = commonUtilityParams(
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: true,
+            hasLosingNonJoker: true
+        )
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.hearts, .king),
+            decision: .defaultNonLead
+        )
+        let leadingContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [190, 120, 110, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4
+        )
+        let trailingContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [90, 170, 150, 140],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4
+        )
+
+        func utility(for context: BotMatchContext) -> Double {
+            service.moveUtility(
+                projectedScore: params.projectedScore,
+                immediateWinProbability: 0.22,
+                threat: 36,
+                move: move,
+                trickNode: params.trickNode,
+                trump: params.trump,
+                shouldChaseTrick: params.shouldChaseTrick,
+                hasWinningNonJoker: params.hasWinningNonJoker,
+                hasLosingNonJoker: params.hasLosingNonJoker,
+                tricksNeededToMatchBid: params.tricksNeededToMatchBid,
+                tricksRemainingIncludingCurrent: params.tricksRemainingIncludingCurrent,
+                chasePressure: params.chasePressure,
+                matchContext: context
+            )
+        }
+
+        let leadingUtility = utility(for: leadingContext)
+        let trailingUtility = utility(for: trailingContext)
+
+        XCTAssertGreaterThan(leadingUtility, trailingUtility)
+    }
+
     func testMoveUtility_matchCatchUpBias_isNearZeroAtEarlyBlockStart() {
         let trickNode = makeTrickNode()
         _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
