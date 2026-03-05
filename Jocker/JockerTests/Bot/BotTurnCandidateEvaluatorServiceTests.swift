@@ -506,6 +506,83 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(pressuredRank.rawValue, neutralRank.rawValue)
     }
 
+    func testBestMove_whenEndgameSolverTriggeredByHandSizeThree_isDeterministic() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+
+        let hand: [Card] = [
+            card(.clubs, .ace),
+            card(.clubs, .seven),
+            card(.diamonds, .six)
+        ]
+        let context = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [120, 110, 95, 90],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4
+        )
+
+        let firstDecision = evaluator.bestMove(
+            legalCards: [card(.clubs, .ace), card(.clubs, .seven)],
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .hearts,
+            targetBid: 1,
+            currentTricks: 1,
+            cardsInRound: 3,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: context,
+            actingPlayerIndex: 0
+        )
+        let secondDecision = evaluator.bestMove(
+            legalCards: [card(.clubs, .ace), card(.clubs, .seven)],
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .hearts,
+            targetBid: 1,
+            currentTricks: 1,
+            cardsInRound: 3,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: context,
+            actingPlayerIndex: 0
+        )
+
+        XCTAssertEqual(secondDecision?.card, firstDecision?.card)
+        XCTAssertEqual(secondDecision?.jokerDecision, firstDecision?.jokerDecision)
+    }
+
+    func testBestMove_whenEndgameDumpAndExactBidAtRisk_prefersControlledLossCard() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+
+        let hand: [Card] = [
+            card(.clubs, .ace),
+            card(.clubs, .seven),
+            card(.diamonds, .six)
+        ]
+
+        let decision = evaluator.bestMove(
+            legalCards: [card(.clubs, .ace), card(.clubs, .seven)],
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .hearts,
+            targetBid: 1,
+            currentTricks: 1,
+            cardsInRound: 3,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: nil,
+            actingPlayerIndex: 0
+        )
+
+        XCTAssertEqual(decision?.card, card(.clubs, .seven))
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
     }

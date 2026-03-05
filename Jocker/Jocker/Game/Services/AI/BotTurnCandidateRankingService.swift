@@ -485,6 +485,26 @@ struct BotTurnCandidateRankingService {
         return 1.0 + (denyPressureMultiplier - 1.0) * 0.25 * lateBlockWeight
     }
 
+    private func opponentDisciplineSignal(from matchContext: BotMatchContext?) -> Double {
+        guard let matchContext, let opponents = matchContext.opponents else { return 0.5 }
+        let prioritizedSnapshots: [BotOpponentModel.OpponentSnapshot]
+        if let leftNeighborIndex = opponents.leftNeighborIndex,
+           let leftNeighborSnapshot = opponents.snapshot(for: leftNeighborIndex) {
+            prioritizedSnapshots = [leftNeighborSnapshot]
+        } else {
+            prioritizedSnapshots = opponents.snapshots
+        }
+        guard let snapshot = prioritizedSnapshots.first, snapshot.observedRounds > 0 else {
+            return 0.5
+        }
+
+        let exact = min(1.0, max(0.0, snapshot.exactBidRate))
+        let over = min(1.0, max(0.0, snapshot.overbidRate))
+        let under = min(1.0, max(0.0, snapshot.underbidRate))
+        let rawSignal = exact - 0.5 * (over + under)
+        return clamped(0.5 + 0.5 * rawSignal, min: 0.0, max: 1.0)
+    }
+
     /// Этап P1-2: pressure от раундового дефицита соперников (`needsTricks == 1`)
     /// с локальным фокусом на следующем по ходу/левом соседе.
     private func opponentBidPressureUtilityAdjustment(
@@ -793,6 +813,202 @@ struct BotTurnCandidateRankingService {
         return candidate.move.decision.style == .faceDown && current.move.decision.style == .faceUp
     }
 
+    private struct CompositeUtilityComponents {
+        let base: Double
+        let tactical: Double
+        let risk: Double
+        let opponent: Double
+        let joker: Double
+    }
+
+    private func clamped(
+        _ value: Double,
+        min lowerBound: Double,
+        max upperBound: Double
+    ) -> Double {
+        return min(upperBound, max(lowerBound, value))
+    }
+
+    private func leadJokerGoalOrientedUtilityAdjustment(
+        immediateWinProbability: Double,
+        leadControlReserveAfterMove: Double,
+        leadPreferredControlSuitAfterMove: Suit?,
+        leadPreferredControlSuitStrengthAfterMove: Double,
+        move: Move,
+        context: UtilityContext
+    ) -> Double {
+        guard move.card.isJoker else { return 0.0 }
+        guard context.trick.playedCards.isEmpty else { return 0.0 }
+        guard move.decision.style == .faceUp else { return 0.0 }
+        guard let declaration = move.decision.leadDeclaration else { return 0.0 }
+
+        let controlReserve = clamped(leadControlReserveAfterMove, min: 0.0, max: 1.0)
+        let preferredControlSuitStrength = clamped(
+            leadPreferredControlSuitStrengthAfterMove,
+            min: 0.0,
+            max: 1.0
+        )
+        let lowReserveNeed = 1.0 - controlReserve
+        let isAllInChase = context.shouldChaseTrick &&
+            context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
+        let isPenaltyRiskContext = context.matchContext?.premium.map {
+            $0.isPenaltyTargetRiskSoFar && $0.premiumCandidatesThreateningPenaltyCount > 0
+        } ?? false
+        let antiPremiumContext = context.matchContext?.premium.map {
+            $0.leftNeighborIsPremiumCandidateSoFar ||
+                $0.opponentPremiumCandidatesSoFarCount > 0 ||
+                $0.isPenaltyTargetRiskSoFar
+        } ?? false
+
+        let secureTrick: Double
+        let preserveControl: Double
+        let controlledLoss: Double
+        switch declaration {
+        case .wish:
+            secureTrick = context.shouldChaseTrick
+                ? clamped(0.62 + 0.38 * immediateWinProbability, min: 0.0, max: 1.0)
+                : 0.34
+            preserveControl = clamped(0.38 + 0.30 * controlReserve, min: 0.0, max: 1.0)
+            controlledLoss = context.shouldChaseTrick ? 0.0 : 0.32
+        case .above(let suit):
+            let declaresTrump = context.trump == suit
+            let matchesPreferredSuit = leadPreferredControlSuitAfterMove == suit
+            secureTrick = clamped(
+                0.54 +
+                    (context.shouldChaseTrick ? 0.18 : 0.0) +
+                    (declaresTrump ? 0.16 : 0.0) +
+                    (matchesPreferredSuit ? 0.08 + 0.10 * preferredControlSuitStrength : 0.0),
+                min: 0.0,
+                max: 1.0
+            )
+            preserveControl = clamped(
+                0.42 +
+                    (declaresTrump ? 0.14 : 0.0) +
+                    (matchesPreferredSuit ? 0.10 + 0.12 * preferredControlSuitStrength : 0.0) +
+                    0.14 * lowReserveNeed,
+                min: 0.0,
+                max: 1.0
+            )
+            controlledLoss = context.shouldChaseTrick ? 0.0 : (declaresTrump ? 0.14 : 0.24)
+        case .takes(let suit):
+            let declaresTrump = context.trump == suit
+            let nonTrumpTakes = context.trump.map { $0 != suit } ?? true
+            secureTrick = context.shouldChaseTrick
+                ? clamped(0.28 + (declaresTrump ? 0.08 : 0.0), min: 0.0, max: 1.0)
+                : 0.16
+            preserveControl = clamped(
+                0.18 +
+                    (declaresTrump ? -0.10 : 0.0) +
+                    (nonTrumpTakes ? 0.04 : 0.0) +
+                    0.10 * lowReserveNeed,
+                min: 0.0,
+                max: 1.0
+            )
+            controlledLoss = context.shouldChaseTrick
+                ? 0.0
+                : clamped(
+                    0.54 +
+                        (nonTrumpTakes ? 0.18 : -0.12) +
+                        (isPenaltyRiskContext ? 0.10 : 0.0),
+                    min: 0.0,
+                    max: 1.0
+                )
+        }
+
+        let secureWeight: Double
+        let controlWeight: Double
+        let controlledLossWeight: Double
+        if context.shouldChaseTrick {
+            secureWeight = clamped(
+                0.52 + 0.34 * context.chasePressure + (isAllInChase ? 0.14 : 0.0),
+                min: 0.0,
+                max: 1.0
+            )
+            controlWeight = clamped(
+                0.26 + 0.22 * lowReserveNeed + (antiPremiumContext ? 0.10 : 0.0),
+                min: 0.0,
+                max: 1.0
+            )
+            controlledLossWeight = -0.18
+        } else {
+            secureWeight = -0.14
+            controlWeight = 0.20 + (antiPremiumContext ? 0.06 : 0.0)
+            controlledLossWeight = clamped(
+                0.58 + (isPenaltyRiskContext ? 0.18 : 0.0),
+                min: 0.0,
+                max: 1.0
+            )
+        }
+
+        let weightedGoalScore =
+            secureTrick * secureWeight +
+            preserveControl * controlWeight +
+            controlledLoss * controlledLossWeight
+        let scale: Double = context.shouldChaseTrick
+            ? (10.0 + 7.0 * context.chasePressure)
+            : (9.0 + 6.0 * (1.0 - immediateWinProbability))
+        return weightedGoalScore * scale
+    }
+
+    private func composeUtility(
+        components: CompositeUtilityComponents,
+        immediateWinProbability: Double,
+        threat: Double,
+        move: Move,
+        context: UtilityContext
+    ) -> Double {
+        let blockUrgency = context.matchContext?.blockProgressFraction ?? 0.0
+        let urgency = clamped(
+            0.58 * context.chasePressure + 0.42 * blockUrgency,
+            min: 0.0,
+            max: 1.0
+        )
+        let penaltyRisk = context.matchContext?.premium?.isPenaltyTargetRiskSoFar == true
+        let hasOpponentEvidence = context.opponentIntention?.hasEvidence == true
+
+        let tacticalMultiplier = clamped(
+            1.0 + 0.04 * urgency + (context.shouldChaseTrick ? 0.03 : 0.0),
+            min: 0.95,
+            max: 1.10
+        )
+        let riskMultiplier = clamped(
+            1.0 + 0.08 * urgency + (penaltyRisk ? 0.06 : 0.0),
+            min: 0.94,
+            max: 1.18
+        )
+        let opponentMultiplier = clamped(
+            1.0 + 0.06 * urgency + (hasOpponentEvidence ? 0.05 : 0.0),
+            min: 0.95,
+            max: 1.16
+        )
+        let jokerMultiplier = move.card.isJoker
+            ? clamped(
+                1.0 + 0.10 * urgency + (context.shouldChaseTrick ? 0.05 : 0.06),
+                min: 0.90,
+                max: 1.22
+            )
+            : 1.0
+
+        let cappedTactical = clamped(components.tactical, min: -180.0, max: 180.0)
+        let cappedRisk = clamped(components.risk, min: -180.0, max: 180.0)
+        let cappedOpponent = clamped(components.opponent, min: -120.0, max: 120.0)
+        let cappedJoker = clamped(components.joker, min: -180.0, max: 180.0)
+
+        let composed =
+            components.base +
+            cappedTactical * tacticalMultiplier +
+            cappedRisk * riskMultiplier +
+            cappedOpponent * opponentMultiplier +
+            cappedJoker * jokerMultiplier
+
+        // Не даём композиции сносить базовую шкалу в крайних комбинациях сигналов.
+        let baselineAnchor = components.base + cappedTactical + cappedRisk + cappedOpponent + cappedJoker
+        let stabilizationWindow = 90.0 + 50.0 * (1.0 - immediateWinProbability) + 0.15 * threat
+        let minValue = baselineAnchor - stabilizationWindow
+        let maxValue = baselineAnchor + stabilizationWindow
+        return clamped(composed, min: minValue, max: maxValue)
+    }
+
     func moveUtility(
         projectedScore: Double,
         immediateWinProbability: Double,
@@ -819,39 +1035,45 @@ struct BotTurnCandidateRankingService {
             context.trick.playedCards.isEmpty &&
             move.decision.style == .faceUp &&
             move.decision.leadDeclaration != nil
-        var utility = projectedScore
-        utility += matchCatchUpUtilityAdjustment(
+        let matchCatchUpAdjustment = matchCatchUpUtilityAdjustment(
             projectedScore: projectedScore,
             immediateWinProbability: immediateWinProbability,
             threat: threat,
             context: context
         )
-        utility += premiumPreserveUtilityAdjustment(
+        let premiumPreserveAdjustment = premiumPreserveUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             context: context
         )
-        utility += opponentBidPressureUtilityAdjustment(
+        let opponentBidPressureAdjustment = opponentBidPressureUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             context: context
         )
-        utility += opponentIntentionUtilityAdjustment(
+        let opponentIntentionAdjustment = opponentIntentionUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             context: context
         )
+
+        let penaltyAvoidAdjustment: Double
+        let premiumDenyAdjustment: Double
         if !isLeadFaceUpDeclaredJoker {
             // Stage 5 already models anti-premium declaration shifts for lead face-up joker.
             // Skipping generic anti-premium utilities here avoids double-counting the same signal.
-            utility += penaltyAvoidUtilityAdjustment(
+            penaltyAvoidAdjustment = penaltyAvoidUtilityAdjustment(
                 projectedScore: projectedScore,
                 immediateWinProbability: immediateWinProbability,
                 context: context
             )
-            utility += premiumDenyUtilityAdjustment(
+            premiumDenyAdjustment = premiumDenyUtilityAdjustment(
                 immediateWinProbability: immediateWinProbability,
                 context: context
             )
+        } else {
+            penaltyAvoidAdjustment = 0.0
+            premiumDenyAdjustment = 0.0
         }
-        utility += leadJokerDeclarationUtilityAdjustment(
+
+        let leadJokerDeclarationAdjustment = leadJokerDeclarationUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             leadControlReserveAfterMove: leadControlReserveAfterMove,
             leadPreferredControlSuitAfterMove: leadPreferredControlSuitAfterMove,
@@ -859,11 +1081,29 @@ struct BotTurnCandidateRankingService {
             move: move,
             context: context
         )
+        let leadJokerGoalOrientedAdjustment = leadJokerGoalOrientedUtilityAdjustment(
+            immediateWinProbability: immediateWinProbability,
+            leadControlReserveAfterMove: leadControlReserveAfterMove,
+            leadPreferredControlSuitAfterMove: leadPreferredControlSuitAfterMove,
+            leadPreferredControlSuitStrengthAfterMove: leadPreferredControlSuitStrengthAfterMove,
+            move: move,
+            context: context
+        )
+
+        var tacticalComponent = 0.0
+        var riskComponent =
+            matchCatchUpAdjustment +
+            premiumPreserveAdjustment +
+            penaltyAvoidAdjustment +
+            premiumDenyAdjustment
+        let opponentComponent = opponentBidPressureAdjustment + opponentIntentionAdjustment
+        var jokerComponent = leadJokerDeclarationAdjustment + leadJokerGoalOrientedAdjustment
+
         if !context.shouldChaseTrick {
             if isOwnPremiumProtectionContext && context.trickDeltaToBidBeforeMove == 0 {
                 // Late exact-bid premium/zero-premium: сильнее поощряем безопасный проигрыш взятки.
                 let lateBlockWeight = 0.5 + 0.5 * (context.matchContext?.blockProgressFraction ?? 0.0)
-                utility += (1.0 - immediateWinProbability) * 64.0 * lateBlockWeight
+                riskComponent += (1.0 - immediateWinProbability) * 64.0 * lateBlockWeight
             }
 
             if context.trickDeltaToBidBeforeMove > 0 &&
@@ -872,12 +1112,28 @@ struct BotTurnCandidateRankingService {
                 !isPenaltyTargetRiskContext {
                 // Уже ушли в overbid: в нейтральном контексте полезно добирать очки (K > V → K×10).
                 let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
-                utility += immediateWinProbability * 14.0 * overbidSeverity
+                tacticalComponent += immediateWinProbability * 14.0 * overbidSeverity
+            }
+
+            if context.trickDeltaToBidBeforeMove > 0 && hasOpponentPremiumPressureContext {
+                // В overbid+dump усиливаем safe-loss только против erratic соперника.
+                // Для disciplined/no-evidence оставляем окно для deny-игры.
+                let disciplineSignal = opponentDisciplineSignal(from: context.matchContext)
+                let erraticSignal = clamped(
+                    (0.5 - disciplineSignal) * 2.0,
+                    min: 0.0,
+                    max: 1.0
+                )
+                let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
+                tacticalComponent +=
+                    (1.0 - immediateWinProbability) *
+                    (12.0 + 20.0 * overbidSeverity) *
+                    erraticSignal
             }
 
             if isPenaltyTargetRiskContext {
                 // Под штрафным риском наоборот приоритизируем controlled-loss dump.
-                utility += (1.0 - immediateWinProbability) * 8.0
+                riskComponent += (1.0 - immediateWinProbability) * 8.0
             }
         }
         let blindChaseOpponentMultiplier = (context.isBlindRound && context.shouldChaseTrick)
@@ -914,7 +1170,7 @@ struct BotTurnCandidateRankingService {
             } else {
                 wishPenaltyReserveMultiplier = 1.0
             }
-            utility -= basePenalty *
+            jokerComponent -= basePenalty *
                 chaseMultiplier *
                 blindWishPenaltyMultiplier *
                 wishPenaltyReserveMultiplier
@@ -923,58 +1179,73 @@ struct BotTurnCandidateRankingService {
         if context.shouldChaseTrick {
             let conservatism = max(0.0, 1.0 - context.chasePressure)
             let mustWinAllRemaining = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
-            utility += immediateWinProbability *
+            tacticalComponent += immediateWinProbability *
                 strategy.chaseWinProbabilityWeight *
                 (1.0 + context.chasePressure) *
                 blindRewardMultiplier
-            utility -= threat *
+            tacticalComponent -= threat *
                 strategy.chaseThreatPenaltyWeight *
                 conservatism *
                 blindRiskMultiplier
 
             if move.card.isJoker && context.hasWinningNonJoker {
-                utility -= strategy.chaseSpendJokerPenalty * conservatism * blindRiskMultiplier
+                jokerComponent -= strategy.chaseSpendJokerPenalty * conservatism * blindRiskMultiplier
             }
 
             if move.card.isJoker && context.hasWinningNonJoker && !mustWinAllRemaining {
                 // Дополнительная защита от раннего расхода джокера, когда есть рабочий non-joker.
-                utility -= strategy.chaseSpendJokerPenalty *
+                jokerComponent -= strategy.chaseSpendJokerPenalty *
                     (0.55 + 0.45 * context.chasePressure) *
                     blindRiskMultiplier
             }
 
             if mustWinAllRemaining {
-                utility -= (1.0 - immediateWinProbability) *
+                jokerComponent -= (1.0 - immediateWinProbability) *
                     strategy.chaseSpendJokerPenalty *
                     blindRiskMultiplier
             }
 
             if isLeadJoker {
                 if case .some(.wish) = move.decision.leadDeclaration {
-                    utility += strategy.chaseLeadWishBonus *
+                    jokerComponent += strategy.chaseLeadWishBonus *
                         (0.5 + context.chasePressure * 0.5) *
                         (context.isBlindRound ? 1.15 : 1.0)
                 }
             }
         } else {
-            utility += (1.0 - immediateWinProbability) * strategy.dumpAvoidWinWeight * blindRewardMultiplier
-            utility += threat * strategy.dumpThreatRewardWeight * blindRewardMultiplier
+            tacticalComponent +=
+                (1.0 - immediateWinProbability) * strategy.dumpAvoidWinWeight * blindRewardMultiplier
+            tacticalComponent +=
+                threat * strategy.dumpThreatRewardWeight * blindRewardMultiplier
 
             if move.card.isJoker && context.hasLosingNonJoker {
-                utility -= strategy.dumpSpendJokerPenalty * blindRiskMultiplier
+                jokerComponent -= strategy.dumpSpendJokerPenalty * blindRiskMultiplier
             }
             if move.card.isJoker && move.decision.style == .faceUp && !context.trick.playedCards.isEmpty {
-                utility -= strategy.dumpFaceUpNonLeadJokerPenalty * blindRiskMultiplier
+                jokerComponent -= strategy.dumpFaceUpNonLeadJokerPenalty * blindRiskMultiplier
             }
 
             if isLeadJoker, case .some(.takes(let suit)) = move.decision.leadDeclaration {
                 if let trump = context.trump, suit != trump {
-                    utility += strategy.dumpLeadTakesNonTrumpBonus * (context.isBlindRound ? 1.2 : 1.0)
+                    jokerComponent +=
+                        strategy.dumpLeadTakesNonTrumpBonus * (context.isBlindRound ? 1.2 : 1.0)
                 }
             }
         }
 
-        return utility
+        return composeUtility(
+            components: .init(
+                base: projectedScore,
+                tactical: tacticalComponent,
+                risk: riskComponent,
+                opponent: opponentComponent,
+                joker: jokerComponent
+            ),
+            immediateWinProbability: immediateWinProbability,
+            threat: threat,
+            move: move,
+            context: context
+        )
     }
 
     func moveUtility(

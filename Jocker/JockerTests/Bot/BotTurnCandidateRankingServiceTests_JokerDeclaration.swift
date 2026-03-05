@@ -1388,4 +1388,70 @@ extension BotTurnCandidateRankingServiceTests {
 
         XCTAssertLessThan(preferredUtility, otherUtility)
     }
+
+    func testMoveUtility_whenLeadJokerDumpingPenaltyRisk_goalOrientedLayerStrengthensControlledLossTakesOverWish() {
+        let trickNode = makeTrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+        let takesNonTrump = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .takes(suit: .hearts))
+        )
+        let penaltyRiskContext = makeContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: false,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false,
+                leftNeighborIndex: 1,
+                leftNeighborIsPremiumCandidateSoFar: true,
+                isPenaltyTargetRiskSoFar: true,
+                premiumCandidatesThreateningPenaltyCount: 1,
+                opponentPremiumCandidatesSoFarCount: 2
+            )
+        )
+
+        func utility(for move: BotTurnCandidateRankingService.Move, context: BotMatchContext?) -> Double {
+            service.moveUtility(
+                projectedScore: 12,
+                immediateWinProbability: move.decision.leadDeclaration == .wish ? 0.86 : 0.80,
+                threat: 42,
+                move: move,
+                trickNode: trickNode,
+                trump: .spades,
+                shouldChaseTrick: false,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 0,
+                tricksRemainingIncludingCurrent: 3,
+                trickDeltaToBidBeforeMove: 1,
+                chasePressure: 0.0,
+                leadControlReserveAfterMove: 0.15,
+                leadPreferredControlSuitAfterMove: .spades,
+                leadPreferredControlSuitStrengthAfterMove: 0.9,
+                matchContext: context
+            )
+        }
+
+        let wishNeutral = utility(for: wish, context: nil)
+        let takesNeutral = utility(for: takesNonTrump, context: nil)
+        let wishPenaltyRisk = utility(for: wish, context: penaltyRiskContext)
+        let takesPenaltyRisk = utility(for: takesNonTrump, context: penaltyRiskContext)
+
+        XCTAssertGreaterThan(takesPenaltyRisk, wishPenaltyRisk)
+        XCTAssertGreaterThan(
+            takesPenaltyRisk - wishPenaltyRisk,
+            takesNeutral - wishNeutral
+        )
+    }
 }

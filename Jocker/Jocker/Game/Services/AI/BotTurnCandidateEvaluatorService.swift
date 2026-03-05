@@ -66,6 +66,7 @@ struct BotTurnCandidateEvaluatorService {
     private struct CandidateScore {
         let evaluation: CandidateEvaluation
         let remainingHand: [Card]
+        let projectedScore: Double
         let baselineUtility: Double
     }
 
@@ -75,6 +76,11 @@ struct BotTurnCandidateEvaluatorService {
         static let maximumIterations = 8
         static let maxCardsPerOpponentSample = 2
         static let maxTrickHorizon = 2
+    }
+
+    private enum EndgameSolverConfig {
+        static let minimumIterations = 6
+        static let maximumIterations = 12
     }
 
     private struct DeterministicRNG {
@@ -290,6 +296,7 @@ struct BotTurnCandidateEvaluatorService {
                     CandidateScore(
                         evaluation: evaluation,
                         remainingHand: remainingHand,
+                        projectedScore: projectedScore,
                         baselineUtility: utility
                     )
                 )
@@ -299,7 +306,19 @@ struct BotTurnCandidateEvaluatorService {
         guard !scoredCandidates.isEmpty else { return nil }
 
         var finalEvaluations = scoredCandidates.map(\.evaluation)
-        if shouldApplyRollout(
+        if shouldApplyEndgameSolver(
+            context: context,
+            scoredCandidates: scoredCandidates
+        ) {
+            finalEvaluations = applyEndgameSolverAdjustments(
+                to: scoredCandidates,
+                context: context,
+                shouldChaseTrick: shouldChaseTrick,
+                beliefState: beliefState,
+                unseenCards: unseen,
+                remainingOpponentPlayerIndices: remainingOpponentPlayerIndices
+            )
+        } else if shouldApplyRollout(
             context: context,
             scoredCandidates: scoredCandidates,
             tricksNeededToMatchBid: tricksNeededToMatchBid
@@ -461,6 +480,86 @@ struct BotTurnCandidateEvaluatorService {
         return handSizeGate || jokerGate || lateBlockUrgencyGate || criticalDeficitGate
     }
 
+    private func shouldApplyEndgameSolver(
+        context: DecisionContext,
+        scoredCandidates: [CandidateScore]
+    ) -> Bool {
+        guard context.handCards.count <= 3 else { return false }
+        guard scoredCandidates.count >= 2 else { return false }
+        if let premium = context.matchContext?.premium {
+            let antiPremiumPressure = premium.leftNeighborIsPremiumCandidateSoFar ||
+                premium.opponentPremiumCandidatesSoFarCount > 0 ||
+                premium.isPenaltyTargetRiskSoFar
+            if antiPremiumPressure {
+                let tricksNeeded = max(0, context.targetBid - context.currentTricks)
+                let allInChase = tricksNeeded >= max(1, context.handCards.count - 1)
+                if !allInChase {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    private func applyEndgameSolverAdjustments(
+        to scoredCandidates: [CandidateScore],
+        context: DecisionContext,
+        shouldChaseTrick: Bool,
+        beliefState: BotBeliefState?,
+        unseenCards: [Card],
+        remainingOpponentPlayerIndices: [Int]?
+    ) -> [CandidateEvaluation] {
+        guard !scoredCandidates.isEmpty else { return [] }
+
+        let iterations = min(
+            EndgameSolverConfig.maximumIterations,
+            max(
+                EndgameSolverConfig.minimumIterations,
+                unseenCards.isEmpty ? EndgameSolverConfig.minimumIterations : unseenCards.count / 3
+            )
+        )
+        let urgencyWeight = rolloutUrgencyWeight(
+            context: context,
+            shouldChaseTrick: shouldChaseTrick
+        )
+        let endgameWeight = 0.22 + 0.28 * urgencyWeight
+
+        return scoredCandidates.map { candidate in
+            var expectedEndgameScore = 0.0
+            for iteration in 0..<iterations {
+                var rng = DeterministicRNG(
+                    seed: endgameSeed(
+                        candidate: candidate,
+                        context: context,
+                        iteration: iteration
+                    )
+                )
+                expectedEndgameScore += Double(
+                    simulateEndgameRoundScore(
+                        candidate: candidate,
+                        context: context,
+                        beliefState: beliefState,
+                        unseenCards: unseenCards,
+                        remainingOpponentPlayerIndices: remainingOpponentPlayerIndices,
+                        shouldChaseTrick: shouldChaseTrick,
+                        rng: &rng
+                    )
+                )
+            }
+            expectedEndgameScore /= Double(max(1, iterations))
+
+            let scoreDelta = expectedEndgameScore - candidate.projectedScore
+            let endgameAdjustment = max(-55.0, min(55.0, scoreDelta * endgameWeight))
+
+            return CandidateEvaluation(
+                move: candidate.evaluation.move,
+                utility: candidate.baselineUtility + endgameAdjustment,
+                immediateWinProbability: candidate.evaluation.immediateWinProbability,
+                threat: candidate.evaluation.threat
+            )
+        }
+    }
+
     private func applyRolloutAdjustments(
         to scoredCandidates: [CandidateScore],
         context: DecisionContext,
@@ -585,6 +684,18 @@ struct BotTurnCandidateEvaluatorService {
         hasher.combine(iteration)
         let hash = hasher.finalize()
         return UInt64(bitPattern: Int64(hash))
+    }
+
+    private func endgameSeed(
+        candidate: CandidateScore,
+        context: DecisionContext,
+        iteration: Int
+    ) -> UInt64 {
+        return rolloutSeed(
+            candidate: candidate,
+            context: context,
+            iteration: iteration ^ 0x9E37
+        ) ^ 0xA24B_AED4_963E_E407
     }
 
     private func simulateRolloutBotTrickWins(
@@ -729,6 +840,153 @@ struct BotTurnCandidateEvaluatorService {
         return botWins
     }
 
+    private func simulateEndgameRoundScore(
+        candidate: CandidateScore,
+        context: DecisionContext,
+        beliefState: BotBeliefState?,
+        unseenCards: [Card],
+        remainingOpponentPlayerIndices: [Int]?,
+        shouldChaseTrick: Bool,
+        rng: inout DeterministicRNG
+    ) -> Int {
+        let fallbackPlayerCount = max(2, context.trick.playedCards.count + 1)
+        let playerCount = max(
+            fallbackPlayerCount,
+            context.playerCount ?? context.matchContext?.playerCount ?? fallbackPlayerCount
+        )
+        let botIndex = normalizedPlayerIndex(
+            context.actingPlayerIndex ?? context.matchContext?.playerIndex ?? 0,
+            playerCount: playerCount
+        )
+        let opponentIndices = (0..<playerCount).filter { $0 != botIndex }
+        let currentTrickRemainingOrder = remainingOpponentPlayerIndices ??
+            rolloutRemainingOpponentOrder(
+                playedCardsCount: context.trick.playedCards.count,
+                playerCount: playerCount,
+                actingPlayerIndex: botIndex
+            )
+
+        var opponentCardRequirements: [Int: Int] = [:]
+        let cardsAfterCurrentMove = max(0, candidate.remainingHand.count)
+        for opponentIndex in opponentIndices {
+            let playsInCurrentTrick = currentTrickRemainingOrder.contains(opponentIndex)
+            opponentCardRequirements[opponentIndex] =
+                cardsAfterCurrentMove + (playsInCurrentTrick ? 1 : 0)
+        }
+        var sampledHands = sampleOpponentHandsWithRequirements(
+            opponentCardRequirements: opponentCardRequirements,
+            unseenCards: unseenCards,
+            beliefState: beliefState,
+            rng: &rng
+        )
+        var botHand = candidate.remainingHand
+
+        let roundSnapshot = context.roundState ?? context.matchContext?.round
+        var simulatedBids = normalizedRoundValues(
+            values: roundSnapshot?.bids,
+            fallback: 0,
+            playerCount: playerCount
+        )
+        simulatedBids[botIndex] = context.targetBid
+        var simulatedTricks = normalizedRoundValues(
+            values: roundSnapshot?.tricksTaken,
+            fallback: 0,
+            playerCount: playerCount
+        )
+        simulatedTricks[botIndex] = context.currentTricks
+
+        var currentTrick = context.trick.playedCards + [
+            PlayedTrickCard(
+                playerIndex: botIndex,
+                card: candidate.evaluation.move.card,
+                jokerPlayStyle: candidate.evaluation.move.decision.style,
+                jokerLeadDeclaration: candidate.evaluation.move.decision.leadDeclaration
+            )
+        ]
+
+        for opponentIndex in currentTrickRemainingOrder {
+            guard opponentIndex != botIndex else { continue }
+            var opponentHand = sampledHands[opponentIndex] ?? []
+            if let simulatedMove = simulatedMove(
+                playerIndex: opponentIndex,
+                hand: &opponentHand,
+                trick: currentTrick,
+                trump: context.trump,
+                bid: simulatedBids[opponentIndex],
+                tricksTaken: simulatedTricks[opponentIndex],
+                shouldPreferControl: false
+            ) {
+                sampledHands[opponentIndex] = opponentHand
+                currentTrick.append(simulatedMove)
+            }
+        }
+
+        var leader = TrickTakingResolver.winnerPlayerIndex(
+            playedCards: currentTrick,
+            trump: context.trump
+        ) ?? botIndex
+        if simulatedTricks.indices.contains(leader) {
+            simulatedTricks[leader] += 1
+        }
+
+        while !botHand.isEmpty {
+            var trick: [PlayedTrickCard] = []
+            for offset in 0..<playerCount {
+                let currentPlayer = normalizedPlayerIndex(
+                    leader + offset,
+                    playerCount: playerCount
+                )
+                if currentPlayer == botIndex {
+                    if let simulatedMove = simulatedMove(
+                        playerIndex: botIndex,
+                        hand: &botHand,
+                        trick: trick,
+                        trump: context.trump,
+                        bid: simulatedBids[botIndex],
+                        tricksTaken: simulatedTricks[botIndex],
+                        shouldPreferControl: shouldChaseTrick
+                    ) {
+                        trick.append(simulatedMove)
+                    }
+                    continue
+                }
+
+                var opponentHand = sampledHands[currentPlayer] ?? []
+                if let simulatedMove = simulatedMove(
+                    playerIndex: currentPlayer,
+                    hand: &opponentHand,
+                    trick: trick,
+                    trump: context.trump,
+                    bid: simulatedBids[currentPlayer],
+                    tricksTaken: simulatedTricks[currentPlayer],
+                    shouldPreferControl: false
+                ) {
+                    sampledHands[currentPlayer] = opponentHand
+                    trick.append(simulatedMove)
+                }
+            }
+
+            guard trick.count >= 2 else { break }
+            leader = TrickTakingResolver.winnerPlayerIndex(
+                playedCards: trick,
+                trump: context.trump
+            ) ?? leader
+            if simulatedTricks.indices.contains(leader) {
+                simulatedTricks[leader] += 1
+            }
+        }
+
+        let finalTricks = simulatedTricks.indices.contains(botIndex)
+            ? simulatedTricks[botIndex]
+            : context.currentTricks
+        return ScoreCalculator.calculateRoundScore(
+            cardsInRound: context.cardsInRound,
+            bid: context.targetBid,
+            tricksTaken: finalTricks,
+            isBlind: context.isBlind
+        )
+    }
+
     private func sampleOpponentHands(
         opponentIndices: [Int],
         unseenCards: [Card],
@@ -750,6 +1008,66 @@ struct BotTurnCandidateEvaluatorService {
             }
 
             let drawCount = min(cardsPerOpponent, cardPool.count)
+            let voidSuits = beliefState?.voidSuits(for: opponentIndex) ?? []
+            var selectedIndices: [Int] = []
+            var deferredIndices: [Int] = []
+
+            for index in cardPool.indices {
+                guard selectedIndices.count < drawCount else { break }
+                if let suit = cardPool[index].suit, voidSuits.contains(suit) {
+                    deferredIndices.append(index)
+                    continue
+                }
+                selectedIndices.append(index)
+            }
+
+            if selectedIndices.count < drawCount {
+                for index in deferredIndices where selectedIndices.count < drawCount {
+                    selectedIndices.append(index)
+                }
+            }
+
+            if selectedIndices.count < drawCount {
+                for index in cardPool.indices where selectedIndices.count < drawCount {
+                    guard !selectedIndices.contains(index) else { continue }
+                    selectedIndices.append(index)
+                }
+            }
+
+            selectedIndices.sort(by: >)
+            var hand: [Card] = []
+            hand.reserveCapacity(selectedIndices.count)
+            for index in selectedIndices {
+                hand.append(cardPool.remove(at: index))
+            }
+            hand.sort()
+            result[opponentIndex] = hand
+        }
+
+        return result
+    }
+
+    private func sampleOpponentHandsWithRequirements(
+        opponentCardRequirements: [Int: Int],
+        unseenCards: [Card],
+        beliefState: BotBeliefState?,
+        rng: inout DeterministicRNG
+    ) -> [Int: [Card]] {
+        guard !opponentCardRequirements.isEmpty else { return [:] }
+
+        var cardPool = unseenCards.sorted()
+        deterministicShuffle(&cardPool, rng: &rng)
+        var result: [Int: [Card]] = [:]
+
+        let orderedPlayers = opponentCardRequirements.keys.sorted()
+        for opponentIndex in orderedPlayers {
+            let requestedCards = max(0, opponentCardRequirements[opponentIndex] ?? 0)
+            guard requestedCards > 0, !cardPool.isEmpty else {
+                result[opponentIndex] = []
+                continue
+            }
+
+            let drawCount = min(requestedCards, cardPool.count)
             let voidSuits = beliefState?.voidSuits(for: opponentIndex) ?? []
             var selectedIndices: [Int] = []
             var deferredIndices: [Int] = []

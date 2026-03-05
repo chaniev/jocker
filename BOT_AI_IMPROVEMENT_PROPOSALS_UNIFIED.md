@@ -441,6 +441,30 @@ flowchart LR
 - P2-1 Composite utility (если стало сложно контролировать взаимодействия)
 - Self-play checkpoint: повтор `SP-2` после закрытия P2-пакета.
 
+### Статус Phase 3 (2026-03-05)
+
+- `P2-2` закрыт:
+  - добавлен goal-oriented слой для lead-joker деклараций (`secureTrick` / `preserveControl` / `controlledLoss`);
+  - слой встроен поверх Stage-5 декларационных эвристик и работает в связке с rollout.
+- `P2-3` закрыт:
+  - добавлен endgame solver для `handSize <= 3` с deterministic seed, budget-гейтингом и выбором по expected round score;
+  - solver не применяется в anti-premium dump-контекстах (кроме all-in chase), чтобы не ломать deny-поведение.
+- `P2-1` закрыт:
+  - введена композиция utility по компонентам (`base/tactical/risk/opponent/joker`) с bounded multipliers и стабилизационным clamp;
+  - добавлена точечная калибровка overbid+anti-premium dump для разграничения `disciplined` vs `erratic` профилей.
+- Regression gates (final pass):
+  - `build-for-testing` (`Jocker`): pass;
+  - `joker-pack` (strict): `16/16`, артефакты `.derivedData/joker-regression-runs/20260305-123135`;
+  - `stage6b-pack-all` (через `--include-flow-plumbing`): `18/18`, артефакты `.derivedData/stage6b-ranking-runs/20260305-123105`;
+  - `test-without-building` `BotSelfPlayEvolutionEngineTests`: pass (`iPhone 15`, id `4F592A52-148C-4540-BB72-590B8C44BD43`).
+- Self-play checkpoint после закрытия P2-пакета:
+  - выполнен `SP-smoke` (`turnStrategy-only`, early-stop), артефакты `.derivedData/bot-ab-runs/20260305-150335`;
+  - `holdout` quality-core: `fitness_Badv=-0.435096`, `winRate_Badv=-0.031250`, `scoreDiff_Badv=-183.750000`;
+  - решение: `C reject/rollback` (tuned snapshot не продвигать, baseline остаётся promoted).
+  - примечание: full `SP-2 compare-v1` в текущем runtime-профиле выполняется существенно дольше часа; запускать отдельным долгим прогоном перед любым promotion.
+
+- Итог: `Phase 3` закрыта по реализации и runtime gate-тестам; promotion по self-play checkpoint отклонён.
+
 Фаза 4 (P3–P4, “consistency + полировка”):
 - P3-3 HandStrength
 - P3-1 Monte-Carlo blind
