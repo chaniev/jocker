@@ -160,6 +160,14 @@
 		E6A100112FA100010037CA75 /* HandFeatureExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A100012FA100010037CA75 /* HandFeatureExtractorTests.swift */; };
 		E6A100122FA100010037CA75 /* BotMatchContextBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A100022FA100010037CA75 /* BotMatchContextBuilderTests.swift */; };
 		E6A100132FA100010037CA75 /* BotOpponentModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A100032FA100010037CA75 /* BotOpponentModelTests.swift */; };
+		E7B201012FB200010037CA75 /* CardModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200012FB200010037CA75 /* CardModelTests.swift */; };
+		E7B201022FB200010037CA75 /* DeckTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200022FB200010037CA75 /* DeckTests.swift */; };
+		E7B201032FB200010037CA75 /* SuitRankTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200032FB200010037CA75 /* SuitRankTests.swift */; };
+		E7B201042FB200010037CA75 /* GameplayModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200042FB200010037CA75 /* GameplayModelsTests.swift */; };
+		E7B201052FB200010037CA75 /* RulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200052FB200010037CA75 /* RulesTests.swift */; };
+		E7B201062FB200010037CA75 /* JokerModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200062FB200010037CA75 /* JokerModelsTests.swift */; };
+		E7B201072FB200010037CA75 /* HistoryModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200072FB200010037CA75 /* HistoryModelsTests.swift */; };
+		E7B201082FB200010037CA75 /* PlayerStatisticsModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B200082FB200010037CA75 /* PlayerStatisticsModelsTests.swift */; };
 		F4A100042F9000010037CA75 /* BotHandStrengthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A100012F9000010037CA75 /* BotHandStrengthModel.swift */; };
 		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
 		E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */; };
@@ -366,6 +374,14 @@
 		E6A100012FA100010037CA75 /* HandFeatureExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandFeatureExtractorTests.swift; sourceTree = "<group>"; };
 		E6A100022FA100010037CA75 /* BotMatchContextBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotMatchContextBuilderTests.swift; sourceTree = "<group>"; };
 		E6A100032FA100010037CA75 /* BotOpponentModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotOpponentModelTests.swift; sourceTree = "<group>"; };
+		E7B200012FB200010037CA75 /* CardModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardModelTests.swift; sourceTree = "<group>"; };
+		E7B200022FB200010037CA75 /* DeckTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckTests.swift; sourceTree = "<group>"; };
+		E7B200032FB200010037CA75 /* SuitRankTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitRankTests.swift; sourceTree = "<group>"; };
+		E7B200042FB200010037CA75 /* GameplayModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameplayModelsTests.swift; sourceTree = "<group>"; };
+		E7B200052FB200010037CA75 /* RulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesTests.swift; sourceTree = "<group>"; };
+		E7B200062FB200010037CA75 /* JokerModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerModelsTests.swift; sourceTree = "<group>"; };
+		E7B200072FB200010037CA75 /* HistoryModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryModelsTests.swift; sourceTree = "<group>"; };
+		E7B200082FB200010037CA75 /* PlayerStatisticsModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerStatisticsModelsTests.swift; sourceTree = "<group>"; };
 		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
 		E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummary.swift; sourceTree = "<group>"; };
 		E10000042F7400010037CA75 /* GameResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsViewController.swift; sourceTree = "<group>"; };
@@ -463,6 +479,7 @@
 			children = (
 				A91040012F7900010037CA75 /* Bot */,
 				A91040022F7900010037CA75 /* Flow */,
+				E7B202012FB200010037CA75 /* Models */,
 				A91040032F7900010037CA75 /* History */,
 				B20000512F7900030037CA75 /* Players */,
 				A91040042F7900010037CA75 /* Results */,
@@ -718,6 +735,21 @@
 				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
 			);
 			path = Flow;
+			sourceTree = "<group>";
+		};
+		E7B202012FB200010037CA75 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E7B200012FB200010037CA75 /* CardModelTests.swift */,
+				E7B200022FB200010037CA75 /* DeckTests.swift */,
+				E7B200032FB200010037CA75 /* SuitRankTests.swift */,
+				E7B200042FB200010037CA75 /* GameplayModelsTests.swift */,
+				E7B200052FB200010037CA75 /* RulesTests.swift */,
+				E7B200062FB200010037CA75 /* JokerModelsTests.swift */,
+				E7B200072FB200010037CA75 /* HistoryModelsTests.swift */,
+				E7B200082FB200010037CA75 /* PlayerStatisticsModelsTests.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		A91040032F7900010037CA75 /* History */ = {
@@ -1209,6 +1241,14 @@
 				E6A100112FA100010037CA75 /* HandFeatureExtractorTests.swift in Sources */,
 				E6A100122FA100010037CA75 /* BotMatchContextBuilderTests.swift in Sources */,
 				E6A100132FA100010037CA75 /* BotOpponentModelTests.swift in Sources */,
+				E7B201012FB200010037CA75 /* CardModelTests.swift in Sources */,
+				E7B201022FB200010037CA75 /* DeckTests.swift in Sources */,
+				E7B201032FB200010037CA75 /* SuitRankTests.swift in Sources */,
+				E7B201042FB200010037CA75 /* GameplayModelsTests.swift in Sources */,
+				E7B201052FB200010037CA75 /* RulesTests.swift in Sources */,
+				E7B201062FB200010037CA75 /* JokerModelsTests.swift in Sources */,
+				E7B201072FB200010037CA75 /* HistoryModelsTests.swift in Sources */,
+				E7B201082FB200010037CA75 /* PlayerStatisticsModelsTests.swift in Sources */,
 					D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */,
 					D4DF00012F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift in Sources */,
 					D4DE00012F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift in Sources */,
