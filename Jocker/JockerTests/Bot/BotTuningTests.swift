@@ -13,6 +13,13 @@ import XCTest
 #endif
 
 final class BotTuningTests: XCTestCase {
+    /// Тестирует, что normal preset совпадает с legacy reference значениями.
+    /// Проверяет:
+    /// - chaseWinProbabilityWeight = 50.0
+    /// - dumpSpendJokerPenalty = 70.0
+    /// - blindDesperateBehindThreshold = 250
+    /// - minimumPowerToDeclareTrump = 1.55
+    /// - playingBotTurnDelay = 0.35
     func testNormalPreset_matchesLegacyReferenceValues() {
         let tuning = Jocker.BotTuning(difficulty: .normal)
 
@@ -23,6 +30,11 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(tuning.timing.playingBotTurnDelay, 0.35, accuracy: 0.000_1)
     }
 
+    /// Тестирует, что difficulty presets меняют aggressiveness и tempo.
+    /// Проверяет:
+    /// - easy < normal < hard для chaseSpendJokerPenalty
+    /// - easy > normal > hard для minimumPowerToDeclareTrump
+    /// - easy > normal > hard для playingBotTurnDelay
     func testDifficultyPresets_changeAggressivenessAndTempo() {
         let easy = Jocker.BotTuning(difficulty: .easy)
         let normal = Jocker.BotTuning(difficulty: .normal)
@@ -38,6 +50,10 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThan(normal.timing.playingBotTurnDelay, hard.timing.playingBotTurnDelay)
     }
 
+    /// Тестирует, что easy preset совпадает с reference значениями и hard держит разумные границы.
+    /// Проверяет:
+    /// - easy: chaseWinProbabilityWeight = 42.0, expectedTrumpBaseBonus = 0.35
+    /// - hard: trickResolutionDelay в диапазоне [0.45, 0.65]
     func testEasyPreset_matchesReferenceValues_andHardKeepsReasonableBounds() {
         let easy = Jocker.BotTuning(difficulty: .easy)
         let hard = Jocker.BotTuning(difficulty: .hard)
@@ -52,6 +68,10 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(hard.bidding.expectedNoTrumpJokerSynergy, 0.0)
     }
 
+    /// Тестирует, что custom initializer сохраняет предоставленные компоненты.
+    /// Проверяет:
+    /// - difficulty = .hard (новый)
+    /// - Все компоненты из base (easy) сохраняются
     func testCustomInitializer_keepsProvidedComponents() {
         let base = Jocker.BotTuning(difficulty: .easy)
 
@@ -71,6 +91,10 @@ final class BotTuningTests: XCTestCase {
     }
 
 #if canImport(JockerSelfPlayTools)
+    /// Тестирует, что self-play evolution с одинаковым seed детерминирован.
+    /// Проверяет:
+    /// - firstRun и secondRun с seed = 123456 дают одинаковые результаты
+    /// - baselineFitness, bestFitness, generationBestFitness совпадают
     func testSelfPlayEvolution_withSameSeed_isDeterministic() {
         let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
         let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
@@ -120,6 +144,11 @@ final class BotTuningTests: XCTestCase {
         )
     }
 
+    /// Тестирует, что self-play evolution держит best не хуже baseline.
+    /// Проверяет:
+    /// - generationBestFitness.count = config.generations
+    /// - bestFitness >= baselineFitness
+    /// - improvement >= 0.0
     func testSelfPlayEvolution_keepsBestNotWorseThanBaseline() {
         let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
         let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
@@ -146,6 +175,10 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.improvement, 0.0)
     }
 
+    /// Тестирует self-play evolution с 10 раундами и report fitness.
+    /// Проверяет:
+    /// - generationBestFitness.count = config.generations
+    /// - Все fitness компоненты конечные (isFinite)
     func testSelfPlayEvolution_runsTenRounds_reportsFitness() {
         let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
         let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
@@ -191,6 +224,11 @@ final class BotTuningTests: XCTestCase {
         XCTAssertTrue(result.bestAveragePremiumPenaltyTargetLoss.isFinite)
     }
 
+    /// Тестирует self-play evolution с full match rules и seat rotation.
+    /// Проверяет:
+    /// - useFullMatchRules = true, rotateCandidateAcrossSeats = true
+    /// - winRate в диапазоне [0, 1]
+    /// - Все fitness компоненты конечные
     func testSelfPlayEvolution_fullMatchAndSeatRotation_reportsFitnessComponents() {
         let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
         let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(

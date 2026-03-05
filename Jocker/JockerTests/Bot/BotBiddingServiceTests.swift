@@ -9,6 +9,10 @@ import XCTest
 @testable import Jocker
 
 final class BotBiddingServiceTests: XCTestCase {
+    /// Тестирует, что бот уважает запрет дилера на определённую ставку.
+    /// Проверяет:
+    /// - Возвращаемая ставка не равна запрещённой
+    /// - Ставка находится в допустимом диапазоне [0, cardsInRound]
     func testMakeBid_respectsForbiddenDealerBid() {
         let service = BotBiddingService()
         let hand: [Card] = [
@@ -29,6 +33,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertLessThanOrEqual(bid, 3)
     }
 
+    /// Тестирует, что более сильная рука produces higher bid than слабая рука.
+    /// Проверяет:
+    /// - Рука с двумя джокерами и тузами получает более высокую ставку
+    /// - Слабая рука с мелкими картами получает более низкую ставку
     func testMakeBid_strongerHandProducesHigherBidThanWeakHand() {
         let service = BotBiddingService()
 
@@ -62,6 +70,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertGreaterThan(strongBid, weakBid)
     }
 
+    /// Тестирует, что рука с плотной trump-мастью получает более высокую ставку.
+    /// Проверяет:
+    /// - Trump-dense рука (6 червей) оценивается выше
+    /// - Mixed рука с разбросанными мастями оценивается ниже
     func testMakeBid_trumpDenseHandProducesHigherBid() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -102,6 +114,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(denseBid, mixedBid)
     }
 
+    /// Тестирует, что рука с джокером и trump-контролем получает более высокую ставку.
+    /// Проверяет:
+    /// - Рука с джокером и сильными spades оценивается выше
+    /// - Плоская рука с джокером но без контроля оценивается ниже
     func testMakeBid_noTrumpControlWithJokerProducesHigherBid() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -142,6 +158,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(controlBid, flatBid)
     }
 
+    /// Тестирует, что лидер с большим преимуществом не делает blind bid.
+    /// Проверяет:
+    /// - Игрок на первом месте с отрывом 250+ очков
+    /// - Бот возвращает nil (отказывается от blind)
     func testMakePreDealBlindBid_returnsNilForLeaderWithBigAdvantage() {
         let service = BotBiddingService()
 
@@ -157,6 +177,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertNil(blindBid)
     }
 
+    /// Тестирует, что игрок с большим отставанием делает blind bid.
+    /// Проверяет:
+    /// - Игрок на последнем месте с отставанием 350+ очков
+    /// - Бот возвращает допустимую ставку из allowedBlindBids
     func testMakePreDealBlindBid_returnsAllowedBidWhenPlayerFarBehind() {
         let service = BotBiddingService()
 
@@ -175,6 +199,11 @@ final class BotBiddingServiceTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что игрок на втором месте с безопасным отрывом избегает blind для защиты позиции.
+    /// Проверяет:
+    /// - Отставание от лидера 250 очков
+    /// - Отрыв от следующего игрока 330 очков (безопасный gap)
+    /// - Бот возвращает nil (консервативная стратегия)
     func testMakePreDealBlindBid_secondPlaceWithSafeGap_avoidsBlindToProtectPosition() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -190,6 +219,11 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertNil(blindBid)
     }
 
+    /// Тестирует, что игрок на втором месте без безопасного gap может делать catch-up blind.
+    /// Проверяет:
+    /// - Отставание от лидера 300 очков
+    /// - Отрыв от следующего игрока 150 очков (не безопасный gap)
+    /// - Бот возвращает non-nil blind bid
     func testMakePreDealBlindBid_secondPlaceWithoutSafeGap_canStillChooseCatchUpBlind() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -205,6 +239,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertNotNil(blindBid)
     }
 
+    /// Тестирует, что в одинаковой catch-up ситуации дилер более консервативен чем не-дилер.
+    /// Проверяет:
+    /// - Не-дилер делает blind bid при отставании 210 очков
+    /// - Дилер отказывается от blind bid в той же ситуации
     func testMakePreDealBlindBid_inSameCatchUpScenario_dealerIsMoreConservativeThanNonDealer() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -229,6 +267,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertNil(dealerBlindBid)
     }
 
+    /// Тестирует, что при небольшом отставании бот использует lower catch-up bid.
+    /// Проверяет:
+    /// - Отставание 150 очков (catch-up зона)
+    /// - Возвращаемая ставка ≤ 4 (консервативный bid)
     func testMakePreDealBlindBid_whenSlightlyBehind_usesLowerCatchUpBid() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -247,6 +289,11 @@ final class BotBiddingServiceTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что при увеличении отставания ставка также растёт.
+    /// Проверяет:
+    /// - catchUpBid при отставании 150 очков
+    /// - desperateBid при отставании 350 очков
+    /// - desperateBid > catchUpBid
     func testMakePreDealBlindBid_whenGapGrows_bidAlsoGrows() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 
@@ -274,6 +321,11 @@ final class BotBiddingServiceTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что при запрещённой лучшей ставке бот выбирает ближайшую альтернативу по utility.
+    /// Проверяет:
+    /// - baseline ставка без ограничений
+    /// - forbiddenAdjusted ставка с запретом baseline
+    /// - Разница между ставками ≤ 1
     func testMakeBid_whenBestBidForbidden_selectsClosestUtilityAlternative() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
         let hand: [Card] = [
@@ -300,6 +352,10 @@ final class BotBiddingServiceTests: XCTestCase {
         XCTAssertLessThanOrEqual(abs(forbiddenAdjusted - baseline), 1)
     }
 
+    /// Тестирует детерминированность blind bid с Monte Carlo слоем.
+    /// Проверяет:
+    /// - Одинаковые входы дают одинаковые результаты
+    /// - Первый и второй запуск возвращают одно значение
     func testMakePreDealBlindBid_isDeterministicForSameInputsWithMonteCarloLayer() {
         let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
 

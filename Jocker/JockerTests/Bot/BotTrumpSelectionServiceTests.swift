@@ -9,6 +9,9 @@ import XCTest
 @testable import Jocker
 
 final class BotTrumpSelectionServiceTests: XCTestCase {
+    /// Тестирует, что бот предпочитает сильную single suit для trump.
+    /// Проверяет:
+    /// - Рука с 3 diamonds + joker выбирает diamonds
     func testSelectTrump_prefersStrongSingleSuit() {
         let service = BotTrumpSelectionService()
         let hand: [Card] = [
@@ -23,6 +26,9 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
         XCTAssertEqual(trump, .diamonds)
     }
 
+    /// Тестирует, что бот возвращает nil для слабой scattered руки.
+    /// Проверяет:
+    /// - Рука с разбросанными мелкими картами не выбирает trump
     func testSelectTrump_returnsNilForWeakScatteredHand() {
         let service = BotTrumpSelectionService()
         let hand: [Card] = [
@@ -37,6 +43,9 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
         XCTAssertNil(trump)
     }
 
+    /// Тестирует, что бот возвращает nil когда нет regular карт.
+    /// Проверяет:
+    /// - Рука только с джокерами не выбирает trump
     func testSelectTrump_returnsNilWhenNoRegularCards() {
         let service = BotTrumpSelectionService()
         let hand: [Card] = [.joker, .joker]
@@ -46,6 +55,9 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
         XCTAssertNil(trump)
     }
 
+    /// Тестирует, что на этапе player choice stage бот предпочитает 2 из 3 same suit.
+    /// Проверяет:
+    /// - Рука с 2 hearts + 1 club выбирает hearts (с бонусом player choice)
     func testSelectTrump_playerChoiceStageBonus_prefersTwoOfThreeSameSuit() {
         let service = BotTrumpSelectionService()
         let hand: [Card] = [
@@ -62,6 +74,9 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
         XCTAssertEqual(trump, .hearts)
     }
 
+    /// Тестирует, что без player choice stage bonus та же рука возвращает nil.
+    /// Проверяет:
+    /// - Рука с 2 hearts + 1 club не выбирает trump (без бонуса)
     func testSelectTrump_withoutPlayerChoiceStageBonus_sameHandReturnsNil() {
         let service = BotTrumpSelectionService()
         let hand: [Card] = [
@@ -78,6 +93,9 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
         XCTAssertNil(trump)
     }
 
+    /// Тестирует multi-factor sequence и joker synergy для выбора trump.
+    /// Проверяет:
+    /// - Рука с AKQ spades + joker выбирает spades (control suit)
     func testSelectTrump_multifactorSequenceAndJokerSynergy_prefersControlSuit() {
         let service = BotTrumpSelectionService(tuning: BotTuning(difficulty: .hard))
         let hand: [Card] = [

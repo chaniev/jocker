@@ -9,6 +9,9 @@ import XCTest
 @testable import Jocker
 
 final class BotRankNormalizationTests: XCTestCase {
+    /// Тестирует, что normalizedForBidding совпадает с legacy формулой для всех рангов.
+    /// Проверяет:
+    /// - Для каждого Rank вычисляется по формуле (rank.rawValue - 5) / 9.0
     func testNormalizedForBidding_matchesLegacyFormulaForAllRanks() {
         for rank in Rank.allCases {
             let legacy = Double(rank.rawValue - 5) / 9.0
@@ -21,6 +24,9 @@ final class BotRankNormalizationTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что normalizedForFutureProjection совпадает с legacy формулой для всех рангов.
+    /// Проверяет:
+    /// - Для каждого Rank вычисляется по формуле (rank.rawValue - 6) / (ace - 6)
     func testNormalizedForFutureProjection_matchesLegacyFormulaForAllRanks() {
         let span = Double(Rank.ace.rawValue - Rank.six.rawValue)
         for rank in Rank.allCases {
@@ -34,6 +40,9 @@ final class BotRankNormalizationTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что normalizedForTrumpSelection совпадает с legacy формулой для всех рангов.
+    /// Проверяет:
+    /// - Для каждого Rank вычисляется по формуле (rank.rawValue - 6) / 8.0
     func testNormalizedForTrumpSelection_matchesLegacyFormulaForAllRanks() {
         for rank in Rank.allCases {
             let legacy = Double(rank.rawValue - Rank.six.rawValue) / 8.0
@@ -46,6 +55,10 @@ final class BotRankNormalizationTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что isHighCard использует Queen threshold.
+    /// Проверяет:
+    /// - jack → false
+    /// - queen, king, ace → true
     func testIsHighCard_usesQueenThreshold() {
         XCTAssertFalse(BotRankNormalization.isHighCard(.jack))
         XCTAssertTrue(BotRankNormalization.isHighCard(.queen))

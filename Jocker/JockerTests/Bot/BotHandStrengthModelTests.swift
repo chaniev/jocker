@@ -11,6 +11,10 @@ import XCTest
 final class BotHandStrengthModelTests: XCTestCase {
     private let model = BotHandStrengthModel(tuning: BotTuning(difficulty: .hard))
 
+    /// Тестирует, что более сильная рука получает более высокую оценку ожидаемых взяток.
+    /// Проверяет:
+    /// - Слабая рука с мелкими картами получает низкую оценку
+    /// - Сильная рука с джокером и тузами получает высокую оценку
     func testBiddingExpectedTricks_strongerHandProducesHigherEstimate() {
         let weakHand: [Card] = [
             card(.diamonds, .six),
@@ -39,6 +43,10 @@ final class BotHandStrengthModelTests: XCTestCase {
         XCTAssertGreaterThan(strongEstimate, weakEstimate)
     }
 
+    /// Тестирует projected future tricks для trump-dense руки против scattered руки.
+    /// Проверяет:
+    /// - Плотная trump-рука (5 spades) получает более высокую проекцию
+    /// - Разбросанная рука получает более низкую проекцию
     func testProjectedFutureTricks_withTrumpDenseHand_isHigherThanScatteredHand() {
         let denseHand: [Card] = [
             card(.spades, .ace),
@@ -67,6 +75,10 @@ final class BotHandStrengthModelTests: XCTestCase {
         XCTAssertGreaterThan(denseProjection, scatteredProjection)
     }
 
+    /// Тестирует, что trump hand summary правильно определяет sequence strength.
+    /// Проверяет:
+    /// - Рука с последовательностью AKQ получает высокую sequenceStrength
+    /// - Рука без последовательности получает низкую sequenceStrength
     func testTrumpHandSummary_sequenceStrength_detectsConsecutiveRun() {
         let sequenceHand: [Card] = [
             card(.hearts, .ace),

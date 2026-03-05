@@ -9,18 +9,27 @@ import XCTest
 @testable import Jocker
 
 final class BotOpponentModelTests: XCTestCase {
+    /// Тестирует, что hasEvidence возвращает true когда observedRounds > 0.
+    /// Проверяет:
+    /// - observedRounds = 2 → hasEvidence = true
     func testOpponentSnapshot_hasEvidence_returnsTrueWhenObservedRoundsGreaterThanZero() {
         let snapshot = makeSnapshot(playerIndex: 1, observedRounds: 2)
 
         XCTAssertTrue(snapshot.hasEvidence)
     }
 
+    /// Тестирует, что hasEvidence возвращает false когда observedRounds = 0.
+    /// Проверяет:
+    /// - observedRounds = 0 → hasEvidence = false
     func testOpponentSnapshot_hasEvidence_returnsFalseWhenObservedRoundsIsZero() {
         let snapshot = makeSnapshot(playerIndex: 1, observedRounds: 0)
 
         XCTAssertFalse(snapshot.hasEvidence)
     }
 
+    /// Тестирует, что snapshot(for:) возвращает правильный snapshot по индексу игрока.
+    /// Проверяет:
+    /// - snapshot для playerIndex = 2 имеет observedRounds = 3
     func testSnapshot_for_returnsCorrectSnapshotByPlayerIndex() {
         let model = BotOpponentModel(
             perspectivePlayerIndex: 0,
@@ -38,6 +47,9 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertEqual(snapshot?.observedRounds, 3)
     }
 
+    /// Тестирует, что snapshot(for:) возвращает nil для неизвестного индекса игрока.
+    /// Проверяет:
+    /// - snapshot для playerIndex = 9 возвращает nil
     func testSnapshot_for_returnsNilForUnknownPlayerIndex() {
         let model = BotOpponentModel(
             perspectivePlayerIndex: 0,
@@ -48,6 +60,9 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertNil(model.snapshot(for: 9))
     }
 
+    /// Тестирует, что leftNeighborIndex правильно хранится для 4 игроков.
+    /// Проверяет:
+    /// - perspective = 3 → expectedLeftNeighbor = 0
     func testLeftNeighborIndex_isStoredCorrectlyForFourPlayers() {
         let perspective = 3
         let expectedLeftNeighbor = PremiumRules.leftNeighbor(of: perspective, playerCount: 4)
@@ -60,6 +75,10 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertEqual(model.leftNeighborIndex, 0)
     }
 
+    /// Тестирует, что leftNeighborIndex может быть nil когда нет соседей.
+    /// Проверяет:
+    /// - leftNeighborIndex = nil
+    /// - snapshots = []
     func testLeftNeighborIndex_canBeNilWhenNoNeighborsAvailable() {
         let model = BotOpponentModel(
             perspectivePlayerIndex: 0,
@@ -71,6 +90,9 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertTrue(model.snapshots.isEmpty)
     }
 
+    /// Тестирует, что blindBidRate находится в диапазоне [0, 1].
+    /// Проверяет:
+    /// - blindBidRate = 0.75 → в допустимом диапазоне
     func testOpponentSnapshot_blindBidRate_isWithinZeroToOne() {
         let snapshot = makeSnapshot(playerIndex: 1, observedRounds: 4, blindBidRate: 0.75)
 
@@ -78,6 +100,9 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertLessThanOrEqual(snapshot.blindBidRate, 1.0)
     }
 
+    /// Тестирует, что averageBidAggression находится в допустимом диапазоне.
+    /// Проверяет:
+    /// - averageBidAggression = 0.82 → в диапазоне [0, 1]
     func testOpponentSnapshot_averageBidAggression_isWithinExpectedRange() {
         let snapshot = makeSnapshot(playerIndex: 2, observedRounds: 3, averageBidAggression: 0.82)
 
@@ -85,6 +110,10 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertLessThanOrEqual(snapshot.averageBidAggression, 1.0)
     }
 
+    /// Тестирует, что snapshots иммутабельны после инициализации.
+    /// Проверяет:
+    /// - Копия массива не изменяет оригинал
+    /// - model.snapshots.count остаётся 2
     func testSnapshots_isImmutableAfterInitialization() {
         let model = BotOpponentModel(
             perspectivePlayerIndex: 0,
@@ -101,6 +130,10 @@ final class BotOpponentModelTests: XCTestCase {
         XCTAssertEqual(model.snapshots.count, 2)
     }
 
+    /// Тестирует, что Equatable conformance работает корректно.
+    /// Проверяет:
+    /// - lhs == rhs (одинаковые snapshots)
+    /// - lhs != different (разные snapshots)
     func testEquatable_conformance_worksCorrectly() {
         let lhs = BotOpponentModel(
             perspectivePlayerIndex: 0,

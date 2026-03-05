@@ -9,6 +9,11 @@ import XCTest
 @testable import Jocker
 
 final class BotMatchContextBuilderTests: XCTestCase {
+    /// Тестирует создание контекста с невалидными параметрами игрока.
+    /// Проверяет:
+    /// - playerIndex = -1 возвращает nil
+    /// - playerIndex за пределами диапазона возвращает nil
+    /// - playerCount = 0 возвращает nil
     func testBuildContext_invalidPlayer_returnsNil() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -39,6 +44,11 @@ final class BotMatchContextBuilderTests: XCTestCase {
         )
     }
 
+    /// Тестирует, что totalScores дополняется нулями когда в scoreManager меньше игроков.
+    /// Проверяет:
+    /// - Контекст имеет totalScores.count = playerCount
+    /// - Первые два игрока имеют реальные очки
+    /// - Последние два игрока имеют нулевые очки (дополнены)
     func testBuildContext_totalScores_whenScoreManagerHasFewerPlayers_padsZerosToPlayerCount() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 2)
@@ -61,6 +71,11 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.totalScores[3], 0)
     }
 
+    /// Тестирует, что round snapshot правильно захватывает ставки, взятки и blind флаги.
+    /// Проверяет:
+    /// - bids массив со ставками всех игроков
+    /// - tricksTaken массив со взятыми взятками
+    /// - isBlindBid массив с флагами blind ставок
     func testBuildContext_roundSnapshot_capturesBidsTricksAndBlindFlags() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -86,6 +101,12 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.round?.isBlindBid, [true, false, false, false])
     }
 
+    /// Тестирует premium snapshot в начале блока.
+    /// Проверяет:
+    /// - completedRoundsInBlock = 0
+    /// - isPremiumCandidateSoFar = true (по умолчанию)
+    /// - isZeroPremiumRelevantInBlock = true (блок 1 или 3)
+    /// - isPenaltyTargetRiskSoFar = false
     func testBuildContext_premiumSnapshot_atBlockStart_hasNoPenaltyRiskAndZeroPremiumCandidate() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -106,6 +127,11 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.premium?.premiumCandidatesThreateningPenaltyCount, 0)
     }
 
+    /// Тестирует, что premium и zero premium кандидаты правильно определяются.
+    /// Проверяет:
+    /// - completedRoundsInBlock = 1
+    /// - isPremiumCandidateSoFar = true (все bid matched)
+    /// - isZeroPremiumCandidateSoFar = true (все нулевые ставки)
     func testBuildContext_premiumSnapshot_detectsPremiumAndZeroPremiumCandidateCorrectly() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -129,6 +155,12 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.premium?.opponentPremiumCandidatesSoFarCount, 1)
     }
 
+    /// Тестирует, что penalty target risk определяется от opponent premium кандидата.
+    /// Проверяет:
+    /// - leftNeighborIndex = 1
+    /// - leftNeighborIsPremiumCandidateSoFar = false
+    /// - isPenaltyTargetRiskSoFar = true (p3 кандидат → target p0)
+    /// - premiumCandidatesThreateningPenaltyCount = 1
     func testBuildContext_premiumSnapshot_marksPenaltyTargetRiskFromOpponentPremiumCandidate() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -153,6 +185,11 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.premium?.opponentPremiumCandidatesSoFarCount, 1)
     }
 
+    /// Тестирует, что флаг left neighbor premium кандидата правильно установлен.
+    /// Проверяет:
+    /// - leftNeighborIndex = 1
+    /// - leftNeighborIsPremiumCandidateSoFar = true (p1 кандидат)
+    /// - isPenaltyTargetRiskSoFar = false
     func testBuildContext_premiumSnapshot_leftNeighborPremiumCandidateFlagSetCorrectly() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -175,6 +212,10 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.premium?.isPenaltyTargetRiskSoFar, false)
     }
 
+    /// Тестирует, что opponentPremiumCandidatesCount исключает себя.
+    /// Проверяет:
+    /// - isPremiumCandidateSoFar = true (p0 кандидат)
+    /// - opponentPremiumCandidatesSoFarCount = 1 (только p2, исключая p0)
     func testBuildContext_premiumSnapshot_opponentPremiumCandidatesCount_excludesSelf() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -196,6 +237,12 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(context?.premium?.opponentPremiumCandidatesSoFarCount, 1)
     }
 
+    /// Тестирует, что opponent model snapshots строятся из round results.
+    /// Проверяет:
+    /// - perspectivePlayerIndex = 0
+    /// - leftNeighborIndex = 1
+    /// - snapshots.count = 3 (для 3 оппонентов)
+    /// - p1: blindBidRate = 0.5, overbidRate = 0.5, underbidRate = 0.5
     func testBuildContext_opponentModel_snapshotsBuiltFromRoundResults() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
@@ -233,6 +280,11 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertEqual(p1?.averageBidAggression ?? -1, 0.875, accuracy: 0.000_1)
     }
 
+    /// Тестирует, что opponent model без evidence возвращает нейтральные snapshots.
+    /// Проверяет:
+    /// - snapshots.count = 3
+    /// - Все snapshots: hasEvidence = false, observedRounds = 0
+    /// - Все rates = 0 (neutral)
     func testBuildContext_opponentModel_zeroEvidenceAtBlockStart_returnsNeutralSnapshots() {
         let gameState = makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)

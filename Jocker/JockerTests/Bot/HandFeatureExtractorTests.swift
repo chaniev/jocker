@@ -11,6 +11,11 @@ import XCTest
 final class HandFeatureExtractorTests: XCTestCase {
     private let extractor = HandFeatureExtractor()
 
+    /// Тестирует извлечение признаков из пустой руки.
+    /// Проверяет:
+    /// - regularCards.isEmpty = true
+    /// - suitCounts.isEmpty = true
+    /// - jokerCount = 0, highCardCount = 0, regularCardsCount = 0
     func testExtract_fromEmptyHand_returnsZeroFeatures() {
         let features = extractor.extract(from: [])
 
@@ -22,6 +27,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.longestSuitCount, 0)
     }
 
+    /// Тестирует извлечение признаков из руки только с джокерами.
+    /// Проверяет:
+    /// - regularCards.isEmpty = true
+    /// - jokerCount = 2
     func testExtract_fromJokersOnly_countsOnlyJokers() {
         let features = extractor.extract(from: [.joker, .joker])
 
@@ -31,6 +40,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.highCardCount, 0)
     }
 
+    /// Тестирует подсчёт мастей и regular карт из обычной руки.
+    /// Проверяет:
+    /// - regularCardsCount = 4
+    /// - suitCounts[.hearts] = 2, suitCounts[.clubs] = 1, suitCounts[.spades] = 1
     func testExtract_fromRegularCards_countsSuitsAndRegularCards() {
         let hand: [Card] = [
             card(.hearts, .seven),
@@ -48,6 +61,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.jokerCount, 0)
     }
 
+    /// Тестирует, что highCardCount считает только Queen, King, Ace.
+    /// Проверяет:
+    /// - 5 карт: jack, queen, king, ace, ten
+    /// - highCardCount = 3 (queen, king, ace)
     func testExtract_highCardCount_countsOnlyQueenKingAce() {
         let hand: [Card] = [
             card(.hearts, .jack),
@@ -62,6 +79,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.highCardCount, 3)
     }
 
+    /// Тестирует, что longestSuitCount возвращает максимальную длину масти.
+    /// Проверяет:
+    /// - 5 карт: 3 hearts + 1 club + 1 spade
+    /// - longestSuitCount = 3
     func testExtract_longestSuitCount_returnsMaxSuitLength() {
         let hand: [Card] = [
             card(.hearts, .six),
@@ -76,6 +97,11 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.longestSuitCount, 3)
     }
 
+    /// Тестирует извлечение признаков из смешанной руки (regular + joker).
+    /// Проверяет:
+    /// - jokerCount = 1, regularCardsCount = 3
+    /// - suitCounts[.diamonds] = 2, suitCounts[.spades] = 1
+    /// - highCardCount = 2
     func testExtract_mixedHand_combinesRegularAndJokerFeatures() {
         let hand: [Card] = [
             .joker,
@@ -93,6 +119,11 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.highCardCount, 2)
     }
 
+    /// Тестирует, что дубликаты карт считаются каждый раз.
+    /// Проверяет:
+    /// - regularCardsCount = 2 (две queen)
+    /// - suitCounts[.hearts] = 2
+    /// - highCardCount = 2, jokerCount = 1
     func testExtract_duplicateCards_countsEachOccurrence() {
         let hand: [Card] = [
             card(.hearts, .queen),
@@ -108,6 +139,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.jokerCount, 1)
     }
 
+    /// Тестирует, что все масти представлены и tracked.
+    /// Проверяет:
+    /// - suitCounts.count = 4
+    /// - Каждая масть имеет count = 1
     func testExtract_allSuitsRepresented_tracksEachSuitCount() {
         let hand: [Card] = [
             card(.hearts, .six),
@@ -125,6 +160,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.suitCounts[.spades], 1)
     }
 
+    /// Тестирует, что single-suit рука устанавливает longestSuit = handSize.
+    /// Проверяет:
+    /// - regularCardsCount = 4
+    /// - longestSuitCount = 4, suitCounts.count = 1
     func testExtract_singleSuitHand_setsLongestSuitToHandSize() {
         let hand: [Card] = [
             card(.clubs, .six),
@@ -141,6 +180,10 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertEqual(features.suitCounts[.clubs], 4)
     }
 
+    /// Тестирует, что regularCards сохраняет информацию о suit и rank.
+    /// Проверяет:
+    /// - regularCards.count = 2
+    /// - Содержит ace of hearts и ten of spades
     func testExtract_regularCards_keepsSuitAndRankInformation() {
         let hand: [Card] = [
             card(.hearts, .ace),
@@ -153,6 +196,9 @@ final class HandFeatureExtractorTests: XCTestCase {
         XCTAssertTrue(features.regularCards.contains(where: { $0.suit == .spades && $0.rank == .ten }))
     }
 
+    /// Тестирует performance и отсутствие деградации с типичным размером руки.
+    /// Проверяет:
+    /// - 1000 итераций извлечения признаков выполняются без деградации
     func testExtract_performance_doesNotDegradeWithTypicalHandSize() {
         let hand: [Card] = [
             .joker,
