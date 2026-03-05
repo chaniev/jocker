@@ -10,11 +10,10 @@ import Foundation
 /// Прогнозы по текущей раздаче для runtime-хода бота:
 /// нормализация ставки, оценка будущих взяток и ожидаемого очкового исхода.
 struct BotTurnRoundProjectionService {
-    private let tuning: BotTuning
-    private let handFeatureExtractor = HandFeatureExtractor()
+    private let handStrengthModel: BotHandStrengthModel
 
     init(tuning: BotTuning) {
-        self.tuning = tuning
+        self.handStrengthModel = BotHandStrengthModel(tuning: tuning)
     }
 
     func normalizedBid(
@@ -105,38 +104,9 @@ struct BotTurnRoundProjectionService {
     }
 
     func estimateFutureTricks(in handCards: [Card], trump: Suit?) -> Double {
-        guard !handCards.isEmpty else { return 0.0 }
-        let strategy = tuning.turnStrategy
-        let handFeatures = handFeatureExtractor.extract(from: handCards)
-        let suitCounts = handFeatures.suitCounts
-
-        var totalPower = 0.0
-        for card in handCards {
-            if card.isJoker {
-                totalPower += strategy.futureJokerPower
-                continue
-            }
-
-            guard case .regular(let suit, let rank) = card else { continue }
-
-            let normalizedRank = BotRankNormalization.normalizedForFutureProjection(rank)
-            var cardPower = strategy.futureRegularBasePower + normalizedRank * strategy.futureRegularRankWeight
-
-            if let trump, suit == trump {
-                cardPower += strategy.futureTrumpBaseBonus + normalizedRank * strategy.futureTrumpRankWeight
-            } else if BotRankNormalization.isHighCard(rank) {
-                cardPower += strategy.futureHighRankBonus
-            }
-
-            let suitLength = suitCounts[suit] ?? 0
-            if suitLength >= 3 {
-                cardPower += strategy.futureLongSuitBonusPerCard * Double(suitLength - 2)
-            }
-
-            totalPower += cardPower
-        }
-
-        let expected = totalPower * strategy.futureTricksScale
-        return min(Double(handCards.count), max(0.0, expected))
+        return handStrengthModel.projectedFutureTricks(
+            hand: handCards,
+            trump: trump
+        )
     }
 }

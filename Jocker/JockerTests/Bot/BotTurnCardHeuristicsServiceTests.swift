@@ -254,6 +254,64 @@ final class BotTurnCardHeuristicsServiceTests: XCTestCase {
         XCTAssertEqual(implicit, explicitNil, accuracy: 0.0001)
     }
 
+    func testCardThreat_withPositionContext_leadThreatIsHigherThanLastSeatThreat() {
+        let leadTrick = TrickNode()
+        let lastSeatTrick = TrickNode()
+        _ = lastSeatTrick.playCard(card(.diamonds, .six), fromPlayer: 1, animated: false)
+        _ = lastSeatTrick.playCard(card(.diamonds, .seven), fromPlayer: 2, animated: false)
+        _ = lastSeatTrick.playCard(card(.diamonds, .eight), fromPlayer: 3, animated: false)
+
+        let leadThreat = service.cardThreat(
+            card: card(.clubs, .queen),
+            decision: .defaultNonLead,
+            trump: .spades,
+            trickNode: leadTrick,
+            cardsRemainingInHandBeforeMove: 5,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+        let lastSeatThreat = service.cardThreat(
+            card: card(.clubs, .queen),
+            decision: .defaultNonLead,
+            trump: .spades,
+            trickNode: lastSeatTrick,
+            cardsRemainingInHandBeforeMove: 5,
+            cardsInRound: 8,
+            playerCount: 4
+        )
+
+        XCTAssertGreaterThan(leadThreat, lastSeatThreat)
+    }
+
+    func testCardThreat_withRoundHistoryContext_whenHigherCardsAlreadyPlayed_increasesResourceThreat() {
+        let trickNode = TrickNode()
+        let baseline = service.cardThreat(
+            card: card(.hearts, .queen),
+            decision: .defaultNonLead,
+            trump: nil,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: 4,
+            cardsInRound: 8
+        )
+        let completedTricks: [[PlayedTrickCard]] = [[
+            PlayedTrickCard(playerIndex: 0, card: card(.hearts, .ace)),
+            PlayedTrickCard(playerIndex: 1, card: card(.clubs, .seven)),
+            PlayedTrickCard(playerIndex: 2, card: card(.hearts, .king)),
+            PlayedTrickCard(playerIndex: 3, card: card(.spades, .seven))
+        ]]
+        let withHistory = service.cardThreat(
+            card: card(.hearts, .queen),
+            decision: .defaultNonLead,
+            trump: nil,
+            trickNode: trickNode,
+            cardsRemainingInHandBeforeMove: 4,
+            cardsInRound: 8,
+            completedTricksInRound: completedTricks
+        )
+
+        XCTAssertGreaterThan(withHistory, baseline)
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
     }

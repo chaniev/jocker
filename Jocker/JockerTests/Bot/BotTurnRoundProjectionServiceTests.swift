@@ -113,6 +113,26 @@ final class BotTurnRoundProjectionServiceTests: XCTestCase {
         XCTAssertEqual(projected, 2.0, accuracy: 0.0001)
     }
 
+    func testEstimateFutureTricks_strongerTrumpHandProducesHigherProjection() {
+        let strongHand: [Card] = [
+            card(.hearts, .ace),
+            card(.hearts, .king),
+            card(.hearts, .queen),
+            card(.clubs, .jack)
+        ]
+        let weakHand: [Card] = [
+            card(.hearts, .nine),
+            card(.clubs, .eight),
+            card(.diamonds, .seven),
+            card(.spades, .six)
+        ]
+
+        let strongProjection = service.estimateFutureTricks(in: strongHand, trump: .hearts)
+        let weakProjection = service.estimateFutureTricks(in: weakHand, trump: .hearts)
+
+        XCTAssertGreaterThan(strongProjection, weakProjection)
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
     }

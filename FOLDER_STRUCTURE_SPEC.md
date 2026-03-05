@@ -95,6 +95,7 @@ This document is the source of truth for repository structure and file placement
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
 - `Jocker/Jocker/Game/Services/AI/HandFeatureExtractor.swift`: shared hand-analysis extractor for bot AI services (regular cards, suit counts, joker/high-card counts) reused by bidding, trump selection, and round projection heuristics.
+- `Jocker/Jocker/Game/Services/AI/BotHandStrengthModel.swift`: unified hand-strength model for bot AI services (shared bidding expected tricks, future-trick projection, and trump suit profile synthesis).
 - `Jocker/Jocker/Game/Services/AI/BotRankNormalization.swift`: centralized named rank-normalization helpers for bot AI modes (`bidding`, `future projection`, `trump selection`) and shared high-card threshold predicate, preserving legacy formulas.
 - `Jocker/Jocker/Game/Services/AI/BotTrumpSelectionService.swift`: bot trump chooser for blocks 2 and 4 based on the pre-deal subset of cards.
 - `Jocker/Jocker/Game/Services/History/DealHistoryStore.swift`: in-memory capture of deal playback data (trump per deal, ordered trick moves, trick winners) plus per-move training samples (state/action/outcome).
@@ -184,6 +185,7 @@ Jocker/Jocker/
 │       │   ├── BotBiddingService.swift
 │       │   ├── BotRankNormalization.swift
 │       │   ├── HandFeatureExtractor.swift
+│       │   ├── BotHandStrengthModel.swift
 │       │   ├── BotMatchContextBuilder.swift
 │       │   ├── BotTurnCandidateEvaluatorService.swift
 │       │   ├── BotTurnCandidateRankingService.swift

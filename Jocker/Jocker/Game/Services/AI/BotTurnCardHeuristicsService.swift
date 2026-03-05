@@ -208,7 +208,9 @@ struct BotTurnCardHeuristicsService {
         trump: Suit?,
         trick: TrickSnapshot,
         cardsRemainingInHandBeforeMove: Int? = nil,
-        cardsInRound: Int? = nil
+        cardsInRound: Int? = nil,
+        completedTricksInRound: [[PlayedTrickCard]] = [],
+        playerCount: Int? = nil
     ) -> Double {
         let strategy = tuning.turnStrategy
         let phaseMultiplier = threatPhaseMultiplier(
@@ -217,12 +219,22 @@ struct BotTurnCardHeuristicsService {
             cardsRemainingInHandBeforeMove: cardsRemainingInHandBeforeMove,
             cardsInRound: cardsInRound
         )
+        let positionMultiplier = threatPositionMultiplier(
+            playedCardsInCurrentTrick: trick.playedCards.count,
+            playerCount: playerCount
+        )
+        let historyMultiplier = threatHistoryMultiplier(
+            for: card,
+            trump: trump,
+            trick: trick,
+            completedTricksInRound: completedTricksInRound
+        )
         if card.isJoker {
             if decision.style == .faceDown {
                 let baseThreat = trick.playedCards.isEmpty
                     ? strategy.threatFaceDownLeadJoker
                     : strategy.threatFaceDownNonLeadJoker
-                return baseThreat * phaseMultiplier
+                return baseThreat * phaseMultiplier * positionMultiplier * historyMultiplier
             }
 
             if trick.playedCards.isEmpty {
@@ -235,10 +247,13 @@ struct BotTurnCardHeuristicsService {
                 case .wish, .none:
                     baseThreat = strategy.threatLeadWishJoker
                 }
-                return baseThreat * phaseMultiplier
+                return baseThreat * phaseMultiplier * positionMultiplier * historyMultiplier
             }
 
-            return strategy.threatNonLeadFaceUpJoker * phaseMultiplier
+            return strategy.threatNonLeadFaceUpJoker *
+                phaseMultiplier *
+                positionMultiplier *
+                historyMultiplier
         }
 
         guard case .regular(let suit, let rank) = card else { return 0.0 }
@@ -249,7 +264,7 @@ struct BotTurnCardHeuristicsService {
         if rank.rawValue >= Rank.queen.rawValue {
             threat += strategy.threatHighRankBonus
         }
-        return threat * phaseMultiplier
+        return threat * phaseMultiplier * positionMultiplier * historyMultiplier
     }
 
     func cardThreat(
@@ -258,7 +273,9 @@ struct BotTurnCardHeuristicsService {
         trump: Suit?,
         trickNode: TrickNode,
         cardsRemainingInHandBeforeMove: Int? = nil,
-        cardsInRound: Int? = nil
+        cardsInRound: Int? = nil,
+        completedTricksInRound: [[PlayedTrickCard]] = [],
+        playerCount: Int? = nil
     ) -> Double {
         return cardThreat(
             card: card,
@@ -266,7 +283,9 @@ struct BotTurnCardHeuristicsService {
             trump: trump,
             trick: TrickSnapshot(trickNode: trickNode),
             cardsRemainingInHandBeforeMove: cardsRemainingInHandBeforeMove,
-            cardsInRound: cardsInRound
+            cardsInRound: cardsInRound,
+            completedTricksInRound: completedTricksInRound,
+            playerCount: playerCount
         )
     }
 
@@ -865,5 +884,74 @@ struct BotTurnCardHeuristicsService {
         }
 
         return min(1.35, max(0.55, multiplier))
+    }
+
+    private func threatPositionMultiplier(
+        playedCardsInCurrentTrick: Int,
+        playerCount: Int?
+    ) -> Double {
+        let normalizedCount = max(0, playedCardsInCurrentTrick)
+        let normalizedPlayerCount = max(2, playerCount ?? max(2, normalizedCount + 1))
+        if normalizedCount == 0 {
+            return 1.08
+        }
+        if normalizedCount >= max(1, normalizedPlayerCount - 1) {
+            return 0.90
+        }
+        if normalizedCount == 1 {
+            return 1.03
+        }
+        return 0.97
+    }
+
+    private func threatHistoryMultiplier(
+        for card: Card,
+        trump: Suit?,
+        trick: TrickSnapshot,
+        completedTricksInRound: [[PlayedTrickCard]]
+    ) -> Double {
+        let allPlayedCards = completedTricksInRound.flatMap { $0 } + trick.playedCards
+
+        if card.isJoker {
+            let playedJokerCount = allPlayedCards.filter { $0.card.isJoker }.count
+            let jokerResourceBoost = playedJokerCount > 0 ? 1.08 : 1.0
+            let positionRelief = trick.playedCards.isEmpty ? 1.02 : 0.98
+            return min(1.16, max(0.86, jokerResourceBoost * positionRelief))
+        }
+
+        guard case .regular(let suit, let rank) = card else { return 1.0 }
+        let totalHigherCards = max(0, Rank.ace.rawValue - rank.rawValue)
+        guard totalHigherCards > 0 else {
+            // Для туза/самой старшей карты угрозу слегка снижаем, если ход уже почти завершён.
+            let terminalRelief = trick.playedCards.count >= 2 ? 0.96 : 1.02
+            return min(1.08, max(0.90, terminalRelief))
+        }
+
+        let higherCardsPlayedInRound = allPlayedCards.reduce(0) { partial, played in
+            guard case .regular(let playedSuit, let playedRank) = played.card else { return partial }
+            guard playedSuit == suit else { return partial }
+            return partial + (playedRank.rawValue > rank.rawValue ? 1 : 0)
+        }
+        let higherCardsPlayedInCurrentTrick = trick.playedCards.reduce(0) { partial, played in
+            guard case .regular(let playedSuit, let playedRank) = played.card else { return partial }
+            guard playedSuit == suit else { return partial }
+            return partial + (playedRank.rawValue > rank.rawValue ? 1 : 0)
+        }
+
+        let depletion = min(
+            1.0,
+            Double(higherCardsPlayedInRound) / Double(totalHigherCards)
+        )
+        let roundContextBoost = 0.98 + 0.14 * depletion
+        let inTrickRelief = max(
+            0.86,
+            1.0 - 0.05 * Double(min(2, higherCardsPlayedInCurrentTrick))
+        )
+        let trumpResourceBoost: Double = {
+            guard let trump, trump == suit else { return 1.0 }
+            return 1.04 + 0.06 * depletion
+        }()
+
+        return min(1.22, max(0.80, roundContextBoost * inTrickRelief * trumpResourceBoost))
     }
 }

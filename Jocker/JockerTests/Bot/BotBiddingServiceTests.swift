@@ -273,4 +273,53 @@ final class BotBiddingServiceTests: XCTestCase {
             XCTAssertGreaterThan(desperateBid, catchUpBid)
         }
     }
+
+    func testMakeBid_whenBestBidForbidden_selectsClosestUtilityAlternative() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let hand: [Card] = [
+            .joker,
+            .regular(suit: .hearts, rank: .ace),
+            .regular(suit: .hearts, rank: .king),
+            .regular(suit: .clubs, rank: .queen)
+        ]
+
+        let baseline = service.makeBid(
+            hand: hand,
+            cardsInRound: 4,
+            trump: .hearts,
+            forbiddenBid: nil
+        )
+        let forbiddenAdjusted = service.makeBid(
+            hand: hand,
+            cardsInRound: 4,
+            trump: .hearts,
+            forbiddenBid: baseline
+        )
+
+        XCTAssertNotEqual(forbiddenAdjusted, baseline)
+        XCTAssertLessThanOrEqual(abs(forbiddenAdjusted - baseline), 1)
+    }
+
+    func testMakePreDealBlindBid_isDeterministicForSameInputsWithMonteCarloLayer() {
+        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+
+        let first = service.makePreDealBlindBid(
+            playerIndex: 3,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: [2, 3, 4, 5, 6],
+            canChooseBlind: true,
+            totalScores: [1200, 1100, 980, 700]
+        )
+        let second = service.makePreDealBlindBid(
+            playerIndex: 3,
+            dealerIndex: 0,
+            cardsInRound: 9,
+            allowedBlindBids: [2, 3, 4, 5, 6],
+            canChooseBlind: true,
+            totalScores: [1200, 1100, 980, 700]
+        )
+
+        XCTAssertEqual(first, second)
+    }
 }

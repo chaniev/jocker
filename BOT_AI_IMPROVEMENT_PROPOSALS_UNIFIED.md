@@ -113,11 +113,11 @@
 | P2-1 | Composite utility model | P2 | `RG-6` | Runtime | частично (декомпозиция есть, композиция аддитивна) | 8-12 ч |
 | P2-2 | Goal-oriented joker declaration | P2 | `RG-4`, `RG-6` | Runtime | частично (эвристики + strict regression) | 16-20 ч |
 | P2-3 | Эндгейм-решатель | P2 | `RG-4` | Runtime | не начато | 8-12 ч |
-| P3-1 | Monte-Carlo blind evaluation | P3 | `RG-7`, `RG-2` | Runtime + Self-play | не начато | 6-8 ч |
-| P3-2 | Context-aware card threat | P3 | `RG-8` | Runtime | частично (phase-aware, без position/history context) | 4-6 ч |
-| P3-3 | Единый HandStrength model (bidding+projection) | P3 | `RG-5` | Runtime | частично (общий extractor есть, формулы разные) | 6-8 ч |
-| P4-1 | Multi-factor trump selection | P4 | `RG-5` | Runtime | частично (базовые multi-factor уже есть) | 3-4 ч |
-| P4-2 | Forbidden-aware bidding | P4 | `RG-5` | Runtime | частично (skip forbidden + tie-break, без utility cost) | 2-3 ч |
+| P3-1 | Monte-Carlo blind evaluation | P3 | `RG-7`, `RG-2` | Runtime + Self-play | выполнено (deterministic Monte-Carlo blind layer + variance-aware utility) | 6-8 ч |
+| P3-2 | Context-aware card threat | P3 | `RG-8` | Runtime | выполнено (phase + position + round-history context) | 4-6 ч |
+| P3-3 | Единый HandStrength model (bidding+projection) | P3 | `RG-5` | Runtime | выполнено (единый `BotHandStrengthModel` подключён в bidding/projection/trump) | 6-8 ч |
+| P4-1 | Multi-factor trump selection | P4 | `RG-5` | Runtime | выполнено (multi-factor suit scoring + stage-bonus при 2/3) | 3-4 ч |
+| P4-2 | Forbidden-aware bidding | P4 | `RG-5` | Runtime | выполнено (utility-cost выбор legal bid при forbidden) | 2-3 ч |
 
 ---
 
@@ -138,6 +138,7 @@
 - Bidding/trump/hand-consistency (`P3-1`, `P3-3`, `P4-1`, `P4-2`):
   - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`
   - `Jocker/Jocker/Game/Services/AI/BotTrumpSelectionService.swift`
+  - `Jocker/Jocker/Game/Services/AI/BotHandStrengthModel.swift`
   - `Jocker/Jocker/Game/Services/AI/HandFeatureExtractor.swift`
   - `Jocker/Jocker/Game/Services/AI/BotRankNormalization.swift`
 - Self-play/harness слой (`P3-1` и проверка всех инициатив по метрикам):
@@ -466,12 +467,20 @@ flowchart LR
 - Итог: `Phase 3` закрыта по реализации и runtime gate-тестам; promotion по self-play checkpoint отклонён.
 
 Фаза 4 (P3–P4, “consistency + полировка”):
-- P3-3 HandStrength
-- P3-1 Monte-Carlo blind
-- P3-2 Context-aware threat
-- P4-1 Trump
-- P4-2 Forbidden-aware bidding
-- Self-play checkpoint: `SP-3` (`compare-v1`, `tuning-scope=all`) + финальный `SP-4` (ensemble).
+- статус на 5 марта 2026: runtime-часть закрыта, целевые regression-наборы зелёные.
+- закрыто:
+  - P3-3 HandStrength;
+  - P3-1 Monte-Carlo blind;
+  - P3-2 Context-aware threat;
+  - P4-1 Trump;
+  - P4-2 Forbidden-aware bidding.
+- regression/gates:
+  - `build-for-testing` (`Jocker`): pass;
+  - `Phase4 target bot suite`: `45/45`, `iPhone 15` (`id=4F592A52-148C-4540-BB72-590B8C44BD43`);
+  - `stage6b strict set`: `18/18` (manual `test-without-building`, concrete destination);
+  - `joker strict set`: `16/16` (manual `test-without-building`, concrete destination).
+- важно: скриптовые `make stage6b-pack-all` / `make joker-pack` в текущем окружении могут падать из-за `CoreSimulatorService` (`destination=platform=iOS Simulator`, без конкретного id); для валидного gate-run использовать concrete `id`.
+- Self-play checkpoint для Phase 4: pending (`SP-3`, затем `SP-4`).
 
 ---
 

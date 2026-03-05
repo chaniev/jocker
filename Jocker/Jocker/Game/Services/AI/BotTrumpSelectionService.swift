@@ -11,14 +11,21 @@ import Foundation
 final class BotTrumpSelectionService {
     private let tuning: BotTuning
     private let handFeatureExtractor = HandFeatureExtractor()
+    private let handStrengthModel: BotHandStrengthModel
     private enum BonusPower {
         // Явный приоритет для блока выбора козыря (2/4):
         // если из 3 открытых карт 2 одной масти, усиливаем эту масть.
         static let twoOfThreeSameSuitInPlayerChoiceStage = 1.40
+        static let lengthFactor = 0.36
+        static let densityFactor = 0.90
+        static let sequenceFactor = 0.62
+        static let controlFactor = 0.46
+        static let jokerSynergyFactor = 0.48
     }
 
     init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
         self.tuning = tuning
+        self.handStrengthModel = BotHandStrengthModel(tuning: tuning)
     }
 
     func selectTrump(
@@ -28,6 +35,7 @@ final class BotTrumpSelectionService {
         guard !hand.isEmpty else { return nil }
         let trumpTuning = tuning.trumpSelection
         let handFeatures = handFeatureExtractor.extract(from: hand)
+        let handSummary = handStrengthModel.trumpHandSummary(hand: hand)
         let pairBonusBySuit = twoOfThreeSameSuitBonus(
             in: hand,
             isPlayerChosenTrumpStage: isPlayerChosenTrumpStage
@@ -35,14 +43,29 @@ final class BotTrumpSelectionService {
 
         var suitPower: [Suit: Double] = [:]
         let regularCardsCount = handFeatures.regularCardsCount
+        let jokerCount = handSummary.jokerCount
 
-        for card in handFeatures.regularCards {
-            let suit = card.suit
-            let rank = card.rank
+        for (suit, profile) in handSummary.suitProfiles {
+            // Low-card short suits should not clear declaration threshold
+            // without explicit stage bonus or high-card support.
+            let qualityMultiplier = max(0.0, profile.topRankStrength)
+            let lengthBonus = profile.count >= 2
+                ? Double(profile.count - 1) * BonusPower.lengthFactor
+                : 0.0
+            let densityBonus = profile.density * Double(profile.count) * BonusPower.densityFactor
+            let sequenceBonus = profile.sequenceStrength * BonusPower.sequenceFactor
+            let controlBonus = profile.controlPotential * BonusPower.controlFactor
+            let jokerSynergyBonus = Double(jokerCount) *
+                (0.40 + profile.controlPotential * BonusPower.jokerSynergyFactor) *
+                qualityMultiplier
 
-            let normalizedRank = BotRankNormalization.normalizedForTrumpSelection(rank)
-            let cardPower = trumpTuning.cardBasePower + normalizedRank
-            suitPower[suit, default: 0.0] += cardPower
+            suitPower[suit, default: 0.0] +=
+                profile.basePower +
+                lengthBonus * qualityMultiplier +
+                densityBonus * qualityMultiplier +
+                sequenceBonus * qualityMultiplier +
+                controlBonus * qualityMultiplier +
+                jokerSynergyBonus
         }
 
         for (suit, bonus) in pairBonusBySuit {

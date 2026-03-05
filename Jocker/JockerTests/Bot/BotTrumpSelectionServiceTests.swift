@@ -77,4 +77,20 @@ final class BotTrumpSelectionServiceTests: XCTestCase {
 
         XCTAssertNil(trump)
     }
+
+    func testSelectTrump_multifactorSequenceAndJokerSynergy_prefersControlSuit() {
+        let service = BotTrumpSelectionService(tuning: BotTuning(difficulty: .hard))
+        let hand: [Card] = [
+            .joker,
+            .regular(suit: .spades, rank: .ace),
+            .regular(suit: .spades, rank: .king),
+            .regular(suit: .spades, rank: .queen),
+            .regular(suit: .hearts, rank: .ace),
+            .regular(suit: .hearts, rank: .seven)
+        ]
+
+        let trump = service.selectTrump(from: hand)
+
+        XCTAssertEqual(trump, .spades)
+    }
 }

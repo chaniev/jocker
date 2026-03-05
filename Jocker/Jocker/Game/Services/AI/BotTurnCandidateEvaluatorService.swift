@@ -267,7 +267,9 @@ struct BotTurnCandidateEvaluatorService {
                     trump: context.trump,
                     trick: context.trick,
                     cardsRemainingInHandBeforeMove: context.handCards.count,
-                    cardsInRound: context.cardsInRound
+                    cardsInRound: context.cardsInRound,
+                    completedTricksInRound: context.completedTricksInRound,
+                    playerCount: context.playerCount
                 )
                 let utility = candidateRanking.moveUtility(
                     projectedScore: projectedScore,
