@@ -113,13 +113,13 @@ struct BotBeliefState: Equatable {
 /// генерация joker-вариантов, оценка угрозы карты и вероятности мгновенного взятия.
 struct BotTurnCardHeuristicsService {
     private enum LegalAwareSampling {
-        static let minimumIterations = 20
-        static let maximumIterations = 48
-        static let reducedMinimumIterations = 8
-        static let reducedMaximumIterations = 20
-        static let rotationStride = 7
-        static let reducedMaxCardsPerOpponentSample = 3
-        static let endgameHandSizeThreshold = 4
+        static let minimumIterations = BotHeuristicsConstants.legalAwareMinIterations
+        static let maximumIterations = BotHeuristicsConstants.legalAwareMaxIterations
+        static let reducedMinimumIterations = BotHeuristicsConstants.legalAwareReducedMinIterations
+        static let reducedMaximumIterations = BotHeuristicsConstants.legalAwareReducedMaxIterations
+        static let rotationStride = BotHeuristicsConstants.legalAwareRotationStride
+        static let reducedMaxCardsPerOpponentSample = BotHeuristicsConstants.legalAwareReducedMaxCardsPerOpponentSample
+        static let endgameHandSizeThreshold = BotHeuristicsConstants.legalAwareEndgameHandSizeThreshold
     }
 
     struct TrickSnapshot {

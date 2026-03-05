@@ -15,6 +15,21 @@ enum GameConstants {
     static let jokersCount = 2
     /// Количество блоков в игре
     static let totalBlocks = 4
+    
+    /// Количество мастей
+    static let suitsCount = 4
+    
+    /// Количество карт в масти (бубны/черви)
+    static let cardsPerSuitMajor = 9
+    
+    /// Количество карт в масти (пики/крести)
+    static let cardsPerSuitMinor = 8
+    
+    /// Общее количество обычных карт (без джокеров)
+    static let regularCardsCount = 34
+    
+    /// Количество игроков по умолчанию
+    static let defaultPlayerCount = 4
 
     /// Максимальное число карт на игрока в фиксированных блоках
     static func maxCardsPerPlayer(for playerCount: Int) -> Int {

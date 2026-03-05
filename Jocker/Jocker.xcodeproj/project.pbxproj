@@ -82,6 +82,8 @@
 		C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE20052F5300010037CA75 /* BotBiddingService.swift */; };
 		AA0000212F2800010037CA75 /* BotBiddingConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000202F2800010037CA75 /* BotBiddingConstants.swift */; };
 		AA0000312F2800010037CA75 /* BotRankingConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000302F2800010037CA75 /* BotRankingConstants.swift */; };
+		AA0000412F2800010037CA75 /* BotHeuristicsConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000402F2800010037CA75 /* BotHeuristicsConstants.swift */; };
+		AA0000512F2800010037CA75 /* BotMatchContextConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000502F2800010037CA75 /* BotMatchContextConstants.swift */; };
 		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
 		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
 		C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */; };
@@ -281,6 +283,8 @@
 		C0DE20052F5300010037CA75 /* BotBiddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingService.swift; sourceTree = "<group>"; };
 		AA0000202F2800010037CA75 /* BotBiddingConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingConstants.swift; sourceTree = "<group>"; };
 		AA0000302F2800010037CA75 /* BotRankingConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRankingConstants.swift; sourceTree = "<group>"; };
+		AA0000402F2800010037CA75 /* BotHeuristicsConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotHeuristicsConstants.swift; sourceTree = "<group>"; };
+		AA0000502F2800010037CA75 /* BotMatchContextConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotMatchContextConstants.swift; sourceTree = "<group>"; };
 		C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
 		C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingServiceTests.swift; sourceTree = "<group>"; };
 		C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyService.swift; sourceTree = "<group>"; };
@@ -619,6 +623,8 @@
 						C0DE20052F5300010037CA75 /* BotBiddingService.swift */,
 						AA0000202F2800010037CA75 /* BotBiddingConstants.swift */,
 						AA0000302F2800010037CA75 /* BotRankingConstants.swift */,
+						AA0000402F2800010037CA75 /* BotHeuristicsConstants.swift */,
+						AA0000502F2800010037CA75 /* BotMatchContextConstants.swift */,
 						D4E200022F8022010037CA75 /* BotRankNormalization.swift */,
 						D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */,
 						F4A100012F9000010037CA75 /* BotHandStrengthModel.swift */,
@@ -1117,6 +1123,8 @@
 				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
 				AA0000212F2800010037CA75 /* BotBiddingConstants.swift in Sources */,
 				AA0000312F2800010037CA75 /* BotRankingConstants.swift in Sources */,
+				AA0000412F2800010037CA75 /* BotHeuristicsConstants.swift in Sources */,
+				AA0000512F2800010037CA75 /* BotMatchContextConstants.swift in Sources */,
 				F4A100042F9000010037CA75 /* BotHandStrengthModel.swift in Sources */,
 					D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */,
 					D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */,
@@ -1267,6 +1275,8 @@
 				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
 				AA0000212F2800010037CA75 /* BotBiddingConstants.swift in Sources */,
 				AA0000312F2800010037CA75 /* BotRankingConstants.swift in Sources */,
+				AA0000412F2800010037CA75 /* BotHeuristicsConstants.swift in Sources */,
+				AA0000512F2800010037CA75 /* BotMatchContextConstants.swift in Sources */,
 				F4A100042F9000010037CA75 /* BotHandStrengthModel.swift in Sources */,
 				D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */,
 				D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */,
