@@ -298,6 +298,10 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── Bot/
 │   ├── BotBiddingServiceTests.swift
+│   ├── BotHandStrengthModelTests.swift
+│   ├── HandFeatureExtractorTests.swift
+│   ├── BotMatchContextBuilderTests.swift
+│   ├── BotOpponentModelTests.swift
 │   ├── BotRankNormalizationTests.swift
 │   ├── BotTurnCandidateEvaluatorServiceTests.swift
 │   ├── BotTurnCandidateRankingServiceTests.swift
@@ -313,6 +317,15 @@ Jocker/JockerTests/
 │   ├── BotTuningTests.swift
 │   ├── BotTurnRoundProjectionServiceTests.swift
 │   └── BotTurnStrategyServiceTests.swift
+├── Models/
+│   ├── CardModelTests.swift
+│   ├── DeckTests.swift
+│   ├── SuitRankTests.swift
+│   ├── GameplayModelsTests.swift
+│   ├── RulesTests.swift
+│   ├── JokerModelsTests.swift
+│   ├── HistoryModelsTests.swift
+│   └── PlayerStatisticsModelsTests.swift
 ├── Flow/
 │   ├── AutoPlayFlowTests.swift
 │   ├── GameFlowIntegrationTests.swift
