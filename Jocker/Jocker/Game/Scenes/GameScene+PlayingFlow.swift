@@ -98,6 +98,7 @@ extension GameScene {
             ? gameState.players[playerIndex].isBlindBid
             : players[playerIndex].isBlindBid
         let matchContext = botMatchContext(for: playerIndex)
+        let roundState = matchContext?.round
         let completedTricksInRound = completedTricksInCurrentRound()
 
         guard let turnDecision = botTurnService(for: playerIndex).automaticTurnDecision(
@@ -111,6 +112,7 @@ extension GameScene {
                 playerCount: playerCount,
                 isBlind: isBlindRound,
                 matchContext: matchContext,
+                roundState: roundState,
                 actingPlayerIndex: playerIndex,
                 completedTricksInRound: completedTricksInRound
             )

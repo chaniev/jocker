@@ -107,9 +107,9 @@
 |---|------------|-----------|--------------|------|---------------|--------|
 | P0-1 | Belief state + legal-aware win probability | P0 | `RG-1`, `RG-2` | Runtime | выполнено (runtime + unit/regression гейты) | 12-16 ч |
 | P0-2 | Block-level planning | P0 | `RG-3`, `RG-6` | Runtime | выполнено (BlockPlan v1 + guardrails) | 4-6 ч |
-| P1-1 | Opponent intention modeling | P1 | `RG-1`, `RG-2`, `RG-3` | Runtime | частично (rates/style, без trick-level intent) | 12-16 ч |
-| P1-2 | Opponent bid/deficit pressure in utility | P1 | `RG-3`, `RG-6` | Runtime + Flow plumbing | не начато | 6-10 ч |
-| P1-3 | Rollout для top-N кандидатов | P1 | `RG-4`, `RG-2` | Runtime | не начато | 12-16 ч |
+| P1-1 | Opponent intention modeling | P1 | `RG-1`, `RG-2`, `RG-3` | Runtime | выполнено (compact intention model v1 + no-evidence neutrality) | 12-16 ч |
+| P1-2 | Opponent bid/deficit pressure in utility | P1 | `RG-3`, `RG-6` | Runtime + Flow plumbing | выполнено (round-state plumbing + deny-exact utility shift) | 6-10 ч |
+| P1-3 | Rollout для top-N кандидатов | P1 | `RG-4`, `RG-2` | Runtime | выполнено (deterministic top-N rollout, strict budget, conditional apply) | 12-16 ч |
 | P2-1 | Composite utility model | P2 | `RG-6` | Runtime | частично (декомпозиция есть, композиция аддитивна) | 8-12 ч |
 | P2-2 | Goal-oriented joker declaration | P2 | `RG-4`, `RG-6` | Runtime | частично (эвристики + strict regression) | 16-20 ч |
 | P2-3 | Эндгейм-решатель | P2 | `RG-4` | Runtime | не начато | 8-12 ч |
@@ -411,6 +411,29 @@ flowchart LR
 - P1-1 Opponent intention (если P0-1 уже даёт belief state)
 - P1-3 Rollout top-N (условно/точечно)
 - Self-play checkpoint: `SP-2` (`compare-v1`, `turnStrategy-only`, решение о promotion по holdout).
+
+### Статус Phase 2 (2026-03-05)
+
+- `P1-2` закрыт:
+  - расширен runtime `round-state` (`bids[]`, `tricksTaken[]`, `isBlindBid[]`) от `GameScene+PlayingFlow` / `GameTurnService` / `GameSceneCoordinator` до `BotTurnStrategyService` и evaluator/ranking;
+  - добавлен utility-shift `deny exact` для сценариев `needsTricks == 1` (chase/dump).
+- `P1-1` закрыт:
+  - введён `OpponentIntentionModel` в turn-stack (signals: bid deficit, trick position, belief void-suit hints, observed rates/style);
+  - соблюдён strict `no-evidence neutrality` (unit/stage6b guardrails).
+- `P1-3` закрыт:
+  - реализован deterministic rollout для top-N кандидатов (`horizon <= 2`);
+  - после perf-коррекции применён строгий budget: `topCandidateCount=2`, `iterations=4...8`, `maxCardsPerOpponentSample=2`, conditional-apply только в высокоценных сценариях.
+- Regression gates (final pass):
+  - `build-for-testing` (`Jocker`): pass;
+  - build scheme `JockerSelfPlayTools`: pass;
+  - `joker-pack` (strict): `16/16`, артефакты `.derivedData/joker-regression-runs/20260305-105533`;
+  - `stage6b-pack-all`: `18/18`, артефакты `.derivedData/stage6b-ranking-runs/20260305-105559`;
+  - `test-without-building` `BotSelfPlayEvolutionEngineTests`: pass (`iPhone 15`, id `4F592A52-148C-4540-BB72-590B8C44BD43`).
+- Self-play checkpoint `SP-2` (`compare-v1`, `turnStrategy-only`):
+  - артефакты `.derivedData/bot-ab-runs/20260305-105643`;
+  - `holdout` quality-core: `fitness_Badv=-0.286803`, `winRate_Badv=-0.070312`, `scoreDiff_Badv=-96.423611`;
+  - решение: `C reject/rollback` (tuned snapshot не продвигать, baseline остаётся promoted).
+- Итог: `Phase 2` формально закрыта по реализации и gate-тестам; promotion по `SP-2` отклонён.
 
 Фаза 3 (P2, “ядро решения”):
 - P2-2 Goal-oriented joker (в связке с rollout)

@@ -250,4 +250,210 @@ extension BotTurnCandidateRankingServiceTests {
 
         XCTAssertEqual(noEvidenceUtility, baseUtility, accuracy: 0.0001)
     }
+
+    func testMoveUtility_whenOpponentNeedsSingleTrick_inChase_increasesControlUtility() {
+        let trickNode = makeTrickNode()
+        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.hearts, .ace),
+            decision: .defaultNonLead
+        )
+        let roundStateWithNeed = BotMatchContext.RoundSnapshot(
+            bids: [2, 2, 0, 0],
+            tricksTaken: [1, 1, 0, 0], // player 1 needs exactly 1 trick
+            isBlindBid: [false, false, false, false]
+        )
+        let neutralRoundState = BotMatchContext.RoundSnapshot(
+            bids: [2, 2, 0, 0],
+            tricksTaken: [1, 2, 0, 0], // player 1 already matched bid
+            isBlindBid: [false, false, false, false]
+        )
+        let matchContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 6,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            round: roundStateWithNeed
+        )
+
+        let baseUtility = service.moveUtility(
+            projectedScore: 20,
+            immediateWinProbability: 0.85,
+            threat: 8,
+            move: move,
+            context: .init(
+                trick: .init(trickNode: trickNode),
+                trump: .clubs,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 1,
+                tricksRemainingIncludingCurrent: 2,
+                chasePressure: 0.5,
+                matchContext: matchContext,
+                roundState: neutralRoundState,
+                actingPlayerIndex: 0,
+                remainingOpponentPlayerIndices: [1, 2]
+            )
+        )
+        let pressuredUtility = service.moveUtility(
+            projectedScore: 20,
+            immediateWinProbability: 0.85,
+            threat: 8,
+            move: move,
+            context: .init(
+                trick: .init(trickNode: trickNode),
+                trump: .clubs,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 1,
+                tricksRemainingIncludingCurrent: 2,
+                chasePressure: 0.5,
+                matchContext: matchContext,
+                roundState: roundStateWithNeed,
+                actingPlayerIndex: 0,
+                remainingOpponentPlayerIndices: [1, 2]
+            )
+        )
+
+        XCTAssertGreaterThan(pressuredUtility, baseUtility)
+    }
+
+    func testMoveUtility_whenOpponentNeedsSingleTrick_inDump_penalizesSafeLoss() {
+        let trickNode = makeTrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let losingMove = BotTurnCandidateRankingService.Move(
+            card: card(.clubs, .seven),
+            decision: .defaultNonLead
+        )
+        let roundStateWithNeed = BotMatchContext.RoundSnapshot(
+            bids: [0, 2, 0, 0],
+            tricksTaken: [1, 1, 0, 0], // player 1 needs exactly 1 trick
+            isBlindBid: [false, false, false, false]
+        )
+        let neutralRoundState = BotMatchContext.RoundSnapshot(
+            bids: [0, 2, 0, 0],
+            tricksTaken: [1, 2, 0, 0],
+            isBlindBid: [false, false, false, false]
+        )
+        let matchContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 6,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            round: roundStateWithNeed
+        )
+
+        let baseUtility = service.moveUtility(
+            projectedScore: 5,
+            immediateWinProbability: 0.10,
+            threat: 4,
+            move: losingMove,
+            context: .init(
+                trick: .init(trickNode: trickNode),
+                trump: .hearts,
+                shouldChaseTrick: false,
+                hasWinningNonJoker: true,
+                hasLosingNonJoker: true,
+                tricksNeededToMatchBid: 0,
+                tricksRemainingIncludingCurrent: 2,
+                trickDeltaToBidBeforeMove: 1,
+                chasePressure: 0.0,
+                matchContext: matchContext,
+                roundState: neutralRoundState,
+                actingPlayerIndex: 0,
+                remainingOpponentPlayerIndices: [1]
+            )
+        )
+        let pressuredUtility = service.moveUtility(
+            projectedScore: 5,
+            immediateWinProbability: 0.10,
+            threat: 4,
+            move: losingMove,
+            context: .init(
+                trick: .init(trickNode: trickNode),
+                trump: .hearts,
+                shouldChaseTrick: false,
+                hasWinningNonJoker: true,
+                hasLosingNonJoker: true,
+                tricksNeededToMatchBid: 0,
+                tricksRemainingIncludingCurrent: 2,
+                trickDeltaToBidBeforeMove: 1,
+                chasePressure: 0.0,
+                matchContext: matchContext,
+                roundState: roundStateWithNeed,
+                actingPlayerIndex: 0,
+                remainingOpponentPlayerIndices: [1]
+            )
+        )
+
+        XCTAssertLessThan(pressuredUtility, baseUtility)
+    }
+
+    func testMoveUtility_whenOpponentIntentionModelHasNoEvidence_keepsUtilityUnchanged() {
+        let trickNode = makeTrickNode()
+        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.hearts, .ace),
+            decision: .defaultNonLead
+        )
+        let noEvidenceModel = BotTurnCandidateRankingService.OpponentIntentionModel(
+            opponentSignals: [
+                .init(
+                    playerIndex: 1,
+                    needsTricks: 1,
+                    likelyToContestCurrentTrick: 0.95,
+                    denyPressure: 0.95,
+                    evidenceWeight: 0.0
+                )
+            ],
+            strongestTargetIndex: 1,
+            strongestDenyPressure: 0.95,
+            totalDenyPressure: 0.95,
+            hasEvidence: false
+        )
+
+        let baselineUtility = service.moveUtility(
+            projectedScore: 12,
+            immediateWinProbability: 0.70,
+            threat: 8,
+            move: move,
+            context: .init(
+                trick: .init(trickNode: trickNode),
+                trump: .clubs,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 1,
+                tricksRemainingIncludingCurrent: 2,
+                chasePressure: 0.5
+            )
+        )
+        let noEvidenceUtility = service.moveUtility(
+            projectedScore: 12,
+            immediateWinProbability: 0.70,
+            threat: 8,
+            move: move,
+            context: .init(
+                trick: .init(trickNode: trickNode),
+                trump: .clubs,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: 1,
+                tricksRemainingIncludingCurrent: 2,
+                chasePressure: 0.5,
+                opponentIntention: noEvidenceModel
+            )
+        )
+
+        XCTAssertEqual(noEvidenceUtility, baselineUtility, accuracy: 0.0001)
+    }
 }

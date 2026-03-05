@@ -19,6 +19,7 @@ final class BotTurnStrategyService {
         let playerCount: Int?
         let isBlind: Bool
         let matchContext: BotMatchContext?
+        let roundState: BotMatchContext.RoundSnapshot?
         let actingPlayerIndex: Int?
         let completedTricksInRound: [[PlayedTrickCard]]
 
@@ -32,6 +33,7 @@ final class BotTurnStrategyService {
             playerCount: Int?,
             isBlind: Bool = false,
             matchContext: BotMatchContext? = nil,
+            roundState: BotMatchContext.RoundSnapshot? = nil,
             actingPlayerIndex: Int? = nil,
             completedTricksInRound: [[PlayedTrickCard]] = []
         ) {
@@ -44,6 +46,7 @@ final class BotTurnStrategyService {
             self.playerCount = playerCount
             self.isBlind = isBlind
             self.matchContext = matchContext
+            self.roundState = roundState
             self.actingPlayerIndex = actingPlayerIndex
             self.completedTricksInRound = completedTricksInRound
         }
@@ -93,6 +96,7 @@ final class BotTurnStrategyService {
         playerCount: Int? = nil,
         isBlind: Bool = false,
         matchContext: BotMatchContext? = nil,
+        roundState: BotMatchContext.RoundSnapshot? = nil,
         actingPlayerIndex: Int? = nil,
         completedTricksInRound: [[PlayedTrickCard]] = []
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
@@ -107,6 +111,7 @@ final class BotTurnStrategyService {
                 playerCount: playerCount,
                 isBlind: isBlind,
                 matchContext: matchContext,
+                roundState: roundState,
                 actingPlayerIndex: actingPlayerIndex,
                 completedTricksInRound: completedTricksInRound
             )
@@ -130,6 +135,7 @@ final class BotTurnStrategyService {
                 playerCount: resolvedContext.request.playerCount,
                 isBlind: resolvedContext.request.isBlind,
                 matchContext: resolvedContext.request.matchContext,
+                roundState: resolvedContext.request.roundState,
                 actingPlayerIndex: resolvedContext.request.actingPlayerIndex,
                 completedTricksInRound: resolvedContext.request.completedTricksInRound
             )

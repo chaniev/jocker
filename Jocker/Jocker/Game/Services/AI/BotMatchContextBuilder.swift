@@ -37,6 +37,10 @@ struct BotMatchContextBuilder {
             playerIndex: playerIndex,
             dealerIndex: gameState.currentDealer,
             playerCount: playerCount,
+            round: makeRoundSnapshot(
+                gameState: gameState,
+                playerCount: playerCount
+            ),
             premium: makePremiumSnapshot(
                 gameState: gameState,
                 scoreManager: scoreManager,
@@ -49,6 +53,30 @@ struct BotMatchContextBuilder {
                 playerIndex: playerIndex,
                 playerCount: playerCount
             )
+        )
+    }
+
+    private static func makeRoundSnapshot(
+        gameState: GameState,
+        playerCount: Int
+    ) -> BotMatchContext.RoundSnapshot {
+        let bids = (0..<playerCount).map { playerIndex in
+            guard gameState.players.indices.contains(playerIndex) else { return 0 }
+            return gameState.players[playerIndex].currentBid
+        }
+        let tricksTaken = (0..<playerCount).map { playerIndex in
+            guard gameState.players.indices.contains(playerIndex) else { return 0 }
+            return gameState.players[playerIndex].tricksTaken
+        }
+        let isBlindBid = (0..<playerCount).map { playerIndex in
+            guard gameState.players.indices.contains(playerIndex) else { return false }
+            return gameState.players[playerIndex].isBlindBid
+        }
+
+        return BotMatchContext.RoundSnapshot(
+            bids: bids,
+            tricksTaken: tricksTaken,
+            isBlindBid: isBlindBid
         )
     }
 
@@ -177,4 +205,3 @@ struct BotMatchContextBuilder {
         )
     }
 }
-

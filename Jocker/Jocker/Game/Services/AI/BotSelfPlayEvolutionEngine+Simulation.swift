@@ -1078,6 +1078,11 @@ extension BotSelfPlayEvolutionEngine {
                         tricksTaken: tricksTaken[player],
                         cardsInRound: cardsInRound,
                         playerCount: playerCount,
+                        roundState: .init(
+                            bids: bids,
+                            tricksTaken: tricksTaken,
+                            isBlindBid: Array(repeating: false, count: playerCount)
+                        ),
                         actingPlayerIndex: player,
                         completedTricksInRound: completedTricksInRound
                     )

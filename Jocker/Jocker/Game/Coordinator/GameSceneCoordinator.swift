@@ -126,6 +126,7 @@ final class GameSceneCoordinator {
         cardsInRound: Int,
         isBlind: Bool = false,
         matchContext: BotMatchContext? = nil,
+        roundState: BotMatchContext.RoundSnapshot? = nil,
         completedTricksInRound: [[PlayedTrickCard]] = []
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
         guard players.indices.contains(playerIndex) else { return nil }
@@ -140,6 +141,7 @@ final class GameSceneCoordinator {
                 playerCount: players.count,
                 isBlind: isBlind,
                 matchContext: matchContext,
+                roundState: roundState,
                 actingPlayerIndex: playerIndex,
                 completedTricksInRound: completedTricksInRound
             )

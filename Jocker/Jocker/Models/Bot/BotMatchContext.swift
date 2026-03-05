@@ -12,6 +12,39 @@ import Foundation
 /// Этап 4a: plumbing-поле. На первом шаге может только прокидываться по стеку
 /// без изменения итогового utility/эвристик.
 struct BotMatchContext: Equatable {
+    struct RoundSnapshot: Equatable {
+        let bids: [Int]
+        let tricksTaken: [Int]
+        let isBlindBid: [Bool]
+
+        init(
+            bids: [Int],
+            tricksTaken: [Int],
+            isBlindBid: [Bool]
+        ) {
+            self.bids = bids
+            self.tricksTaken = tricksTaken
+            self.isBlindBid = isBlindBid
+        }
+
+        func bid(for playerIndex: Int) -> Int? {
+            guard bids.indices.contains(playerIndex) else { return nil }
+            return bids[playerIndex]
+        }
+
+        func tricks(for playerIndex: Int) -> Int? {
+            guard tricksTaken.indices.contains(playerIndex) else { return nil }
+            return tricksTaken[playerIndex]
+        }
+
+        func needsTricks(for playerIndex: Int) -> Int? {
+            guard let bid = bid(for: playerIndex), let tricks = tricks(for: playerIndex) else {
+                return nil
+            }
+            return max(0, bid - tricks)
+        }
+    }
+
     struct PremiumSnapshot: Equatable {
         let completedRoundsInBlock: Int
         let remainingRoundsInBlock: Int
@@ -56,6 +89,7 @@ struct BotMatchContext: Equatable {
     let playerIndex: Int
     let dealerIndex: Int
     let playerCount: Int
+    let round: RoundSnapshot?
     let premium: PremiumSnapshot?
     let opponents: BotOpponentModel?
 
@@ -67,6 +101,7 @@ struct BotMatchContext: Equatable {
         playerIndex: Int,
         dealerIndex: Int,
         playerCount: Int,
+        round: RoundSnapshot? = nil,
         premium: PremiumSnapshot? = nil,
         opponents: BotOpponentModel? = nil
     ) {
@@ -77,6 +112,7 @@ struct BotMatchContext: Equatable {
         self.playerIndex = playerIndex
         self.dealerIndex = dealerIndex
         self.playerCount = playerCount
+        self.round = round
         self.premium = premium
         self.opponents = opponents
     }

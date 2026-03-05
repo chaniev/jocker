@@ -22,6 +22,23 @@ struct BotTurnCandidateRankingService {
         let threat: Double
     }
 
+    /// Этап P1-1: компактная модель намерений соперников в текущей взятке/раунде.
+    struct OpponentIntentionModel {
+        struct OpponentSignal {
+            let playerIndex: Int
+            let needsTricks: Int
+            let likelyToContestCurrentTrick: Double
+            let denyPressure: Double
+            let evidenceWeight: Double
+        }
+
+        let opponentSignals: [OpponentSignal]
+        let strongestTargetIndex: Int?
+        let strongestDenyPressure: Double
+        let totalDenyPressure: Double
+        let hasEvidence: Bool
+    }
+
     struct UtilityContext {
         let trick: BotTurnCardHeuristicsService.TrickSnapshot
         let trump: Suit?
@@ -34,6 +51,10 @@ struct BotTurnCandidateRankingService {
         let chasePressure: Double
         let isBlindRound: Bool
         let matchContext: BotMatchContext?
+        let roundState: BotMatchContext.RoundSnapshot?
+        let actingPlayerIndex: Int?
+        let remainingOpponentPlayerIndices: [Int]?
+        let opponentIntention: OpponentIntentionModel?
 
         init(
             trick: BotTurnCardHeuristicsService.TrickSnapshot,
@@ -46,7 +67,11 @@ struct BotTurnCandidateRankingService {
             trickDeltaToBidBeforeMove: Int = 0,
             chasePressure: Double,
             isBlindRound: Bool = false,
-            matchContext: BotMatchContext? = nil
+            matchContext: BotMatchContext? = nil,
+            roundState: BotMatchContext.RoundSnapshot? = nil,
+            actingPlayerIndex: Int? = nil,
+            remainingOpponentPlayerIndices: [Int]? = nil,
+            opponentIntention: OpponentIntentionModel? = nil
         ) {
             self.trick = trick
             self.trump = trump
@@ -59,6 +84,10 @@ struct BotTurnCandidateRankingService {
             self.chasePressure = chasePressure
             self.isBlindRound = isBlindRound
             self.matchContext = matchContext
+            self.roundState = roundState
+            self.actingPlayerIndex = actingPlayerIndex
+            self.remainingOpponentPlayerIndices = remainingOpponentPlayerIndices
+            self.opponentIntention = opponentIntention
         }
     }
 
@@ -456,6 +485,91 @@ struct BotTurnCandidateRankingService {
         return 1.0 + (denyPressureMultiplier - 1.0) * 0.25 * lateBlockWeight
     }
 
+    /// Этап P1-2: pressure от раундового дефицита соперников (`needsTricks == 1`)
+    /// с локальным фокусом на следующем по ходу/левом соседе.
+    private func opponentBidPressureUtilityAdjustment(
+        immediateWinProbability: Double,
+        context: UtilityContext
+    ) -> Double {
+        guard let roundState = context.roundState else { return 0.0 }
+
+        let resolvedPlayerCount = context.matchContext?.playerCount ?? roundState.bids.count
+        guard resolvedPlayerCount > 1 else { return 0.0 }
+
+        let actingPlayerIndex: Int = {
+            if let explicit = context.actingPlayerIndex {
+                return normalizedPlayerIndex(explicit, playerCount: resolvedPlayerCount)
+            }
+            if let fromMatchContext = context.matchContext?.playerIndex {
+                return normalizedPlayerIndex(fromMatchContext, playerCount: resolvedPlayerCount)
+            }
+            return 0
+        }()
+
+        let leftNeighborIndex = context.matchContext?.premium?.leftNeighborIndex.map {
+            normalizedPlayerIndex($0, playerCount: resolvedPlayerCount)
+        }
+        let nextOpponentIndex = context.remainingOpponentPlayerIndices?.first.map {
+            normalizedPlayerIndex($0, playerCount: resolvedPlayerCount)
+        }
+        let opponents = (0..<resolvedPlayerCount).filter { $0 != actingPlayerIndex }
+
+        var pressure = 0.0
+        for opponentIndex in opponents {
+            guard let needs = roundState.needsTricks(for: opponentIndex) else { continue }
+            guard needs == 1 else { continue }
+
+            var weight = 0.0
+            if opponentIndex == nextOpponentIndex {
+                weight = max(weight, 1.0)
+            }
+            if opponentIndex == leftNeighborIndex {
+                weight = max(weight, 0.9)
+            }
+            if weight == 0 {
+                weight = 0.45
+            }
+            pressure += weight
+        }
+
+        guard pressure > 0 else { return 0.0 }
+        let normalizedPressure = min(1.8, pressure)
+
+        if context.shouldChaseTrick {
+            // Нужно добирать: чуть сильнее ценим контроль текущей взятки, если он ломает exact-линию соперника.
+            return immediateWinProbability * (10.0 + 8.0 * normalizedPressure)
+        }
+
+        // Режим dump: избегаем "безопасного" проигрыша, который отдает точный добор сопернику.
+        return -(1.0 - immediateWinProbability) * (7.0 + 9.0 * normalizedPressure)
+    }
+
+    /// Этап P1-1: надбавка по compact intention-model.
+    /// При отсутствии evidence должна быть нейтральной.
+    private func opponentIntentionUtilityAdjustment(
+        immediateWinProbability: Double,
+        context: UtilityContext
+    ) -> Double {
+        guard let intention = context.opponentIntention else { return 0.0 }
+        guard intention.hasEvidence else { return 0.0 }
+
+        let strongest = max(0.0, intention.strongestDenyPressure)
+        let aggregate = max(0.0, intention.totalDenyPressure)
+        guard strongest > 0 || aggregate > 0 else { return 0.0 }
+
+        let pressure = min(1.9, strongest + aggregate * 0.22)
+        if context.shouldChaseTrick {
+            return immediateWinProbability * (8.0 + 7.5 * pressure)
+        }
+
+        return -(1.0 - immediateWinProbability) * (6.5 + 8.5 * pressure)
+    }
+
+    private func normalizedPlayerIndex(_ value: Int, playerCount: Int) -> Int {
+        guard playerCount > 0 else { return 0 }
+        return ((value % playerCount) + playerCount) % playerCount
+    }
+
     /// Этап 5 (MVP): контекстная оценка объявления ведущего джокера.
     /// На первом шаге даём отдельный utility для `wish/above/takes` без сложного моделирования ответов соперников.
     private func leadJokerDeclarationUtilityAdjustment(
@@ -713,6 +827,14 @@ struct BotTurnCandidateRankingService {
             context: context
         )
         utility += premiumPreserveUtilityAdjustment(
+            immediateWinProbability: immediateWinProbability,
+            context: context
+        )
+        utility += opponentBidPressureUtilityAdjustment(
+            immediateWinProbability: immediateWinProbability,
+            context: context
+        )
+        utility += opponentIntentionUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             context: context
         )

@@ -381,6 +381,131 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         XCTAssertEqual(erraticDecision?.card, card(.clubs, .seven))
     }
 
+    func testBestMove_whenRolloutTriggeredBySmallHand_isDeterministic() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+
+        let hand: [Card] = [
+            card(.hearts, .ace),
+            card(.hearts, .king),
+            card(.hearts, .seven)
+        ]
+        let roundState = BotMatchContext.RoundSnapshot(
+            bids: [2, 2, 0, 0],
+            tricksTaken: [1, 1, 0, 0],
+            isBlindBid: [false, false, false, false]
+        )
+        let context = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            round: roundState
+        )
+
+        let firstDecision = evaluator.bestMove(
+            legalCards: hand,
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .clubs,
+            targetBid: 2,
+            currentTricks: 1,
+            cardsInRound: 8,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: context,
+            roundState: roundState,
+            actingPlayerIndex: 0
+        )
+        let secondDecision = evaluator.bestMove(
+            legalCards: hand,
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .clubs,
+            targetBid: 2,
+            currentTricks: 1,
+            cardsInRound: 8,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: context,
+            roundState: roundState,
+            actingPlayerIndex: 0
+        )
+
+        XCTAssertEqual(secondDecision?.card, firstDecision?.card)
+        XCTAssertEqual(secondDecision?.jokerDecision, firstDecision?.jokerDecision)
+    }
+
+    func testBestMove_whenRoundStateNeedsSingleTrickAhead_canPreferControlCard() {
+        let trickNode = TrickNode()
+        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+
+        let hand: [Card] = [
+            card(.clubs, .ace),
+            card(.clubs, .seven)
+        ]
+        let pressuredRoundState = BotMatchContext.RoundSnapshot(
+            bids: [0, 2, 0, 0],
+            tricksTaken: [1, 1, 0, 0], // player 1 needs exactly one trick
+            isBlindBid: [false, false, false, false]
+        )
+        let neutralRoundState = BotMatchContext.RoundSnapshot(
+            bids: [0, 2, 0, 0],
+            tricksTaken: [1, 2, 0, 0],
+            isBlindBid: [false, false, false, false]
+        )
+        let matchContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 6,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4,
+            round: pressuredRoundState
+        )
+
+        let neutralDecision = evaluator.bestMove(
+            legalCards: hand,
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .hearts,
+            targetBid: 0,
+            currentTricks: 1,
+            cardsInRound: 8,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: matchContext,
+            roundState: neutralRoundState,
+            actingPlayerIndex: 0
+        )
+        let pressuredDecision = evaluator.bestMove(
+            legalCards: hand,
+            handCards: hand,
+            trickNode: trickNode,
+            trump: .hearts,
+            targetBid: 0,
+            currentTricks: 1,
+            cardsInRound: 8,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: matchContext,
+            roundState: pressuredRoundState,
+            actingPlayerIndex: 0
+        )
+
+        XCTAssertEqual(pressuredDecision?.card, card(.clubs, .ace))
+        guard case .some(.regular(_, let neutralRank)) = neutralDecision?.card,
+              case .some(.regular(_, let pressuredRank)) = pressuredDecision?.card else {
+            XCTFail("Ожидались регулярные карты в сравнении pressure/neutral")
+            return
+        }
+        XCTAssertGreaterThanOrEqual(pressuredRank.rawValue, neutralRank.rawValue)
+    }
+
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return .regular(suit: suit, rank: rank)
     }

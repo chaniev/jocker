@@ -37,6 +37,7 @@ final class GameTurnService {
         playerCount: Int? = nil,
         isBlind: Bool = false,
         matchContext: BotMatchContext? = nil,
+        roundState: BotMatchContext.RoundSnapshot? = nil,
         actingPlayerIndex: Int? = nil,
         completedTricksInRound: [[PlayedTrickCard]] = []
     ) -> (card: Card, jokerDecision: JokerPlayDecision)? {
@@ -51,6 +52,7 @@ final class GameTurnService {
                 playerCount: playerCount,
                 isBlind: isBlind,
                 matchContext: matchContext,
+                roundState: roundState,
                 actingPlayerIndex: actingPlayerIndex,
                 completedTricksInRound: completedTricksInRound
             )
