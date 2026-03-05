@@ -157,6 +157,9 @@
 		D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E200022F8022010037CA75 /* BotRankNormalization.swift */; };
 		D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */; };
 		F4A100022F9000010037CA75 /* BotHandStrengthModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A100032F9000010037CA75 /* BotHandStrengthModelTests.swift */; };
+		E6A100112FA100010037CA75 /* HandFeatureExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A100012FA100010037CA75 /* HandFeatureExtractorTests.swift */; };
+		E6A100122FA100010037CA75 /* BotMatchContextBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A100022FA100010037CA75 /* BotMatchContextBuilderTests.swift */; };
+		E6A100132FA100010037CA75 /* BotOpponentModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6A100032FA100010037CA75 /* BotOpponentModelTests.swift */; };
 		F4A100042F9000010037CA75 /* BotHandStrengthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A100012F9000010037CA75 /* BotHandStrengthModel.swift */; };
 		DD1000022F3E00010037CA75 /* GameStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1000012F3E00010037CA75 /* GameStateTests.swift */; };
 		E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */; };
@@ -360,6 +363,9 @@
 		D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRankNormalizationTests.swift; sourceTree = "<group>"; };
 		F4A100012F9000010037CA75 /* BotHandStrengthModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotHandStrengthModel.swift; sourceTree = "<group>"; };
 		F4A100032F9000010037CA75 /* BotHandStrengthModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotHandStrengthModelTests.swift; sourceTree = "<group>"; };
+		E6A100012FA100010037CA75 /* HandFeatureExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandFeatureExtractorTests.swift; sourceTree = "<group>"; };
+		E6A100022FA100010037CA75 /* BotMatchContextBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotMatchContextBuilderTests.swift; sourceTree = "<group>"; };
+		E6A100032FA100010037CA75 /* BotOpponentModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotOpponentModelTests.swift; sourceTree = "<group>"; };
 		DD1000012F3E00010037CA75 /* GameStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStateTests.swift; sourceTree = "<group>"; };
 		E10000022F7400010037CA75 /* GameFinalPlayerSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFinalPlayerSummary.swift; sourceTree = "<group>"; };
 		E10000042F7400010037CA75 /* GameResultsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsViewController.swift; sourceTree = "<group>"; };
@@ -679,6 +685,9 @@
 				children = (
 					C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */,
 					F4A100032F9000010037CA75 /* BotHandStrengthModelTests.swift */,
+					E6A100012FA100010037CA75 /* HandFeatureExtractorTests.swift */,
+					E6A100022FA100010037CA75 /* BotMatchContextBuilderTests.swift */,
+					E6A100032FA100010037CA75 /* BotOpponentModelTests.swift */,
 					D4E300022F8023010037CA75 /* BotRankNormalizationTests.swift */,
 					D4DF00022F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift */,
 					D4DE00022F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift */,
@@ -1197,6 +1206,9 @@
 				B20000412F7900030037CA75 /* GamePlayersSettingsStoreTests.swift in Sources */,
 				C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
 				F4A100022F9000010037CA75 /* BotHandStrengthModelTests.swift in Sources */,
+				E6A100112FA100010037CA75 /* HandFeatureExtractorTests.swift in Sources */,
+				E6A100122FA100010037CA75 /* BotMatchContextBuilderTests.swift in Sources */,
+				E6A100132FA100010037CA75 /* BotOpponentModelTests.swift in Sources */,
 					D4E300012F8023010037CA75 /* BotRankNormalizationTests.swift in Sources */,
 					D4DF00012F801E010037CA75 /* BotTurnCandidateEvaluatorServiceTests.swift in Sources */,
 					D4DE00012F801D010037CA75 /* BotTurnCandidateRankingServiceTests.swift in Sources */,
