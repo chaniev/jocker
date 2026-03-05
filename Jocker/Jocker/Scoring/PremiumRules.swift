@@ -215,7 +215,7 @@ enum PremiumRules {
         }
 
         for playerIndex in zeroPremiumPlayers {
-            zeroPremiumBonuses[playerIndex] = ScoreCalculator.zeroPremiumAmount
+            zeroPremiumBonuses[playerIndex] = ScoringConstants.zeroPremiumAmount
         }
 
         let premiumSet = Set(allPremiumPlayers)

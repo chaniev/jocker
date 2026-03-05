@@ -260,9 +260,9 @@ final class ScoreCalculatorTests: XCTestCase {
     }
     
     // MARK: - Нулевая премия
-    
+
     func testZeroPremiumAmount() {
-        XCTAssertEqual(ScoreCalculator.zeroPremiumAmount, 500)
+        XCTAssertEqual(ScoringConstants.zeroPremiumAmount, 500)
     }
     
     func testZeroPremiumEligible_allZeros() {

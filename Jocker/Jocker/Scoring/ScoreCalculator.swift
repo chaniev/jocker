@@ -32,32 +32,34 @@ enum ScoreCalculator {
     /// - Returns: количество очков за раунд
     static func calculateRoundScore(cardsInRound: Int, bid: Int, tricksTaken: Int, isBlind: Bool) -> Int {
         let baseScore: Int
-        
+
         if tricksTaken == bid {
             if bid == cardsInRound {
                 // K = V = C → K×100
-                baseScore = bid * 100
+                baseScore = bid * ScoringConstants.exactBidAllTricksMultiplier
             } else {
                 // K = V, V ≠ C → K×50 + 50
-                baseScore = bid * 50 + 50
+                baseScore = bid * ScoringConstants.exactBidBaseMultiplier
+                       + ScoringConstants.exactBidBaseBonus
             }
         } else if tricksTaken > bid {
             // K > V → K×10
-            baseScore = tricksTaken * 10
+            baseScore = tricksTaken * ScoringConstants.overbidTrickValue
         } else {
             // tricksTaken < bid
             if bid == cardsInRound && tricksTaken == 0 {
                 // K = 0 и V = C → -V×100
-                baseScore = -bid * 100
+                baseScore = -bid * ScoringConstants.zeroBidAllTricksPenaltyMultiplier
             } else {
                 // K < V → -(V-K)×50 - 50
                 let deficit = bid - tricksTaken
-                baseScore = -(deficit * 50 + 50)
+                baseScore = -(deficit * ScoringConstants.underbidPenaltyPerTrick
+                            + ScoringConstants.underbidBasePenalty)
             }
         }
-        
+
         // Если ставка «в тёмную», очки удваиваются
-        return isBlind ? baseScore * 2 : baseScore
+        return isBlind ? baseScore * ScoringConstants.blindScoreMultiplier : baseScore
     }
     
     // MARK: - Расчёт премии
@@ -78,10 +80,7 @@ enum ScoreCalculator {
     }
     
     // MARK: - Нулевая премия
-    
-    /// Количество очков за нулевую премию
-    static let zeroPremiumAmount: Int = 500
-    
+
     /// Проверить, заслужил ли игрок нулевую премию
     ///
     /// Игрок получает нулевую премию в блоках 1 и 3, если во всех раздачах

@@ -44,6 +44,7 @@
 		A900010A2F7700010037CA75 /* DealHistoryExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */; };
 		AA0000022F2800010037CA75 /* RoundResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000012F2800010037CA75 /* RoundResult.swift */; };
 		AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000032F2800010037CA75 /* ScoreCalculator.swift */; };
+		AA0000112F2800010037CA75 /* ScoringConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102F2800010037CA75 /* ScoringConstants.swift */; };
 		AA0000062F2800010037CA75 /* BlockResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000052F2800010037CA75 /* BlockResult.swift */; };
 		AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000072F2800010037CA75 /* ScoreManager.swift */; };
 		AA00000A2F2800010037CA75 /* ScoreCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */; };
@@ -241,6 +242,7 @@
 		A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportServiceTests.swift; sourceTree = "<group>"; };
 		AA0000012F2800010037CA75 /* RoundResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundResult.swift; sourceTree = "<group>"; };
 		AA0000032F2800010037CA75 /* ScoreCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculator.swift; sourceTree = "<group>"; };
+		AA0000102F2800010037CA75 /* ScoringConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringConstants.swift; sourceTree = "<group>"; };
 		AA0000052F2800010037CA75 /* BlockResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockResult.swift; sourceTree = "<group>"; };
 		AA0000072F2800010037CA75 /* ScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreManager.swift; sourceTree = "<group>"; };
 		AA0000092F2800010037CA75 /* ScoreCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculatorTests.swift; sourceTree = "<group>"; };
@@ -820,6 +822,7 @@
 			isa = PBXGroup;
 			children = (
 				AA0000032F2800010037CA75 /* ScoreCalculator.swift */,
+				AA0000102F2800010037CA75 /* ScoringConstants.swift */,
 				D4C100042F8000010037CA75 /* PremiumRules.swift */,
 				AA0000072F2800010037CA75 /* ScoreManager.swift */,
 			);
@@ -1132,6 +1135,7 @@
 				A90001032F7700010037CA75 /* DealTrickMove.swift in Sources */,
 				A90001082F7700010037CA75 /* DealTrainingMoveSample.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
+				AA0000112F2800010037CA75 /* ScoringConstants.swift in Sources */,
 				D4C100032F8000010037CA75 /* PremiumRules.swift in Sources */,
 				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,
 				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
@@ -1249,6 +1253,7 @@
 				F40000092F5600010037CA75 /* BotMatchContext.swift in Sources */,
 				F400000A2F5600010037CA75 /* BotOpponentModel.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
+				AA0000112F2800010037CA75 /* ScoringConstants.swift in Sources */,
 				D4C100032F8000010037CA75 /* PremiumRules.swift in Sources */,
 				AA0000082F2800010037CA75 /* ScoreManager.swift in Sources */,
 				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,

@@ -105,7 +105,7 @@ final class PremiumRulesTests: XCTestCase {
         XCTAssertTrue(outcome.allPremiumPlayers.contains(1))
         XCTAssertTrue(outcome.zeroPremiumPlayers.contains(1))
         XCTAssertFalse(outcome.regularPremiumPlayers.contains(1))
-        XCTAssertEqual(outcome.zeroPremiumBonuses[1], ScoreCalculator.zeroPremiumAmount)
+        XCTAssertEqual(outcome.zeroPremiumBonuses[1], ScoringConstants.zeroPremiumAmount)
         XCTAssertEqual(outcome.premiumBonuses[1], 0)
         XCTAssertEqual(outcome.roundsWithPremiums[1][2].score, 550)
         XCTAssertEqual(outcome.baseBlockScores[1], 650)
