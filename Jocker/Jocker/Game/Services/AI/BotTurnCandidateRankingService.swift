@@ -121,16 +121,16 @@ struct BotTurnCandidateRankingService {
         let behindLeader = max(0, leaderScore - ownScore)
         let safeLead = max(0, ownScore - bestOpponentScore)
 
-        let scoreScale = matchContext.block == .fourth ? 180.0 : 260.0
+        let scoreScale = matchContext.block == .fourth ? BotRankingConstants.fourthBlockScoreScale : BotRankingConstants.standardBlockScoreScale
         let behindSignal = min(1.0, Double(behindLeader) / scoreScale)
         let leadSignal = min(1.0, Double(safeLead) / scoreScale)
-        let blockWeight = matchContext.block == .fourth ? 1.15 : 1.0
+        let blockWeight = matchContext.block == .fourth ? BotRankingConstants.fourthBlockWeight : 1.0
 
         let premium = matchContext.premium
         let preserveOwnPremiumBias: Double = {
             guard let premium else { return 0.0 }
             guard premium.isPremiumCandidateSoFar || premium.isZeroPremiumCandidateSoFar else { return 0.0 }
-            return 0.35 + 0.65 * matchContext.blockProgressFraction
+            return BotRankingConstants.premiumPreserveBase + BotRankingConstants.premiumPreserveProgressWeight * matchContext.blockProgressFraction
         }()
         let denyOpponentPremiumBias: Double = {
             guard let premium else { return 0.0 }
@@ -139,18 +139,18 @@ struct BotTurnCandidateRankingService {
                     premium.opponentPremiumCandidatesSoFarCount > 0 else {
                 return 0.0
             }
-            return 0.30 + 0.70 * matchContext.blockProgressFraction
+            return BotRankingConstants.denyPremiumBase + BotRankingConstants.denyPremiumProgressWeight * matchContext.blockProgressFraction
         }()
 
         var riskBudget = (behindSignal - leadSignal) * blockWeight
-        let baseActivationWeight = 0.05 + 0.95 * matchContext.blockProgressFraction
+        let baseActivationWeight = BotRankingConstants.baseActivationWeight + BotRankingConstants.progressActivationWeight * matchContext.blockProgressFraction
         let roundsRemainingForActivation = max(0, matchContext.totalRoundsInBlock - matchContext.roundIndexInBlock - 1)
         let finalRoundsActivationBoost: Double
         switch roundsRemainingForActivation {
         case 0...1:
-            finalRoundsActivationBoost = 1.0
+            finalRoundsActivationBoost = BotRankingConstants.finalRoundsActivationFull
         case 2:
-            finalRoundsActivationBoost = 0.75
+            finalRoundsActivationBoost = BotRankingConstants.finalRoundsActivationHalf
         default:
             finalRoundsActivationBoost = baseActivationWeight
         }
@@ -167,23 +167,23 @@ struct BotTurnCandidateRankingService {
         let endgameUrgency: Double
         switch roundsRemaining {
         case 0...1:
-            endgameUrgency = 1.0
+            endgameUrgency = BotRankingConstants.endgameUrgencyFull
         case 2:
-            endgameUrgency = 0.82
+            endgameUrgency = BotRankingConstants.endgameUrgencyTwoRounds
         case 3:
-            endgameUrgency = 0.68
+            endgameUrgency = BotRankingConstants.endgameUrgencyThreeRounds
         default:
-            endgameUrgency = 0.42
+            endgameUrgency = BotRankingConstants.endgameUrgencyDefault
         }
         let urgency = min(
             1.0,
             max(
                 0.0,
                 max(
-                    abs(riskBudget) * 0.75,
-                    endgameUrgency * 0.60 +
-                        matchContext.blockProgressFraction * 0.40 +
-                        max(preserveOwnPremiumBias, denyOpponentPremiumBias) * 0.12
+                    abs(riskBudget) * BotRankingConstants.riskBudgetWeight,
+                    endgameUrgency * BotRankingConstants.endgameUrgencyWeight +
+                        matchContext.blockProgressFraction * BotRankingConstants.blockProgressWeight +
+                        max(preserveOwnPremiumBias, denyOpponentPremiumBias) * BotRankingConstants.premiumBiasWeight
                 )
             )
         )
@@ -204,17 +204,17 @@ struct BotTurnCandidateRankingService {
         context: UtilityContext
     ) -> Double {
         guard let plan = blockPlan(from: context.matchContext) else { return 0.0 }
-        guard abs(plan.riskBudget) > 0.000_001 else { return 0.0 }
+        guard abs(plan.riskBudget) > BotRankingConstants.utilityTieTolerance else { return 0.0 }
 
         let chaseAggressionSignal =
-            immediateWinProbability * 120.0 -
-            threat * 0.05 +
-            context.chasePressure * 18.0
+            immediateWinProbability * BotRankingConstants.matchCatchUpChaseAggressionBase -
+            threat * BotRankingConstants.matchCatchUpChaseAggressionThreatWeight +
+            context.chasePressure * BotRankingConstants.matchCatchUpChaseAggressionPressureWeight
         let finalTrickUrgencyBonus = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent && context.shouldChaseTrick
-            ? 8.0
+            ? BotRankingConstants.matchCatchUpFinalTrickUrgencyBonus
             : 0.0
         let opponentUrgencyMultiplier = opponentMatchCatchUpUrgencyMultiplier(from: context.matchContext)
-        let urgencyWeight = 0.20 + 0.80 * plan.urgency
+        let urgencyWeight = BotRankingConstants.matchCatchUpOpponentUrgencyBase + BotRankingConstants.matchCatchUpUrgencyWeightProgress * plan.urgency
 
         if context.shouldChaseTrick {
             var adjustment = plan.riskBudget *
@@ -222,23 +222,23 @@ struct BotTurnCandidateRankingService {
                 (chaseAggressionSignal + finalTrickUrgencyBonus) *
                 urgencyWeight
             if plan.preserveOwnPremiumBias > 0, context.trickDeltaToBidBeforeMove >= 0 {
-                adjustment -= immediateWinProbability * 3.0 * plan.preserveOwnPremiumBias
+                adjustment -= immediateWinProbability * BotRankingConstants.matchCatchUpPreservePremiumPenalty * plan.preserveOwnPremiumBias
             }
             return adjustment
         }
 
         let conservativeDumpSignal =
-            (1.0 - immediateWinProbability) * 96.0 +
-            threat * 0.035 +
-            max(0.0, projectedScore) * 0.06
+            (1.0 - immediateWinProbability) * BotRankingConstants.matchCatchUpConservativeDumpBase +
+            threat * BotRankingConstants.matchCatchUpConservativeDumpThreatWeight +
+            max(0.0, projectedScore) * BotRankingConstants.matchCatchUpConservativeDumpScoreWeight
         var adjustment = (-plan.riskBudget) *
             opponentUrgencyMultiplier *
             conservativeDumpSignal *
-            (0.12 + 0.55 * urgencyWeight)
+            (BotRankingConstants.matchCatchUpUrgencyWeightBase + BotRankingConstants.matchCatchUpUrgencyWeightProgress * urgencyWeight)
         if plan.denyOpponentPremiumBias > 0 {
             adjustment -=
                 (1.0 - immediateWinProbability) *
-                2.5 *
+                BotRankingConstants.matchCatchUpDenyOpponentPenaltyBase *
                 plan.denyOpponentPremiumBias
         }
         return adjustment
@@ -254,7 +254,7 @@ struct BotTurnCandidateRankingService {
         guard let premium = matchContext.premium else { return 0.0 }
         guard premium.isPremiumCandidateSoFar || premium.isZeroPremiumCandidateSoFar else { return 0.0 }
 
-        let evidenceWeight = 0.25 + 0.75 * min(
+        let evidenceWeight = BotRankingConstants.premiumPreserveEvidenceBase + BotRankingConstants.premiumPreserveEvidenceProgress * min(
             1.0,
             Double(max(0, premium.completedRoundsInBlock)) /
                 Double(max(1, matchContext.totalRoundsInBlock - 1))
@@ -262,13 +262,13 @@ struct BotTurnCandidateRankingService {
         let closingRoundsWeight: Double
         switch premium.remainingRoundsInBlock {
         case ...1:
-            closingRoundsWeight = 1.35
+            closingRoundsWeight = BotRankingConstants.premiumPreserveClosingRoundsWeight
         case 2:
-            closingRoundsWeight = 1.15
+            closingRoundsWeight = BotRankingConstants.premiumPreserveClosingRoundsTwo
         default:
-            closingRoundsWeight = 1.0
+            closingRoundsWeight = BotRankingConstants.premiumPreserveClosingRoundsDefault
         }
-        let progressWeight = (0.20 + 1.10 * matchContext.blockProgressFraction) * evidenceWeight * closingRoundsWeight
+        let progressWeight = (BotRankingConstants.premiumPreserveProgressBase + BotRankingConstants.premiumPreserveEvidenceProgressWeight * matchContext.blockProgressFraction) * evidenceWeight * closingRoundsWeight
         var adjustment = 0.0
         let bidTrajectoryDelta = context.trickDeltaToBidBeforeMove
         let isExactlyOnBidBeforeMove = bidTrajectoryDelta == 0
@@ -281,20 +281,20 @@ struct BotTurnCandidateRankingService {
                     Double(context.tricksNeededToMatchBid) / Double(max(1, context.tricksRemainingIncludingCurrent))
                 )
                 let mustWinAllRemaining = context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
-                let trajectoryMultiplier = mustWinAllRemaining ? 1.30 : 1.0
+                let trajectoryMultiplier = mustWinAllRemaining ? BotRankingConstants.premiumPreserveMustWinAllMultiplier : 1.0
                 // Если одновременно релевантен zero-premium, избегаем ситуации, где обычный
                 // premium-chase бонус полностью "перебивает" zero-premium осторожность.
-                let zeroPremiumConflictDampener = premium.isZeroPremiumCandidateSoFar ? 0.94 : 1.0
+                let zeroPremiumConflictDampener = premium.isZeroPremiumCandidateSoFar ? BotRankingConstants.premiumPreserveZeroConflictDampener : 1.0
                 adjustment += immediateWinProbability *
-                    (10.0 + 12.0 * deficitUrgency) *
+                    (BotRankingConstants.premiumPreserveChaseBonusBase + BotRankingConstants.premiumPreserveChaseBonusProgress * deficitUrgency) *
                     progressWeight *
                     trajectoryMultiplier *
                     zeroPremiumConflictDampener
             } else {
-                let exactBidPreserveMultiplier = isExactlyOnBidBeforeMove ? 1.45 : 1.0
-                let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? 0.15 : 1.0
+                let exactBidPreserveMultiplier = isExactlyOnBidBeforeMove ? BotRankingConstants.premiumPreserveExactBidMultiplier : 1.0
+                let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? BotRankingConstants.premiumPreserveAlreadyBrokenMultiplier : 1.0
                 adjustment += (1.0 - immediateWinProbability) *
-                    16.0 *
+                    BotRankingConstants.premiumPreserveDumpBonus *
                     progressWeight *
                     exactBidPreserveMultiplier *
                     alreadyBrokenMultiplier
@@ -303,13 +303,13 @@ struct BotTurnCandidateRankingService {
 
         if premium.isZeroPremiumCandidateSoFar {
             if context.shouldChaseTrick {
-                let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? 0.10 : 1.0
-                adjustment -= immediateWinProbability * 28.0 * progressWeight * alreadyBrokenMultiplier
+                let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? BotRankingConstants.premiumPreserveZeroAlreadyBrokenMultiplier : 1.0
+                adjustment -= immediateWinProbability * BotRankingConstants.premiumPreserveZeroChasePenalty * progressWeight * alreadyBrokenMultiplier
             } else {
-                let exactZeroProtectMultiplier = isExactlyOnBidBeforeMove ? 1.60 : 1.0
-                let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? 0.10 : 1.0
+                let exactZeroProtectMultiplier = isExactlyOnBidBeforeMove ? BotRankingConstants.premiumPreserveExactZeroMultiplier : 1.0
+                let alreadyBrokenMultiplier = hasAlreadyBrokenRoundExactBid ? BotRankingConstants.premiumPreserveZeroAlreadyBrokenMultiplier : 1.0
                 adjustment += (1.0 - immediateWinProbability) *
-                    24.0 *
+                    BotRankingConstants.premiumPreserveZeroDumpBonus *
                     progressWeight *
                     exactZeroProtectMultiplier *
                     alreadyBrokenMultiplier
@@ -331,33 +331,33 @@ struct BotTurnCandidateRankingService {
         guard premium.isPenaltyTargetRiskSoFar else { return 0.0 }
         guard premium.premiumCandidatesThreateningPenaltyCount > 0 else { return 0.0 }
 
-        let threatCountWeight = min(1.6, 0.8 + 0.25 * Double(premium.premiumCandidatesThreateningPenaltyCount))
-        let evidenceWeight = 0.25 + 0.75 * min(
+        let threatCountWeight = min(BotRankingConstants.penaltyAvoidThreatCountMax, BotRankingConstants.penaltyAvoidThreatCountMin + BotRankingConstants.penaltyAvoidThreatCountProgress * Double(premium.premiumCandidatesThreateningPenaltyCount))
+        let evidenceWeight = BotRankingConstants.penaltyAvoidEvidenceBase + BotRankingConstants.penaltyAvoidEvidenceProgress * min(
             1.0,
             Double(max(0, premium.completedRoundsInBlock)) /
                 Double(max(1, matchContext.totalRoundsInBlock - 1))
         )
-        let endBlockWeight = 0.20 + 1.00 * matchContext.blockProgressFraction
+        let endBlockWeight = BotRankingConstants.penaltyAvoidEndBlockBase + BotRankingConstants.penaltyAvoidEndBlockProgress * matchContext.blockProgressFraction
         let opponentStyleMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
         let riskWeight = threatCountWeight * evidenceWeight * endBlockWeight * opponentStyleMultiplier
         // Retune (Stage 4c/6): усиливаем penalty-avoid в поздней части блока,
         // чтобы реже сохранять штрафоопасную траекторию соперников.
-        let lateBlockPenaltyAvoidBoost = 1.0 + 0.18 * matchContext.blockProgressFraction
+        let lateBlockPenaltyAvoidBoost = 1.0 + BotRankingConstants.penaltyAvoidLateBlockBoost * matchContext.blockProgressFraction
 
         var adjustment = 0.0
         let positiveProjectedScore = max(0.0, projectedScore)
         if positiveProjectedScore > 0 {
-            adjustment -= positiveProjectedScore * 0.18 * riskWeight
+            adjustment -= positiveProjectedScore * BotRankingConstants.penaltyAvoidProjectedScoreWeight * riskWeight
         }
 
         if context.shouldChaseTrick {
             if context.trickDeltaToBidBeforeMove > 0 {
                 // Уже вышли в overbid и продолжаем добирать: при риске штрафа это особенно плохо.
-                adjustment -= immediateWinProbability * 18.0 * riskWeight * lateBlockPenaltyAvoidBoost
+                adjustment -= immediateWinProbability * BotRankingConstants.penaltyAvoidOverbidPenalty * riskWeight * lateBlockPenaltyAvoidBoost
             }
         } else {
             // В режиме dump под риском штрафа чуть сильнее поощряем безопасный проигрыш взятки.
-            adjustment += (1.0 - immediateWinProbability) * 10.8 * riskWeight * lateBlockPenaltyAvoidBoost
+            adjustment += (1.0 - immediateWinProbability) * BotRankingConstants.penaltyAvoidDumpBonus * riskWeight * lateBlockPenaltyAvoidBoost
         }
 
         return adjustment
@@ -381,33 +381,33 @@ struct BotTurnCandidateRankingService {
             return 0.0
         }
 
-        let evidenceWeight = 0.25 + 0.75 * min(
+        let evidenceWeight = BotRankingConstants.premiumDenyEvidenceBase + BotRankingConstants.premiumDenyEvidenceProgress * min(
             1.0,
             Double(max(0, premium.completedRoundsInBlock)) /
                 Double(max(1, matchContext.totalRoundsInBlock - 1))
         )
-        let endBlockWeight = 0.20 + 1.00 * matchContext.blockProgressFraction
-        let leftNeighborWeight = premium.leftNeighborIsPremiumCandidateSoFar ? 1.0 : 0.0
+        let endBlockWeight = BotRankingConstants.premiumDenyEndBlockBase + BotRankingConstants.premiumDenyEndBlockProgress * matchContext.blockProgressFraction
+        let leftNeighborWeight = premium.leftNeighborIsPremiumCandidateSoFar ? BotRankingConstants.premiumDenyLeftNeighborWeight : 0.0
         let otherOpponentCandidates = max(
             0,
             premium.opponentPremiumCandidatesSoFarCount - (premium.leftNeighborIsPremiumCandidateSoFar ? 1 : 0)
         )
-        let otherOpponentsWeight = min(1.4, Double(otherOpponentCandidates) * 0.55)
+        let otherOpponentsWeight = min(BotRankingConstants.premiumDenyOtherOpponentsMax, Double(otherOpponentCandidates) * BotRankingConstants.premiumDenyOtherOpponentsWeight)
         let opponentStyleMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
         let denyWeight = (leftNeighborWeight + otherOpponentsWeight) *
             evidenceWeight *
             endBlockWeight *
             opponentStyleMultiplier
         guard denyWeight > 0 else { return 0.0 }
-        let overbidRelaxation = context.trickDeltaToBidBeforeMove > 0 ? 1.20 : 1.0
+        let overbidRelaxation = context.trickDeltaToBidBeforeMove > 0 ? BotRankingConstants.premiumDenyOverbidRelaxation : 1.0
 
         if context.shouldChaseTrick {
-            return immediateWinProbability * 10.0 * denyWeight * overbidRelaxation
+            return immediateWinProbability * BotRankingConstants.premiumDenyChaseBonus * denyWeight * overbidRelaxation
         }
 
         // В dump-режиме уменьшаем привлекательность "безопасного проигрыша взятки",
         // если это может сохранять премиальную линию соседа слева.
-        return -(1.0 - immediateWinProbability) * 12.0 * denyWeight * overbidRelaxation
+        return -(1.0 - immediateWinProbability) * BotRankingConstants.premiumDenyDumpPenalty * denyWeight * overbidRelaxation
     }
 
     /// Этап 6b (MVP): лёгкая калибровка anti-premium давления по наблюдаемому стилю.
@@ -425,7 +425,7 @@ struct BotTurnCandidateRankingService {
         }
         guard !prioritizedSnapshots.isEmpty else { return 1.0 }
 
-        let evidenceSaturationRounds = Double(max(1, min(matchContext.totalRoundsInBlock, 4)))
+        let evidenceSaturationRounds = Double(max(1, min(matchContext.totalRoundsInBlock, BotRankingConstants.opponentStyleEvidenceSaturationRounds)))
         var weightedStyleSignal = 0.0
         var totalWeight = 0.0
 
@@ -442,13 +442,13 @@ struct BotTurnCandidateRankingService {
             let blind = min(1.0, max(0.0, snapshot.blindBidRate))
             let aggression = min(1.0, max(0.0, snapshot.averageBidAggression))
 
-            let disciplineSignal = exact - 0.5 * (over + under)
-            let aggressionSignal = aggression - 0.45
-            let blindPressureSignal = blind - 0.20
+            let disciplineSignal = exact - BotRankingConstants.opponentStyleExactBase * (over + under)
+            let aggressionSignal = aggression - BotRankingConstants.opponentStyleAggressionBase
+            let blindPressureSignal = blind - BotRankingConstants.opponentStyleBlindBase
             let styleSignal =
-                disciplineSignal * 0.22 +
-                aggressionSignal * 0.10 +
-                blindPressureSignal * 0.04
+                disciplineSignal * BotRankingConstants.opponentStyleDisciplineWeight +
+                aggressionSignal * BotRankingConstants.opponentStyleAggressionWeight +
+                blindPressureSignal * BotRankingConstants.opponentStyleBlindPressureWeight
 
             weightedStyleSignal += styleSignal * evidenceWeight
             totalWeight += evidenceWeight
@@ -456,7 +456,7 @@ struct BotTurnCandidateRankingService {
 
         guard totalWeight > 0 else { return 1.0 }
         let normalizedSignal = weightedStyleSignal / totalWeight
-        return min(1.25, max(0.85, 1.0 + normalizedSignal))
+        return min(BotRankingConstants.opponentStyleMultiplierMax, max(BotRankingConstants.opponentStyleMultiplierMin, 1.0 + normalizedSignal))
     }
 
     /// Stage 6b: более мягкая версия style-signal для lead-joker anti-premium корректировок.
@@ -464,7 +464,7 @@ struct BotTurnCandidateRankingService {
     private func opponentLeadJokerAntiPremiumMultiplier(from matchContext: BotMatchContext?) -> Double {
         guard let matchContext else { return 1.0 }
         let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
-        return 1.0 + (denyPressureMultiplier - 1.0) * 0.60
+        return 1.0 + (denyPressureMultiplier - 1.0) * BotRankingConstants.opponentLeadJokerAntiPremiumWeight
     }
 
     /// Stage 6b: очень мягкая калибровка match catch-up urgency по opponent-style сигналу.
@@ -472,8 +472,8 @@ struct BotTurnCandidateRankingService {
     private func opponentMatchCatchUpUrgencyMultiplier(from matchContext: BotMatchContext?) -> Double {
         guard let matchContext else { return 1.0 }
         let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
-        let lateBlockWeight = 0.20 + 0.80 * matchContext.blockProgressFraction
-        return 1.0 + (denyPressureMultiplier - 1.0) * 0.35 * lateBlockWeight
+        let lateBlockWeight = BotRankingConstants.opponentLateBlockWeightBase + BotRankingConstants.opponentLateBlockWeightProgress * matchContext.blockProgressFraction
+        return 1.0 + (denyPressureMultiplier - 1.0) * BotRankingConstants.opponentMatchCatchUpUrgencyWeight * lateBlockWeight
     }
 
     /// Stage 6b: очень мягкая blind-chase калибровка.
@@ -481,8 +481,8 @@ struct BotTurnCandidateRankingService {
     private func opponentBlindChaseContestMultiplier(from matchContext: BotMatchContext?) -> Double {
         guard let matchContext else { return 1.0 }
         let denyPressureMultiplier = opponentPremiumDenyPressureMultiplier(from: matchContext)
-        let lateBlockWeight = 0.15 + 0.85 * matchContext.blockProgressFraction
-        return 1.0 + (denyPressureMultiplier - 1.0) * 0.25 * lateBlockWeight
+        let lateBlockWeight = BotRankingConstants.opponentLateBlockWeightBase + BotRankingConstants.opponentLateBlockWeightProgress * matchContext.blockProgressFraction
+        return 1.0 + (denyPressureMultiplier - 1.0) * BotRankingConstants.opponentBlindChaseContestWeight * lateBlockWeight
     }
 
     private func opponentDisciplineSignal(from matchContext: BotMatchContext?) -> Double {
@@ -541,27 +541,27 @@ struct BotTurnCandidateRankingService {
 
             var weight = 0.0
             if opponentIndex == nextOpponentIndex {
-                weight = max(weight, 1.0)
+                weight = max(weight, BotRankingConstants.opponentBidPressureNextWeight)
             }
             if opponentIndex == leftNeighborIndex {
-                weight = max(weight, 0.9)
+                weight = max(weight, BotRankingConstants.opponentBidPressureLeftNeighborWeight)
             }
             if weight == 0 {
-                weight = 0.45
+                weight = BotRankingConstants.opponentBidPressureOtherWeight
             }
             pressure += weight
         }
 
         guard pressure > 0 else { return 0.0 }
-        let normalizedPressure = min(1.8, pressure)
+        let normalizedPressure = min(BotRankingConstants.opponentBidPressureMax, pressure)
 
         if context.shouldChaseTrick {
             // Нужно добирать: чуть сильнее ценим контроль текущей взятки, если он ломает exact-линию соперника.
-            return immediateWinProbability * (10.0 + 8.0 * normalizedPressure)
+            return immediateWinProbability * (BotRankingConstants.opponentBidPressureChaseBase + BotRankingConstants.opponentBidPressureChaseProgress * normalizedPressure)
         }
 
         // Режим dump: избегаем "безопасного" проигрыша, который отдает точный добор сопернику.
-        return -(1.0 - immediateWinProbability) * (7.0 + 9.0 * normalizedPressure)
+        return -(1.0 - immediateWinProbability) * (BotRankingConstants.opponentBidPressureDumpBase + BotRankingConstants.opponentBidPressureDumpProgress * normalizedPressure)
     }
 
     /// Этап P1-1: надбавка по compact intention-model.
@@ -577,12 +577,12 @@ struct BotTurnCandidateRankingService {
         let aggregate = max(0.0, intention.totalDenyPressure)
         guard strongest > 0 || aggregate > 0 else { return 0.0 }
 
-        let pressure = min(1.9, strongest + aggregate * 0.22)
+        let pressure = min(BotRankingConstants.opponentIntentionPressureMax, strongest + aggregate * BotRankingConstants.opponentIntentionAggregateWeight)
         if context.shouldChaseTrick {
-            return immediateWinProbability * (8.0 + 7.5 * pressure)
+            return immediateWinProbability * (BotRankingConstants.opponentIntentionChaseBase + BotRankingConstants.opponentIntentionChaseProgress * pressure)
         }
 
-        return -(1.0 - immediateWinProbability) * (6.5 + 8.5 * pressure)
+        return -(1.0 - immediateWinProbability) * (BotRankingConstants.opponentIntentionDumpBase + BotRankingConstants.opponentIntentionDumpProgress * pressure)
     }
 
     private func normalizedPlayerIndex(_ value: Int, playerCount: Int) -> Int {
