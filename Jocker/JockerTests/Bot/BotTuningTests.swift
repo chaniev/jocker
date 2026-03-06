@@ -73,7 +73,10 @@ final class BotTuningTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(hard.bidding.expectedNoTrumpHighCardBonus, 0.0)
         XCTAssertGreaterThanOrEqual(hard.bidding.expectedNoTrumpJokerSynergy, 0.0)
         XCTAssertEqual(hard.runtimePolicy.ranking.standardBlockScoreScale, 260.0, accuracy: 0.000_1)
+        XCTAssertEqual(hard.runtimePolicy.ranking.jokerDeclaration.earlyWishPenaltyBase, 24.0, accuracy: 0.000_1)
+        XCTAssertEqual(hard.runtimePolicy.ranking.moveComposition.blindRewardMultiplier, 1.55, accuracy: 0.000_1)
         XCTAssertEqual(hard.runtimePolicy.opponentModeling.opponentLeadJokerAntiPremiumWeight, 0.60, accuracy: 0.000_1)
+        XCTAssertEqual(hard.runtimePolicy.opponentModeling.opponentDisciplineNeutralValue, 0.50, accuracy: 0.000_1)
     }
 
     /// Тестирует, что custom initializer сохраняет предоставленные компоненты.

@@ -18,15 +18,18 @@ struct MoveUtilityComposer {
 
     private let strategy: BotTuning.TurnStrategy
     private let jokerPolicy: BotTuning.JokerPolicy
+    private let policy: BotRuntimePolicy.Ranking.MoveComposition
     private let opponentPressureAdjuster: OpponentPressureAdjuster
 
     init(
         strategy: BotTuning.TurnStrategy,
         jokerPolicy: BotTuning.JokerPolicy,
+        policy: BotRuntimePolicy.Ranking.MoveComposition,
         opponentPressureAdjuster: OpponentPressureAdjuster
     ) {
         self.strategy = strategy
         self.jokerPolicy = jokerPolicy
+        self.policy = policy
         self.opponentPressureAdjuster = opponentPressureAdjuster
     }
 
@@ -66,38 +69,59 @@ struct MoveUtilityComposer {
 
         if !context.shouldChaseTrick {
             if isOwnPremiumProtectionContext && context.trickDeltaToBidBeforeMove == 0 {
-                let lateBlockWeight = 0.5 + 0.5 * (context.matchContext?.blockProgressFraction ?? 0.0)
-                riskComponent += (1.0 - immediateWinProbability) * 64.0 * lateBlockWeight
+                let lateBlockWeight = policy.lateExactBidDumpProgressBase +
+                    policy.lateExactBidDumpProgressWeight *
+                    (context.matchContext?.blockProgressFraction ?? 0.0)
+                riskComponent +=
+                    (1.0 - immediateWinProbability) *
+                    policy.lateExactBidDumpBase *
+                    lateBlockWeight
             }
 
             if context.trickDeltaToBidBeforeMove > 0 &&
                 !isOwnPremiumProtectionContext &&
                 !hasOpponentPremiumPressureContext &&
                 !isPenaltyTargetRiskContext {
-                let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
-                tacticalComponent += immediateWinProbability * 14.0 * overbidSeverity
+                let overbidSeverity = min(
+                    policy.neutralOverbidSeverityCap,
+                    Double(context.trickDeltaToBidBeforeMove)
+                )
+                tacticalComponent +=
+                    immediateWinProbability *
+                    policy.neutralOverbidBonus *
+                    overbidSeverity
             }
 
             if context.trickDeltaToBidBeforeMove > 0 && hasOpponentPremiumPressureContext {
                 let disciplineSignal = opponentPressureAdjuster.disciplineSignal(from: context.matchContext)
-                let erraticSignal = clamped((0.5 - disciplineSignal) * 2.0, min: 0.0, max: 1.0)
-                let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
+                let erraticSignal = clamped(
+                    (policy.pressuredOverbidErraticCenter - disciplineSignal) *
+                        policy.pressuredOverbidErraticScale,
+                    min: 0.0,
+                    max: 1.0
+                )
+                let overbidSeverity = min(
+                    policy.neutralOverbidSeverityCap,
+                    Double(context.trickDeltaToBidBeforeMove)
+                )
                 tacticalComponent +=
                     (1.0 - immediateWinProbability) *
-                    (12.0 + 20.0 * overbidSeverity) *
+                    (policy.pressuredOverbidBase + policy.pressuredOverbidSeverityWeight * overbidSeverity) *
                     erraticSignal
             }
 
             if isPenaltyTargetRiskContext {
-                riskComponent += (1.0 - immediateWinProbability) * 8.0
+                riskComponent += (1.0 - immediateWinProbability) * policy.penaltyRiskDumpBonus
             }
         }
 
         let blindChaseOpponentMultiplier = (context.isBlindRound && context.shouldChaseTrick)
             ? opponentPressureAdjuster.blindChaseContestMultiplier(from: context.matchContext)
             : 1.0
-        let blindRewardMultiplier = context.isBlindRound ? 1.55 * blindChaseOpponentMultiplier : 1.0
-        let blindRiskMultiplier = context.isBlindRound ? 1.30 : 1.0
+        let blindRewardMultiplier = context.isBlindRound
+            ? policy.blindRewardMultiplier * blindChaseOpponentMultiplier
+            : 1.0
+        let blindRiskMultiplier = context.isBlindRound ? policy.blindRiskMultiplier : 1.0
         let isLeadJoker = move.card.isJoker && context.trick.playedCards.isEmpty
 
         if context.shouldChaseTrick {
@@ -121,7 +145,8 @@ struct MoveUtilityComposer {
 
             if move.card.isJoker && context.hasWinningNonJoker && !mustWinAllRemaining {
                 jokerComponent -= jokerPolicy.chaseSpendJokerPenalty *
-                    (0.55 + 0.45 * context.chasePressure) *
+                    (policy.chaseJokerExtraSpendBase +
+                        policy.chaseJokerExtraSpendPressureWeight * context.chasePressure) *
                     blindRiskMultiplier
             }
 
@@ -133,8 +158,9 @@ struct MoveUtilityComposer {
 
             if isLeadJoker, case .some(.wish) = move.decision.leadDeclaration {
                 jokerComponent += jokerPolicy.chaseLeadWishBonus *
-                    (0.5 + context.chasePressure * 0.5) *
-                    (context.isBlindRound ? 1.15 : 1.0)
+                    (policy.chaseLeadWishPressureBase +
+                        context.chasePressure * policy.chaseLeadWishPressureWeight) *
+                    (context.isBlindRound ? policy.chaseLeadWishBlindMultiplier : 1.0)
             }
         } else {
             tacticalComponent +=
@@ -151,7 +177,7 @@ struct MoveUtilityComposer {
             if isLeadJoker, case .some(.takes(let suit)) = move.decision.leadDeclaration {
                 if let trump = context.trump, suit != trump {
                     jokerComponent += jokerPolicy.dumpLeadTakesNonTrumpBonus *
-                        (context.isBlindRound ? 1.2 : 1.0)
+                        (context.isBlindRound ? policy.dumpLeadTakesBlindMultiplier : 1.0)
                 }
             }
         }
@@ -180,7 +206,8 @@ struct MoveUtilityComposer {
     ) -> Double {
         let blockUrgency = context.matchContext?.blockProgressFraction ?? 0.0
         let urgency = clamped(
-            0.58 * context.chasePressure + 0.42 * blockUrgency,
+            policy.urgencyChasePressureWeight * context.chasePressure +
+                policy.urgencyBlockProgressWeight * blockUrgency,
             min: 0.0,
             max: 1.0
         )
@@ -188,32 +215,54 @@ struct MoveUtilityComposer {
         let hasOpponentEvidence = context.opponentIntention?.hasEvidence == true
 
         let tacticalMultiplier = clamped(
-            1.0 + 0.04 * urgency + (context.shouldChaseTrick ? 0.03 : 0.0),
-            min: 0.95,
-            max: 1.10
+            1.0 + policy.tacticalMultiplierUrgencyWeight * urgency +
+                (context.shouldChaseTrick ? policy.tacticalMultiplierChaseBonus : 0.0),
+            min: policy.tacticalMultiplierMin,
+            max: policy.tacticalMultiplierMax
         )
         let riskMultiplier = clamped(
-            1.0 + 0.08 * urgency + (penaltyRisk ? 0.06 : 0.0),
-            min: 0.94,
-            max: 1.18
+            1.0 + policy.riskMultiplierUrgencyWeight * urgency +
+                (penaltyRisk ? policy.riskMultiplierPenaltyRiskBonus : 0.0),
+            min: policy.riskMultiplierMin,
+            max: policy.riskMultiplierMax
         )
         let opponentMultiplier = clamped(
-            1.0 + 0.06 * urgency + (hasOpponentEvidence ? 0.05 : 0.0),
-            min: 0.95,
-            max: 1.16
+            1.0 + policy.opponentMultiplierUrgencyWeight * urgency +
+                (hasOpponentEvidence ? policy.opponentMultiplierEvidenceBonus : 0.0),
+            min: policy.opponentMultiplierMin,
+            max: policy.opponentMultiplierMax
         )
         let jokerMultiplier = move.card.isJoker
             ? clamped(
-                1.0 + 0.10 * urgency + (context.shouldChaseTrick ? 0.05 : 0.06),
-                min: 0.90,
-                max: 1.22
+                1.0 + policy.jokerMultiplierUrgencyWeight * urgency +
+                    (context.shouldChaseTrick
+                        ? policy.jokerMultiplierChaseBonus
+                        : policy.jokerMultiplierDumpBonus),
+                min: policy.jokerMultiplierMin,
+                max: policy.jokerMultiplierMax
             )
             : 1.0
 
-        let cappedTactical = clamped(components.tactical, min: -180.0, max: 180.0)
-        let cappedRisk = clamped(components.risk, min: -180.0, max: 180.0)
-        let cappedOpponent = clamped(components.opponent, min: -120.0, max: 120.0)
-        let cappedJoker = clamped(components.joker, min: -180.0, max: 180.0)
+        let cappedTactical = clamped(
+            components.tactical,
+            min: -policy.cappedTacticalMagnitude,
+            max: policy.cappedTacticalMagnitude
+        )
+        let cappedRisk = clamped(
+            components.risk,
+            min: -policy.cappedRiskMagnitude,
+            max: policy.cappedRiskMagnitude
+        )
+        let cappedOpponent = clamped(
+            components.opponent,
+            min: -policy.cappedOpponentMagnitude,
+            max: policy.cappedOpponentMagnitude
+        )
+        let cappedJoker = clamped(
+            components.joker,
+            min: -policy.cappedJokerMagnitude,
+            max: policy.cappedJokerMagnitude
+        )
 
         let composed =
             components.base +
@@ -228,7 +277,9 @@ struct MoveUtilityComposer {
             cappedRisk +
             cappedOpponent +
             cappedJoker
-        let stabilizationWindow = 90.0 + 50.0 * (1.0 - immediateWinProbability) + 0.15 * threat
+        let stabilizationWindow = policy.stabilizationWindowBase +
+            policy.stabilizationWindowMissWeight * (1.0 - immediateWinProbability) +
+            policy.stabilizationWindowThreatWeight * threat
         let minValue = baselineAnchor - stabilizationWindow
         let maxValue = baselineAnchor + stabilizationWindow
         return clamped(composed, min: minValue, max: maxValue)

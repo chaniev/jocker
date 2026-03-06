@@ -8,9 +8,14 @@
 import Foundation
 
 struct JokerDeclarationAdjuster {
+    private let policy: BotRuntimePolicy.Ranking.JokerDeclaration
     private let opponentPressureAdjuster: OpponentPressureAdjuster
 
-    init(opponentPressureAdjuster: OpponentPressureAdjuster) {
+    init(
+        policy: BotRuntimePolicy.Ranking.JokerDeclaration,
+        opponentPressureAdjuster: OpponentPressureAdjuster
+    ) {
+        self.policy = policy
         self.opponentPressureAdjuster = opponentPressureAdjuster
     }
 
@@ -57,8 +62,12 @@ struct JokerDeclarationAdjuster {
         guard let declaration = move.decision.leadDeclaration else { return 0.0 }
 
         let tricksAfterCurrent = max(0, context.tricksRemainingIncludingCurrent - 1)
-        let earlyPhaseWeight = min(1.0, Double(min(tricksAfterCurrent, 4)) / 4.0)
-        let blindMultiplier = context.isBlindRound ? 1.15 : 1.0
+        let earlyPhaseTrickCap = max(1.0, policy.earlyPhaseTrickCap)
+        let earlyPhaseWeight = min(
+            1.0,
+            Double(min(tricksAfterCurrent, Int(earlyPhaseTrickCap))) / earlyPhaseTrickCap
+        )
+        let blindMultiplier = context.isBlindRound ? policy.blindUtilityMultiplier : 1.0
         let isFinalTrick = context.tricksRemainingIncludingCurrent <= 1
         let isAllInChase = context.shouldChaseTrick &&
             context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
@@ -83,19 +92,31 @@ struct JokerDeclarationAdjuster {
         case .wish:
             if context.shouldChaseTrick {
                 if isFinalTrick || isAllInChase {
-                    var bonus = 4.0 * (0.6 + 0.4 * immediateWinProbability)
+                    var bonus = policy.wishFinalChaseBonusBase *
+                        (policy.wishFinalChaseImmediateWinBase +
+                            policy.wishFinalChaseImmediateWinWeight * immediateWinProbability)
                     if isAllInChase && !isFinalTrick && antiPremiumPressureContext {
-                        bonus -= 2.5 * antiPremiumStyleMultiplier
+                        bonus -= policy.wishAllInAntiPremiumPenalty * antiPremiumStyleMultiplier
                     }
                     return bonus
                 }
 
-                let controlLossPenalty = (8.0 + 8.0 * earlyPhaseWeight) * blindMultiplier
-                let pressureRelief = 1.0 - 0.35 * context.chasePressure
-                let noTrumpRelief = context.trump == nil ? 0.80 : 1.0
-                let antiPremiumControlNeedMultiplier = antiPremiumPressureContext ? 1.15 : 1.0
-                let lowReserveAmplifier = 0.85 + 0.35 * lowReserveNeedForImmediateControl
-                let highReserveWishRelief = 2.0 * controlReserve * (0.4 + 0.6 * earlyPhaseWeight)
+                let controlLossPenalty =
+                    (policy.wishChaseControlLossBase +
+                        policy.wishChaseControlLossEarlyPhaseWeight * earlyPhaseWeight) *
+                    blindMultiplier
+                let pressureRelief = 1.0 - policy.wishChasePressureReliefWeight * context.chasePressure
+                let noTrumpRelief = context.trump == nil ? policy.wishChaseNoTrumpRelief : 1.0
+                let antiPremiumControlNeedMultiplier = antiPremiumPressureContext
+                    ? policy.wishChaseAntiPremiumControlNeedMultiplier
+                    : 1.0
+                let lowReserveAmplifier = policy.wishChaseLowReserveBase +
+                    policy.wishChaseLowReserveWeight * lowReserveNeedForImmediateControl
+                let highReserveWishRelief =
+                    policy.wishChaseHighReserveReliefBase *
+                    controlReserve *
+                    (policy.wishChaseHighReserveEarlyPhaseBase +
+                        policy.wishChaseHighReserveEarlyPhaseWeight * earlyPhaseWeight)
                 return -controlLossPenalty *
                     pressureRelief *
                     noTrumpRelief *
@@ -104,9 +125,11 @@ struct JokerDeclarationAdjuster {
                     highReserveWishRelief
             }
 
-            var wishDumpBonus = (2.0 + 4.0 * earlyPhaseWeight) * (context.isBlindRound ? 1.05 : 1.0)
+            var wishDumpBonus =
+                (policy.wishDumpBonusBase + policy.wishDumpBonusEarlyPhaseWeight * earlyPhaseWeight) *
+                (context.isBlindRound ? policy.wishDumpBlindMultiplier : 1.0)
             if ownPremiumProtectionContext {
-                wishDumpBonus -= 2.0
+                wishDumpBonus -= policy.wishDumpOwnPremiumPenalty
             }
             return wishDumpBonus
 
@@ -115,40 +138,51 @@ struct JokerDeclarationAdjuster {
             let matchesPreferredControlSuit = preferredControlSuit == suit
 
             if context.shouldChaseTrick {
-                var bonus = (4.0 + 7.0 * earlyPhaseWeight + 3.0 * context.chasePressure) * blindMultiplier
+                var bonus =
+                    (policy.aboveChaseBonusBase +
+                        policy.aboveChaseBonusEarlyPhaseWeight * earlyPhaseWeight +
+                        policy.aboveChaseBonusPressureWeight * context.chasePressure) *
+                    blindMultiplier
                 if declaresTrump {
-                    bonus += 3.0
+                    bonus += policy.aboveChaseTrumpBonus
                 }
                 if matchesPreferredControlSuit {
-                    bonus += 2.5 + 2.5 * preferredControlSuitStrength
+                    bonus += policy.aboveChasePreferredSuitBase +
+                        policy.aboveChasePreferredSuitStrengthWeight * preferredControlSuitStrength
                 }
                 if isFinalTrick {
-                    bonus *= 0.55
+                    bonus *= policy.aboveChaseFinalTrickMultiplier
                 }
                 if isAllInChase {
-                    bonus *= 0.70
+                    bonus *= policy.aboveChaseAllInMultiplier
                 }
                 if antiPremiumPressureContext {
-                    bonus += 2.5 * antiPremiumStyleMultiplier
+                    bonus += policy.aboveChaseAntiPremiumBonus * antiPremiumStyleMultiplier
                     if isAllInChase && !isFinalTrick {
-                        bonus += 2.0 * antiPremiumStyleMultiplier
+                        bonus += policy.aboveChaseAllInAntiPremiumBonus * antiPremiumStyleMultiplier
                     }
                 }
-                let lowReserveAmplifier = 0.90 + 0.30 * lowReserveNeedForImmediateControl
-                let highReserveAboveRelaxation = isAllInChase ? 1.0 : (1.0 - 0.12 * controlReserve)
+                let lowReserveAmplifier = policy.aboveChaseLowReserveBase +
+                    policy.aboveChaseLowReserveWeight * lowReserveNeedForImmediateControl
+                let highReserveAboveRelaxation = isAllInChase
+                    ? 1.0
+                    : (1.0 - policy.aboveChaseHighReserveRelaxationWeight * controlReserve)
                 return bonus *
-                    (0.65 + 0.35 * immediateWinProbability) *
+                    (policy.aboveChaseImmediateWinBase +
+                        policy.aboveChaseImmediateWinWeight * immediateWinProbability) *
                     lowReserveAmplifier *
                     highReserveAboveRelaxation
             }
 
-            var penalty = (3.0 + 5.0 * earlyPhaseWeight) * blindMultiplier
+            var penalty =
+                (policy.aboveDumpPenaltyBase + policy.aboveDumpPenaltyEarlyPhaseWeight * earlyPhaseWeight) *
+                blindMultiplier
             if declaresTrump {
-                penalty += 2.5
+                penalty += policy.aboveDumpTrumpPenalty
             }
             if let premium = context.matchContext?.premium,
                premium.isPremiumCandidateSoFar || premium.isZeroPremiumCandidateSoFar {
-                penalty += 1.5
+                penalty += policy.aboveDumpOwnPremiumPenalty
             }
             return -penalty
 
@@ -157,52 +191,73 @@ struct JokerDeclarationAdjuster {
             let matchesPreferredControlSuit = preferredControlSuit == suit
 
             if context.shouldChaseTrick {
-                var penalty = (5.0 + 8.0 * earlyPhaseWeight) * blindMultiplier
+                var penalty =
+                    (policy.takesChasePenaltyBase +
+                        policy.takesChasePenaltyEarlyPhaseWeight * earlyPhaseWeight) *
+                    blindMultiplier
                 if declaresTrump {
-                    penalty += 2.0
+                    penalty += policy.takesChaseTrumpPenalty
                 }
                 if matchesPreferredControlSuit {
-                    penalty += 1.5 + 1.5 * preferredControlSuitStrength
+                    penalty += policy.takesChasePreferredSuitBase +
+                        policy.takesChasePreferredSuitStrengthWeight * preferredControlSuitStrength
                 }
                 if isAllInChase {
-                    penalty *= 1.15
+                    penalty *= policy.takesChaseAllInMultiplier
                 }
                 if isFinalTrick {
-                    penalty *= 0.75
+                    penalty *= policy.takesChaseFinalTrickMultiplier
                 }
-                let lowReserveAmplifier = 0.90 + 0.25 * lowReserveNeedForImmediateControl
-                return -penalty * (0.65 + 0.35 * immediateWinProbability) * lowReserveAmplifier
+                let lowReserveAmplifier = policy.takesChaseLowReserveBase +
+                    policy.takesChaseLowReserveWeight * lowReserveNeedForImmediateControl
+                return -penalty *
+                    (policy.takesChaseImmediateWinBase +
+                        policy.takesChaseImmediateWinWeight * immediateWinProbability) *
+                    lowReserveAmplifier
             }
 
-            var bonus = (4.0 + 6.0 * earlyPhaseWeight) * blindMultiplier
+            var bonus =
+                (policy.takesDumpBonusBase + policy.takesDumpBonusEarlyPhaseWeight * earlyPhaseWeight) *
+                blindMultiplier
             if declaresTrump {
-                bonus -= 5.0
+                bonus -= policy.takesDumpTrumpPenalty
             } else {
-                bonus += 3.0
+                bonus += policy.takesDumpNonTrumpBonus
             }
             if matchesPreferredControlSuit {
-                bonus -= 1.5 + 1.5 * preferredControlSuitStrength
+                bonus -= policy.takesDumpPreferredSuitBase +
+                    policy.takesDumpPreferredSuitStrengthWeight * preferredControlSuitStrength
             }
             if isFinalTrick {
-                bonus *= 0.70
+                bonus *= policy.takesDumpFinalTrickMultiplier
             }
             if let premium = context.matchContext?.premium,
                premium.leftNeighborIsPremiumCandidateSoFar || premium.isPenaltyTargetRiskSoFar {
-                bonus += 1.5 * antiPremiumStyleMultiplier
+                bonus += policy.takesDumpAntiPremiumBonus * antiPremiumStyleMultiplier
             }
             if ownPremiumProtectionContext {
-                bonus += 2.0
+                bonus += policy.takesDumpOwnPremiumBonus
             }
             if context.trickDeltaToBidBeforeMove > 0 && !context.hasLosingNonJoker {
-                let overbidSeverity = min(2.0, Double(context.trickDeltaToBidBeforeMove))
-                var controlledLossLeadBonus = (2.5 + 2.0 * earlyPhaseWeight) * overbidSeverity
+                let overbidSeverity = min(
+                    policy.takesDumpOverbidSeverityCap,
+                    Double(context.trickDeltaToBidBeforeMove)
+                )
+                var controlledLossLeadBonus =
+                    (policy.takesDumpOverbidBase +
+                        policy.takesDumpOverbidEarlyPhaseWeight * earlyPhaseWeight) *
+                    overbidSeverity
                 if !declaresTrump {
-                    controlledLossLeadBonus += 1.0
+                    controlledLossLeadBonus += policy.takesDumpOverbidNonTrumpBonus
                 }
                 bonus += controlledLossLeadBonus
             }
-            let lowReserveAmplifier = 0.90 + 0.25 * lowReserveNeedForImmediateControl
-            return bonus * (0.80 + 0.20 * (1.0 - immediateWinProbability)) * lowReserveAmplifier
+            let lowReserveAmplifier = policy.takesDumpLowReserveBase +
+                policy.takesDumpLowReserveWeight * lowReserveNeedForImmediateControl
+            return bonus *
+                (policy.takesDumpImmediateWinBase +
+                    policy.takesDumpImmediateWinMissWeight * (1.0 - immediateWinProbability)) *
+                lowReserveAmplifier
         }
     }
 
@@ -243,52 +298,77 @@ struct JokerDeclarationAdjuster {
         switch declaration {
         case .wish:
             secureTrick = context.shouldChaseTrick
-                ? clamped(0.62 + 0.38 * immediateWinProbability, min: 0.0, max: 1.0)
-                : 0.34
-            preserveControl = clamped(0.38 + 0.30 * controlReserve, min: 0.0, max: 1.0)
-            controlledLoss = context.shouldChaseTrick ? 0.0 : 0.32
+                ? clamped(
+                    policy.goalWishSecureTrickBase +
+                        policy.goalWishSecureTrickImmediateWinWeight * immediateWinProbability,
+                    min: 0.0,
+                    max: 1.0
+                )
+                : policy.goalWishDumpSecureTrick
+            preserveControl = clamped(
+                policy.goalWishPreserveControlBase +
+                    policy.goalWishPreserveControlReserveWeight * controlReserve,
+                min: 0.0,
+                max: 1.0
+            )
+            controlledLoss = context.shouldChaseTrick ? 0.0 : policy.goalWishDumpControlledLoss
 
         case .above(let suit):
             let declaresTrump = context.trump == suit
             let matchesPreferredSuit = leadPreferredControlSuitAfterMove == suit
             secureTrick = clamped(
-                0.54 +
-                    (context.shouldChaseTrick ? 0.18 : 0.0) +
-                    (declaresTrump ? 0.16 : 0.0) +
-                    (matchesPreferredSuit ? 0.08 + 0.10 * preferredControlSuitStrength : 0.0),
+                policy.goalAboveSecureTrickBase +
+                    (context.shouldChaseTrick ? policy.goalAboveSecureTrickChaseBonus : 0.0) +
+                    (declaresTrump ? policy.goalAboveSecureTrickTrumpBonus : 0.0) +
+                    (matchesPreferredSuit
+                        ? policy.goalAboveSecureTrickPreferredSuitBase +
+                            policy.goalAboveSecureTrickPreferredSuitStrengthWeight * preferredControlSuitStrength
+                        : 0.0),
                 min: 0.0,
                 max: 1.0
             )
             preserveControl = clamped(
-                0.42 +
-                    (declaresTrump ? 0.14 : 0.0) +
-                    (matchesPreferredSuit ? 0.10 + 0.12 * preferredControlSuitStrength : 0.0) +
-                    0.14 * lowReserveNeed,
+                policy.goalAbovePreserveControlBase +
+                    (declaresTrump ? policy.goalAbovePreserveControlTrumpBonus : 0.0) +
+                    (matchesPreferredSuit
+                        ? policy.goalAbovePreserveControlPreferredSuitBase +
+                            policy.goalAbovePreserveControlPreferredSuitStrengthWeight * preferredControlSuitStrength
+                        : 0.0) +
+                    policy.goalAbovePreserveControlLowReserveWeight * lowReserveNeed,
                 min: 0.0,
                 max: 1.0
             )
-            controlledLoss = context.shouldChaseTrick ? 0.0 : (declaresTrump ? 0.14 : 0.24)
+            controlledLoss = context.shouldChaseTrick
+                ? 0.0
+                : (declaresTrump
+                    ? policy.goalAboveDumpControlledLossTrump
+                    : policy.goalAboveDumpControlledLossNonTrump)
 
         case .takes(let suit):
             let declaresTrump = context.trump == suit
             let nonTrumpTakes = context.trump.map { $0 != suit } ?? true
             secureTrick = context.shouldChaseTrick
-                ? clamped(0.28 + (declaresTrump ? 0.08 : 0.0), min: 0.0, max: 1.0)
-                : 0.16
+                ? clamped(
+                    policy.goalTakesChaseSecureTrickBase +
+                        (declaresTrump ? policy.goalTakesChaseSecureTrickTrumpBonus : 0.0),
+                    min: 0.0,
+                    max: 1.0
+                )
+                : policy.goalTakesDumpSecureTrick
             preserveControl = clamped(
-                0.18 +
-                    (declaresTrump ? -0.10 : 0.0) +
-                    (nonTrumpTakes ? 0.04 : 0.0) +
-                    0.10 * lowReserveNeed,
+                policy.goalTakesPreserveControlBase +
+                    (declaresTrump ? -policy.goalTakesPreserveControlTrumpPenalty : 0.0) +
+                    (nonTrumpTakes ? policy.goalTakesPreserveControlNonTrumpBonus : 0.0) +
+                    policy.goalTakesPreserveControlLowReserveWeight * lowReserveNeed,
                 min: 0.0,
                 max: 1.0
             )
             controlledLoss = context.shouldChaseTrick
                 ? 0.0
                 : clamped(
-                    0.54 +
-                        (nonTrumpTakes ? 0.18 : -0.12) +
-                        (isPenaltyRiskContext ? 0.10 : 0.0),
+                    policy.goalTakesControlledLossBase +
+                        (nonTrumpTakes ? policy.goalTakesControlledLossNonTrumpBonus : -policy.goalTakesControlledLossTrumpPenalty) +
+                        (isPenaltyRiskContext ? policy.goalTakesControlledLossPenaltyRiskBonus : 0.0),
                     min: 0.0,
                     max: 1.0
                 )
@@ -299,21 +379,27 @@ struct JokerDeclarationAdjuster {
         let controlledLossWeight: Double
         if context.shouldChaseTrick {
             secureWeight = clamped(
-                0.52 + 0.34 * context.chasePressure + (isAllInChase ? 0.14 : 0.0),
+                policy.goalChaseSecureWeightBase +
+                    policy.goalChaseSecureWeightPressure * context.chasePressure +
+                    (isAllInChase ? policy.goalChaseSecureWeightAllInBonus : 0.0),
                 min: 0.0,
                 max: 1.0
             )
             controlWeight = clamped(
-                0.26 + 0.22 * lowReserveNeed + (antiPremiumContext ? 0.10 : 0.0),
+                policy.goalChaseControlWeightBase +
+                    policy.goalChaseControlWeightLowReserveWeight * lowReserveNeed +
+                    (antiPremiumContext ? policy.goalChaseControlWeightAntiPremiumBonus : 0.0),
                 min: 0.0,
                 max: 1.0
             )
-            controlledLossWeight = -0.18
+            controlledLossWeight = policy.goalChaseControlledLossWeight
         } else {
-            secureWeight = -0.14
-            controlWeight = 0.20 + (antiPremiumContext ? 0.06 : 0.0)
+            secureWeight = policy.goalDumpSecureWeight
+            controlWeight = policy.goalDumpControlWeightBase +
+                (antiPremiumContext ? policy.goalDumpControlWeightAntiPremiumBonus : 0.0)
             controlledLossWeight = clamped(
-                0.58 + (isPenaltyRiskContext ? 0.18 : 0.0),
+                policy.goalDumpControlledLossWeightBase +
+                    (isPenaltyRiskContext ? policy.goalDumpControlledLossWeightPenaltyRiskBonus : 0.0),
                 min: 0.0,
                 max: 1.0
             )
@@ -324,8 +410,8 @@ struct JokerDeclarationAdjuster {
             preserveControl * controlWeight +
             controlledLoss * controlledLossWeight
         let scale: Double = context.shouldChaseTrick
-            ? (10.0 + 7.0 * context.chasePressure)
-            : (9.0 + 6.0 * (1.0 - immediateWinProbability))
+            ? (policy.goalChaseScaleBase + policy.goalChaseScalePressureWeight * context.chasePressure)
+            : (policy.goalDumpScaleBase + policy.goalDumpScaleMissWeight * (1.0 - immediateWinProbability))
         return weightedGoalScore * scale
     }
 
@@ -348,15 +434,21 @@ struct JokerDeclarationAdjuster {
         guard isNonFinalLeadWishJoker else { return 0.0 }
 
         let tricksAfterCurrent = max(1, context.tricksRemainingIncludingCurrent - 1)
-        let basePenalty = 24.0 + Double(tricksAfterCurrent) * 6.0
-        let chaseMultiplier = context.shouldChaseTrick ? (1.0 + context.chasePressure * 0.25) : 1.0
-        let blindWishPenaltyMultiplier = context.isBlindRound ? 1.25 : 1.0
+        let basePenalty = policy.earlyWishPenaltyBase +
+            Double(tricksAfterCurrent) * policy.earlyWishPenaltyPerRemainingTrick
+        let chaseMultiplier = context.shouldChaseTrick
+            ? (1.0 + context.chasePressure * policy.earlyWishPenaltyChasePressureWeight)
+            : 1.0
+        let blindWishPenaltyMultiplier = context.isBlindRound
+            ? policy.earlyWishPenaltyBlindMultiplier
+            : 1.0
         let isAllInChase = context.shouldChaseTrick &&
             context.tricksNeededToMatchBid >= context.tricksRemainingIncludingCurrent
         let wishPenaltyReserveMultiplier: Double
         if context.shouldChaseTrick && !isAllInChase {
             let controlReserve = min(1.0, max(0.0, leadControlReserveAfterMove))
-            wishPenaltyReserveMultiplier = 1.15 - 0.45 * controlReserve
+            wishPenaltyReserveMultiplier = policy.earlyWishPenaltyReserveBase -
+                policy.earlyWishPenaltyReserveWeight * controlReserve
         } else {
             wishPenaltyReserveMultiplier = 1.0
         }

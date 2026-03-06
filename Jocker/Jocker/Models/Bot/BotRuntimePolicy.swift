@@ -12,6 +12,186 @@ import Foundation
 /// передавались одним объектом, а не через `static let` в сервисах.
 struct BotRuntimePolicy {
     struct Ranking {
+        struct JokerDeclaration {
+            var earlyPhaseTrickCap: Double
+            var blindUtilityMultiplier: Double
+
+            var wishFinalChaseBonusBase: Double
+            var wishFinalChaseImmediateWinBase: Double
+            var wishFinalChaseImmediateWinWeight: Double
+            var wishAllInAntiPremiumPenalty: Double
+            var wishChaseControlLossBase: Double
+            var wishChaseControlLossEarlyPhaseWeight: Double
+            var wishChasePressureReliefWeight: Double
+            var wishChaseNoTrumpRelief: Double
+            var wishChaseAntiPremiumControlNeedMultiplier: Double
+            var wishChaseLowReserveBase: Double
+            var wishChaseLowReserveWeight: Double
+            var wishChaseHighReserveReliefBase: Double
+            var wishChaseHighReserveEarlyPhaseBase: Double
+            var wishChaseHighReserveEarlyPhaseWeight: Double
+            var wishDumpBonusBase: Double
+            var wishDumpBonusEarlyPhaseWeight: Double
+            var wishDumpBlindMultiplier: Double
+            var wishDumpOwnPremiumPenalty: Double
+
+            var aboveChaseBonusBase: Double
+            var aboveChaseBonusEarlyPhaseWeight: Double
+            var aboveChaseBonusPressureWeight: Double
+            var aboveChaseTrumpBonus: Double
+            var aboveChasePreferredSuitBase: Double
+            var aboveChasePreferredSuitStrengthWeight: Double
+            var aboveChaseFinalTrickMultiplier: Double
+            var aboveChaseAllInMultiplier: Double
+            var aboveChaseAntiPremiumBonus: Double
+            var aboveChaseAllInAntiPremiumBonus: Double
+            var aboveChaseLowReserveBase: Double
+            var aboveChaseLowReserveWeight: Double
+            var aboveChaseHighReserveRelaxationWeight: Double
+            var aboveChaseImmediateWinBase: Double
+            var aboveChaseImmediateWinWeight: Double
+            var aboveDumpPenaltyBase: Double
+            var aboveDumpPenaltyEarlyPhaseWeight: Double
+            var aboveDumpTrumpPenalty: Double
+            var aboveDumpOwnPremiumPenalty: Double
+
+            var takesChasePenaltyBase: Double
+            var takesChasePenaltyEarlyPhaseWeight: Double
+            var takesChaseTrumpPenalty: Double
+            var takesChasePreferredSuitBase: Double
+            var takesChasePreferredSuitStrengthWeight: Double
+            var takesChaseAllInMultiplier: Double
+            var takesChaseFinalTrickMultiplier: Double
+            var takesChaseLowReserveBase: Double
+            var takesChaseLowReserveWeight: Double
+            var takesChaseImmediateWinBase: Double
+            var takesChaseImmediateWinWeight: Double
+
+            var takesDumpBonusBase: Double
+            var takesDumpBonusEarlyPhaseWeight: Double
+            var takesDumpTrumpPenalty: Double
+            var takesDumpNonTrumpBonus: Double
+            var takesDumpPreferredSuitBase: Double
+            var takesDumpPreferredSuitStrengthWeight: Double
+            var takesDumpFinalTrickMultiplier: Double
+            var takesDumpAntiPremiumBonus: Double
+            var takesDumpOwnPremiumBonus: Double
+            var takesDumpOverbidSeverityCap: Double
+            var takesDumpOverbidBase: Double
+            var takesDumpOverbidEarlyPhaseWeight: Double
+            var takesDumpOverbidNonTrumpBonus: Double
+            var takesDumpLowReserveBase: Double
+            var takesDumpLowReserveWeight: Double
+            var takesDumpImmediateWinBase: Double
+            var takesDumpImmediateWinMissWeight: Double
+
+            var goalWishSecureTrickBase: Double
+            var goalWishSecureTrickImmediateWinWeight: Double
+            var goalWishDumpSecureTrick: Double
+            var goalWishPreserveControlBase: Double
+            var goalWishPreserveControlReserveWeight: Double
+            var goalWishDumpControlledLoss: Double
+
+            var goalAboveSecureTrickBase: Double
+            var goalAboveSecureTrickChaseBonus: Double
+            var goalAboveSecureTrickTrumpBonus: Double
+            var goalAboveSecureTrickPreferredSuitBase: Double
+            var goalAboveSecureTrickPreferredSuitStrengthWeight: Double
+            var goalAbovePreserveControlBase: Double
+            var goalAbovePreserveControlTrumpBonus: Double
+            var goalAbovePreserveControlPreferredSuitBase: Double
+            var goalAbovePreserveControlPreferredSuitStrengthWeight: Double
+            var goalAbovePreserveControlLowReserveWeight: Double
+            var goalAboveDumpControlledLossTrump: Double
+            var goalAboveDumpControlledLossNonTrump: Double
+
+            var goalTakesChaseSecureTrickBase: Double
+            var goalTakesChaseSecureTrickTrumpBonus: Double
+            var goalTakesDumpSecureTrick: Double
+            var goalTakesPreserveControlBase: Double
+            var goalTakesPreserveControlTrumpPenalty: Double
+            var goalTakesPreserveControlNonTrumpBonus: Double
+            var goalTakesPreserveControlLowReserveWeight: Double
+            var goalTakesControlledLossBase: Double
+            var goalTakesControlledLossNonTrumpBonus: Double
+            var goalTakesControlledLossTrumpPenalty: Double
+            var goalTakesControlledLossPenaltyRiskBonus: Double
+
+            var goalChaseSecureWeightBase: Double
+            var goalChaseSecureWeightPressure: Double
+            var goalChaseSecureWeightAllInBonus: Double
+            var goalChaseControlWeightBase: Double
+            var goalChaseControlWeightLowReserveWeight: Double
+            var goalChaseControlWeightAntiPremiumBonus: Double
+            var goalChaseControlledLossWeight: Double
+            var goalDumpSecureWeight: Double
+            var goalDumpControlWeightBase: Double
+            var goalDumpControlWeightAntiPremiumBonus: Double
+            var goalDumpControlledLossWeightBase: Double
+            var goalDumpControlledLossWeightPenaltyRiskBonus: Double
+            var goalChaseScaleBase: Double
+            var goalChaseScalePressureWeight: Double
+            var goalDumpScaleBase: Double
+            var goalDumpScaleMissWeight: Double
+
+            var earlyWishPenaltyBase: Double
+            var earlyWishPenaltyPerRemainingTrick: Double
+            var earlyWishPenaltyChasePressureWeight: Double
+            var earlyWishPenaltyBlindMultiplier: Double
+            var earlyWishPenaltyReserveBase: Double
+            var earlyWishPenaltyReserveWeight: Double
+        }
+
+        struct MoveComposition {
+            var lateExactBidDumpBase: Double
+            var lateExactBidDumpProgressBase: Double
+            var lateExactBidDumpProgressWeight: Double
+            var neutralOverbidSeverityCap: Double
+            var neutralOverbidBonus: Double
+            var pressuredOverbidErraticCenter: Double
+            var pressuredOverbidErraticScale: Double
+            var pressuredOverbidBase: Double
+            var pressuredOverbidSeverityWeight: Double
+            var penaltyRiskDumpBonus: Double
+
+            var blindRewardMultiplier: Double
+            var blindRiskMultiplier: Double
+            var chaseJokerExtraSpendBase: Double
+            var chaseJokerExtraSpendPressureWeight: Double
+            var chaseLeadWishPressureBase: Double
+            var chaseLeadWishPressureWeight: Double
+            var chaseLeadWishBlindMultiplier: Double
+            var dumpLeadTakesBlindMultiplier: Double
+
+            var urgencyChasePressureWeight: Double
+            var urgencyBlockProgressWeight: Double
+            var tacticalMultiplierUrgencyWeight: Double
+            var tacticalMultiplierChaseBonus: Double
+            var tacticalMultiplierMin: Double
+            var tacticalMultiplierMax: Double
+            var riskMultiplierUrgencyWeight: Double
+            var riskMultiplierPenaltyRiskBonus: Double
+            var riskMultiplierMin: Double
+            var riskMultiplierMax: Double
+            var opponentMultiplierUrgencyWeight: Double
+            var opponentMultiplierEvidenceBonus: Double
+            var opponentMultiplierMin: Double
+            var opponentMultiplierMax: Double
+            var jokerMultiplierUrgencyWeight: Double
+            var jokerMultiplierChaseBonus: Double
+            var jokerMultiplierDumpBonus: Double
+            var jokerMultiplierMin: Double
+            var jokerMultiplierMax: Double
+
+            var cappedTacticalMagnitude: Double
+            var cappedRiskMagnitude: Double
+            var cappedOpponentMagnitude: Double
+            var cappedJokerMagnitude: Double
+            var stabilizationWindowBase: Double
+            var stabilizationWindowMissWeight: Double
+            var stabilizationWindowThreatWeight: Double
+        }
+
         var fourthBlockScoreScale: Double
         var standardBlockScoreScale: Double
         var fourthBlockWeight: Double
@@ -91,6 +271,8 @@ struct BotRuntimePolicy {
         var premiumDenyDumpPenalty: Double
         var premiumDenyOverbidRelaxation: Double
 
+        var jokerDeclaration: JokerDeclaration
+        var moveComposition: MoveComposition
         var utilityTieTolerance: Double
     }
 
@@ -192,6 +374,10 @@ struct BotRuntimePolicy {
     }
 
     struct OpponentModeling {
+        var opponentDisciplineNeutralValue: Double
+        var opponentDisciplineMismatchWeight: Double
+        var opponentDisciplineNormalizationWeight: Double
+
         var opponentStyleEvidenceSaturationRounds: Int
         var opponentStyleMultiplierMin: Double
         var opponentStyleMultiplierMax: Double
@@ -355,6 +541,172 @@ struct BotRuntimePolicy {
             premiumDenyChaseBonus: 10.0,
             premiumDenyDumpPenalty: 12.0,
             premiumDenyOverbidRelaxation: 1.20,
+            jokerDeclaration: Ranking.JokerDeclaration(
+                earlyPhaseTrickCap: 4.0,
+                blindUtilityMultiplier: 1.15,
+                wishFinalChaseBonusBase: 4.0,
+                wishFinalChaseImmediateWinBase: 0.6,
+                wishFinalChaseImmediateWinWeight: 0.4,
+                wishAllInAntiPremiumPenalty: 2.5,
+                wishChaseControlLossBase: 8.0,
+                wishChaseControlLossEarlyPhaseWeight: 8.0,
+                wishChasePressureReliefWeight: 0.35,
+                wishChaseNoTrumpRelief: 0.80,
+                wishChaseAntiPremiumControlNeedMultiplier: 1.15,
+                wishChaseLowReserveBase: 0.85,
+                wishChaseLowReserveWeight: 0.35,
+                wishChaseHighReserveReliefBase: 2.0,
+                wishChaseHighReserveEarlyPhaseBase: 0.4,
+                wishChaseHighReserveEarlyPhaseWeight: 0.6,
+                wishDumpBonusBase: 2.0,
+                wishDumpBonusEarlyPhaseWeight: 4.0,
+                wishDumpBlindMultiplier: 1.05,
+                wishDumpOwnPremiumPenalty: 2.0,
+                aboveChaseBonusBase: 4.0,
+                aboveChaseBonusEarlyPhaseWeight: 7.0,
+                aboveChaseBonusPressureWeight: 3.0,
+                aboveChaseTrumpBonus: 3.0,
+                aboveChasePreferredSuitBase: 2.5,
+                aboveChasePreferredSuitStrengthWeight: 2.5,
+                aboveChaseFinalTrickMultiplier: 0.55,
+                aboveChaseAllInMultiplier: 0.70,
+                aboveChaseAntiPremiumBonus: 2.5,
+                aboveChaseAllInAntiPremiumBonus: 2.0,
+                aboveChaseLowReserveBase: 0.90,
+                aboveChaseLowReserveWeight: 0.30,
+                aboveChaseHighReserveRelaxationWeight: 0.12,
+                aboveChaseImmediateWinBase: 0.65,
+                aboveChaseImmediateWinWeight: 0.35,
+                aboveDumpPenaltyBase: 3.0,
+                aboveDumpPenaltyEarlyPhaseWeight: 5.0,
+                aboveDumpTrumpPenalty: 2.5,
+                aboveDumpOwnPremiumPenalty: 1.5,
+                takesChasePenaltyBase: 5.0,
+                takesChasePenaltyEarlyPhaseWeight: 8.0,
+                takesChaseTrumpPenalty: 2.0,
+                takesChasePreferredSuitBase: 1.5,
+                takesChasePreferredSuitStrengthWeight: 1.5,
+                takesChaseAllInMultiplier: 1.15,
+                takesChaseFinalTrickMultiplier: 0.75,
+                takesChaseLowReserveBase: 0.90,
+                takesChaseLowReserveWeight: 0.25,
+                takesChaseImmediateWinBase: 0.65,
+                takesChaseImmediateWinWeight: 0.35,
+                takesDumpBonusBase: 4.0,
+                takesDumpBonusEarlyPhaseWeight: 6.0,
+                takesDumpTrumpPenalty: 5.0,
+                takesDumpNonTrumpBonus: 3.0,
+                takesDumpPreferredSuitBase: 1.5,
+                takesDumpPreferredSuitStrengthWeight: 1.5,
+                takesDumpFinalTrickMultiplier: 0.70,
+                takesDumpAntiPremiumBonus: 1.5,
+                takesDumpOwnPremiumBonus: 2.0,
+                takesDumpOverbidSeverityCap: 2.0,
+                takesDumpOverbidBase: 2.5,
+                takesDumpOverbidEarlyPhaseWeight: 2.0,
+                takesDumpOverbidNonTrumpBonus: 1.0,
+                takesDumpLowReserveBase: 0.90,
+                takesDumpLowReserveWeight: 0.25,
+                takesDumpImmediateWinBase: 0.80,
+                takesDumpImmediateWinMissWeight: 0.20,
+                goalWishSecureTrickBase: 0.62,
+                goalWishSecureTrickImmediateWinWeight: 0.38,
+                goalWishDumpSecureTrick: 0.34,
+                goalWishPreserveControlBase: 0.38,
+                goalWishPreserveControlReserveWeight: 0.30,
+                goalWishDumpControlledLoss: 0.32,
+                goalAboveSecureTrickBase: 0.54,
+                goalAboveSecureTrickChaseBonus: 0.18,
+                goalAboveSecureTrickTrumpBonus: 0.16,
+                goalAboveSecureTrickPreferredSuitBase: 0.08,
+                goalAboveSecureTrickPreferredSuitStrengthWeight: 0.10,
+                goalAbovePreserveControlBase: 0.42,
+                goalAbovePreserveControlTrumpBonus: 0.14,
+                goalAbovePreserveControlPreferredSuitBase: 0.10,
+                goalAbovePreserveControlPreferredSuitStrengthWeight: 0.12,
+                goalAbovePreserveControlLowReserveWeight: 0.14,
+                goalAboveDumpControlledLossTrump: 0.14,
+                goalAboveDumpControlledLossNonTrump: 0.24,
+                goalTakesChaseSecureTrickBase: 0.28,
+                goalTakesChaseSecureTrickTrumpBonus: 0.08,
+                goalTakesDumpSecureTrick: 0.16,
+                goalTakesPreserveControlBase: 0.18,
+                goalTakesPreserveControlTrumpPenalty: 0.10,
+                goalTakesPreserveControlNonTrumpBonus: 0.04,
+                goalTakesPreserveControlLowReserveWeight: 0.10,
+                goalTakesControlledLossBase: 0.54,
+                goalTakesControlledLossNonTrumpBonus: 0.18,
+                goalTakesControlledLossTrumpPenalty: 0.12,
+                goalTakesControlledLossPenaltyRiskBonus: 0.10,
+                goalChaseSecureWeightBase: 0.52,
+                goalChaseSecureWeightPressure: 0.34,
+                goalChaseSecureWeightAllInBonus: 0.14,
+                goalChaseControlWeightBase: 0.26,
+                goalChaseControlWeightLowReserveWeight: 0.22,
+                goalChaseControlWeightAntiPremiumBonus: 0.10,
+                goalChaseControlledLossWeight: -0.18,
+                goalDumpSecureWeight: -0.14,
+                goalDumpControlWeightBase: 0.20,
+                goalDumpControlWeightAntiPremiumBonus: 0.06,
+                goalDumpControlledLossWeightBase: 0.58,
+                goalDumpControlledLossWeightPenaltyRiskBonus: 0.18,
+                goalChaseScaleBase: 10.0,
+                goalChaseScalePressureWeight: 7.0,
+                goalDumpScaleBase: 9.0,
+                goalDumpScaleMissWeight: 6.0,
+                earlyWishPenaltyBase: 24.0,
+                earlyWishPenaltyPerRemainingTrick: 6.0,
+                earlyWishPenaltyChasePressureWeight: 0.25,
+                earlyWishPenaltyBlindMultiplier: 1.25,
+                earlyWishPenaltyReserveBase: 1.15,
+                earlyWishPenaltyReserveWeight: 0.45
+            ),
+            moveComposition: Ranking.MoveComposition(
+                lateExactBidDumpBase: 64.0,
+                lateExactBidDumpProgressBase: 0.5,
+                lateExactBidDumpProgressWeight: 0.5,
+                neutralOverbidSeverityCap: 2.0,
+                neutralOverbidBonus: 14.0,
+                pressuredOverbidErraticCenter: 0.5,
+                pressuredOverbidErraticScale: 2.0,
+                pressuredOverbidBase: 12.0,
+                pressuredOverbidSeverityWeight: 20.0,
+                penaltyRiskDumpBonus: 8.0,
+                blindRewardMultiplier: 1.55,
+                blindRiskMultiplier: 1.30,
+                chaseJokerExtraSpendBase: 0.55,
+                chaseJokerExtraSpendPressureWeight: 0.45,
+                chaseLeadWishPressureBase: 0.5,
+                chaseLeadWishPressureWeight: 0.5,
+                chaseLeadWishBlindMultiplier: 1.15,
+                dumpLeadTakesBlindMultiplier: 1.2,
+                urgencyChasePressureWeight: 0.58,
+                urgencyBlockProgressWeight: 0.42,
+                tacticalMultiplierUrgencyWeight: 0.04,
+                tacticalMultiplierChaseBonus: 0.03,
+                tacticalMultiplierMin: 0.95,
+                tacticalMultiplierMax: 1.10,
+                riskMultiplierUrgencyWeight: 0.08,
+                riskMultiplierPenaltyRiskBonus: 0.06,
+                riskMultiplierMin: 0.94,
+                riskMultiplierMax: 1.18,
+                opponentMultiplierUrgencyWeight: 0.06,
+                opponentMultiplierEvidenceBonus: 0.05,
+                opponentMultiplierMin: 0.95,
+                opponentMultiplierMax: 1.16,
+                jokerMultiplierUrgencyWeight: 0.10,
+                jokerMultiplierChaseBonus: 0.05,
+                jokerMultiplierDumpBonus: 0.06,
+                jokerMultiplierMin: 0.90,
+                jokerMultiplierMax: 1.22,
+                cappedTacticalMagnitude: 180.0,
+                cappedRiskMagnitude: 180.0,
+                cappedOpponentMagnitude: 120.0,
+                cappedJokerMagnitude: 180.0,
+                stabilizationWindowBase: 90.0,
+                stabilizationWindowMissWeight: 50.0,
+                stabilizationWindowThreatWeight: 0.15
+            ),
             utilityTieTolerance: 0.000_001
         ),
         bidding: Bidding(
@@ -437,6 +789,9 @@ struct BotRuntimePolicy {
             legalAwareEndgameHandSizeThreshold: 4
         ),
         opponentModeling: OpponentModeling(
+            opponentDisciplineNeutralValue: 0.5,
+            opponentDisciplineMismatchWeight: 0.5,
+            opponentDisciplineNormalizationWeight: 0.5,
             opponentStyleEvidenceSaturationRounds: 4,
             opponentStyleMultiplierMin: 0.85,
             opponentStyleMultiplierMax: 1.25,

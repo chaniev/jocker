@@ -121,11 +121,13 @@ struct BotTurnCandidateRankingService {
         )
         self.opponentPressureAdjuster = opponentPressureAdjuster
         self.jokerDeclarationAdjuster = JokerDeclarationAdjuster(
+            policy: rankingPolicy.jokerDeclaration,
             opponentPressureAdjuster: opponentPressureAdjuster
         )
         self.moveUtilityComposer = MoveUtilityComposer(
             strategy: tuning.turnStrategy,
             jokerPolicy: tuning.jokerPolicy,
+            policy: rankingPolicy.moveComposition,
             opponentPressureAdjuster: opponentPressureAdjuster
         )
         self.candidateTieBreakPolicy = CandidateTieBreakPolicy(

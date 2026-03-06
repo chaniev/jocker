@@ -95,7 +95,8 @@ struct OpponentPressureAdjuster {
     }
 
     func disciplineSignal(from matchContext: BotMatchContext?) -> Double {
-        guard let matchContext, let opponents = matchContext.opponents else { return 0.5 }
+        let neutralValue = opponentModelingPolicy.opponentDisciplineNeutralValue
+        guard let matchContext, let opponents = matchContext.opponents else { return neutralValue }
         let prioritizedSnapshots: [BotOpponentModel.OpponentSnapshot]
         if let leftNeighborIndex = opponents.leftNeighborIndex,
            let leftNeighborSnapshot = opponents.snapshot(for: leftNeighborIndex) {
@@ -104,14 +105,18 @@ struct OpponentPressureAdjuster {
             prioritizedSnapshots = opponents.snapshots
         }
         guard let snapshot = prioritizedSnapshots.first, snapshot.observedRounds > 0 else {
-            return 0.5
+            return neutralValue
         }
 
         let exact = min(1.0, max(0.0, snapshot.exactBidRate))
         let over = min(1.0, max(0.0, snapshot.overbidRate))
         let under = min(1.0, max(0.0, snapshot.underbidRate))
-        let rawSignal = exact - 0.5 * (over + under)
-        return clamped(0.5 + 0.5 * rawSignal, min: 0.0, max: 1.0)
+        let rawSignal = exact - opponentModelingPolicy.opponentDisciplineMismatchWeight * (over + under)
+        return clamped(
+            neutralValue + opponentModelingPolicy.opponentDisciplineNormalizationWeight * rawSignal,
+            min: 0.0,
+            max: 1.0
+        )
     }
 
     func bidPressureUtilityAdjustment(
