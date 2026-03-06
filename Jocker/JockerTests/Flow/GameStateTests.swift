@@ -10,6 +10,12 @@ import XCTest
 
 final class GameStateTests: XCTestCase {
 
+    /// Тестирует, что первый раунд в первом блоке имеет 1 карту на игрока.
+    /// Проверяет:
+    /// - currentBlock = .first
+    /// - currentRoundInBlock = 0
+    /// - currentCardsPerPlayer = 1
+    /// - currentDealer = 0
     func testStartGame_hasOneCardPerPlayerInFirstRound() {
         let gameState = GameState(playerCount: 4)
 
@@ -21,6 +27,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentDealer, 0)
     }
 
+    /// Тестирует, что startGame устанавливает предоставленного initial dealer.
+    /// Проверяет:
+    /// - currentDealer = 2 (предоставленный)
+    /// - currentPlayer = 3 (dealer + 1)
     func testStartGame_setsProvidedInitialDealer() {
         let gameState = GameState(playerCount: 4)
 
@@ -63,6 +73,10 @@ final class GameStateTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что startNewRound прогрессирует карты в первом блоке и переходит ко второму.
+    /// Проверяет:
+    /// - Карты увеличиваются с 2 до 8 в первом блоке
+    /// - После 8 карт переход во второй блок с 9 картами
     func testStartNewRound_progressesCardsInFirstBlockAndMovesToSecond() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()
@@ -79,6 +93,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentCardsPerPlayer, 9)
     }
 
+    /// Тестирует, что startNewRound переходит к третьему блоку с убывающими картами.
+    /// Проверяет:
+    /// - После первого и второго блока переход к третьему
+    /// - Карты уменьшаются с 8 до 1
     func testStartNewRound_movesToThirdBlockWithDescendingCards() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()
@@ -101,6 +119,10 @@ final class GameStateTests: XCTestCase {
         }
     }
 
+    /// Тестирует, что для 3 игроков используется unified deal plan во втором блоке.
+    /// Проверяет:
+    /// - totalRoundsInBlock = 11 в первом блоке
+    /// - Во втором блоке 3 раунда по 12 карт
     func testThreePlayers_usesUnifiedDealPlanInSecondBlock() {
         let gameState = GameState(playerCount: 3)
         gameState.startGame()
@@ -126,6 +148,9 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentCardsPerPlayer, 12)
     }
 
+    /// Тестирует, что startNewRound ротирует дилера каждый раунд.
+    /// Проверяет:
+    /// - dealer увеличивается: 0 → 1 → 2 → 3 → 0
     func testStartNewRound_rotatesDealerEachRound() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()
@@ -145,6 +170,11 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.currentDealer, 0)
     }
 
+    /// Тестирует, что дилер с 1 картой и уже сделанной ставкой исключает 0 из allowed bids.
+    /// Проверяет:
+    /// - Игрок 2 заказал 1 взятку
+    /// - Дилер (Игрок 1) не может заказать 0
+    /// - allowed = [1]
     func testAllowedBids_dealerWithOneCardAndOneBidAlreadyPlaced_excludesZero() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame(initialDealerIndex: 0)
@@ -157,6 +187,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(allowed, [1])
     }
 
+    /// Тестирует, что дилер с 1 картой и без положительных ставок исключает 1.
+    /// Проверяет:
+    /// - Все игроки заказали 0
+    /// - allowed = [0]
     func testAllowedBids_dealerWithOneCardAndNoPositiveBids_excludesOne() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame(initialDealerIndex: 0)
@@ -167,6 +201,9 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(allowed, [0])
     }
 
+    /// Тестирует, что не-дилер сохраняет полный диапазон ставок.
+    /// Проверяет:
+    /// - allowed = [0, 1] для не-дилера
     func testAllowedBids_nonDealerKeepsFullRange() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame(initialDealerIndex: 0)
@@ -177,6 +214,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(allowed, [0, 1])
     }
 
+    /// Тестирует, что canChooseBlindBid доступен только в четвёртом блоке.
+    /// Проверяет:
+    /// - В первых трёх блоках = false
+    /// - В четвёртом блоке = true
     func testCanChooseBlindBid_isAvailableOnlyInFourthBlock() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame(initialDealerIndex: 0)
@@ -188,6 +229,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertTrue(gameState.canChooseBlindBid(forPlayer: 1, blindSelections: selections))
     }
 
+    /// Тестирует, что дилер требует чтобы все остальные игроки выбрали blind.
+    /// Проверяет:
+    /// - allOpen = false → дилер не может выбрать blind
+    /// - allBlindExceptDealer = true → дилер может выбрать blind
     func testCanChooseBlindBid_dealerRequiresAllOtherPlayersToChooseBlind() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame(initialDealerIndex: 0)
@@ -206,7 +251,13 @@ final class GameStateTests: XCTestCase {
 
         XCTAssertTrue(gameState.canChooseBlindBid(forPlayer: dealerIndex, blindSelections: allBlindExceptDealer))
     }
-    
+
+    /// Тестирует, что setPlayerNames применяет имена и fallback для пустых значений.
+    /// Проверяет:
+    /// - "Анна" → "Анна"
+    /// - "  " → "Игрок 2" (fallback)
+    /// - "Борис" → "Борис"
+    /// - Пустой → "Игрок 4" (fallback)
     func testSetPlayerNames_appliesProvidedNamesAndFallbacksForEmptyValues() {
         let gameState = GameState(playerCount: 4)
         
@@ -218,6 +269,9 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.players[3].name, "Игрок 4")
     }
 
+    /// Тестирует, что startNewRound на последнем раунде сохраняет gameEnd phase.
+    /// Проверяет:
+    /// - После последнего раунда phase = .gameEnd
     func testStartNewRound_onFinalRoundKeepsGameEndPhase() {
         let gameState = GameState(playerCount: 4)
         gameState.startGame()
@@ -231,6 +285,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.phase, .gameEnd)
     }
 
+    /// Тестирует, что первая карта идёт стартовому игроку при раздаче.
+    /// Проверяет:
+    /// - startingPlayerIndex = 1 → первая карта игроку 1
+    /// - Остальные карты по порядку
     func testDeckDealCards_firstCardGoesToStartingPlayer() {
         var deck = Deck()
 
@@ -242,6 +300,9 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(result.hands[0], [.regular(suit: .diamonds, rank: .nine)])
     }
 
+    /// Тестирует, что start по умолчанию = игрок 0.
+    /// Проверяет:
+    /// - Игрок 0 получает первую карту
     func testDeckDealCards_defaultStartIsPlayerZero() {
         var deck = Deck()
 
@@ -253,6 +314,11 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(result.hands[3], [.regular(suit: .diamonds, rank: .nine)])
     }
 
+    /// Тестирует, что shuffle сохраняет карты и обычно меняет порядок.
+    /// Проверяет:
+    /// - Количество карт сохраняется
+    /// - Set карт одинаковый
+    /// - Порядок обычно отличается
     func testDeckShuffle_preservesCardsAndUsuallyChangesOrder() {
         var deck = Deck()
         let originalOrder = deck.cards
@@ -268,6 +334,11 @@ final class GameStateTests: XCTestCase {
         )
     }
 
+    /// Тестирует, что при полной раздаче 4 игрокам по 9 карт все карты раздаются без trump.
+    /// Проверяет:
+    /// - 4 руки по 9 карт
+    /// - trump = nil
+    /// - deck.count = 0
     func testDeckDealCards_fourPlayersNineCardsEach_dealsAllCardsWithoutTrump() {
         var deck = Deck()
 
@@ -282,6 +353,11 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(deck.count, 0)
     }
 
+    /// Тестирует staged deal: сначала 3 карты, потом остальные 6.
+    /// Проверяет:
+    /// - firstStage: 4 руки по 3 карты
+    /// - secondStage: 4 руки по 6 карт
+    /// - combined: 4 руки по 9 карт
     func testDeckStagedDeal_fourPlayersFullRound_distributesThreeThenRemainingCards() {
         var deck = Deck()
 
@@ -307,6 +383,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertNil(secondStage.trump)
     }
 
+    /// Тестирует, что trump selection использует automatic top card в первом и третьем блоках.
+    /// Проверяет:
+    /// - strategy = .automaticTopDeckCard
+    /// - cardsToDealBeforeChoicePerPlayer = 8 (первый блок), 5 (третий блок)
     func testTrumpSelectionRules_usesAutomaticTopCardInFirstAndThirdBlocks() {
         let firstBlockRule = TrumpSelectionRules.rule(
             for: .first,
@@ -330,6 +410,11 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(thirdBlockRule.chooserPlayerIndex, 3)
     }
 
+    /// Тестирует, что trump selection использует player on dealer left во втором и четвёртом блоках.
+    /// Проверяет:
+    /// - strategy = .playerOnDealerLeft
+    /// - chooserPlayerIndex = 0 (слева от дилера)
+    /// - cardsToDealBeforeChoicePerPlayer = 3 (второй блок), 4 (четвёртый блок)
     func testTrumpSelectionRules_usesPlayerOnDealerLeftInSecondAndFourthBlocks() {
         let secondBlockRule = TrumpSelectionRules.rule(
             for: .second,
@@ -353,6 +438,10 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(fourthBlockRule.cardsToDealBeforeChoicePerPlayer, 4)
     }
 
+    /// Тестирует, что selectFirstDealer начинает с предоставленного seat и находит первый Ace.
+    /// Проверяет:
+    /// - startingPlayerIndex = 1
+    /// - dealerIndex = 0 (первый туз)
     func testDeckSelectFirstDealer_startsFromProvidedSeatAndFindsFirstAce() {
         var deck = Deck()
 
@@ -365,6 +454,12 @@ final class GameStateTests: XCTestCase {
         )
     }
 
+    /// Тестирует, что prepareFirstDealerSelection предоставляет visual sequence и winning Ace.
+    /// Проверяет:
+    /// - tableCard = верхняя карта (diamonds six)
+    /// - dealtCards не пустой
+    /// - dealerIndex = 0
+    /// - Последняя карта в dealtCards = Ace
     func testPrepareFirstDealerSelection_providesVisualSequenceAndWinningAce() {
         var deck = Deck()
 

@@ -9,9 +9,12 @@ import XCTest
 @testable import Jocker
 
 final class ScoreCalculatorTests: XCTestCase {
-    
+
     // MARK: - K = V, V ≠ C → K×50 + 50
-    
+
+    /// Тестирует расчёт очков при совпавшей ставке не все карты.
+    /// Проверяет:
+    /// - V=0, K=0, C=3 → 0×50+50 = 50
     func testBidMatchedNotAllCards_zeroTricks() {
         // V=0, K=0, C=3 → 0×50+50 = 50
         let score = ScoreCalculator.calculateRoundScore(
@@ -19,7 +22,10 @@ final class ScoreCalculatorTests: XCTestCase {
         )
         XCTAssertEqual(score, 50)
     }
-    
+
+    /// Тестирует расчёт очков при совпавшей ставке не все карты.
+    /// Проверяет:
+    /// - V=1, K=1, C=3 → 1×50+50 = 100
     func testBidMatchedNotAllCards_oneTrick() {
         // V=1, K=1, C=3 → 1×50+50 = 100
         let score = ScoreCalculator.calculateRoundScore(
@@ -27,7 +33,10 @@ final class ScoreCalculatorTests: XCTestCase {
         )
         XCTAssertEqual(score, 100)
     }
-    
+
+    /// Тестирует расчёт очков при совпавшей ставке не все карты.
+    /// Проверяет:
+    /// - V=3, K=3, C=5 → 3×50+50 = 200
     func testBidMatchedNotAllCards_multipleTricks() {
         // V=3, K=3, C=5 → 3×50+50 = 200
         let score = ScoreCalculator.calculateRoundScore(
@@ -35,9 +44,12 @@ final class ScoreCalculatorTests: XCTestCase {
         )
         XCTAssertEqual(score, 200)
     }
-    
+
     // MARK: - K = V = C → K×100
-    
+
+    /// Тестирует расчёт очков при совпавшей ставке все карты.
+    /// Проверяет:
+    /// - V=1, K=1, C=1 → 1×100 = 100
     func testBidMatchedAllCards_oneCard() {
         // V=1, K=1, C=1 → 1×100 = 100
         let score = ScoreCalculator.calculateRoundScore(

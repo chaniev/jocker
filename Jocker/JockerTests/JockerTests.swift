@@ -10,6 +10,11 @@ import UIKit
 @testable import Jocker
 
 final class JockerTests: XCTestCase {
+    /// Тестирует raw values и порядок case для BotDifficulty.
+    /// Проверяет:
+    /// - easy, normal, hard имеют правильные raw values
+    /// - allCases возвращает [.easy, .normal, .hard]
+    /// - displayTitle для каждого уровня сложности
     func testBotDifficultyRawValuesAndCaseOrder() {
         XCTAssertEqual(BotDifficulty.easy.rawValue, "easy")
         XCTAssertEqual(BotDifficulty.normal.rawValue, "normal")
@@ -20,6 +25,10 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(BotDifficulty.hard.settingsDisplayTitle, "Гранд мастер бит")
     }
 
+    /// Тестирует инициализацию BotDifficulty из raw value.
+    /// Проверяет:
+    /// - Корректная инициализация для "easy", "normal", "hard"
+    /// - Возврат nil для несуществующего значения "legendary"
     func testBotDifficultyInitializationFromRawValue() {
         XCTAssertEqual(BotDifficulty(rawValue: "easy"), .easy)
         XCTAssertEqual(BotDifficulty(rawValue: "normal"), .normal)
@@ -27,6 +36,12 @@ final class JockerTests: XCTestCase {
         XCTAssertNil(BotDifficulty(rawValue: "legendary"))
     }
 
+    /// Тестирует, что BlockResult корректно хранит предоставленные значения.
+    /// Проверяет:
+    /// - roundResults массивы для каждого игрока
+    /// - baseScores, premiumPlayerIndices, premiumBonuses
+    /// - premiumPenalties, premiumPenaltyRoundIndices, premiumPenaltyRoundScores
+    /// - zeroPremiumPlayerIndices, zeroPremiumBonuses, finalScores
     func testBlockResultStoresProvidedValues() {
         let roundsPlayer0 = [
             RoundResult(cardsInRound: 1, bid: 1, tricksTaken: 1, isBlind: false),
@@ -69,6 +84,12 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(result.finalScores, [250, 350])
     }
 
+    /// Тестирует, что TrickNode в simulation mode отслеживает карты без рендеринга.
+    /// Проверяет:
+    /// - playedCards.count увеличивается
+    /// - children.count остаётся 0 (без рендеринга)
+    /// - determineWinner корректно определяет победителя
+    /// - clearTrick очищает взятку
     func testTrickNodeSimulationMode_tracksCardsWithoutRenderingNodes() {
         let trickNode = TrickNode(rendersCards: false)
 
@@ -97,6 +118,10 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(trickNode.children.count, 0)
     }
 
+    /// Тестирует, что TrickNode в default mode сохраняет поведение рендеринга.
+    /// Проверяет:
+    /// - playedCards.count увеличивается
+    /// - children.count увеличивается (рендеринг активен)
     func testTrickNodeDefaultMode_keepsRenderingBehavior() {
         let trickNode = TrickNode()
 
@@ -110,6 +135,12 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(trickNode.children.count, 1)
     }
 
+    /// Тестирует, что subtotal row отображает очки делёнными на 100 с одним знаком после запятой.
+    /// Проверяет:
+    /// - 200 → 2,0
+    /// - -200 → -2,0
+    /// - 100 → 1,0
+    /// - 50 → 0,5
     @MainActor
     func testSubtotalRowDisplaysScoresDividedByHundredWithOneFractionDigit() {
         let manager = ScoreManager(playerCountProvider: { 4 })
@@ -128,7 +159,11 @@ final class JockerTests: XCTestCase {
         let subtotalRowIndex = 8
         XCTAssertEqual(displayedPoints(at: subtotalRowIndex, in: tableView), ["2,0", "-2,0", "1,0", "0,5"])
     }
-    
+
+    /// Тестирует, что cumulative row отображает кумулятивные очки делёнными на 100.
+    /// Проверяет:
+    /// - Блок 1: [200, -200, 100, 50]
+    /// - Блок 2: кумулятивные [300, -150, -50, 200] → [3,0, -1,5, -0,5, 2,0]
     @MainActor
     func testCumulativeRowDisplaysScoresDividedByHundredWithOneFractionDigit() {
         let manager = ScoreManager(playerCountProvider: { 4 })
@@ -159,6 +194,12 @@ final class JockerTests: XCTestCase {
         XCTAssertEqual(displayedPoints(at: cumulativeRowIndex, in: tableView), ["3,0", "-1,5", "-0,5", "2,0"])
     }
 
+    /// Тестирует, что penalty strike в deal points при равных penalty кандидатах отмечает только earliest deal.
+    /// Проверяет:
+    /// - premiumPenalty = 100 для P1
+    /// - premiumPenaltyRoundIndices = 0 (первая раздача)
+    /// - firstPenaltyLabel имеет strikethrough
+    /// - secondPenaltyLabel не имеет strikethrough
     @MainActor
     func testPenaltyStrikeInDealPoints_withEqualPenaltyCandidates_marksOnlyEarliestDeal() {
         let manager = ScoreManager(playerCountProvider: { 4 })
