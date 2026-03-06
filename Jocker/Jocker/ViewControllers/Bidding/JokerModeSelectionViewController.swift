@@ -49,30 +49,17 @@ final class JokerModeSelectionViewController: UIViewController {
     }
 
     private func setupView() {
-        let overlayColor = UIColor(red: 0.04, green: 0.07, blue: 0.12, alpha: 0.58)
-        let surfaceColor = UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 0.98)
-        let borderColor = UIColor(red: 0.31, green: 0.40, blue: 0.55, alpha: 0.85)
-        let titleColor = UIColor(red: 0.95, green: 0.97, blue: 1.00, alpha: 1.0)
-        let accentColor = UIColor(red: 0.16, green: 0.39, blue: 0.77, alpha: 1.0)
+        view.backgroundColor = PanelAppearance.overlayBackgroundColor
 
-        view.backgroundColor = overlayColor
-
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = surfaceColor
-        containerView.layer.cornerRadius = 16
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = borderColor.cgColor
-        containerView.clipsToBounds = true
+        let containerView = PanelContainerView(surfaceColor: PanelAppearance.overlaySurfaceColor)
         view.addSubview(containerView)
 
-        let titleLabel = UILabel()
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Выберите как положить джокер"
-        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 24)
-        titleLabel.textAlignment = .center
-        titleLabel.textColor = titleColor
-        containerView.addSubview(titleLabel)
+        let headerView = PanelHeaderView(
+            title: "Выберите как положить джокер",
+            alignment: .center,
+            titleFont: PanelTypography.modalTitle
+        )
+        containerView.addSubview(headerView)
 
         let contentStack = UIStackView()
         contentStack.translatesAutoresizingMaskIntoConstraints = false
@@ -91,8 +78,8 @@ final class JokerModeSelectionViewController: UIViewController {
 
             let suitTitle = UILabel()
             suitTitle.text = "Выберите масть"
-            suitTitle.font = UIFont(name: "AvenirNext-DemiBold", size: 15)
-            suitTitle.textColor = titleColor
+            suitTitle.font = PanelTypography.body
+            suitTitle.textColor = PanelAppearance.primaryTextColor
             suitTitle.textAlignment = .left
             suitTitleLabel = suitTitle
             contentStack.addArrangedSubview(suitTitle)
@@ -115,20 +102,13 @@ final class JokerModeSelectionViewController: UIViewController {
         buttonsRow.distribution = .fillEqually
         containerView.addSubview(buttonsRow)
 
-        let cancelButton = UIButton(type: .system)
-        cancelButton.setTitle("Отмена", for: .normal)
-        cancelButton.titleLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 18)
-        cancelButton.backgroundColor = UIColor(red: 0.22, green: 0.28, blue: 0.38, alpha: 1.0)
-        cancelButton.setTitleColor(titleColor, for: .normal)
-        cancelButton.layer.cornerRadius = 12
+        let cancelButton = SecondaryPanelButton(title: "Отмена", style: .neutral)
         cancelButton.addTarget(self, action: #selector(handleCancelButton), for: .touchUpInside)
 
-        let confirmButton = UIButton(type: .system)
-        confirmButton.setTitle("Подтвердить", for: .normal)
-        confirmButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 18)
-        confirmButton.backgroundColor = accentColor
-        confirmButton.setTitleColor(.white, for: .normal)
-        confirmButton.layer.cornerRadius = 12
+        let confirmButton = PrimaryPanelButton(
+            title: "Подтвердить",
+            font: PanelTypography.secondaryButton
+        )
         confirmButton.addTarget(self, action: #selector(handleConfirmButton), for: .touchUpInside)
 
         buttonsRow.addArrangedSubview(cancelButton)
@@ -140,11 +120,11 @@ final class JokerModeSelectionViewController: UIViewController {
             containerView.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.78),
             containerView.widthAnchor.constraint(greaterThanOrEqualToConstant: 420),
 
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            contentStack.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 18),
+            contentStack.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 18),
             contentStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             contentStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 

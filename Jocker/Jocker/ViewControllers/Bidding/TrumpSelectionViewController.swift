@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import SpriteKit
 
 final class TrumpSelectionViewController: UIViewController {
     private enum LayoutMetrics {
@@ -40,48 +39,27 @@ final class TrumpSelectionViewController: UIViewController {
     }
 
     private func setupView() {
-        let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.62)
-        let surfaceColor = UIColor(red: 0.15, green: 0.21, blue: 0.32, alpha: 0.98)
-        let borderColor = GameColors.goldTranslucent
-        let titleColor = GameColors.textPrimary
-        let subtitleColor = GameColors.textSecondary
-        let accentColor = GameColors.buttonFill
-        let accentBorderColor = GameColors.buttonStroke
-        let accentTextColor = GameColors.buttonText
+        view.backgroundColor = PanelAppearance.overlayBackgroundColor
 
-        view.backgroundColor = overlayColor
-
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = surfaceColor
-        containerView.layer.cornerRadius = 16
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = borderColor.cgColor
-        containerView.clipsToBounds = true
+        let containerView = PanelContainerView(surfaceColor: PanelAppearance.overlaySurfaceColor)
         view.addSubview(containerView)
 
-        let titleLabel = UILabel()
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Выбор козыря"
-        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 24)
-        titleLabel.textAlignment = .center
-        titleLabel.textColor = titleColor
-        containerView.addSubview(titleLabel)
-
-        let chooserLabel = UILabel()
-        chooserLabel.translatesAutoresizingMaskIntoConstraints = false
-        chooserLabel.text = "Выбирает: \(playerName)"
-        chooserLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 15)
-        chooserLabel.textAlignment = .center
-        chooserLabel.textColor = GameColors.gold
-        containerView.addSubview(chooserLabel)
+        let headerView = PanelHeaderView(
+            title: "Выбор козыря",
+            subtitle: "Выбирает: \(playerName)",
+            alignment: .center,
+            titleFont: PanelTypography.modalTitle,
+            subtitleFont: PanelTypography.body,
+            subtitleColor: PanelAppearance.goldTextColor
+        )
+        containerView.addSubview(headerView)
 
         let subtitleLabel = UILabel()
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.text = handCardsDisplayText()
-        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
+        subtitleLabel.font = PanelTypography.modalSubtitle
         subtitleLabel.textAlignment = .center
-        subtitleLabel.textColor = subtitleColor
+        subtitleLabel.textColor = PanelAppearance.secondaryTextColor
         subtitleLabel.numberOfLines = 3
         containerView.addSubview(subtitleLabel)
 
@@ -109,9 +87,7 @@ final class TrumpSelectionViewController: UIViewController {
         let suitButtons = Suit.allCases.map { suit in
             makeSuitButton(
                 title: "\(suit.rawValue) \(suit.name)",
-                backgroundColor: accentColor,
-                borderColor: accentBorderColor,
-                textColor: accentTextColor
+                isPrimary: true
             ) { [weak self] in
                 self?.onSelect(suit)
                 self?.dismiss(animated: true)
@@ -128,9 +104,7 @@ final class TrumpSelectionViewController: UIViewController {
 
         let noTrumpButton = makeSuitButton(
             title: "Без козыря",
-            backgroundColor: UIColor(red: 0.31, green: 0.36, blue: 0.45, alpha: 1.0),
-            borderColor: UIColor(red: 0.22, green: 0.27, blue: 0.35, alpha: 1.0),
-            textColor: titleColor
+            isPrimary: false
         ) { [weak self] in
             self?.onSelect(nil)
             self?.dismiss(animated: true)
@@ -145,15 +119,11 @@ final class TrumpSelectionViewController: UIViewController {
             containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: LayoutMetrics.minContainerHeight),
             containerView.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.86),
 
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            chooserLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            chooserLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            chooserLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            subtitleLabel.topAnchor.constraint(equalTo: chooserLabel.bottomAnchor, constant: 10),
+            subtitleLabel.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 10),
             subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
@@ -172,26 +142,22 @@ final class TrumpSelectionViewController: UIViewController {
 
     private func makeSuitButton(
         title: String,
-        backgroundColor: UIColor,
-        borderColor: UIColor,
-        textColor: UIColor,
+        isPrimary: Bool,
         onTap: @escaping () -> Void
     ) -> UIButton {
-        let button = UIButton(type: .system)
-        button.setTitle(title, for: .normal)
-        button.titleLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 18)
-        button.setTitleColor(textColor, for: .normal)
-        button.backgroundColor = backgroundColor
-        button.layer.cornerRadius = 12
-        button.layer.borderWidth = 1
-        button.layer.borderColor = borderColor.cgColor
+        let button: UIButton = isPrimary
+            ? PrimaryPanelButton(title: title, font: PanelTypography.secondaryButton)
+            : SecondaryPanelButton(
+                title: title,
+                style: .neutral,
+                font: PanelTypography.secondaryButton
+            )
         button.addAction(
             UIAction { _ in
                 onTap()
             },
             for: .touchUpInside
         )
-        button.translatesAutoresizingMaskIntoConstraints = false
         button.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight).isActive = true
         return button
     }

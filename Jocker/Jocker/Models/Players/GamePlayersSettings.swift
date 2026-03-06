@@ -36,30 +36,14 @@ struct GamePlayersSettings: Codable, Equatable {
     }
 
     func displayName(for playerIndex: Int) -> String {
-        guard playerNames.indices.contains(playerIndex) else {
-            return "Игрок \(playerIndex + 1)"
-        }
-
-        let trimmed = playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Игрок \(playerIndex + 1)" : trimmed
+        return PlayerDisplayNameFormatter.displayName(for: playerIndex, in: playerNames)
     }
 
     private static func normalizedNames(_ names: [String]) -> [String] {
-        var normalized = names
-            .prefix(supportedPlayerSlots)
-            .enumerated()
-            .map { index, name in
-                let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? "Игрок \(index + 1)" : trimmed
-            }
-
-        if normalized.count < supportedPlayerSlots {
-            for index in normalized.count..<supportedPlayerSlots {
-                normalized.append("Игрок \(index + 1)")
-            }
-        }
-
-        return normalized
+        return PlayerDisplayNameFormatter.normalizedNames(
+            Array(names.prefix(supportedPlayerSlots)),
+            playerCount: supportedPlayerSlots
+        )
     }
 
     private static func normalizedBotDifficulties(_ difficulties: [BotDifficulty]) -> [BotDifficulty] {

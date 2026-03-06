@@ -9,11 +9,6 @@ import UIKit
 
 final class GameParametersViewController: UIViewController, UITextFieldDelegate {
     private enum Appearance {
-        static let backgroundColor = UIColor(red: 0.10, green: 0.11, blue: 0.16, alpha: 1.0)
-        static let panelColor = UIColor(red: 0.14, green: 0.18, blue: 0.27, alpha: 1.0)
-        static let borderColor = GameColors.goldTranslucent
-        static let titleColor = GameColors.textPrimary
-        static let subtitleColor = GameColors.textSecondary
         static let textFieldBackground = UIColor.white.withAlphaComponent(0.10)
         static let textFieldBorder = UIColor.white.withAlphaComponent(0.28)
         static let radioSelectedBackground = UIColor(red: 0.25, green: 0.35, blue: 0.52, alpha: 0.98)
@@ -22,13 +17,10 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         static let radioSelectedBorder = UIColor(red: 0.90, green: 0.72, blue: 0.22, alpha: 0.98)
         static let radioSelectedIcon = UIColor(red: 0.92, green: 0.76, blue: 0.24, alpha: 1.0)
         static let radioUnselectedIcon = UIColor.white.withAlphaComponent(0.66)
-        static let buttonFill = GameColors.buttonFill
-        static let buttonText = GameColors.buttonText
     }
 
     private enum Layout {
         static let rowSpacing: CGFloat = 12
-        static let panelCornerRadius: CGFloat = 16
         static let textFieldHeight: CGFloat = 44
         static let difficultyRadioButtonHeight: CGFloat = 42
         static let footerButtonHeight: CGFloat = 50
@@ -37,9 +29,16 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
     private var settings: GamePlayersSettings
     private let onSave: (GamePlayersSettings) -> Void
 
-    private let containerView = UIView()
+    private let containerView = PanelContainerView(surfaceColor: PanelAppearance.screenSurfaceColor)
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
+    private let headerView = PanelHeaderView(
+        title: "Параметры игры",
+        subtitle: "Имена всех игроков и сложность ботов",
+        alignment: .left,
+        titleFont: PanelTypography.screenTitle,
+        subtitleFont: PanelTypography.screenSubtitle
+    )
 
     private var nameFields: [UITextField] = []
     private var difficultyOptionButtonsByPlayerIndex: [Int: [BotDifficulty: UIButton]] = [:]
@@ -69,13 +68,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
     }
 
     private func setupView() {
-        view.backgroundColor = Appearance.backgroundColor
+        view.backgroundColor = PanelAppearance.screenBackgroundColor
 
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = Appearance.panelColor
-        containerView.layer.cornerRadius = Layout.panelCornerRadius
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = Appearance.borderColor.cgColor
         view.addSubview(containerView)
 
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -93,7 +87,6 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
             containerView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             containerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
 
-            scrollView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 86),
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -80),
@@ -107,30 +100,13 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
     }
 
     private func setupHeader() {
-        let titleLabel = UILabel()
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Параметры игры"
-        titleLabel.textColor = Appearance.titleColor
-        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 30)
-        titleLabel.textAlignment = .left
-        containerView.addSubview(titleLabel)
-
-        let subtitleLabel = UILabel()
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.text = "Имена всех игроков и сложность ботов"
-        subtitleLabel.textColor = Appearance.subtitleColor
-        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: 16)
-        subtitleLabel.textAlignment = .left
-        containerView.addSubview(subtitleLabel)
+        containerView.addSubview(headerView)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 16),
         ])
     }
 
@@ -160,8 +136,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.text = "Игрок \(playerIndex + 1)"
-        titleLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 18)
-        titleLabel.textColor = Appearance.titleColor
+        titleLabel.font = PanelTypography.sectionTitle
+        titleLabel.textColor = PanelAppearance.primaryTextColor
         titleLabel.textAlignment = .left
         stack.addArrangedSubview(titleLabel)
 
@@ -169,8 +145,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         nameField.translatesAutoresizingMaskIntoConstraints = false
         nameField.text = settings.displayName(for: playerIndex)
         nameField.placeholder = "Игрок \(playerIndex + 1)"
-        nameField.font = UIFont(name: "AvenirNext-Medium", size: 18)
-        nameField.textColor = Appearance.titleColor
+        nameField.font = PanelTypography.bodyLarge
+        nameField.textColor = PanelAppearance.primaryTextColor
         nameField.tintColor = .white
         nameField.backgroundColor = Appearance.textFieldBackground
         nameField.layer.cornerRadius = 10
@@ -192,8 +168,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
             let hintLabel = UILabel()
             hintLabel.translatesAutoresizingMaskIntoConstraints = false
             hintLabel.text = "Уровень зависит от самого игрока"
-            hintLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
-            hintLabel.textColor = Appearance.subtitleColor
+            hintLabel.font = PanelTypography.modalSubtitle
+            hintLabel.textColor = PanelAppearance.secondaryTextColor
             hintLabel.numberOfLines = 2
             hintLabel.textAlignment = .left
             stack.addArrangedSubview(hintLabel)
@@ -201,8 +177,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
             let difficultyLabel = UILabel()
             difficultyLabel.translatesAutoresizingMaskIntoConstraints = false
             difficultyLabel.text = "Уровень"
-            difficultyLabel.font = UIFont(name: "AvenirNext-Medium", size: 14)
-            difficultyLabel.textColor = Appearance.subtitleColor
+            difficultyLabel.font = PanelTypography.modalSubtitle
+            difficultyLabel.textColor = PanelAppearance.secondaryTextColor
             difficultyLabel.textAlignment = .left
             stack.addArrangedSubview(difficultyLabel)
 
@@ -239,10 +215,10 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
     }
 
     private func setupFooterButtons() {
-        let cancelButton = makeFooterButton(title: "Отмена")
+        let cancelButton = SecondaryPanelButton(title: "Отмена")
         cancelButton.addTarget(self, action: #selector(handleCancelTapped), for: .touchUpInside)
 
-        let saveButton = makeFooterButton(title: "Сохранить")
+        let saveButton = PrimaryPanelButton(title: "Сохранить")
         saveButton.addTarget(self, action: #selector(handleSaveTapped), for: .touchUpInside)
 
         let buttonsStack = UIStackView(arrangedSubviews: [cancelButton, saveButton])
@@ -260,19 +236,6 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         ])
     }
 
-    private func makeFooterButton(title: String) -> UIButton {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle(title, for: .normal)
-        button.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 20)
-        button.setTitleColor(Appearance.buttonText, for: .normal)
-        button.backgroundColor = Appearance.buttonFill
-        button.layer.cornerRadius = 12
-        button.layer.borderWidth = 1
-        button.layer.borderColor = GameColors.buttonStroke.cgColor
-        return button
-    }
-
     private func makeDifficultyRadioButton(
         playerIndex: Int,
         difficulty: BotDifficulty
@@ -280,7 +243,7 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.contentHorizontalAlignment = .left
-        button.titleLabel?.font = UIFont(name: "AvenirNext-Medium", size: 12)
+        button.titleLabel?.font = PanelTypography.caption
         button.titleLabel?.adjustsFontSizeToFitWidth = true
         button.titleLabel?.minimumScaleFactor = 0.78
         button.titleLabel?.numberOfLines = 1
@@ -313,7 +276,7 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
             button.setImage(iconImage, for: .normal)
             button.tintColor = isSelected ? Appearance.radioSelectedIcon : Appearance.radioUnselectedIcon
             button.setTitleColor(
-                isSelected ? Appearance.titleColor : Appearance.subtitleColor,
+                isSelected ? PanelAppearance.primaryTextColor : PanelAppearance.secondaryTextColor,
                 for: .normal
             )
             button.backgroundColor = isSelected
@@ -349,8 +312,10 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
     }
 
     private func normalizedName(_ rawName: String?, playerIndex: Int) -> String {
-        let trimmed = rawName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return trimmed.isEmpty ? "Игрок \(playerIndex + 1)" : trimmed
+        return PlayerDisplayNameFormatter.normalizedName(
+            rawName,
+            playerIndex: playerIndex
+        )
     }
 
     private func difficultyTagValue(for difficulty: BotDifficulty) -> Int {

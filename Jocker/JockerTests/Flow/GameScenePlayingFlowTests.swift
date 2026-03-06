@@ -162,6 +162,47 @@ final class GameScenePlayingFlowTests: XCTestCase {
         XCTAssertEqual(viewController.trumpDisplayText(), "Козырь: без козыря")
     }
 
+    func testBidSelectionView_whenHandHasMoreThanFiveCards_usesTwoLineSubtitle() {
+        let viewController = BidSelectionViewController(
+            playerName: "Мурад",
+            handCards: [
+                .regular(suit: .diamonds, rank: .seven),
+                .regular(suit: .diamonds, rank: .ten),
+                .regular(suit: .diamonds, rank: .jack),
+                .regular(suit: .diamonds, rank: .ace),
+                .regular(suit: .hearts, rank: .nine),
+                .regular(suit: .hearts, rank: .queen),
+                .regular(suit: .clubs, rank: .king),
+                .regular(suit: .spades, rank: .ace)
+            ],
+            allowedBids: Array(0...8),
+            maxBid: 8,
+            playerNames: ["Мурад", "Шамс", "Талыб", "Сурен"],
+            displayedBidsByPlayer: [nil, 1, 2, 0],
+            biddingOrder: [2, 3, 0, 1],
+            currentPlayerIndex: 0,
+            forbiddenBid: nil,
+            trumpSuit: .clubs
+        ) { _ in }
+
+        viewController.loadViewIfNeeded()
+        viewController.view.frame = CGRect(x: 0, y: 0, width: 1180, height: 820)
+        viewController.view.layoutIfNeeded()
+
+        guard let headerView = findSubview(ofType: PanelHeaderView.self, in: viewController.view) else {
+            XCTFail("Ожидался PanelHeaderView в модалке заказа взяток")
+            return
+        }
+
+        XCTAssertEqual(headerView.subtitleLabel.numberOfLines, 2)
+        XCTAssertEqual(headerView.subtitleLabel.lineBreakMode, .byWordWrapping)
+        XCTAssertTrue(headerView.subtitleLabel.text?.contains("\n") == true)
+        XCTAssertGreaterThanOrEqual(
+            headerView.bounds.height,
+            ceil(PanelTypography.modalTitle.lineHeight + (PanelTypography.modalSubtitle.lineHeight * 2))
+        )
+    }
+
     func testTrumpIndicator_whenNoTrump_displaysJokerCard() {
         let indicator = TrumpIndicator()
 
@@ -471,5 +512,19 @@ final class GameScenePlayingFlowTests: XCTestCase {
             texts.append(contentsOf: allLabelTexts(in: subview))
         }
         return texts
+    }
+
+    private func findSubview<T: UIView>(ofType type: T.Type, in view: UIView) -> T? {
+        if let matchingView = view as? T {
+            return matchingView
+        }
+
+        for subview in view.subviews {
+            if let matchingView = findSubview(ofType: type, in: subview) {
+                return matchingView
+            }
+        }
+
+        return nil
     }
 }

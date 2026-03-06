@@ -203,12 +203,7 @@ final class GameStatisticsTableView: UIView {
     }
 
     private func displayName(for playerIndex: Int, playerNames: [String]) -> String {
-        guard playerNames.indices.contains(playerIndex) else {
-            return "Игрок \(playerIndex + 1)"
-        }
-
-        let trimmedName = playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedName.isEmpty ? "Игрок \(playerIndex + 1)" : trimmedName
+        return PlayerDisplayNameFormatter.displayName(for: playerIndex, in: playerNames)
     }
 
     private func makeRow(
@@ -275,7 +270,7 @@ final class GameStatisticsTableView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.text = text
         label.textColor = textColor
-        label.font = UIFont(name: isHeader ? "AvenirNext-DemiBold" : "AvenirNext-Medium", size: isHeader ? 16 : 15)
+        label.font = isHeader ? PanelTypography.screenSubtitle : PanelTypography.body
         label.textAlignment = .center
         label.adjustsFontSizeToFitWidth = true
         label.minimumScaleFactor = 0.75

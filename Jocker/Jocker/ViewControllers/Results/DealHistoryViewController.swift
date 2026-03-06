@@ -9,22 +9,11 @@ import UIKit
 
 final class DealHistoryViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
     private enum Appearance {
-        static let backgroundColor = UIColor(red: 0.10, green: 0.11, blue: 0.16, alpha: 1.0)
-        static let containerColor = UIColor(red: 0.14, green: 0.18, blue: 0.27, alpha: 1.0)
-        static let borderColor = GameColors.goldTranslucent
-        static let titleColor = GameColors.textPrimary
-        static let subtitleColor = GameColors.textSecondary
-        static let buttonColor = GameColors.buttonFill
-        static let buttonTextColor = GameColors.buttonText
-        static let secondaryButtonBackground = UIColor(red: 0.20, green: 0.30, blue: 0.46, alpha: 0.55)
         static let tableSectionBackground = UIColor(red: 0.11, green: 0.15, blue: 0.24, alpha: 0.95)
         static let tableSeparatorColor = UIColor(red: 0.30, green: 0.41, blue: 0.60, alpha: 0.56)
-        static let primaryRowTextColor = GameColors.textPrimary
-        static let secondaryRowTextColor = GameColors.textSecondary
     }
 
     private enum Layout {
-        static let containerCornerRadius: CGFloat = 16
         static let buttonHeight: CGFloat = 46
     }
 
@@ -39,12 +28,23 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     private let playerControlTypes: [PlayerControlType]
     private let exportService: DealHistoryExportService
 
-    private let containerView = UIView()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private let containerView = PanelContainerView(surfaceColor: PanelAppearance.screenSurfaceColor)
+    private lazy var headerView = PanelHeaderView(
+        title: "Раздача \(dealHistory.key.roundIndex + 1), блок \(dealHistory.key.blockIndex + 1)",
+        subtitle: "Подробная история хода и стартовых рук игроков",
+        alignment: .left,
+        titleFont: PanelTypography.resultsTitle,
+        subtitleFont: PanelTypography.screenSubtitle
+    )
     private let trumpLabel = UILabel()
-    private let closeButton = UIButton(type: .system)
-    private let exportButton = UIButton(type: .system)
+    private let closeButton = PrimaryPanelButton(
+        title: "Закрыть",
+        font: PanelTypography.secondaryButton
+    )
+    private let exportButton = SecondaryPanelButton(
+        title: "Экспорт JSON",
+        font: PanelTypography.compactLabel
+    )
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let emptyStateLabel = UILabel()
     private var isExportInProgress = false
@@ -80,13 +80,7 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     }
 
     private func setupView() {
-        view.backgroundColor = Appearance.backgroundColor
-
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = Appearance.containerColor
-        containerView.layer.cornerRadius = Layout.containerCornerRadius
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = Appearance.borderColor.cgColor
+        view.backgroundColor = PanelAppearance.screenBackgroundColor
         view.addSubview(containerView)
 
         NSLayoutConstraint.activate([
@@ -98,62 +92,27 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     }
 
     private func setupHeader() {
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.setTitle("Закрыть", for: .normal)
-        closeButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 18)
-        closeButton.setTitleColor(Appearance.buttonTextColor, for: .normal)
-        closeButton.backgroundColor = Appearance.buttonColor
-        closeButton.layer.cornerRadius = 12
-        closeButton.layer.borderWidth = 1
-        closeButton.layer.borderColor = GameColors.buttonStroke.cgColor
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
         containerView.addSubview(closeButton)
 
-        exportButton.translatesAutoresizingMaskIntoConstraints = false
-        exportButton.setTitle("Экспорт JSON", for: .normal)
-        exportButton.titleLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 17)
-        exportButton.setTitleColor(Appearance.primaryRowTextColor, for: .normal)
-        exportButton.backgroundColor = Appearance.secondaryButtonBackground
-        exportButton.layer.cornerRadius = 12
-        exportButton.layer.borderWidth = 1
-        exportButton.layer.borderColor = Appearance.tableSeparatorColor.cgColor
         exportButton.addTarget(self, action: #selector(handleExportTapped), for: .touchUpInside)
         containerView.addSubview(exportButton)
 
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 29)
-        titleLabel.textColor = Appearance.titleColor
-        titleLabel.textAlignment = .left
-        titleLabel.text = "Раздача \(dealHistory.key.roundIndex + 1), блок \(dealHistory.key.blockIndex + 1)"
-        containerView.addSubview(titleLabel)
-
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: 16)
-        subtitleLabel.textColor = Appearance.subtitleColor
-        subtitleLabel.textAlignment = .left
-        subtitleLabel.text = "Подробная история хода и стартовых рук игроков"
-        containerView.addSubview(subtitleLabel)
+        containerView.addSubview(headerView)
 
         trumpLabel.translatesAutoresizingMaskIntoConstraints = false
-        trumpLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 17)
-        trumpLabel.textColor = Appearance.subtitleColor
+        trumpLabel.font = PanelTypography.compactLabel
+        trumpLabel.textColor = PanelAppearance.secondaryTextColor
         trumpLabel.textAlignment = .left
         trumpLabel.text = trumpDisplayText()
         containerView.addSubview(trumpLabel)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6)
-        ])
-
-        NSLayoutConstraint.activate([
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            trumpLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 4),
+            trumpLabel.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 4),
             trumpLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             trumpLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
@@ -191,8 +150,8 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
 
     private func setupEmptyState() {
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateLabel.font = UIFont(name: "AvenirNext-DemiBold", size: 20)
-        emptyStateLabel.textColor = Appearance.secondaryRowTextColor
+        emptyStateLabel.font = PanelTypography.primaryButton
+        emptyStateLabel.textColor = PanelAppearance.secondaryTextColor
         emptyStateLabel.textAlignment = .center
         emptyStateLabel.numberOfLines = 0
         emptyStateLabel.text = "По этой раздаче нет сохранённых данных."
@@ -227,12 +186,7 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     }
 
     private func playerDisplayName(at index: Int) -> String {
-        guard playerNames.indices.contains(index) else {
-            return "Игрок \(index + 1)"
-        }
-
-        let trimmed = playerNames[index].trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Игрок \(index + 1)" : trimmed
+        return PlayerDisplayNameFormatter.displayName(for: index, in: playerNames)
     }
 
     private func playerRoleDisplayName(at index: Int) -> String {
@@ -292,13 +246,10 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     }
 
     private func normalizedPlayerNames(for playerCount: Int) -> [String] {
-        return (0..<playerCount).map { index in
-            if playerNames.indices.contains(index) {
-                let trimmed = playerNames[index].trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? "Игрок \(index + 1)" : trimmed
-            }
-            return "Игрок \(index + 1)"
-        }
+        return PlayerDisplayNameFormatter.normalizedNames(
+            playerNames,
+            playerCount: playerCount
+        )
     }
 
     private func normalizedPlayerControlTypes(for playerCount: Int) -> [PlayerControlType] {
@@ -358,24 +309,24 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
         cell.selectionStyle = .none
         cell.backgroundColor = Appearance.tableSectionBackground
         cell.contentView.backgroundColor = Appearance.tableSectionBackground
-        cell.tintColor = Appearance.primaryRowTextColor
-        cell.textLabel?.textColor = Appearance.primaryRowTextColor
-        cell.detailTextLabel?.textColor = Appearance.secondaryRowTextColor
+        cell.tintColor = PanelAppearance.primaryTextColor
+        cell.textLabel?.textColor = PanelAppearance.primaryTextColor
+        cell.detailTextLabel?.textColor = PanelAppearance.secondaryTextColor
 
         if hasHandsSection, indexPath.section == 0 {
             let playerIndex = indexPath.row
             let playerName = playerDisplayName(at: playerIndex)
             let role = playerRoleDisplayName(at: playerIndex)
-            cell.textLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 17)
+            cell.textLabel?.font = PanelTypography.compactLabel
             cell.textLabel?.numberOfLines = 1
-            cell.detailTextLabel?.font = UIFont(name: "AvenirNext-Medium", size: 15)
+            cell.detailTextLabel?.font = PanelTypography.body
             cell.detailTextLabel?.numberOfLines = 0
             cell.textLabel?.text = "\(playerName) (\(role))"
             cell.detailTextLabel?.text = handDisplayText(for: playerIndex)
             return cell
         }
 
-        cell.textLabel?.font = UIFont(name: "AvenirNext-Medium", size: 16)
+        cell.textLabel?.font = PanelTypography.screenSubtitle
         cell.textLabel?.numberOfLines = 0
         cell.detailTextLabel?.text = nil
 
@@ -415,10 +366,10 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
 
     func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
         guard let header = view as? UITableViewHeaderFooterView else { return }
-        header.tintColor = Appearance.containerColor
-        header.contentView.backgroundColor = Appearance.containerColor
-        header.textLabel?.textColor = Appearance.subtitleColor
-        header.textLabel?.font = UIFont(name: "AvenirNext-DemiBold", size: 15)
+        header.tintColor = PanelAppearance.screenSurfaceColor
+        header.contentView.backgroundColor = PanelAppearance.screenSurfaceColor
+        header.textLabel?.textColor = PanelAppearance.secondaryTextColor
+        header.textLabel?.font = PanelTypography.body
     }
 
     // MARK: - Actions

@@ -9,13 +9,6 @@ import UIKit
 
 final class GameStatisticsViewController: UIViewController {
     private enum Appearance {
-        static let backgroundColor = UIColor(red: 0.10, green: 0.11, blue: 0.16, alpha: 1.0)
-        static let panelColor = UIColor(red: 0.14, green: 0.18, blue: 0.27, alpha: 1.0)
-        static let borderColor = GameColors.goldTranslucent
-        static let titleColor = GameColors.textPrimary
-        static let subtitleColor = GameColors.textSecondary
-        static let buttonColor = GameColors.buttonFill
-        static let buttonTextColor = GameColors.buttonText
         static let segmentedTint = UIColor(red: 0.20, green: 0.30, blue: 0.46, alpha: 1.0)
     }
 
@@ -25,12 +18,17 @@ final class GameStatisticsViewController: UIViewController {
     private var playersSettings: GamePlayersSettings
     private var selectedScope: GameStatisticsScope = .allGames
 
-    private let containerView = UIView()
-    private let titleLabel = UILabel()
-    private let subtitleLabel = UILabel()
+    private let containerView = PanelContainerView(surfaceColor: PanelAppearance.screenSurfaceColor)
+    private let headerView = PanelHeaderView(
+        title: "Статистика игр",
+        subtitle: "Таблица метрик по всем игрокам",
+        alignment: .left,
+        titleFont: PanelTypography.screenTitle,
+        subtitleFont: PanelTypography.screenSubtitle
+    )
     private let scopeSegmentedControl = UISegmentedControl(items: GameStatisticsScope.allCases.map(\.title))
     private let statisticsTableView = GameStatisticsTableView()
-    private let closeButton = UIButton(type: .system)
+    private let closeButton = PrimaryPanelButton(title: "Назад")
 
     init(
         statisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore(),
@@ -64,13 +62,7 @@ final class GameStatisticsViewController: UIViewController {
     }
 
     private func setupView() {
-        view.backgroundColor = Appearance.backgroundColor
-
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = Appearance.panelColor
-        containerView.layer.cornerRadius = 16
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = Appearance.borderColor.cgColor
+        view.backgroundColor = PanelAppearance.screenBackgroundColor
         view.addSubview(containerView)
 
         NSLayoutConstraint.activate([
@@ -82,45 +74,29 @@ final class GameStatisticsViewController: UIViewController {
     }
 
     private func setupHeader() {
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Статистика игр"
-        titleLabel.textColor = Appearance.titleColor
-        titleLabel.font = UIFont(name: "AvenirNext-Bold", size: 30)
-        titleLabel.textAlignment = .left
-        containerView.addSubview(titleLabel)
-
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.text = "Таблица метрик по всем игрокам"
-        subtitleLabel.textColor = Appearance.subtitleColor
-        subtitleLabel.font = UIFont(name: "AvenirNext-Medium", size: 16)
-        subtitleLabel.textAlignment = .left
-        containerView.addSubview(subtitleLabel)
+        containerView.addSubview(headerView)
 
         scopeSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
         scopeSegmentedControl.selectedSegmentIndex = 0
         scopeSegmentedControl.backgroundColor = Appearance.segmentedTint.withAlphaComponent(0.55)
         scopeSegmentedControl.selectedSegmentTintColor = Appearance.segmentedTint
         scopeSegmentedControl.setTitleTextAttributes([
-            .font: UIFont(name: "AvenirNext-DemiBold", size: 15) as Any,
-            .foregroundColor: GameColors.textPrimary
+            .font: PanelTypography.body as Any,
+            .foregroundColor: PanelAppearance.primaryTextColor
         ], for: .selected)
         scopeSegmentedControl.setTitleTextAttributes([
-            .font: UIFont(name: "AvenirNext-Medium", size: 14) as Any,
-            .foregroundColor: Appearance.subtitleColor
+            .font: PanelTypography.modalSubtitle as Any,
+            .foregroundColor: PanelAppearance.secondaryTextColor
         ], for: .normal)
         scopeSegmentedControl.addTarget(self, action: #selector(handleScopeChanged), for: .valueChanged)
         containerView.addSubview(scopeSegmentedControl)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            scopeSegmentedControl.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 12),
+            scopeSegmentedControl.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 12),
             scopeSegmentedControl.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             scopeSegmentedControl.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             scopeSegmentedControl.heightAnchor.constraint(equalToConstant: 38)
@@ -140,14 +116,6 @@ final class GameStatisticsViewController: UIViewController {
     }
 
     private func setupCloseButton() {
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.setTitle("Назад", for: .normal)
-        closeButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 20)
-        closeButton.setTitleColor(Appearance.buttonTextColor, for: .normal)
-        closeButton.backgroundColor = Appearance.buttonColor
-        closeButton.layer.cornerRadius = 12
-        closeButton.layer.borderWidth = 1
-        closeButton.layer.borderColor = GameColors.buttonStroke.cgColor
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
         containerView.addSubview(closeButton)
 

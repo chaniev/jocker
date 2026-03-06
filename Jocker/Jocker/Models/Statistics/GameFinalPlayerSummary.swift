@@ -29,11 +29,10 @@ struct GameFinalPlayerSummary {
         summaries.reserveCapacity(playerCount)
 
         for playerIndex in 0..<playerCount {
-            let fallbackName = "Игрок \(playerIndex + 1)"
-            let trimmedName = playerNames.indices.contains(playerIndex)
-                ? playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-                : ""
-            let playerName = trimmedName.isEmpty ? fallbackName : trimmedName
+            let playerName = PlayerDisplayNameFormatter.displayName(
+                for: playerIndex,
+                in: playerNames
+            )
 
             let blockScores = (0..<totalBlocks).map { blockIndex in
                 guard completedBlocks.indices.contains(blockIndex) else { return 0 }

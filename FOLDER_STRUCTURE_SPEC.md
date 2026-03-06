@@ -125,6 +125,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/History/DealTrainingMoveSample.swift`: per-move training payload with pre-move state, chosen action, and trick outcome.
 - `Jocker/Jocker/Models/Players/PlayerControlType.swift`: player control mode (`human` / `bot`) used by the scene/controller flow.
 - `Jocker/Jocker/Models/Players/GamePlayersSettings.swift`: normalized snapshot of editable names for 4 player slots and stored bot difficulties for slots 2–4.
+- `Jocker/Jocker/Models/Players/PlayerDisplayNameFormatter.swift`: centralized trim/fallback player-name formatting shared by settings, flow models, export, and UIKit table/controllers.
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
 - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
@@ -133,6 +134,12 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
 - `Jocker/Jocker/Scoring/ScoreManager.swift`: sole owner of accumulated game scores, block persistence, standings helpers, and premium application.
+- `Jocker/Jocker/ViewControllers/Common/PanelAppearance.swift`: shared UIKit panel palette and chrome constants for full-screen and overlay screens.
+- `Jocker/Jocker/ViewControllers/Common/PanelTypography.swift`: shared AvenirNext typography helpers for UIKit panel headers, buttons, and compact table labels.
+- `Jocker/Jocker/ViewControllers/Common/PanelContainerView.swift`: reusable rounded/bordered panel shell for UIKit screen and modal containers.
+- `Jocker/Jocker/ViewControllers/Common/PanelHeaderView.swift`: reusable title/subtitle header stack with left/center alignment for panel screens.
+- `Jocker/Jocker/ViewControllers/Common/PrimaryPanelButton.swift`: shared primary CTA button with accent panel styling.
+- `Jocker/Jocker/ViewControllers/Common/SecondaryPanelButton.swift`: shared secondary/neutral CTA button for panel screens.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
@@ -143,7 +150,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift`: pure tap hit-testing helper for `ScoreTableView` that maps tap coordinates to a deal row target (`blockIndex`, `roundIndex`) using static row mappings.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays and summary score formatting.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
-- `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared modal UI building blocks for bid-related selectors (container, labels, scroll grid, and bid-button rows).
+- `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared bid-selector modal base built on common panel chrome (container, labels, primary actions, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human post-deal bid amount with current hand/trump context and bidding summary panel.
 - `Jocker/Jocker/ViewControllers/Bidding/PreDealBlindSelectionViewController.swift`: modal selector of pre-deal blind mode (`open after deal` vs `blind bid`) and blind bid amount list.
 - `Jocker/Jocker/ViewControllers/Bidding/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
@@ -256,6 +263,7 @@ Jocker/Jocker/
 │   │   └── PlayedTrickCard.swift
 │   ├── Players/
 │   │   ├── GamePlayersSettings.swift
+│   │   ├── PlayerDisplayNameFormatter.swift
 │   │   ├── PlayerControlType.swift
 │   │   └── PlayerInfo.swift
 │   └── Statistics/
@@ -278,6 +286,13 @@ Jocker/Jocker/
 │   │   ├── JokerModeSelectionViewController.swift
 │   │   ├── PreDealBlindSelectionViewController.swift
 │   │   └── TrumpSelectionViewController.swift
+│   ├── Common/
+│   │   ├── PanelAppearance.swift
+│   │   ├── PanelContainerView.swift
+│   │   ├── PanelHeaderView.swift
+│   │   ├── PanelTypography.swift
+│   │   ├── PrimaryPanelButton.swift
+│   │   └── SecondaryPanelButton.swift
 │   ├── GameFlow/
 │   │   ├── FirstPlayerAnnouncementViewController.swift
 │   │   ├── GameParametersViewController.swift
@@ -351,7 +366,8 @@ Jocker/JockerTests/
 │   ├── DealHistoryExportServiceTests.swift
 │   └── DealHistoryStoreTests.swift
 ├── Players/
-│   └── GamePlayersSettingsStoreTests.swift
+│   ├── GamePlayersSettingsStoreTests.swift
+│   └── PlayerDisplayNameFormatterTests.swift
 ├── Results/
 │   ├── GameResultsPresentationIntegrationTests.swift
 │   ├── ScoreTableInProgressRoundSnapshotProviderTests.swift

@@ -18,33 +18,24 @@ class BidSelectionModalBaseViewController: UIViewController {
     }
 
     enum Appearance {
-        static let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.62)
-        static let surfaceColor = UIColor(red: 0.15, green: 0.21, blue: 0.32, alpha: 0.98)
-        static let borderColor = GameColors.goldTranslucent
-        static let titleColor = GameColors.textPrimary
-        static let subtitleColor = GameColors.textSecondary
-        static let accentColor = GameColors.buttonFill
-        static let accentBorderColor = GameColors.buttonStroke
-        static let accentTextColor = GameColors.buttonText
+        static let titleColor = PanelAppearance.primaryTextColor
+        static let subtitleColor = PanelAppearance.secondaryTextColor
+        static let accentColor = PanelAppearance.accentColor
+        static let accentBorderColor = PanelAppearance.accentBorderColor
+        static let accentTextColor = PanelAppearance.accentTextColor
         static let disabledBidBackground = UIColor(red: 0.19, green: 0.26, blue: 0.39, alpha: 1.0)
-        static let disabledBidBorder = GameColors.buttonStroke.withAlphaComponent(0.35)
+        static let disabledBidBorder = PanelAppearance.accentBorderColor.withAlphaComponent(0.35)
         static let blindBidBackground = UIColor(red: 0.24, green: 0.36, blue: 0.56, alpha: 1.0)
         static let bidSummaryPanelBackground = UIColor(red: 0.11, green: 0.17, blue: 0.27, alpha: 0.78)
-        static let bidSummaryPanelBorder = GameColors.buttonStroke.withAlphaComponent(0.6)
+        static let bidSummaryPanelBorder = PanelAppearance.accentBorderColor.withAlphaComponent(0.6)
         static let bidSummaryValueColor = UIColor(red: 0.92, green: 0.95, blue: 1.0, alpha: 0.95)
-        static let bidSummaryPendingColor = GameColors.textSecondary
+        static let bidSummaryPendingColor = PanelAppearance.secondaryTextColor
     }
 
     func makeContainerView() -> UIView {
-        view.backgroundColor = Appearance.overlayColor
+        view.backgroundColor = PanelAppearance.overlayBackgroundColor
 
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = Appearance.surfaceColor
-        containerView.layer.cornerRadius = 16
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = Appearance.borderColor.cgColor
-        containerView.clipsToBounds = true
+        let containerView = PanelContainerView(surfaceColor: PanelAppearance.overlaySurfaceColor)
         view.addSubview(containerView)
         return containerView
     }
@@ -85,15 +76,10 @@ class BidSelectionModalBaseViewController: UIViewController {
     }
 
     func makePrimaryButton(title: String, font: UIFont?, action: Selector) -> UIButton {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle(title, for: .normal)
-        button.titleLabel?.font = font
-        button.setTitleColor(Appearance.accentTextColor, for: .normal)
-        button.backgroundColor = Appearance.accentColor
-        button.layer.cornerRadius = 12
-        button.layer.borderWidth = 1
-        button.layer.borderColor = Appearance.accentBorderColor.cgColor
+        let button = PrimaryPanelButton(
+            title: title,
+            font: font ?? PanelTypography.primaryButton
+        )
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
     }
@@ -177,7 +163,7 @@ class BidSelectionModalBaseViewController: UIViewController {
         if bids.isEmpty {
             let fallbackLabel = makeLabel(
                 text: fallbackMessage,
-                font: UIFont(name: "AvenirNext-DemiBold", size: 16),
+                font: PanelTypography.screenSubtitle,
                 textColor: fallbackTextColor
             )
             fallbackLabel.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight).isActive = true

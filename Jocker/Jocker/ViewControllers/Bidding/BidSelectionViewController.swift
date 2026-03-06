@@ -11,6 +11,13 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
     private typealias LayoutMetrics = BidSelectionModalBaseViewController.LayoutMetrics
     private typealias Appearance = BidSelectionModalBaseViewController.Appearance
 
+    private static let handCardsSubtitleLineCount = 2
+    private static let handCardsHeaderMinHeight = ceil(
+        PanelTypography.modalTitle.lineHeight +
+        (PanelTypography.modalSubtitle.lineHeight * CGFloat(handCardsSubtitleLineCount)) +
+        16
+    )
+
     private let playerName: String
     private let handCards: [Card]
     private let allowedBids: [Int]
@@ -63,30 +70,25 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
 
     private func setupPostDealBidView() {
         let containerView = makeContainerView()
-        let turnLabel = makeLabel(
-            text: "Ваше слово",
-            font: UIFont(name: "AvenirNext-Bold", size: 24),
-            textColor: Appearance.titleColor
+        let headerView = PanelHeaderView(
+            title: "Ваше слово",
+            subtitle: handCardsDisplayText(),
+            alignment: .center,
+            titleFont: PanelTypography.modalTitle,
+            subtitleFont: PanelTypography.modalSubtitle
         )
-        turnLabel.setContentCompressionResistancePriority(.required, for: .vertical)
-        turnLabel.setContentHuggingPriority(.required, for: .vertical)
-        containerView.addSubview(turnLabel)
-
-        let subtitleLabel = makeLabel(
-            text: handCardsDisplayText(),
-            font: UIFont(name: "AvenirNext-Medium", size: 14),
-            textColor: Appearance.subtitleColor,
-            numberOfLines: 2
-        )
-        subtitleLabel.lineBreakMode = .byWordWrapping
-        subtitleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
-        subtitleLabel.setContentHuggingPriority(.required, for: .vertical)
-        containerView.addSubview(subtitleLabel)
+        headerView.subtitleLabel.numberOfLines = Self.handCardsSubtitleLineCount
+        headerView.subtitleLabel.lineBreakMode = .byWordWrapping
+        headerView.subtitleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        headerView.subtitleLabel.setContentHuggingPriority(.required, for: .vertical)
+        headerView.setContentCompressionResistancePriority(.required, for: .vertical)
+        headerView.setContentHuggingPriority(.required, for: .vertical)
+        containerView.addSubview(headerView)
 
         let trumpLabel = makeLabel(
             text: trumpDisplayText(),
-            font: UIFont(name: "AvenirNext-DemiBold", size: 14),
-            textColor: GameColors.gold
+            font: PanelTypography.captionStrong,
+            textColor: PanelAppearance.goldTextColor
         )
         trumpLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         trumpLabel.setContentHuggingPriority(.required, for: .vertical)
@@ -100,8 +102,8 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
         }
         let hintLabel = makeLabel(
             text: hintText,
-            font: UIFont(name: "AvenirNext-DemiBold", size: 14),
-            textColor: GameColors.gold,
+            font: PanelTypography.captionStrong,
+            textColor: PanelAppearance.goldTextColor,
             numberOfLines: 2
         )
         hintLabel.isHidden = hintText == nil
@@ -140,17 +142,12 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
             includeCompactHeight: true
         )
         constraints.append(contentsOf: [
-            turnLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
-            turnLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            turnLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            turnLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 30),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.heightAnchor.constraint(greaterThanOrEqualToConstant: Self.handCardsHeaderMinHeight),
 
-            subtitleLabel.topAnchor.constraint(equalTo: turnLabel.bottomAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            subtitleLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 36),
-
-            trumpLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 8),
+            trumpLabel.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 8),
             trumpLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             trumpLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             trumpLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 18),
@@ -203,7 +200,7 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
 
         let titleLabel = makeLabel(
             text: "Заказы игроков",
-            font: UIFont(name: "AvenirNext-DemiBold", size: 14),
+            font: PanelTypography.captionStrong,
             textColor: Appearance.titleColor
         )
         panel.addSubview(titleLabel)
@@ -244,8 +241,8 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
 
         let playerLabel = makeLabel(
             text: isCurrentPlayer ? "\(playerName) (вы)" : playerName,
-            font: UIFont(name: isCurrentPlayer ? "AvenirNext-DemiBold" : "AvenirNext-Medium", size: 13),
-            textColor: isCurrentPlayer ? GameColors.gold : Appearance.subtitleColor
+            font: isCurrentPlayer ? PanelTypography.captionStrong : PanelTypography.caption,
+            textColor: isCurrentPlayer ? PanelAppearance.goldTextColor : Appearance.subtitleColor
         )
         playerLabel.textAlignment = .left
 
@@ -276,7 +273,10 @@ final class BidSelectionViewController: BidSelectionModalBaseViewController {
 
         let order = normalizedBiddingOrder()
         return order.map { playerIndex in
-            let playerName = playerNames[playerIndex]
+            let playerName = PlayerDisplayNameFormatter.displayName(
+                for: playerIndex,
+                in: playerNames
+            )
             let bid = displayedBidsByPlayer.indices.contains(playerIndex)
                 ? displayedBidsByPlayer[playerIndex]
                 : nil

@@ -15,23 +15,15 @@ final class GameResultsViewController: UIViewController {
     }
 
     private enum Appearance {
-        static let overlayColor = GameColors.sceneBackground.withAlphaComponent(0.72)
-        static let containerColor = UIColor(red: 0.12, green: 0.17, blue: 0.27, alpha: 0.97)
-        static let borderColor = GameColors.goldTranslucent
-        static let titleColor = GameColors.textPrimary
-        static let secondaryTextColor = GameColors.textSecondary
         static let headerCellColor = UIColor(red: 0.17, green: 0.24, blue: 0.38, alpha: 0.96)
         static let rowCellColor = UIColor(red: 0.10, green: 0.15, blue: 0.25, alpha: 0.95)
         static let rowAlternateCellColor = UIColor(red: 0.08, green: 0.13, blue: 0.22, alpha: 0.95)
         static let headerTextColor = GameColors.gold
-        static let rowTextColor = GameColors.textPrimary
+        static let rowTextColor = PanelAppearance.primaryTextColor
         static let gridBorderColor = UIColor(red: 0.30, green: 0.41, blue: 0.60, alpha: 0.82)
-        static let buttonColor = GameColors.buttonFill
-        static let buttonTextColor = GameColors.buttonText
     }
 
     private enum Layout {
-        static let containerCornerRadius: CGFloat = 16
         static let closeButtonHeight: CGFloat = 50
         static let headerRowHeight: CGFloat = 50
         static let rowHeight: CGFloat = 44
@@ -61,32 +53,20 @@ final class GameResultsViewController: UIViewController {
     }
 
     private func setupView() {
-        view.backgroundColor = Appearance.overlayColor
+        view.backgroundColor = PanelAppearance.resultsOverlayColor
 
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.backgroundColor = Appearance.containerColor
-        containerView.layer.cornerRadius = Layout.containerCornerRadius
-        containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = Appearance.borderColor.cgColor
-        containerView.clipsToBounds = true
+        let containerView = PanelContainerView(surfaceColor: PanelAppearance.resultsSurfaceColor)
         view.addSubview(containerView)
 
-        let titleLabel = makeLabel(
-            text: "Итоги игры",
-            font: UIFont(name: "AvenirNext-Bold", size: 28),
-            color: Appearance.titleColor
+        let headerView = PanelHeaderView(
+            title: "Итоги игры",
+            subtitle: "Строки: игроки, колонки: показатели",
+            alignment: .center,
+            titleFont: PanelTypography.resultsTitle,
+            subtitleFont: PanelTypography.body
         )
-        titleLabel.accessibilityIdentifier = "game_results_title_label"
-        containerView.addSubview(titleLabel)
-
-        let subtitleLabel = makeLabel(
-            text: "Строки: игроки, колонки: показатели",
-            font: UIFont(name: "AvenirNext-Medium", size: 15),
-            color: Appearance.secondaryTextColor
-        )
-        subtitleLabel.numberOfLines = 2
-        containerView.addSubview(subtitleLabel)
+        headerView.titleLabel.accessibilityIdentifier = "game_results_title_label"
+        containerView.addSubview(headerView)
 
         let tableScrollView = UIScrollView()
         tableScrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -129,15 +109,7 @@ final class GameResultsViewController: UIViewController {
             )
         }
 
-        let closeButton = UIButton(type: .system)
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-        closeButton.setTitle("Закрыть и в меню", for: .normal)
-        closeButton.titleLabel?.font = UIFont(name: "AvenirNext-Bold", size: 20)
-        closeButton.setTitleColor(Appearance.buttonTextColor, for: .normal)
-        closeButton.backgroundColor = Appearance.buttonColor
-        closeButton.layer.cornerRadius = 12
-        closeButton.layer.borderWidth = 1
-        closeButton.layer.borderColor = GameColors.buttonStroke.cgColor
+        let closeButton = PrimaryPanelButton(title: "Закрыть и в меню")
         closeButton.accessibilityIdentifier = "game_results_close_button"
         closeButton.addTarget(self, action: #selector(handleCloseTapped), for: .touchUpInside)
         containerView.addSubview(closeButton)
@@ -150,15 +122,11 @@ final class GameResultsViewController: UIViewController {
             containerView.heightAnchor.constraint(lessThanOrEqualTo: view.heightAnchor, multiplier: 0.90),
             containerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 360),
 
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            tableScrollView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 14),
+            tableScrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 14),
             tableScrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             tableScrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
 
@@ -244,8 +212,8 @@ final class GameResultsViewController: UIViewController {
 
         let textColor = isHeader ? Appearance.headerTextColor : Appearance.rowTextColor
         let font = isHeader
-            ? UIFont(name: "AvenirNext-Bold", size: 14)
-            : UIFont(name: "AvenirNext-Medium", size: 14)
+            ? PanelTypography.headerCell
+            : PanelTypography.modalSubtitle
 
         for (index, column) in columns.enumerated() {
             let cellLabel = UILabel()
@@ -271,20 +239,6 @@ final class GameResultsViewController: UIViewController {
         }
 
         return rowStack
-    }
-
-    private func makeLabel(
-        text: String,
-        font: UIFont?,
-        color: UIColor
-    ) -> UILabel {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = text
-        label.font = font
-        label.textColor = color
-        label.textAlignment = .center
-        return label
     }
 
     private func formattedScore(_ rawScore: Int) -> String {

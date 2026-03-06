@@ -95,9 +95,10 @@ final class DealHistoryExportService {
             }
             return lhs.key.blockIndex < rhs.key.blockIndex
         }
-        let normalizedPlayerNames = (0..<playerCount).map { index in
-            playerNames.indices.contains(index) ? playerNames[index] : "Игрок \(index + 1)"
-        }
+        let normalizedPlayerNames = PlayerDisplayNameFormatter.normalizedNames(
+            playerNames,
+            playerCount: playerCount
+        )
         let normalizedControlTypes = (0..<playerCount).map { index -> String in
             guard playerControlTypes.indices.contains(index) else { return "bot" }
             switch playerControlTypes[index] {

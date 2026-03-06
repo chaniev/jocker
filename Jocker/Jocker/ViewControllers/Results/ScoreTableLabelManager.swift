@@ -18,9 +18,9 @@ final class ScoreTableLabelManager {
         let surfaceColor: UIColor
 
         static let `default` = LabelConfig(
-            headerFont: UIFont(name: "AvenirNext-Bold", size: 14) ?? UIFont.boldSystemFont(ofSize: 14),
-            cellFont: UIFont(name: "AvenirNext-Medium", size: 12) ?? UIFont.systemFont(ofSize: 12, weight: .medium),
-            summaryFont: UIFont(name: "AvenirNext-DemiBold", size: 12) ?? UIFont.systemFont(ofSize: 12, weight: .semibold),
+            headerFont: PanelTypography.headerCell,
+            cellFont: PanelTypography.cell,
+            summaryFont: PanelTypography.summaryCell,
             textPrimaryColor: UIColor(red: 0.10, green: 0.14, blue: 0.22, alpha: 1.0),
             textSecondaryColor: UIColor(red: 0.39, green: 0.45, blue: 0.54, alpha: 1.0),
             surfaceColor: UIColor.white
@@ -233,12 +233,7 @@ final class ScoreTableLabelManager {
     }
 
     private func displayName(for playerIndex: Int, playerNames: [String]) -> String {
-        guard playerNames.indices.contains(playerIndex) else {
-            return "Игрок \(playerIndex + 1)"
-        }
-
-        let trimmedName = playerNames[playerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedName.isEmpty ? "Игрок \(playerIndex + 1)" : trimmedName
+        return PlayerDisplayNameFormatter.displayName(for: playerIndex, in: playerNames)
     }
 
     // MARK: - Update column widths

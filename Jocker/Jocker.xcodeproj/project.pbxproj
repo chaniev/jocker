@@ -70,6 +70,15 @@
 		B20000012F7900030037CA75 /* GamePlayersSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000112F7900030037CA75 /* GamePlayersSettings.swift */; };
 		B20000022F7900030037CA75 /* GamePlayersSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000122F7900030037CA75 /* GamePlayersSettingsStore.swift */; };
 		B20000032F7900030037CA75 /* GameParametersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000132F7900030037CA75 /* GameParametersViewController.swift */; };
+		C70010112FE000010037CA75 /* PanelAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010012FE000010037CA75 /* PanelAppearance.swift */; };
+		C70010122FE000010037CA75 /* PanelTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010022FE000010037CA75 /* PanelTypography.swift */; };
+		C70010132FE000010037CA75 /* PanelContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010032FE000010037CA75 /* PanelContainerView.swift */; };
+		C70010142FE000010037CA75 /* PanelHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010042FE000010037CA75 /* PanelHeaderView.swift */; };
+		C70010152FE000010037CA75 /* PrimaryPanelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010052FE000010037CA75 /* PrimaryPanelButton.swift */; };
+		C70010162FE000010037CA75 /* SecondaryPanelButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010062FE000010037CA75 /* SecondaryPanelButton.swift */; };
+		C70010172FE000010037CA75 /* PlayerDisplayNameFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010072FE000010037CA75 /* PlayerDisplayNameFormatter.swift */; };
+		C70010182FE000010037CA75 /* PlayerDisplayNameFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010082FE000010037CA75 /* PlayerDisplayNameFormatterTests.swift */; };
+		C70010192FE000010037CA75 /* PlayerDisplayNameFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010072FE000010037CA75 /* PlayerDisplayNameFormatter.swift */; };
 		C1F700012F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F700022F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift */; };
 		C2A1000B2F8A10010037CA75 /* libJockerSelfPlayTools.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */; };
 		B20000412F7900030037CA75 /* GamePlayersSettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */; };
@@ -290,6 +299,14 @@
 		B20000112F7900030037CA75 /* GamePlayersSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayersSettings.swift; sourceTree = "<group>"; };
 		B20000122F7900030037CA75 /* GamePlayersSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayersSettingsStore.swift; sourceTree = "<group>"; };
 		B20000132F7900030037CA75 /* GameParametersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameParametersViewController.swift; sourceTree = "<group>"; };
+		C70010012FE000010037CA75 /* PanelAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelAppearance.swift; sourceTree = "<group>"; };
+		C70010022FE000010037CA75 /* PanelTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelTypography.swift; sourceTree = "<group>"; };
+		C70010032FE000010037CA75 /* PanelContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelContainerView.swift; sourceTree = "<group>"; };
+		C70010042FE000010037CA75 /* PanelHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelHeaderView.swift; sourceTree = "<group>"; };
+		C70010052FE000010037CA75 /* PrimaryPanelButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryPanelButton.swift; sourceTree = "<group>"; };
+		C70010062FE000010037CA75 /* SecondaryPanelButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondaryPanelButton.swift; sourceTree = "<group>"; };
+		C70010072FE000010037CA75 /* PlayerDisplayNameFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDisplayNameFormatter.swift; sourceTree = "<group>"; };
+		C70010082FE000010037CA75 /* PlayerDisplayNameFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDisplayNameFormatterTests.swift; sourceTree = "<group>"; };
 		C1F700022F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstPlayerAnnouncementViewController.swift; sourceTree = "<group>"; };
 		C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libJockerSelfPlayTools.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayersSettingsStoreTests.swift; sourceTree = "<group>"; };
@@ -582,10 +599,24 @@
 			isa = PBXGroup;
 			children = (
 				B20000112F7900030037CA75 /* GamePlayersSettings.swift */,
+				C70010072FE000010037CA75 /* PlayerDisplayNameFormatter.swift */,
 				F200000C2F5300010037CA75 /* PlayerControlType.swift */,
 				BB0000052F2800010037CA75 /* PlayerInfo.swift */,
 			);
 			path = Players;
+			sourceTree = "<group>";
+		};
+		C70010092FE000010037CA75 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				C70010012FE000010037CA75 /* PanelAppearance.swift */,
+				C70010032FE000010037CA75 /* PanelContainerView.swift */,
+				C70010042FE000010037CA75 /* PanelHeaderView.swift */,
+				C70010052FE000010037CA75 /* PrimaryPanelButton.swift */,
+				C70010062FE000010037CA75 /* SecondaryPanelButton.swift */,
+				C70010022FE000010037CA75 /* PanelTypography.swift */,
+			);
+			path = Common;
 			sourceTree = "<group>";
 		};
 		A91010072F7900010037CA75 /* Statistics */ = {
@@ -904,6 +935,7 @@
 			isa = PBXGroup;
 			children = (
 				A91020012F7900010037CA75 /* Bidding */,
+				C70010092FE000010037CA75 /* Common */,
 				A91020022F7900010037CA75 /* GameFlow */,
 				A91020032F7900010037CA75 /* Results */,
 				A91020042F7900010037CA75 /* Statistics */,
@@ -932,6 +964,7 @@
 			isa = PBXGroup;
 			children = (
 				B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */,
+				C70010082FE000010037CA75 /* PlayerDisplayNameFormatterTests.swift */,
 			);
 			path = Players;
 			sourceTree = "<group>";
@@ -1137,6 +1170,12 @@
 				D1A000082F7000010037CA75 /* GameScene+ModalFlow.swift in Sources */,
 				7E4AC94E2F268D820037CA75 /* GameViewController.swift in Sources */,
 				B20000032F7900030037CA75 /* GameParametersViewController.swift in Sources */,
+				C70010112FE000010037CA75 /* PanelAppearance.swift in Sources */,
+				C70010122FE000010037CA75 /* PanelTypography.swift in Sources */,
+				C70010132FE000010037CA75 /* PanelContainerView.swift in Sources */,
+				C70010142FE000010037CA75 /* PanelHeaderView.swift in Sources */,
+				C70010152FE000010037CA75 /* PrimaryPanelButton.swift in Sources */,
+				C70010162FE000010037CA75 /* SecondaryPanelButton.swift in Sources */,
 				C1F700012F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift in Sources */,
 				E10000032F7400010037CA75 /* GameResultsViewController.swift in Sources */,
 				D4CA00012F8009010037CA75 /* ScoreTableInProgressRoundSnapshotProvider.swift in Sources */,
@@ -1230,6 +1269,7 @@
 				AB1000022F4200010037CA75 /* GameBlockFormatter.swift in Sources */,
 				BB0000062F2800010037CA75 /* PlayerInfo.swift in Sources */,
 				B20000012F7900030037CA75 /* GamePlayersSettings.swift in Sources */,
+				C70010172FE000010037CA75 /* PlayerDisplayNameFormatter.swift in Sources */,
 				BB0000082F2800010037CA75 /* GameButton.swift in Sources */,
 				CC0000012F2800010037CA75 /* GameConstants.swift in Sources */,
 				E10000012F7400010037CA75 /* GameFinalPlayerSummary.swift in Sources */,
@@ -1264,6 +1304,7 @@
 				B20000422F7900030037CA75 /* GameStatisticsTableViewTests.swift in Sources */,
 				B10000172F7500010037CA75 /* GameStatisticsStoreTests.swift in Sources */,
 				B20000412F7900030037CA75 /* GamePlayersSettingsStoreTests.swift in Sources */,
+				C70010182FE000010037CA75 /* PlayerDisplayNameFormatterTests.swift in Sources */,
 				C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */,
 				F4A100022F9000010037CA75 /* BotHandStrengthModelTests.swift in Sources */,
 				E6A100112FA100010037CA75 /* HandFeatureExtractorTests.swift in Sources */,
@@ -1344,6 +1385,7 @@
 				F20000032F5200010037CA75 /* PlayedTrickCard.swift in Sources */,
 				F200000B2F5300010037CA75 /* PlayerControlType.swift in Sources */,
 				B20000012F7900030037CA75 /* GamePlayersSettings.swift in Sources */,
+				C70010192FE000010037CA75 /* PlayerDisplayNameFormatter.swift in Sources */,
 				F40000012F5600010037CA75 /* BotDifficulty.swift in Sources */,
 				F40000022F5600010037CA75 /* BotTuning.swift in Sources */,
 				F40000092F5600010037CA75 /* BotMatchContext.swift in Sources */,

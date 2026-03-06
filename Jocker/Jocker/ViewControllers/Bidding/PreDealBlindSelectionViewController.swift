@@ -41,34 +41,28 @@ final class PreDealBlindSelectionViewController: BidSelectionModalBaseViewContro
 
     private func setupPreDealBlindChoiceView() {
         let containerView = makeContainerView()
-        let titleLabel = makeLabel(
-            text: "Заказ до раздачи",
-            font: UIFont(name: "AvenirNext-Bold", size: 24),
-            textColor: Appearance.titleColor
-        )
-        containerView.addSubview(titleLabel)
-
-        let subtitleLabel = makeLabel(
-            text: canChooseBlind
+        let headerView = PanelHeaderView(
+            title: "Заказ до раздачи",
+            subtitle: canChooseBlind
                 ? "\(playerName), выберите режим ставки"
                 : "\(playerName), можно ставить только после раздачи",
-            font: UIFont(name: "AvenirNext-Medium", size: 14),
-            textColor: Appearance.subtitleColor,
-            numberOfLines: 2
+            alignment: .center,
+            titleFont: PanelTypography.modalTitle,
+            subtitleFont: PanelTypography.modalSubtitle
         )
-        containerView.addSubview(subtitleLabel)
+        containerView.addSubview(headerView)
 
         let openButton = makePrimaryButton(
             title: "Ставить после раздачи",
-            font: UIFont(name: "AvenirNext-DemiBold", size: 18),
+            font: PanelTypography.secondaryButton,
             action: #selector(handleOpenChoiceTapped)
         )
         containerView.addSubview(openButton)
 
         let blindTitle = makeLabel(
             text: "Заказать в темную",
-            font: UIFont(name: "AvenirNext-DemiBold", size: 16),
-            textColor: GameColors.gold
+            font: PanelTypography.screenSubtitle,
+            textColor: PanelAppearance.goldTextColor
         )
         blindTitle.isHidden = !canChooseBlind
         containerView.addSubview(blindTitle)
@@ -99,15 +93,11 @@ final class PreDealBlindSelectionViewController: BidSelectionModalBaseViewContro
             includeCompactHeight: false
         )
         constraints.append(contentsOf: [
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
-            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            headerView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            headerView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            headerView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
 
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
-            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-
-            openButton.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 14),
+            openButton.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 14),
             openButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             openButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             openButton.heightAnchor.constraint(equalToConstant: LayoutMetrics.buttonHeight),

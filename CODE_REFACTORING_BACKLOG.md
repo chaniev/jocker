@@ -258,6 +258,13 @@
 
 ### P7. Вынести общий UIKit panel/chrome слой
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- Добавлен общий presentation kit для UIKit panel screens: `PanelAppearance`, `PanelTypography`, `PanelContainerView`, `PanelHeaderView`, `PrimaryPanelButton`, `SecondaryPanelButton`.
+- На общий chrome переведены `GameParametersViewController`, `DealHistoryViewController`, `GameResultsViewController`, `GameStatisticsViewController`, `FirstPlayerAnnouncementViewController`, `TrumpSelectionViewController`, `JokerModeSelectionViewController` и bidding modals через `BidSelectionModalBaseViewController`.
+- Централизован player-name display formatting в `PlayerDisplayNameFormatter`, после чего одинаковая trim/fallback логика убрана из controllers, `GameState`, `GamePlayersSettings`, `GameFinalPlayerSummary`, `DealHistoryExportService`, `ScoreTableLabelManager` и `GameStatisticsTableView`.
+
 **Цель:** убрать копипасту panel setup и сделать presentation code дешевле в сопровождении.
 
 **Что видно сейчас**
@@ -374,7 +381,7 @@
 
 ### Волна 4. Presentation + devtools + tests
 
-7. P7: общий UIKit panel/chrome слой  
+7. P7: общий UIKit panel/chrome слой (выполнено 2026-03-06)
 8. P8: presentation builders для крупных контроллеров  
 9. P9: self-play simulation cleanup  
 10. P10: общий AI test fixture layer
