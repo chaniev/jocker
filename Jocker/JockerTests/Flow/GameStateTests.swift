@@ -52,7 +52,6 @@ final class GameStateTests: XCTestCase {
         gameState.completeTrick(winner: 0)
         gameState.completeRound()
 
-        XCTAssertTrue(gameState.players.contains { $0.score != 0 })
         XCTAssertTrue(gameState.players.contains { $0.currentBid != 0 || $0.tricksTaken != 0 || $0.isBlindBid || $0.isBidLockedBeforeDeal })
 
         gameState.startGame(initialDealerIndex: 1)
@@ -65,7 +64,6 @@ final class GameStateTests: XCTestCase {
         XCTAssertEqual(gameState.phase, .bidding)
 
         for player in gameState.players {
-            XCTAssertEqual(player.score, 0)
             XCTAssertEqual(player.currentBid, 0)
             XCTAssertEqual(player.tricksTaken, 0)
             XCTAssertFalse(player.isBlindBid)
@@ -250,6 +248,28 @@ final class GameStateTests: XCTestCase {
         XCTAssertFalse(gameState.canChooseBlindBid(forPlayer: dealerIndex, blindSelections: allOpen))
 
         XCTAssertTrue(gameState.canChooseBlindBid(forPlayer: dealerIndex, blindSelections: allBlindExceptDealer))
+    }
+
+    func testCompleteRound_keepsRoundStateAvailableForScoreSnapshots() {
+        let gameState = GameState(playerCount: 4)
+        gameState.startGame(initialDealerIndex: 0)
+
+        gameState.setBid(1, forPlayerAt: 0, isBlind: true, lockBeforeDeal: true)
+        gameState.setBid(0, forPlayerAt: 1)
+        gameState.setBid(0, forPlayerAt: 2)
+        gameState.setBid(0, forPlayerAt: 3)
+        gameState.beginPlayingAfterBids()
+        gameState.completeTrick(winner: 0)
+        gameState.completeRound()
+
+        let results = GameRoundResultsBuilder.build(from: gameState, playerCount: 4)
+
+        XCTAssertEqual(gameState.phase, .roundEnd)
+        XCTAssertEqual(results?.count, 4)
+        XCTAssertEqual(results?[0].bid, 1)
+        XCTAssertEqual(results?[0].tricksTaken, 1)
+        XCTAssertEqual(results?[0].isBlind, true)
+        XCTAssertEqual(results?[0].score, 200)
     }
 
     /// Тестирует, что setPlayerNames применяет имена и fallback для пустых значений.

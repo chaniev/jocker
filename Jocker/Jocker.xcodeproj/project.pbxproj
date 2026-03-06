@@ -42,6 +42,7 @@
 		A90001082F7700010037CA75 /* DealTrainingMoveSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */; };
 		A90001092F7700010037CA75 /* DealHistoryExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000192F7700010037CA75 /* DealHistoryExportService.swift */; };
 		A900010A2F7700010037CA75 /* DealHistoryExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */; };
+		C3A100012FD600010037CA75 /* GameRoundResultsBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A100022FD600010037CA75 /* GameRoundResultsBuilder.swift */; };
 		AA0000022F2800010037CA75 /* RoundResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000012F2800010037CA75 /* RoundResult.swift */; };
 		AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000032F2800010037CA75 /* ScoreCalculator.swift */; };
 		AA0000112F2800010037CA75 /* ScoringConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102F2800010037CA75 /* ScoringConstants.swift */; };
@@ -255,6 +256,7 @@
 		A90000182F7700010037CA75 /* DealTrainingMoveSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealTrainingMoveSample.swift; sourceTree = "<group>"; };
 		A90000192F7700010037CA75 /* DealHistoryExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportService.swift; sourceTree = "<group>"; };
 		A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportServiceTests.swift; sourceTree = "<group>"; };
+		C3A100022FD600010037CA75 /* GameRoundResultsBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundResultsBuilder.swift; sourceTree = "<group>"; };
 		AA0000012F2800010037CA75 /* RoundResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundResult.swift; sourceTree = "<group>"; };
 		AA0000032F2800010037CA75 /* ScoreCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculator.swift; sourceTree = "<group>"; };
 		AA0000102F2800010037CA75 /* ScoringConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringConstants.swift; sourceTree = "<group>"; };
@@ -874,6 +876,7 @@
 		AA1000062F2800020037CA75 /* Scoring */ = {
 			isa = PBXGroup;
 			children = (
+				C3A100022FD600010037CA75 /* GameRoundResultsBuilder.swift */,
 				AA0000032F2800010037CA75 /* ScoreCalculator.swift */,
 				AA0000102F2800010037CA75 /* ScoringConstants.swift */,
 				D4C100042F8000010037CA75 /* PremiumRules.swift */,
@@ -1192,6 +1195,7 @@
 				A90001032F7700010037CA75 /* DealTrickMove.swift in Sources */,
 				A90001082F7700010037CA75 /* DealTrainingMoveSample.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,
+				C3A100012FD600010037CA75 /* GameRoundResultsBuilder.swift in Sources */,
 				AA0000112F2800010037CA75 /* ScoringConstants.swift in Sources */,
 				D4C100032F8000010037CA75 /* PremiumRules.swift in Sources */,
 				AA0000062F2800010037CA75 /* BlockResult.swift in Sources */,

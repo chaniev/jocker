@@ -82,21 +82,10 @@ final class GameRoundService {
             round: gameState.currentRoundInBlock
         )
         guard lastRecordedRoundKey != roundKey else { return }
-
-        let cardsInRound = gameState.currentCardsPerPlayer
-        var results: [RoundResult] = []
-        results.reserveCapacity(playerCount)
-
-        for playerIndex in 0..<playerCount {
-            let player = gameState.players[playerIndex]
-            let result = RoundResult(
-                cardsInRound: cardsInRound,
-                bid: player.currentBid,
-                tricksTaken: player.tricksTaken,
-                isBlind: player.isBlindBid
-            )
-            results.append(result)
-        }
+        guard let results = GameRoundResultsBuilder.build(
+            from: gameState,
+            playerCount: playerCount
+        ) else { return }
 
         scoreManager.recordRoundResults(results)
         scoreManager.clearInProgressRoundResults()

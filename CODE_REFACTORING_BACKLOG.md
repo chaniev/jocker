@@ -59,6 +59,14 @@
 
 ### P1. Сделать `ScoreManager` единственным владельцем счёта
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- `PlayerInfo` больше не хранит накопленный score.
+- `GameState` больше не считает и не накапливает total score при `completeRound()`, а отвечает только за phase/order/bid/trick state.
+- Сбор `[RoundResult]` вынесен в общий `GameRoundResultsBuilder` и используется из `GameRoundService` и `GameScene.syncInProgressRoundResultsForScoreTable()`.
+- Источником правды по accumulated scores и standings остаётся `ScoreManager`.
+
 **Цель:** убрать дублирование между `GameState` и `ScoreManager`.
 
 **Почему это первый приоритет**
@@ -341,7 +349,7 @@
 
 ### Волна 1. Foundation
 
-1. P1: один источник правды по счёту  
+1. P1: один источник правды по счёту (выполнено 2026-03-06)  
 2. P2: вынос session state и modal/persistence responsibilities из `GameScene`
 
 ### Волна 2. Runtime AI boundaries

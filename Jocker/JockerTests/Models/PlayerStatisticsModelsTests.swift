@@ -40,7 +40,6 @@ final class PlayerStatisticsModelsTests: XCTestCase {
 
         XCTAssertEqual(player.playerNumber, 2)
         XCTAssertEqual(player.name, "Игрок 2")
-        XCTAssertEqual(player.score, 0)
         XCTAssertEqual(player.currentBid, 0)
     }
 

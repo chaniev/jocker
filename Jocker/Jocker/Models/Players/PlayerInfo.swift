@@ -11,7 +11,6 @@ import Foundation
 struct PlayerInfo {
     let playerNumber: Int
     var name: String
-    var score: Int = 0
     var currentBid: Int = 0
     var tricksTaken: Int = 0
     var isBlindBid: Bool = false

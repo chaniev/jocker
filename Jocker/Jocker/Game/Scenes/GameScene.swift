@@ -331,18 +331,10 @@ class GameScene: SKScene {
     /// Обновляет снимок текущего раунда для таблицы очков.
     func syncInProgressRoundResultsForScoreTable() {
         guard gameState.phase == .playing else { return }
-        guard gameState.players.count >= playerCount else { return }
-
-        let cardsInRound = gameState.currentCardsPerPlayer
-        let results = (0..<playerCount).map { index in
-            let player = gameState.players[index]
-            return RoundResult(
-                cardsInRound: cardsInRound,
-                bid: player.currentBid,
-                tricksTaken: player.tricksTaken,
-                isBlind: player.isBlindBid
-            )
-        }
+        guard let results = GameRoundResultsBuilder.build(
+            from: gameState,
+            playerCount: playerCount
+        ) else { return }
 
         let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
         scoreManager.setInProgressRoundResults(

@@ -11,15 +11,38 @@ import XCTest
 final class ScoreManagerTests: XCTestCase {
     
     // MARK: - Helpers
+
+    private func validRoundResults(
+        cardsInRound: Int,
+        bids: [Int],
+        tricksTaken: [Int],
+        blindPlayerIndices: Set<Int> = []
+    ) -> [RoundResult] {
+        XCTAssertEqual(bids.count, tricksTaken.count)
+        XCTAssertEqual(
+            tricksTaken.reduce(0, +),
+            cardsInRound,
+            "Сумма взяток должна совпадать с количеством розданных карт."
+        )
+        XCTAssertNotEqual(
+            bids.reduce(0, +),
+            cardsInRound,
+            "Сумма заказов не должна быть равна количеству розданных карт."
+        )
+
+        return bids.enumerated().map { index, bid in
+            RoundResult(
+                cardsInRound: cardsInRound,
+                bid: bid,
+                tricksTaken: tricksTaken[index],
+                isBlind: blindPlayerIndices.contains(index)
+            )
+        }
+    }
     
     /// Создать результат раунда с совпавшей ставкой
     private func matchedResult(bid: Int, cardsInRound: Int, isBlind: Bool = false) -> RoundResult {
         return RoundResult(cardsInRound: cardsInRound, bid: bid, tricksTaken: bid, isBlind: isBlind)
-    }
-    
-    /// Создать результат раунда с несовпавшей ставкой
-    private func mismatchedResult(bid: Int, tricksTaken: Int, cardsInRound: Int, isBlind: Bool = false) -> RoundResult {
-        return RoundResult(cardsInRound: cardsInRound, bid: bid, tricksTaken: tricksTaken, isBlind: isBlind)
     }
     
     // MARK: - Запись результатов раунда
@@ -36,12 +59,11 @@ final class ScoreManagerTests: XCTestCase {
     
     func testRecordRoundResults_allPlayers() {
         let manager = ScoreManager(playerCountProvider: { 4 })
-        let results = [
-            matchedResult(bid: 1, cardsInRound: 3),
-            matchedResult(bid: 0, cardsInRound: 3),
-            mismatchedResult(bid: 2, tricksTaken: 1, cardsInRound: 3),
-            matchedResult(bid: 0, cardsInRound: 3)
-        ]
+        let results = validRoundResults(
+            cardsInRound: 3,
+            bids: [1, 1, 1, 1],
+            tricksTaken: [1, 1, 1, 0]
+        )
         
         manager.recordRoundResults(results)
         
@@ -105,12 +127,13 @@ final class ScoreManagerTests: XCTestCase {
     func testPlayerCountGetter_doesNotSynchronizeOrResetStateWhenProviderChanges() {
         var dynamicPlayerCount = 4
         let manager = ScoreManager(playerCountProvider: { dynamicPlayerCount })
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         dynamicPlayerCount = 3
 
         XCTAssertEqual(manager.playerCount, 4, "Getter should be side-effect free and return cached value")
@@ -122,12 +145,13 @@ final class ScoreManagerTests: XCTestCase {
         var dynamicPlayerCount = 4
         let manager = ScoreManager(playerCountProvider: { dynamicPlayerCount })
 
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         manager.setInProgressRoundResults([
             RoundResult(cardsInRound: 2, bid: 1, tricksTaken: 0, isBlind: false),
             RoundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false),
@@ -153,17 +177,18 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Раунд 1 (C=1)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),        // 1×100 = 100
-            matchedResult(bid: 0, cardsInRound: 1),        // 0×50+50 = 50
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),  // -1×100 = -100
-            matchedResult(bid: 0, cardsInRound: 1)         // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         
         let scores = manager.currentBlockBaseScores
         XCTAssertEqual(scores[0], 100)
-        XCTAssertEqual(scores[1], 50)
-        XCTAssertEqual(scores[2], -100)
+        XCTAssertEqual(scores[1], -100)
+        XCTAssertEqual(scores[2], 50)
         XCTAssertEqual(scores[3], 50)
     }
     
@@ -171,65 +196,64 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Раунд 1 (C=1)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),        // 100
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1)         // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         
         // Раунд 2 (C=2)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),        // 100
-            matchedResult(bid: 0, cardsInRound: 2),        // 50
-            matchedResult(bid: 1, cardsInRound: 2),        // 100
-            matchedResult(bid: 0, cardsInRound: 2)         // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 1, 0, 0]
+            )
+        )
         
         let scores = manager.currentBlockBaseScores
         XCTAssertEqual(scores[0], 200)  // 100 + 100
-        XCTAssertEqual(scores[1], 100)  // 50 + 50
-        XCTAssertEqual(scores[2], 150)  // 50 + 100
+        XCTAssertEqual(scores[1], 0)    // -100 + 100
+        XCTAssertEqual(scores[2], -50)  // 50 - 100
         XCTAssertEqual(scores[3], 100)  // 50 + 50
     }
-    
+
     // MARK: - Завершение блока без премий
     
     func testFinalizeBlock_noPremium() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
-        // 3 раунда, у игрока 2 — не совпала ставка во 2-м раунде
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // 100
-            matchedResult(bid: 0, cardsInRound: 1),                      // 50
-            matchedResult(bid: 0, cardsInRound: 1),                      // 50
-            matchedResult(bid: 0, cardsInRound: 1)                       // 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 2),   // -100
-            matchedResult(bid: 1, cardsInRound: 2),                      // 100
-            mismatchedResult(bid: 1, tricksTaken: 2, cardsInRound: 2)    // 2×10 = 20
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                      // 150
-            matchedResult(bid: 1, cardsInRound: 3),                      // 100
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 3),   // -150
-            matchedResult(bid: 0, cardsInRound: 3)                       // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [0, 1, 1, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 2, 0],
+                tricksTaken: [2, 1, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock()
         
-        // Нет премий — у всех есть хотя бы 1 несовпавшая ставка
         XCTAssertTrue(result.premiumPlayerIndices.isEmpty)
-        
-        // Базовые очки
-        XCTAssertEqual(result.baseScores[0], 350)  // 100+100+150
-        XCTAssertEqual(result.baseScores[1], 50)   // 50-100+100
-        XCTAssertEqual(result.baseScores[2], 0)    // 50+100-150
-        XCTAssertEqual(result.baseScores[3], 120)  // 50+20+50
-        
-        // Без премий — итоговые = базовые
+        XCTAssertEqual(result.baseScores[0], 150)
+        XCTAssertEqual(result.baseScores[1], 10)
+        XCTAssertEqual(result.baseScores[2], -150)
+        XCTAssertEqual(result.baseScores[3], 0)
         XCTAssertEqual(result.finalScores, result.baseScores)
     }
     
@@ -240,26 +264,29 @@ final class ScoreManagerTests: XCTestCase {
         
         // Игрок 0 совпадает во всех раундах → получает премию
         // Раунд 1 (C=1)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            matchedResult(bid: 0, cardsInRound: 1),                      // P1: 50
-            matchedResult(bid: 0, cardsInRound: 1),                      // P2: 50
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         // Раунд 2 (C=2)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
-            mismatchedResult(bid: 1, tricksTaken: 2, cardsInRound: 2),   // P1: 20
-            matchedResult(bid: 1, cardsInRound: 2),                      // P2: 100
-            mismatchedResult(bid: 0, tricksTaken: 0, cardsInRound: 2)    // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 1, 0, 1],
+                tricksTaken: [1, 1, 0, 0]
+            )
+        )
         // Раунд 3 (C=3) — последний раунд блока
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                      // P0: 150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P1: 100
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 3),   // P2: -150
-            matchedResult(bid: 0, cardsInRound: 3)                       // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 0, 1],
+                tricksTaken: [2, 1, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock()
         
@@ -270,55 +297,58 @@ final class ScoreManagerTests: XCTestCase {
         XCTAssertEqual(result.premiumBonuses[0], 100)
         
         // Штраф берётся с игрока слева от 0 → это игрок 1
-        // Максимальное положительное очко игрока 1 (раунды 1 и 2): max(50, 20) = 50
-        XCTAssertEqual(result.premiumPenalties[1], 50)
+        // Максимальное положительное очко игрока 1 (раунды 1 и 2): max(-100, 100) = 100
+        XCTAssertEqual(result.premiumPenalties[1], 100)
         
         // Базовые очки (премия вшита в последнюю раздачу)
         XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
-        XCTAssertEqual(result.baseScores[1], 170)  // 50+20+100
+        XCTAssertEqual(result.baseScores[1], 100)  // -100+100+100
         XCTAssertEqual(result.baseScores[2], 0)    // 50+100-150
-        XCTAssertEqual(result.baseScores[3], 150)  // 50+50+50
+        XCTAssertEqual(result.baseScores[3], -150)
 
         // Последняя раздача P0 увеличена на размер премии
         XCTAssertEqual(result.roundResults[0][2].score, 250)  // 150 + 100
         
         // Итоговые очки
         XCTAssertEqual(result.finalScores[0], 450)
-        XCTAssertEqual(result.finalScores[1], 120)  // 170 - 50 штраф
+        XCTAssertEqual(result.finalScores[1], 0)    // 100 - 100 штраф
         XCTAssertEqual(result.finalScores[2], 0)    // без изменений
-        XCTAssertEqual(result.finalScores[3], 150)  // без изменений
+        XCTAssertEqual(result.finalScores[3], -150)
     }
 
     func testFinalizeBlock_onePremium_penaltyRoundWithEqualScoresChoosesEarliestDeal() {
         let manager = ScoreManager(playerCountProvider: { 4 })
 
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            matchedResult(bid: 1, cardsInRound: 1),                      // P1: 100
-            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 1),   // P2: 10
-            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 1)    // P3: 10
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
-            matchedResult(bid: 1, cardsInRound: 2),                      // P1: 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 2),   // P2: -100
-            matchedResult(bid: 0, cardsInRound: 2)                       // P3: 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 3),                      // P0: 100
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 3),   // P1: -150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P2: 100
-            mismatchedResult(bid: 0, tricksTaken: 2, cardsInRound: 3)    // P3: 20
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [1, 0, 1, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [1, 2, 1, 1],
+                tricksTaken: [1, 0, 1, 1]
+            )
+        )
 
         let result = manager.finalizeBlock(blockNumber: 1)
 
         XCTAssertEqual(result.premiumPlayerIndices, [0])
-        XCTAssertEqual(result.premiumPenalties[1], 100)
+        XCTAssertEqual(result.premiumPenalties[1], 50)
         XCTAssertEqual(result.premiumPenaltyRoundIndices[1], 0)
-        XCTAssertEqual(result.premiumPenaltyRoundScores[1], 100)
+        XCTAssertEqual(result.premiumPenaltyRoundScores[1], 50)
 
-        XCTAssertEqual(result.finalScores[1], result.baseScores[1] - 100)
+        XCTAssertEqual(result.finalScores[1], result.baseScores[1] - 50)
     }
 
     func testFinalizeBlock_onePremium_penaltyAppliedToLeftNeighborFromRules() {
@@ -327,30 +357,34 @@ final class ScoreManagerTests: XCTestCase {
         // Сценарий из реальной партии (4 раздачи по 9 карт):
         // P0 (Мурад) совпадает во всех раздачах и получает премию.
         // По новым правилам слева от P0 находится P1, значит штраф должен идти в P1.
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 9),                      // P0: 150
-            mismatchedResult(bid: 3, tricksTaken: 2, cardsInRound: 9),   // P1: -100
-            mismatchedResult(bid: 2, tricksTaken: 1, cardsInRound: 9),   // P2: -100
-            mismatchedResult(bid: 3, tricksTaken: 4, cardsInRound: 9)    // P3: 40
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 9),                      // P0: 150
-            matchedResult(bid: 2, cardsInRound: 9),                      // P1: 150
-            matchedResult(bid: 2, cardsInRound: 9),                      // P2: 150
-            mismatchedResult(bid: 2, tricksTaken: 3, cardsInRound: 9)    // P3: 30
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 9),                      // P0: 50
-            mismatchedResult(bid: 3, tricksTaken: 6, cardsInRound: 9),   // P1: 60
-            matchedResult(bid: 3, cardsInRound: 9),                      // P2: 200
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 9)    // P3: -150
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 9),                      // P0: 150 (+премия)
-            matchedResult(bid: 2, cardsInRound: 9),                      // P1: 150
-            mismatchedResult(bid: 2, tricksTaken: 5, cardsInRound: 9),   // P2: 50
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 9)    // P3: -150
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 9,
+                bids: [2, 3, 2, 3],
+                tricksTaken: [2, 2, 1, 4]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 9,
+                bids: [2, 2, 3, 3],
+                tricksTaken: [2, 2, 2, 3]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 9,
+                bids: [0, 3, 3, 2],
+                tricksTaken: [0, 6, 3, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 9,
+                bids: [2, 2, 2, 2],
+                tricksTaken: [2, 2, 5, 0]
+            )
+        )
 
         let result = manager.finalizeBlock()
 
@@ -360,8 +394,8 @@ final class ScoreManagerTests: XCTestCase {
 
         // Штраф только с P1 (слева от P0): max positive P1 на 1..N-1 = max(-100, 150, 60) = 150
         XCTAssertEqual(result.premiumPenalties, [0, 150, 0, 0])
-        XCTAssertEqual(result.baseScores, [650, 260, 300, -230])
-        XCTAssertEqual(result.finalScores, [650, 110, 300, -230])
+        XCTAssertEqual(result.baseScores, [650, 260, 50, -60])
+        XCTAssertEqual(result.finalScores, [650, 110, 50, -60])
     }
     
     // MARK: - Премия: пропуск соседа с премией
@@ -374,26 +408,29 @@ final class ScoreManagerTests: XCTestCase {
         // Игрок 3: слева — игрок 0 (премия) → пропуск → игрок 1 → штраф с игрока 1
         
         // Раунд 1 (C=1)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            mismatchedResult(bid: 0, tricksTaken: 0, cardsInRound: 1),   // P1: 50
-            mismatchedResult(bid: 0, tricksTaken: 0, cardsInRound: 1),   // P2: 50
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         // Раунд 2 (C=2)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
-            mismatchedResult(bid: 2, tricksTaken: 1, cardsInRound: 2),   // P1: -100
-            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 2),   // P2: 10
-            matchedResult(bid: 1, cardsInRound: 2)                       // P3: 100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 1, 0, 1],
+                tricksTaken: [1, 0, 0, 1]
+            )
+        )
         // Раунд 3 (C=3) — последний
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                      // P0: 150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P1: 100
-            mismatchedResult(bid: 0, tricksTaken: 0, cardsInRound: 3),   // P2: 50
-            matchedResult(bid: 0, cardsInRound: 3)                       // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 1, 0],
+                tricksTaken: [2, 1, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock()
         
@@ -414,14 +451,14 @@ final class ScoreManagerTests: XCTestCase {
         
         // Базовые очки (премии вшиты в последние раздачи)
         XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
-        XCTAssertEqual(result.baseScores[1], 50)   // 50-100+100
-        XCTAssertEqual(result.baseScores[2], 110)  // 50+10+50
+        XCTAssertEqual(result.baseScores[1], 50)
+        XCTAssertEqual(result.baseScores[2], -150)
         XCTAssertEqual(result.baseScores[3], 300)  // 50+100+(50+100)
         
         // Итоговые
         XCTAssertEqual(result.finalScores[0], 450)
         XCTAssertEqual(result.finalScores[1], -50)  // 50 - 100
-        XCTAssertEqual(result.finalScores[2], 110)  // без изменений
+        XCTAssertEqual(result.finalScores[2], -150)
         XCTAssertEqual(result.finalScores[3], 300)
     }
     
@@ -431,48 +468,52 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Блок 1: простой, без премий
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            matchedResult(bid: 0, cardsInRound: 1),                      // P1: 50
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),   // P2: -100
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50
-        ])
-        manager.recordRoundResults([
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 2),   // P0: -100
-            matchedResult(bid: 1, cardsInRound: 2),                      // P1: 100
-            matchedResult(bid: 1, cardsInRound: 2),                      // P2: 100
-            mismatchedResult(bid: 0, tricksTaken: 0, cardsInRound: 2)    // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [0, 1, 1, 0]
+            )
+        )
         
         manager.finalizeBlock()
         
         let block1Scores = manager.totalScores
-        XCTAssertEqual(block1Scores[0], 0)    // 100-100
-        XCTAssertEqual(block1Scores[1], 150)  // 50+100
-        XCTAssertEqual(block1Scores[2], 0)    // -100+100
-        XCTAssertEqual(block1Scores[3], 100)  // 50+50
+        XCTAssertEqual(block1Scores[0], 0)
+        XCTAssertEqual(block1Scores[1], -90)
+        XCTAssertEqual(block1Scores[2], 0)
+        XCTAssertEqual(block1Scores[3], -50)
         
         // Блок 2: ещё раунды
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                      // P0: 150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P1: 100
-            matchedResult(bid: 0, cardsInRound: 3),                      // P2: 50
-            matchedResult(bid: 0, cardsInRound: 3)                       // P3: 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 3),                      // P0: 100
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 3),   // P1: -150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P2: 100
-            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 3)    // P3: 10
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 1, 1],
+                tricksTaken: [2, 0, 0, 1]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [1, 2, 1, 0],
+                tricksTaken: [0, 1, 1, 1]
+            )
+        )
         
         manager.finalizeBlock()
         
         let totalAfterBlock2 = manager.totalScores
-        XCTAssertEqual(totalAfterBlock2[0], 250)   // 0 + 250
-        XCTAssertEqual(totalAfterBlock2[1], 100)   // 150 + (-50)
-        XCTAssertEqual(totalAfterBlock2[2], 150)   // 0 + 150
-        XCTAssertEqual(totalAfterBlock2[3], 160)   // 100 + 60
+        XCTAssertEqual(totalAfterBlock2[0], 50)
+        XCTAssertEqual(totalAfterBlock2[1], -290)
+        XCTAssertEqual(totalAfterBlock2[2], 0)
+        XCTAssertEqual(totalAfterBlock2[3], 60)
     }
     
     // MARK: - Общие очки с текущим незавершённым блоком
@@ -481,36 +522,39 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Завершаем блок 1
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),        // 100
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1)         // 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 1, cardsInRound: 1)         // 100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [0, 1, 1, 0]
+            )
+        )
         manager.finalizeBlock()
         
         // Начинаем блок 2 (незавершённый)
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),        // 150
-            matchedResult(bid: 0, cardsInRound: 3),        // 50
-            matchedResult(bid: 1, cardsInRound: 3),        // 100
-            matchedResult(bid: 0, cardsInRound: 3)         // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 0, 1],
+                tricksTaken: [2, 0, 0, 1]
+            )
+        )
         
         let scoresWithCurrent = manager.totalScoresIncludingCurrentBlock
         let completedOnly = manager.totalScores
         
         // Общие = завершённые + текущий блок
         XCTAssertEqual(scoresWithCurrent[0], completedOnly[0] + 150)
-        XCTAssertEqual(scoresWithCurrent[1], completedOnly[1] + 50)
-        XCTAssertEqual(scoresWithCurrent[2], completedOnly[2] + 100)
-        XCTAssertEqual(scoresWithCurrent[3], completedOnly[3] + 50)
+        XCTAssertEqual(scoresWithCurrent[1], completedOnly[1] - 100)
+        XCTAssertEqual(scoresWithCurrent[2], completedOnly[2] + 50)
+        XCTAssertEqual(scoresWithCurrent[3], completedOnly[3] + 100)
     }
     
     // MARK: - Победитель
@@ -518,26 +562,22 @@ final class ScoreManagerTests: XCTestCase {
     func testGetWinnerIndex() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),        // 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),  // -100
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1)         // 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 0, cardsInRound: 1),        // 50
-            matchedResult(bid: 1, cardsInRound: 1),        // 100
-            matchedResult(bid: 0, cardsInRound: 1)         // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [1, 1, 0, 0]
+            )
+        )
         manager.finalizeBlock()
         
-        // P0: 150, P1: -50, P2: 150, P3: 100
-        // P0, P2, P3 — премия (все совпали). P1 — нет.
-        // P0 бонус: max(100) = 100, штраф → P3(премия)→P2(премия)→P1: max positive=0
-        // P2 бонус: max(50) = 50, штраф → P1: max positive=0
-        // P3 бонус: max(50) = 50, штраф → P2(премия)→P1: max positive=0
-        // Итог: P0=250, P1=-50, P2=200, P3=150
         let winner = manager.getWinnerIndex()
         XCTAssertEqual(winner, 0)
     }
@@ -547,18 +587,20 @@ final class ScoreManagerTests: XCTestCase {
     func testGetScoreboard() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
-        manager.recordRoundResults([
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),   // P0: -100
-            matchedResult(bid: 0, cardsInRound: 1),                      // P1: 50
-            matchedResult(bid: 1, cardsInRound: 1),                      // P2: 100
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),                      // P0: 50
-            matchedResult(bid: 1, cardsInRound: 1),                      // P1: 100
-            matchedResult(bid: 0, cardsInRound: 1),                      // P2: 50
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1)    // P3: -100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [0, 1, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [0, 1, 1, 1],
+                tricksTaken: [0, 1, 1, 0]
+            )
+        )
         manager.finalizeBlock()
         
         let scoreboard = manager.getScoreboard()
@@ -574,18 +616,20 @@ final class ScoreManagerTests: XCTestCase {
     func testReset() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1)
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 1, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [0, 1, 1, 0]
+            )
+        )
         manager.finalizeBlock()
         
         XCTAssertEqual(manager.completedBlocks.count, 1)
@@ -605,19 +649,22 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Раунд 1: игрок 0 ставит в тёмную
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1, isBlind: true),       // P0: 100×2 = 200
-            matchedResult(bid: 0, cardsInRound: 1),                      // P1: 50
-            matchedResult(bid: 0, cardsInRound: 1),                      // P2: 50
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 0, 0, 0],
+                blindPlayerIndices: [0]
+            )
+        )
         // Раунд 2
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
-            matchedResult(bid: 0, cardsInRound: 2),                      // P1: 50
-            matchedResult(bid: 1, cardsInRound: 2),                      // P2: 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 2)    // P3: -100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [1, 1, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock()
         
@@ -639,21 +686,27 @@ final class ScoreManagerTests: XCTestCase {
         // Игрок 0 получает премию
         // Слева от 0 → игрок 1 (0+1)%3 = 1
         
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),   // P1: -100
-            matchedResult(bid: 0, cardsInRound: 1)                       // P2: 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
-            matchedResult(bid: 0, cardsInRound: 2),                      // P1: 50
-            mismatchedResult(bid: 1, tricksTaken: 2, cardsInRound: 2)    // P2: 20
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                      // P0: 150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P1: 100
-            matchedResult(bid: 0, cardsInRound: 3)                       // P2: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0],
+                tricksTaken: [1, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 2],
+                tricksTaken: [1, 0, 1]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 1],
+                tricksTaken: [2, 1, 0]
+            )
+        )
         
         let result = manager.finalizeBlock()
         
@@ -668,10 +721,8 @@ final class ScoreManagerTests: XCTestCase {
         
         // Итого P0: 450
         XCTAssertEqual(result.finalScores[0], 450)
-        // Итого P1: 50 - 50 = 0
         XCTAssertEqual(result.finalScores[1], 0)
-        // Итого P2: 120
-        XCTAssertEqual(result.finalScores[2], 120)
+        XCTAssertEqual(result.finalScores[2], -150)
     }
     
     // MARK: - Краевые случаи
@@ -689,17 +740,17 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // 1 раунд — нет «предпоследнего», бонус = 0
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 1, 1],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock()
         
-        // Все совпали → все получают премию
-        XCTAssertEqual(result.premiumPlayerIndices.count, 4)
+        XCTAssertEqual(result.premiumPlayerIndices, [0])
         
         // Но бонус = 0 (нет предпоследнего раунда)
         XCTAssertEqual(result.premiumBonuses, [0, 0, 0, 0])
@@ -715,26 +766,29 @@ final class ScoreManagerTests: XCTestCase {
         
         // Игрок 1 заказывает 0 и берёт 0 во всех раундах
         // Раунд 1 (C=1)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),        // P0: 100
-            matchedResult(bid: 0, cardsInRound: 1),        // P1: 50 (bid=0, K=0)
-            matchedResult(bid: 0, cardsInRound: 1),        // P2: 50
-            matchedResult(bid: 0, cardsInRound: 1)         // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         // Раунд 2 (C=2)
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),        // P0: 100
-            matchedResult(bid: 0, cardsInRound: 2),        // P1: 50 (bid=0, K=0)
-            mismatchedResult(bid: 1, tricksTaken: 2, cardsInRound: 2),  // P2: 20
-            matchedResult(bid: 1, cardsInRound: 2)         // P3: 100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 2, 1],
+                tricksTaken: [1, 0, 1, 0]
+            )
+        )
         // Раунд 3 (C=3) — последний
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),        // P0: 150
-            matchedResult(bid: 0, cardsInRound: 3),        // P1: 50 (bid=0, K=0)
-            matchedResult(bid: 1, cardsInRound: 3),        // P2: 100
-            matchedResult(bid: 0, cardsInRound: 3)         // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 0, 1, 1],
+                tricksTaken: [2, 0, 1, 0]
+            )
+        )
         
         let result = manager.finalizeBlock(blockNumber: 1)
         
@@ -757,18 +811,20 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // Тот же сценарий, но блок 2 — нулевая премия не применяется
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1)
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 1, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 2, 1],
+                tricksTaken: [1, 0, 1, 0]
+            )
+        )
         
         let result = manager.finalizeBlock(blockNumber: 2)
         
@@ -781,24 +837,27 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // P2 заказывает 0 и берёт 0 во всех раундах блока 3
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 3),                      // P0: 100
-            mismatchedResult(bid: 1, tricksTaken: 2, cardsInRound: 3),   // P1: 20
-            matchedResult(bid: 0, cardsInRound: 3),                      // P2: 50 (bid=0, K=0)
-            matchedResult(bid: 0, cardsInRound: 3)                       // P3: 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 2),                      // P0: 200
-            matchedResult(bid: 0, cardsInRound: 2),                      // P1: 50
-            matchedResult(bid: 0, cardsInRound: 2),                      // P2: 50 (bid=0, K=0)
-            matchedResult(bid: 0, cardsInRound: 2)                       // P3: 50
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            matchedResult(bid: 0, cardsInRound: 1),                      // P1: 50
-            matchedResult(bid: 0, cardsInRound: 1),                      // P2: 50 (bid=0, K=0)
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [1, 1, 0, 2],
+                tricksTaken: [1, 2, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [2, 1, 0, 0],
+                tricksTaken: [2, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock(blockNumber: 3)
         
@@ -813,18 +872,20 @@ final class ScoreManagerTests: XCTestCase {
     func testZeroPremium_block4_notEligible() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1)
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 1, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 2, 1],
+                tricksTaken: [1, 0, 1, 0]
+            )
+        )
         
         let result = manager.finalizeBlock(blockNumber: 4)
         
@@ -837,18 +898,20 @@ final class ScoreManagerTests: XCTestCase {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
         // P1 заказывает 0, но в одном раунде берёт взятку
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0
-            matchedResult(bid: 0, cardsInRound: 1),                      // P1: bid=0, K=0
-            matchedResult(bid: 0, cardsInRound: 1),                      // P2
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0
-            mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 2),   // P1: bid=0, K=1!
-            matchedResult(bid: 1, cardsInRound: 2),                      // P2
-            matchedResult(bid: 0, cardsInRound: 2)                       // P3
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [1, 1, 0, 0]
+            )
+        )
         
         let result = manager.finalizeBlock(blockNumber: 1)
         
@@ -863,24 +926,27 @@ final class ScoreManagerTests: XCTestCase {
         // P3 заказывает 0 и берёт 0 во всех раундах → нулевая премия
         // P0 все ставки совпали → обычная премия
         // Обе премии защищают от штрафов и штрафуют соседа слева
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                      // P0: 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),   // P1: -100
-            matchedResult(bid: 0, cardsInRound: 1),                      // P2: 50
-            matchedResult(bid: 0, cardsInRound: 1)                       // P3: 50 (bid=0, K=0)
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 2),                      // P0: 100
-            matchedResult(bid: 1, cardsInRound: 2),                      // P1: 100
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 2),   // P2: -100
-            matchedResult(bid: 0, cardsInRound: 2)                       // P3: 50 (bid=0, K=0)
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                      // P0: 150
-            matchedResult(bid: 1, cardsInRound: 3),                      // P1: 100
-            matchedResult(bid: 0, cardsInRound: 3),                      // P2: 50
-            matchedResult(bid: 0, cardsInRound: 3)                       // P3: 50 (bid=0, K=0)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 1, 1, 0],
+                tricksTaken: [1, 1, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 1, 0],
+                tricksTaken: [2, 0, 1, 0]
+            )
+        )
         
         let result = manager.finalizeBlock(blockNumber: 1)
         
@@ -906,16 +972,14 @@ final class ScoreManagerTests: XCTestCase {
         
         // Базовые очки (премии вшиты в последние раздачи)
         XCTAssertEqual(result.baseScores[0], 450)  // 100+100+(150+100)
-        XCTAssertEqual(result.baseScores[1], 100)  // -100+100+100
-        XCTAssertEqual(result.baseScores[2], 0)    // 50-100+50
+        XCTAssertEqual(result.baseScores[1], -100)
+        XCTAssertEqual(result.baseScores[2], 50)
         XCTAssertEqual(result.baseScores[3], 650)  // 50+50+(50+500)
         
         // P0 итого: 450
         XCTAssertEqual(result.finalScores[0], 450)
-        // P1 итого: 100 - 200 = -100
-        XCTAssertEqual(result.finalScores[1], -100)
-        // P2 итого: 0
-        XCTAssertEqual(result.finalScores[2], 0)
+        XCTAssertEqual(result.finalScores[1], -300)
+        XCTAssertEqual(result.finalScores[2], 50)
         // P3 итого: 650
         XCTAssertEqual(result.finalScores[3], 650)
     }
@@ -923,18 +987,20 @@ final class ScoreManagerTests: XCTestCase {
     func testZeroPremium_noBlockNumber_notApplied() {
         let manager = ScoreManager(playerCountProvider: { 4 })
         
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 1, cardsInRound: 1)
-        ])
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1),
-            matchedResult(bid: 0, cardsInRound: 1)
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 0, 1, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 2, 1],
+                tricksTaken: [1, 0, 1, 0]
+            )
+        )
         
         // Без blockNumber — нулевая премия не применяется
         let result = manager.finalizeBlock()
@@ -950,33 +1016,37 @@ final class ScoreManagerTests: XCTestCase {
         
         // Симулируем блок из 4 раундов
         // Раунд 1 (C=1): P0=100, P1=50, P2=50, P3=-100
-        manager.recordRoundResults([
-            matchedResult(bid: 1, cardsInRound: 1),                       // 100
-            matchedResult(bid: 0, cardsInRound: 1),                       // 50
-            matchedResult(bid: 0, cardsInRound: 1),                       // 50
-            mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1)     // -100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 1],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
         // Раунд 2 (C=2): P0=200(V=C), P1=100, P2=-200(V=C,K=0), P3=50
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 2),                       // V=C=K=2 → 2×100=200
-            matchedResult(bid: 1, cardsInRound: 2),                       // 100
-            mismatchedResult(bid: 2, tricksTaken: 0, cardsInRound: 2),    // -200 (V=C, K=0)
-            matchedResult(bid: 0, cardsInRound: 2)                        // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [2, 1, 2, 0],
+                tricksTaken: [2, 0, 0, 0]
+            )
+        )
         // Раунд 3 (C=3): P0=200, P1=-100, P2=100, P3=50
-        manager.recordRoundResults([
-            matchedResult(bid: 2, cardsInRound: 3),                       // 150
-            mismatchedResult(bid: 2, tricksTaken: 1, cardsInRound: 3),    // -100
-            matchedResult(bid: 1, cardsInRound: 3),                       // 100
-            matchedResult(bid: 0, cardsInRound: 3)                        // 50
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 3,
+                bids: [2, 1, 1, 1],
+                tricksTaken: [2, 1, 0, 0]
+            )
+        )
         // Раунд 4 (C=4) — последний: P0=100, P1=50, P2=50, P3=50
-        manager.recordRoundResults([
-            matchedResult(bid: 0, cardsInRound: 4),                       // 50
-            matchedResult(bid: 2, cardsInRound: 4),                       // 150
-            matchedResult(bid: 1, cardsInRound: 4),                       // 100
-            matchedResult(bid: 1, cardsInRound: 4)                        // 100
-        ])
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 4,
+                bids: [0, 2, 1, 2],
+                tricksTaken: [0, 2, 0, 2]
+            )
+        )
         
         let result = manager.finalizeBlock()
         

@@ -62,7 +62,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Scenes/GameScene+ModalFlow.swift`: unified overlay-modal entrypoints and callbacks for trump selection, bid/blind input, and joker play-mode decision fallback.
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Coordinator/GameEnvironment.swift`: dependency container for `GameScene` infrastructure/services (coordinator, stores/export, and bot service factories), enabling explicit DI at scene creation.
-- `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and round recording guards against inconsistent player snapshots.
+- `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and score-manager recording via shared round-result snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`: pure builder mapping `GameState` + `ScoreManager` to `BotMatchContext` (premium snapshot + opponent model), keeping `GameScene` UI-focused.
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that resolves legal cards, round context, and fallback move selection.
@@ -123,9 +123,10 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
 - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized coefficients and timing presets consumed by bot services and gameplay flow delays.
+- `Jocker/Jocker/Scoring/GameRoundResultsBuilder.swift`: shared mapper from `GameState` runtime round state to `[RoundResult]`, reused by flow recording and in-progress score-table snapshots.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
-- `Jocker/Jocker/Scoring/ScoreManager.swift`: score persistence through blocks and premium application.
+- `Jocker/Jocker/Scoring/ScoreManager.swift`: sole owner of accumulated game scores, block persistence, standings helpers, and premium application.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
@@ -254,6 +255,7 @@ Jocker/Jocker/
 │   ├── Actions.sks
 │   └── GameScene.sks
 ├── Scoring/
+│   ├── GameRoundResultsBuilder.swift
 │   ├── ScoreCalculator.swift
 │   ├── PremiumRules.swift
 │   └── ScoreManager.swift

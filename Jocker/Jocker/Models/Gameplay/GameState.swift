@@ -62,7 +62,6 @@ class GameState {
 
     private func resetPlayersForNewGame() {
         for index in players.indices {
-            players[index].score = 0
             players[index].resetForNewRound()
         }
     }
@@ -220,20 +219,11 @@ class GameState {
     }
     
     /// Завершить раунд
+    ///
+    /// `GameState` фиксирует только фазовый переход.
+    /// Подсчёт и накопление очков выполняет `ScoreManager`.
     func completeRound() {
         guard phase == .playing else { return }
-        
-        // Подсчитываем очки через единый ScoreCalculator
-        for index in players.indices {
-            let roundScore = ScoreCalculator.calculateRoundScore(
-                cardsInRound: currentCardsPerPlayer,
-                bid: players[index].currentBid,
-                tricksTaken: players[index].tricksTaken,
-                isBlind: players[index].isBlindBid
-            )
-            players[index].score += roundScore
-        }
-        
         phase = .roundEnd
     }
     
@@ -253,17 +243,6 @@ class GameState {
         
         currentRoundInBlock = 0
         calculateRoundsInBlock()
-    }
-    
-    /// Получить игрока с наибольшим счётом
-    func getWinner() -> PlayerInfo? {
-        return players.max(by: { $0.score < $1.score })
-    }
-    
-    /// Получить таблицу очков
-    func getScoreboard() -> [(player: PlayerInfo, rank: Int)] {
-        let sorted = players.sorted(by: { $0.score > $1.score })
-        return sorted.enumerated().map { (player: $1, rank: $0 + 1) }
     }
     
     // MARK: - Мутация игроков (для внешних вызовов)
