@@ -24,14 +24,13 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     }()
 
     private let dealHistory: DealHistory
-    private let playerNames: [String]
-    private let playerControlTypes: [PlayerControlType]
-    private let exportService: DealHistoryExportService
+    private let presentation: DealHistoryPresentationBuilder.Presentation
+    private let exportCoordinator: DealHistoryExportCoordinator
 
     private let containerView = PanelContainerView(surfaceColor: PanelAppearance.screenSurfaceColor)
     private lazy var headerView = PanelHeaderView(
-        title: "Раздача \(dealHistory.key.roundIndex + 1), блок \(dealHistory.key.blockIndex + 1)",
-        subtitle: "Подробная история хода и стартовых рук игроков",
+        title: presentation.title,
+        subtitle: presentation.subtitle,
         alignment: .left,
         titleFont: PanelTypography.resultsTitle,
         subtitleFont: PanelTypography.screenSubtitle
@@ -47,7 +46,6 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     )
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let emptyStateLabel = UILabel()
-    private var isExportInProgress = false
 
     init(
         dealHistory: DealHistory,
@@ -56,10 +54,14 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
         exportService: DealHistoryExportService? = nil
     ) {
         self.dealHistory = dealHistory
-        self.playerNames = playerNames
-        self.playerControlTypes = playerControlTypes
-        self.exportService = exportService ?? DealHistoryExportService(
+        let resolvedExportService = exportService ?? DealHistoryExportService(
             exportRootURL: Self.manualExportDirectoryURL
+        )
+        self.exportCoordinator = DealHistoryExportCoordinator(exportService: resolvedExportService)
+        self.presentation = DealHistoryPresentationBuilder().build(
+            dealHistory: dealHistory,
+            playerNames: playerNames,
+            playerControlTypes: playerControlTypes
         )
         super.init(nibName: nil, bundle: nil)
     }
@@ -104,7 +106,7 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
         trumpLabel.font = PanelTypography.compactLabel
         trumpLabel.textColor = PanelAppearance.secondaryTextColor
         trumpLabel.textAlignment = .left
-        trumpLabel.text = trumpDisplayText()
+        trumpLabel.text = presentation.trumpText
         containerView.addSubview(trumpLabel)
 
         NSLayoutConstraint.activate([
@@ -173,137 +175,24 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
     }
 
     private func updateEmptyStateVisibility() {
-        let isEmpty = !hasHandsSection && dealHistory.tricks.isEmpty
+        let isEmpty = presentation.isEmpty
         emptyStateLabel.isHidden = !isEmpty
         tableView.isHidden = isEmpty
-    }
-
-    private func trumpDisplayText() -> String {
-        guard let trump = dealHistory.trump else {
-            return "Козырь: без козыря"
-        }
-        return "Козырь: \(trump.name)"
-    }
-
-    private func playerDisplayName(at index: Int) -> String {
-        return PlayerDisplayNameFormatter.displayName(for: index, in: playerNames)
-    }
-
-    private func playerRoleDisplayName(at index: Int) -> String {
-        guard playerControlTypes.indices.contains(index) else {
-            return "Бот"
-        }
-
-        switch playerControlTypes[index] {
-        case .human:
-            return "Человек"
-        case .bot:
-            return "Бот"
-        }
-    }
-
-    private var resolvedPlayerCount: Int {
-        let maxPlayerIndexFromMoves = dealHistory.tricks
-            .flatMap(\.moves)
-            .map(\.playerIndex)
-            .max() ?? -1
-        return max(
-            playerNames.count,
-            playerControlTypes.count,
-            dealHistory.initialHands.count,
-            maxPlayerIndexFromMoves + 1
-        )
-    }
-
-    private var hasHandsSection: Bool {
-        return resolvedPlayerCount > 0
-    }
-
-    private func cardDisplayText(for card: Card) -> String {
-        switch card {
-        case .joker:
-            return "🃏"
-        case .regular(let suit, let rank):
-            return "\(rank.symbol)\(suit.rawValue)"
-        }
-    }
-
-    private func handDisplayText(for playerIndex: Int) -> String {
-        guard dealHistory.initialHands.indices.contains(playerIndex) else {
-            return "Нет данных"
-        }
-
-        let hand = dealHistory.initialHands[playerIndex].sorted()
-        guard !hand.isEmpty else {
-            return "Пусто"
-        }
-
-        return hand.map(cardDisplayText(for:)).joined(separator: "  ")
-    }
-
-    private var trickSectionOffset: Int {
-        return hasHandsSection ? 1 : 0
-    }
-
-    private func normalizedPlayerNames(for playerCount: Int) -> [String] {
-        return PlayerDisplayNameFormatter.normalizedNames(
-            playerNames,
-            playerCount: playerCount
-        )
-    }
-
-    private func normalizedPlayerControlTypes(for playerCount: Int) -> [PlayerControlType] {
-        return (0..<playerCount).map { index in
-            if playerControlTypes.indices.contains(index) {
-                return playerControlTypes[index]
-            }
-            return .bot
-        }
-    }
-
-    private func cardDisplayText(for move: DealTrickMove) -> String {
-        switch move.card {
-        case .regular(let suit, let rank):
-            return "\(rank.symbol)\(suit.rawValue)"
-        case .joker:
-            let styleSuffix = move.jokerPlayStyle == .faceDown ? "рубашкой вверх" : "лицом вверх"
-            guard let declaration = move.jokerLeadDeclaration else {
-                return "🃏 (\(styleSuffix))"
-            }
-            return "🃏 (\(styleSuffix), \(declarationDisplayText(declaration)))"
-        }
-    }
-
-    private func declarationDisplayText(_ declaration: JokerLeadDeclaration) -> String {
-        switch declaration {
-        case .wish:
-            return "хочу"
-        case .above(let suit):
-            return "выше \(suit.name.lowercased())"
-        case .takes(let suit):
-            return "забирает \(suit.name.lowercased())"
-        }
     }
 
     // MARK: - UITableViewDataSource
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        let handSectionsCount = hasHandsSection ? 1 : 0
-        return handSectionsCount + dealHistory.tricks.count
+        return presentation.sections.count
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if hasHandsSection, section == 0 {
-            return resolvedPlayerCount
-        }
-
-        let trickSection = section - trickSectionOffset
-        guard dealHistory.tricks.indices.contains(trickSection) else { return 0 }
-        return dealHistory.tricks[trickSection].moves.count
+        guard presentation.sections.indices.contains(section) else { return 0 }
+        return presentation.sections[section].rows.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let reuseIdentifier = hasHandsSection && indexPath.section == 0 ? "HandCell" : "MoveCell"
+        let reuseIdentifier = reuseIdentifier(for: indexPath)
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier) ??
             UITableViewCell(style: .subtitle, reuseIdentifier: reuseIdentifier)
         cell.selectionStyle = .none
@@ -313,55 +202,51 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
         cell.textLabel?.textColor = PanelAppearance.primaryTextColor
         cell.detailTextLabel?.textColor = PanelAppearance.secondaryTextColor
 
-        if hasHandsSection, indexPath.section == 0 {
-            let playerIndex = indexPath.row
-            let playerName = playerDisplayName(at: playerIndex)
-            let role = playerRoleDisplayName(at: playerIndex)
+        guard presentation.sections.indices.contains(indexPath.section),
+              presentation.sections[indexPath.section].rows.indices.contains(indexPath.row) else {
+            cell.textLabel?.text = ""
+            return cell
+        }
+
+        let row = presentation.sections[indexPath.section].rows[indexPath.row]
+        switch row.kind {
+        case .hand:
             cell.textLabel?.font = PanelTypography.compactLabel
             cell.textLabel?.numberOfLines = 1
             cell.detailTextLabel?.font = PanelTypography.body
             cell.detailTextLabel?.numberOfLines = 0
-            cell.textLabel?.text = "\(playerName) (\(role))"
-            cell.detailTextLabel?.text = handDisplayText(for: playerIndex)
-            return cell
+            cell.textLabel?.text = row.title
+            cell.detailTextLabel?.text = row.detail
+        case .move:
+            cell.textLabel?.font = PanelTypography.screenSubtitle
+            cell.textLabel?.numberOfLines = 0
+            cell.detailTextLabel?.text = nil
+            cell.textLabel?.text = row.title
         }
-
-        cell.textLabel?.font = PanelTypography.screenSubtitle
-        cell.textLabel?.numberOfLines = 0
-        cell.detailTextLabel?.text = nil
-
-        let trickSection = indexPath.section - trickSectionOffset
-        guard dealHistory.tricks.indices.contains(trickSection) else {
-            cell.textLabel?.text = ""
-            return cell
-        }
-
-        let trick = dealHistory.tricks[trickSection]
-        guard trick.moves.indices.contains(indexPath.row) else {
-            cell.textLabel?.text = ""
-            return cell
-        }
-
-        let move = trick.moves[indexPath.row]
-        let playerName = playerDisplayName(at: move.playerIndex)
-        let moveText = cardDisplayText(for: move)
-        cell.textLabel?.text = "\(indexPath.row + 1). \(playerName): \(moveText)"
 
         return cell
+    }
+
+    private func reuseIdentifier(for indexPath: IndexPath) -> String {
+        guard presentation.sections.indices.contains(indexPath.section),
+              presentation.sections[indexPath.section].rows.indices.contains(indexPath.row) else {
+            return "MoveCell"
+        }
+
+        let row = presentation.sections[indexPath.section].rows[indexPath.row]
+        switch row.kind {
+        case .hand:
+            return "HandCell"
+        case .move:
+            return "MoveCell"
+        }
     }
 
     // MARK: - UITableViewDelegate
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if hasHandsSection, section == 0 {
-            return "Карты на руках после раздачи"
-        }
-
-        let trickSection = section - trickSectionOffset
-        guard dealHistory.tricks.indices.contains(trickSection) else { return nil }
-        let trick = dealHistory.tricks[trickSection]
-        let winnerName = playerDisplayName(at: trick.winnerPlayerIndex)
-        return "Взятка \(trickSection + 1) • Забрал: \(winnerName)"
+        guard presentation.sections.indices.contains(section) else { return nil }
+        return presentation.sections[section].title
     }
 
     func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
@@ -376,67 +261,16 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
 
     @objc
     private func handleExportTapped() {
-        guard !isExportInProgress else { return }
-
-        let playerCount = resolvedPlayerCount
-        guard playerCount > 0 else {
-            showExportErrorAlert(message: "Не удалось определить состав игроков для экспорта.")
-            return
-        }
-
-        isExportInProgress = true
-        exportButton.isEnabled = false
-
-        let result = exportService.export(
-            histories: [dealHistory],
-            playerCount: playerCount,
-            playerNames: normalizedPlayerNames(for: playerCount),
-            playerControlTypes: normalizedPlayerControlTypes(for: playerCount),
-            reason: .deal(
-                blockIndex: dealHistory.key.blockIndex,
-                roundIndex: dealHistory.key.roundIndex
-            )
+        exportCoordinator.export(
+            dealHistory: dealHistory,
+            exportData: presentation.exportData,
+            from: self,
+            sourceButton: exportButton
         )
-
-        guard let result else {
-            finishExport()
-            showExportErrorAlert(message: "Не удалось подготовить JSON-файл с историей раздачи.")
-            return
-        }
-
-        let shareController = UIActivityViewController(
-            activityItems: [result.fileURL],
-            applicationActivities: nil
-        )
-        shareController.completionWithItemsHandler = { [weak self] _, _, _, _ in
-            self?.finishExport()
-        }
-
-        if let popover = shareController.popoverPresentationController {
-            popover.sourceView = exportButton
-            popover.sourceRect = exportButton.bounds
-        }
-
-        present(shareController, animated: true)
     }
 
     @objc private func handleCloseTapped() {
         dismiss(animated: true)
-    }
-
-    private func finishExport() {
-        isExportInProgress = false
-        exportButton.isEnabled = true
-    }
-
-    private func showExportErrorAlert(message: String) {
-        let alert = UIAlertController(
-            title: "Экспорт не выполнен",
-            message: message,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "ОК", style: .default))
-        present(alert, animated: true)
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {

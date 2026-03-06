@@ -295,6 +295,14 @@
 
 ### P8. Упростить крупные UIViewController'ы через presentation builders
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- Для `DealHistoryViewController` вынесены `DealHistoryPresentationBuilder` и `DealHistoryExportCoordinator`: секции/rows и export/share flow больше не живут в контроллере.
+- Для статистики вынесен `GameStatisticsPresentationProvider`: метрики, seat normalization и number formatting строятся вне `GameStatisticsTableView`, а `GameStatisticsViewController` больше не подготавливает строки вручную.
+- Для параметров игры добавлен `PlayerSettingsRowView`, а `GameParametersViewController` переведён на explicit difficulty handlers без tag-based parsing.
+- Добавлены unit tests для `DealHistoryPresentationBuilder` и `GameStatisticsPresentationProvider`; обновлены `GameStatisticsTableViewTests`.
+
 **Цель:** убрать из контроллеров форматирование данных и тяжёлую table-building логику.
 
 **Что изменить**
@@ -382,7 +390,7 @@
 ### Волна 4. Presentation + devtools + tests
 
 7. P7: общий UIKit panel/chrome слой (выполнено 2026-03-06)
-8. P8: presentation builders для крупных контроллеров  
+8. P8: presentation builders для крупных контроллеров (выполнено 2026-03-06)
 9. P9: self-play simulation cleanup  
 10. P10: общий AI test fixture layer
 

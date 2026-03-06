@@ -140,6 +140,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Common/PanelHeaderView.swift`: reusable title/subtitle header stack with left/center alignment for panel screens.
 - `Jocker/Jocker/ViewControllers/Common/PrimaryPanelButton.swift`: shared primary CTA button with accent panel styling.
 - `Jocker/Jocker/ViewControllers/Common/SecondaryPanelButton.swift`: shared secondary/neutral CTA button for panel screens.
+- `Jocker/Jocker/ViewControllers/GameFlow/PlayerSettingsRowView.swift`: reusable settings row for one player slot (name field + bot difficulty controls) used by `GameParametersViewController` without tag-based action decoding.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
@@ -149,17 +150,20 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableScrollOffsetResolver.swift`: pure scroll-offset calculator for `ScoreTableView` that centers target rows and clamps vertical offsets to scroll bounds.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift`: pure tap hit-testing helper for `ScoreTableView` that maps tap coordinates to a deal row target (`blockIndex`, `roundIndex`) using static row mappings.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays and summary score formatting.
+- `Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift`: pure presentation builder for one deal history screen (header text, hand rows, trick sections, and normalized export payload).
+- `Jocker/Jocker/ViewControllers/Results/DealHistoryExportCoordinator.swift`: export/share flow helper for the deal-history screen, encapsulating JSON export state, alerts, and activity presentation.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared bid-selector modal base built on common panel chrome (container, labels, primary actions, scroll grid, and bid-button rows).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionViewController.swift`: modal selector of human post-deal bid amount with current hand/trump context and bidding summary panel.
 - `Jocker/Jocker/ViewControllers/Bidding/PreDealBlindSelectionViewController.swift`: modal selector of pre-deal blind mode (`open after deal` vs `blind bid`) and blind bid amount list.
 - `Jocker/Jocker/ViewControllers/Bidding/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
-- `Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift`: full-screen settings form for all player names and per-bot difficulty controls.
+- `Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift`: full-screen settings form for all player names and per-bot difficulty controls, now delegating row UI and difficulty selection handling to `PlayerSettingsRowView`.
 - `Jocker/Jocker/ViewControllers/GameFlow/FirstPlayerAnnouncementViewController.swift`: overlay modal that announces the first player and confirms continuation before the first deal.
 - `Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
-- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player games, and 3-player games.
-- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsTableView.swift`: grid-style statistics table where rows are metrics and columns are player seats.
-- `Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift`: modal details for a selected deal with trump, full move sequence, and trick winners.
+- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsPresentationProvider.swift`: presentation provider for statistics tables (metric definitions, score formatting, seat normalization, and row view models).
+- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player games, and 3-player games, delegating row construction to `GameStatisticsPresentationProvider`.
+- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsTableView.swift`: render-only grid-style statistics table that consumes prebuilt presentation rows.
+- `Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift`: modal details for a selected deal that renders builder-produced sections and delegates export/share flow to `DealHistoryExportCoordinator`.
 
 ## App Source Layout
 
@@ -297,8 +301,11 @@ Jocker/Jocker/
 │   │   ├── FirstPlayerAnnouncementViewController.swift
 │   │   ├── GameParametersViewController.swift
 │   │   ├── GameViewController.swift
+│   │   ├── PlayerSettingsRowView.swift
 │   │   └── PlayerSelectionViewController.swift
 │   ├── Results/
+│   │   ├── DealHistoryExportCoordinator.swift
+│   │   ├── DealHistoryPresentationBuilder.swift
 │   │   ├── DealHistoryViewController.swift
 │   │   ├── GameResultsViewController.swift
 │   │   ├── ScoreTableInProgressRoundSnapshotProvider.swift
@@ -312,6 +319,7 @@ Jocker/Jocker/
 │   │   ├── ScoreTableView.swift
 │   │   └── ScoreTableViewController.swift
 │   └── Statistics/
+│       ├── GameStatisticsPresentationProvider.swift
 │       ├── GameStatisticsTableView.swift
 │       └── GameStatisticsViewController.swift
 ├── Assets.xcassets/
@@ -369,6 +377,7 @@ Jocker/JockerTests/
 │   ├── GamePlayersSettingsStoreTests.swift
 │   └── PlayerDisplayNameFormatterTests.swift
 ├── Results/
+│   ├── DealHistoryPresentationBuilderTests.swift
 │   ├── GameResultsPresentationIntegrationTests.swift
 │   ├── ScoreTableInProgressRoundSnapshotProviderTests.swift
 │   ├── ScoreTableRowNavigationResolverTests.swift
@@ -387,6 +396,7 @@ Jocker/JockerTests/
 │   └── ScoreManagerTests.swift
 ├── Statistics/
 │   ├── GameFinalPlayerSummaryTests.swift
+│   ├── GameStatisticsPresentationProviderTests.swift
 │   ├── GameStatisticsTableViewTests.swift
 │   └── GameStatisticsStoreTests.swift
 └── JockerTests.swift

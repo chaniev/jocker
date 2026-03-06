@@ -14,6 +14,7 @@ final class GameStatisticsViewController: UIViewController {
 
     private let statisticsStore: GameStatisticsStore
     private let playersSettingsStore: GamePlayersSettingsStore
+    private let presentationProvider = GameStatisticsPresentationProvider()
     private var snapshot: GameStatisticsSnapshot
     private var playersSettings: GamePlayersSettings
     private var selectedScope: GameStatisticsScope = .allGames
@@ -144,28 +145,12 @@ final class GameStatisticsViewController: UIViewController {
     }
 
     private func refreshStatisticsTable() {
-        statisticsTableView.update(
-            records: displayedRecords,
+        let presentation = presentationProvider.makePresentation(
+            records: snapshot.records(for: selectedScope),
             visiblePlayerCount: selectedScope.visiblePlayerCount,
             playerNames: playersSettings.playerNames
         )
-    }
-
-    private var displayedRecords: [GameStatisticsPlayerRecord] {
-        let records = snapshot.records(for: selectedScope)
-            .sorted { $0.playerIndex < $1.playerIndex }
-        let visibleCount = selectedScope.visiblePlayerCount
-
-        if records.count >= visibleCount {
-            return Array(records.prefix(visibleCount))
-        }
-
-        var filled = records
-        let missingStart = records.count
-        for index in missingStart..<visibleCount {
-            filled.append(GameStatisticsPlayerRecord.empty(playerIndex: index))
-        }
-        return filled
+        statisticsTableView.update(presentation: presentation)
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {

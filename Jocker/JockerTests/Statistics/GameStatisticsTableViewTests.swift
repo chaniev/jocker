@@ -12,14 +12,16 @@ final class GameStatisticsTableViewTests: XCTestCase {
     @MainActor
     func testUpdate_usesProvidedPlayerNamesInHeader() {
         let tableView = GameStatisticsTableView(frame: CGRect(x: 0, y: 0, width: 900, height: 500))
+        let presentationProvider = GameStatisticsPresentationProvider()
         tableView.layoutIfNeeded()
 
         let records = (0..<4).map(GameStatisticsPlayerRecord.empty)
-        tableView.update(
+        let presentation = presentationProvider.makePresentation(
             records: records,
             visiblePlayerCount: 4,
             playerNames: ["Человек", "Бот Север", "Бот Юг", "Бот Запад"]
         )
+        tableView.update(presentation: presentation)
 
         let headerValues = headerRowValues(in: tableView)
 
@@ -33,14 +35,16 @@ final class GameStatisticsTableViewTests: XCTestCase {
     @MainActor
     func testUpdate_fallsBackToDefaultNameWhenProvidedNameIsEmpty() {
         let tableView = GameStatisticsTableView(frame: CGRect(x: 0, y: 0, width: 900, height: 500))
+        let presentationProvider = GameStatisticsPresentationProvider()
         tableView.layoutIfNeeded()
 
         let records = (0..<3).map(GameStatisticsPlayerRecord.empty)
-        tableView.update(
+        let presentation = presentationProvider.makePresentation(
             records: records,
             visiblePlayerCount: 3,
             playerNames: ["Игрок", "   ", "Бот 3", "Бот 4"]
         )
+        tableView.update(presentation: presentation)
 
         let headerValues = headerRowValues(in: tableView)
 

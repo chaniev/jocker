@@ -8,25 +8,12 @@
 import UIKit
 
 final class GameParametersViewController: UIViewController, UITextFieldDelegate {
-    private enum Appearance {
-        static let textFieldBackground = UIColor.white.withAlphaComponent(0.10)
-        static let textFieldBorder = UIColor.white.withAlphaComponent(0.28)
-        static let radioSelectedBackground = UIColor(red: 0.25, green: 0.35, blue: 0.52, alpha: 0.98)
-        static let radioUnselectedBackground = UIColor.white.withAlphaComponent(0.03)
-        static let radioBorder = UIColor.white.withAlphaComponent(0.24)
-        static let radioSelectedBorder = UIColor(red: 0.90, green: 0.72, blue: 0.22, alpha: 0.98)
-        static let radioSelectedIcon = UIColor(red: 0.92, green: 0.76, blue: 0.24, alpha: 1.0)
-        static let radioUnselectedIcon = UIColor.white.withAlphaComponent(0.66)
-    }
-
     private enum Layout {
         static let rowSpacing: CGFloat = 12
-        static let textFieldHeight: CGFloat = 44
-        static let difficultyRadioButtonHeight: CGFloat = 42
         static let footerButtonHeight: CGFloat = 50
     }
 
-    private var settings: GamePlayersSettings
+    private let settings: GamePlayersSettings
     private let onSave: (GamePlayersSettings) -> Void
 
     private let containerView = PanelContainerView(surfaceColor: PanelAppearance.screenSurfaceColor)
@@ -40,10 +27,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         subtitleFont: PanelTypography.screenSubtitle
     )
 
-    private var nameFields: [UITextField] = []
-    private var difficultyOptionButtonsByPlayerIndex: [Int: [BotDifficulty: UIButton]] = [:]
+    private var playerRows: [PlayerSettingsRowView] = []
     private var selectedBotDifficulties: [BotDifficulty]
-    private let difficultyDisplayOrder: [BotDifficulty] = [.hard, .normal, .easy]
 
     init(
         settings: GamePlayersSettings,
@@ -111,107 +96,45 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
     }
 
     private func setupPlayersForm() {
-        nameFields.removeAll()
-        difficultyOptionButtonsByPlayerIndex.removeAll()
+        for row in playerRows {
+            contentStack.removeArrangedSubview(row)
+            row.removeFromSuperview()
+        }
+        playerRows.removeAll()
 
         for playerIndex in 0..<GamePlayersSettings.supportedPlayerSlots {
-            contentStack.addArrangedSubview(makePlayerRow(playerIndex: playerIndex))
+            let row = makePlayerSettingsRowView(playerIndex: playerIndex)
+            playerRows.append(row)
+            contentStack.addArrangedSubview(row)
         }
     }
 
-    private func makePlayerRow(playerIndex: Int) -> UIView {
-        let rowContainer = UIView()
-        rowContainer.translatesAutoresizingMaskIntoConstraints = false
-        rowContainer.backgroundColor = UIColor.white.withAlphaComponent(0.04)
-        rowContainer.layer.cornerRadius = 10
-        rowContainer.layer.borderWidth = 1
-        rowContainer.layer.borderColor = UIColor.white.withAlphaComponent(0.12).cgColor
-
-        let stack = UIStackView()
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.axis = .vertical
-        stack.spacing = 8
-        rowContainer.addSubview(stack)
-
-        let titleLabel = UILabel()
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "Игрок \(playerIndex + 1)"
-        titleLabel.font = PanelTypography.sectionTitle
-        titleLabel.textColor = PanelAppearance.primaryTextColor
-        titleLabel.textAlignment = .left
-        stack.addArrangedSubview(titleLabel)
-
-        let nameField = UITextField()
-        nameField.translatesAutoresizingMaskIntoConstraints = false
-        nameField.text = settings.displayName(for: playerIndex)
-        nameField.placeholder = "Игрок \(playerIndex + 1)"
-        nameField.font = PanelTypography.bodyLarge
-        nameField.textColor = PanelAppearance.primaryTextColor
-        nameField.tintColor = .white
-        nameField.backgroundColor = Appearance.textFieldBackground
-        nameField.layer.cornerRadius = 10
-        nameField.layer.borderWidth = 1
-        nameField.layer.borderColor = Appearance.textFieldBorder.cgColor
-        nameField.autocapitalizationType = .words
-        nameField.autocorrectionType = .no
-        nameField.returnKeyType = .done
-        nameField.clearButtonMode = .whileEditing
-        nameField.delegate = self
-        nameField.setLeftPadding(12)
-        nameField.setRightPadding(12)
-        nameField.heightAnchor.constraint(equalToConstant: Layout.textFieldHeight).isActive = true
-        nameField.accessibilityIdentifier = "game_parameters_name_field_\(playerIndex + 1)"
-        stack.addArrangedSubview(nameField)
-        nameFields.append(nameField)
-
+    private func makePlayerSettingsRowView(playerIndex: Int) -> PlayerSettingsRowView {
+        let row: PlayerSettingsRowView
         if playerIndex == 0 {
-            let hintLabel = UILabel()
-            hintLabel.translatesAutoresizingMaskIntoConstraints = false
-            hintLabel.text = "Уровень зависит от самого игрока"
-            hintLabel.font = PanelTypography.modalSubtitle
-            hintLabel.textColor = PanelAppearance.secondaryTextColor
-            hintLabel.numberOfLines = 2
-            hintLabel.textAlignment = .left
-            stack.addArrangedSubview(hintLabel)
+            row = PlayerSettingsRowView(
+                playerIndex: playerIndex,
+                playerName: settings.displayName(for: playerIndex),
+                mode: .human
+            )
         } else {
-            let difficultyLabel = UILabel()
-            difficultyLabel.translatesAutoresizingMaskIntoConstraints = false
-            difficultyLabel.text = "Уровень"
-            difficultyLabel.font = PanelTypography.modalSubtitle
-            difficultyLabel.textColor = PanelAppearance.secondaryTextColor
-            difficultyLabel.textAlignment = .left
-            stack.addArrangedSubview(difficultyLabel)
-
-            let radioStack = UIStackView()
-            radioStack.translatesAutoresizingMaskIntoConstraints = false
-            radioStack.axis = .horizontal
-            radioStack.spacing = 6
-            radioStack.alignment = .fill
-            radioStack.distribution = .fillEqually
-            stack.addArrangedSubview(radioStack)
-
-            var buttonsByDifficulty: [BotDifficulty: UIButton] = [:]
-            for difficulty in difficultyDisplayOrder {
-                let button = makeDifficultyRadioButton(
-                    playerIndex: playerIndex,
-                    difficulty: difficulty
-                )
-                buttonsByDifficulty[difficulty] = button
-                radioStack.addArrangedSubview(button)
-            }
-
-            difficultyOptionButtonsByPlayerIndex[playerIndex] = buttonsByDifficulty
-            updateDifficultyOptions(for: playerIndex)
+            let selectedDifficulty = selectedBotDifficulties.indices.contains(playerIndex)
+                ? selectedBotDifficulties[playerIndex]
+                : .hard
+            row = PlayerSettingsRowView(
+                playerIndex: playerIndex,
+                playerName: settings.displayName(for: playerIndex),
+                mode: .bot(selectedDifficulty: selectedDifficulty),
+                onDifficultySelected: { [weak self] difficulty in
+                    guard let self,
+                          self.selectedBotDifficulties.indices.contains(playerIndex) else { return }
+                    self.selectedBotDifficulties[playerIndex] = difficulty
+                }
+            )
         }
 
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: rowContainer.topAnchor, constant: 12),
-            stack.leadingAnchor.constraint(equalTo: rowContainer.leadingAnchor, constant: 12),
-            stack.trailingAnchor.constraint(equalTo: rowContainer.trailingAnchor, constant: -12),
-            stack.bottomAnchor.constraint(equalTo: rowContainer.bottomAnchor, constant: -12),
-        ])
-
-        return rowContainer
+        row.setTextFieldDelegate(self)
+        return row
     }
 
     private func setupFooterButtons() {
@@ -236,71 +159,8 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
         ])
     }
 
-    private func makeDifficultyRadioButton(
-        playerIndex: Int,
-        difficulty: BotDifficulty
-    ) -> UIButton {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.contentHorizontalAlignment = .left
-        button.titleLabel?.font = PanelTypography.caption
-        button.titleLabel?.adjustsFontSizeToFitWidth = true
-        button.titleLabel?.minimumScaleFactor = 0.78
-        button.titleLabel?.numberOfLines = 1
-        button.titleLabel?.lineBreakMode = .byClipping
-        button.setTitle("   \(difficulty.settingsDisplayTitle)", for: .normal)
-        button.layer.cornerRadius = 8
-        button.layer.borderWidth = 1
-        button.heightAnchor.constraint(equalToConstant: Layout.difficultyRadioButtonHeight).isActive = true
-        button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
-        button.semanticContentAttribute = .forceLeftToRight
-        button.tag = (playerIndex * 10) + difficultyTagValue(for: difficulty)
-        button.accessibilityIdentifier = "game_parameters_difficulty_radio_\(playerIndex + 1)_\(difficulty.rawValue)"
-        button.addTarget(self, action: #selector(handleDifficultyRadioTapped(_:)), for: .touchUpInside)
-        return button
-    }
-
-    private func updateDifficultyOptions(for playerIndex: Int) {
-        guard let buttons = difficultyOptionButtonsByPlayerIndex[playerIndex] else { return }
-        let selected = selectedDifficulty(for: playerIndex)
-
-        for difficulty in difficultyDisplayOrder {
-            guard let button = buttons[difficulty] else { continue }
-            let isSelected = difficulty == selected
-            let iconName = isSelected ? "largecircle.fill.circle" : "circle"
-            let iconConfig = UIImage.SymbolConfiguration(
-                pointSize: isSelected ? 21 : 20,
-                weight: isSelected ? .bold : .regular
-            )
-            let iconImage = UIImage(systemName: iconName, withConfiguration: iconConfig)
-            button.setImage(iconImage, for: .normal)
-            button.tintColor = isSelected ? Appearance.radioSelectedIcon : Appearance.radioUnselectedIcon
-            button.setTitleColor(
-                isSelected ? PanelAppearance.primaryTextColor : PanelAppearance.secondaryTextColor,
-                for: .normal
-            )
-            button.backgroundColor = isSelected
-                ? Appearance.radioSelectedBackground
-                : Appearance.radioUnselectedBackground
-            button.layer.borderWidth = isSelected ? 2 : 1
-            button.layer.borderColor = isSelected
-                ? Appearance.radioSelectedBorder.cgColor
-                : Appearance.radioBorder.cgColor
-        }
-    }
-
-    private func selectedDifficulty(for playerIndex: Int) -> BotDifficulty {
-        guard selectedBotDifficulties.indices.contains(playerIndex) else {
-            return .hard
-        }
-        return selectedBotDifficulties[playerIndex]
-    }
-
     private func saveSettingsAndDismiss() {
-        let names = (0..<GamePlayersSettings.supportedPlayerSlots).map { index in
-            let rawName = nameFields.indices.contains(index) ? nameFields[index].text : nil
-            return normalizedName(rawName, playerIndex: index)
-        }
+        let names = playerRows.map { $0.resolvedName() }
 
         let updatedSettings = GamePlayersSettings(
             playerNames: names,
@@ -309,50 +169,6 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
 
         onSave(updatedSettings)
         dismiss(animated: true)
-    }
-
-    private func normalizedName(_ rawName: String?, playerIndex: Int) -> String {
-        return PlayerDisplayNameFormatter.normalizedName(
-            rawName,
-            playerIndex: playerIndex
-        )
-    }
-
-    private func difficultyTagValue(for difficulty: BotDifficulty) -> Int {
-        switch difficulty {
-        case .easy:
-            return 0
-        case .normal:
-            return 1
-        case .hard:
-            return 2
-        }
-    }
-
-    private func difficultyFromTagValue(_ value: Int) -> BotDifficulty? {
-        switch value {
-        case 0:
-            return .easy
-        case 1:
-            return .normal
-        case 2:
-            return .hard
-        default:
-            return nil
-        }
-    }
-
-    @objc
-    private func handleDifficultyRadioTapped(_ sender: UIButton) {
-        let playerIndex = sender.tag / 10
-        let difficultyTag = sender.tag % 10
-
-        guard playerIndex > 0 else { return }
-        guard selectedBotDifficulties.indices.contains(playerIndex) else { return }
-        guard let difficulty = difficultyFromTagValue(difficultyTag) else { return }
-
-        selectedBotDifficulties[playerIndex] = difficulty
-        updateDifficultyOptions(for: playerIndex)
     }
 
     @objc
@@ -377,17 +193,5 @@ final class GameParametersViewController: UIViewController, UITextFieldDelegate 
 
     override var prefersStatusBarHidden: Bool {
         return true
-    }
-}
-
-private extension UITextField {
-    func setLeftPadding(_ value: CGFloat) {
-        leftView = UIView(frame: CGRect(x: 0, y: 0, width: value, height: 1))
-        leftViewMode = .always
-    }
-
-    func setRightPadding(_ value: CGFloat) {
-        rightView = UIView(frame: CGRect(x: 0, y: 0, width: value, height: 1))
-        rightViewMode = .always
     }
 }

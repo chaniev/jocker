@@ -33,15 +33,6 @@ final class GameStatisticsTableView: UIView {
     private var contentWidthConstraint: NSLayoutConstraint?
     private var metricColumnWidth: CGFloat = Layout.preferredMetricColumnWidth
     private var playerColumnWidth: CGFloat = Layout.minimumPlayerColumnWidth
-    private static let scoreFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 1
-        formatter.maximumFractionDigits = 1
-        formatter.usesGroupingSeparator = false
-        return formatter
-    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -52,28 +43,10 @@ final class GameStatisticsTableView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func update(
-        records: [GameStatisticsPlayerRecord],
-        visiblePlayerCount: Int,
-        playerNames: [String]
-    ) {
-        let playerCount = max(1, visiblePlayerCount)
-        let sortedRecords = records.sorted { $0.playerIndex < $1.playerIndex }
-        var shownRecords = Array(sortedRecords.prefix(playerCount))
-
-        if shownRecords.count < playerCount {
-            let startIndex = shownRecords.count
-            for playerIndex in startIndex..<playerCount {
-                shownRecords.append(GameStatisticsPlayerRecord.empty(playerIndex: playerIndex))
-            }
-        }
-
+    func update(presentation: GameStatisticsPresentationProvider.Presentation) {
+        let playerCount = max(1, presentation.visiblePlayerCount)
         resolveColumnWidths(playerCount: playerCount)
-        rebuildRows(
-            records: shownRecords,
-            playerNames: playerNames,
-            showFourthPlaceRow: playerCount >= 4
-        )
+        rebuildRows(rows: presentation.rows)
         updateContentWidth(playerCount: playerCount)
     }
 
@@ -120,90 +93,18 @@ final class GameStatisticsTableView: UIView {
         minWidthConstraint.isActive = true
     }
 
-    private func rebuildRows(
-        records: [GameStatisticsPlayerRecord],
-        playerNames: [String],
-        showFourthPlaceRow: Bool
-    ) {
+    private func rebuildRows(rows: [GameStatisticsPresentationProvider.Presentation.Row]) {
         clearRows()
-
-        let playerHeaders = records.map { record in
-            displayName(for: record.playerIndex, playerNames: playerNames)
-        }
-        rowsStackView.addArrangedSubview(
-            makeRow(
-                title: "Показатель",
-                values: playerHeaders,
-                isHeader: true,
-                rowIndex: 0
-            )
-        )
-
-        var rowIndex = 1
-        let metricRows = buildMetricRows(
-            records: records,
-            showFourthPlaceRow: showFourthPlaceRow
-        )
-        for row in metricRows {
+        for (rowIndex, row) in rows.enumerated() {
             rowsStackView.addArrangedSubview(
                 makeRow(
                     title: row.title,
                     values: row.values,
-                    isHeader: false,
+                    isHeader: row.isHeader,
                     rowIndex: rowIndex
                 )
             )
-            rowIndex += 1
         }
-    }
-
-    private func buildMetricRows(
-        records: [GameStatisticsPlayerRecord],
-        showFourthPlaceRow: Bool
-    ) -> [(title: String, values: [String])] {
-        let premiums = (0..<GameConstants.totalBlocks).map { blockIndex in
-            (
-                title: "Премии блок \(blockIndex + 1)",
-                values: records.map { record in
-                    let value = record.premiumsByBlock.indices.contains(blockIndex)
-                        ? record.premiumsByBlock[blockIndex]
-                        : 0
-                    return "\(value)"
-                }
-            )
-        }
-
-        var rows: [(title: String, values: [String])] = [
-            ("Количество игр", records.map { "\($0.gamesPlayed)" }),
-            ("1 место", records.map { "\($0.firstPlaceCount)" }),
-            ("2 место", records.map { "\($0.secondPlaceCount)" }),
-            ("3 место", records.map { "\($0.thirdPlaceCount)" })
-        ]
-
-        if showFourthPlaceRow {
-            rows.append(("4 место", records.map { "\($0.fourthPlaceCount)" }))
-        }
-
-        rows.append(contentsOf: premiums)
-        rows.append(("Заказы в темную", records.map { "\($0.blindBidCount)" }))
-        rows.append((
-            "Макс. очков за игру",
-            records.map { record in
-                return formattedScore(record.maxTotalScore)
-            }
-        ))
-        rows.append((
-            "Мин. очков за игру",
-            records.map { record in
-                return formattedScore(record.minTotalScore)
-            }
-        ))
-
-        return rows
-    }
-
-    private func displayName(for playerIndex: Int, playerNames: [String]) -> String {
-        return PlayerDisplayNameFormatter.displayName(for: playerIndex, in: playerNames)
     }
 
     private func makeRow(
@@ -332,11 +233,5 @@ final class GameStatisticsTableView: UIView {
 
         metricColumnWidth = resolvedMetricWidth
         playerColumnWidth = resolvedPlayerWidth
-    }
-
-    private func formattedScore(_ value: Double?) -> String {
-        guard let value else { return "-" }
-        let normalizedValue = (value * 10).rounded() / 10
-        return Self.scoreFormatter.string(from: NSNumber(value: normalizedValue)) ?? "-"
     }
 }
