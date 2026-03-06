@@ -112,16 +112,6 @@ struct BotBeliefState: Equatable {
 /// Низкоуровневые эвристики runtime-хода бота:
 /// генерация joker-вариантов, оценка угрозы карты и вероятности мгновенного взятия.
 struct BotTurnCardHeuristicsService {
-    private enum LegalAwareSampling {
-        static let minimumIterations = BotHeuristicsConstants.legalAwareMinIterations
-        static let maximumIterations = BotHeuristicsConstants.legalAwareMaxIterations
-        static let reducedMinimumIterations = BotHeuristicsConstants.legalAwareReducedMinIterations
-        static let reducedMaximumIterations = BotHeuristicsConstants.legalAwareReducedMaxIterations
-        static let rotationStride = BotHeuristicsConstants.legalAwareRotationStride
-        static let reducedMaxCardsPerOpponentSample = BotHeuristicsConstants.legalAwareReducedMaxCardsPerOpponentSample
-        static let endgameHandSizeThreshold = BotHeuristicsConstants.legalAwareEndgameHandSizeThreshold
-    }
-
     struct TrickSnapshot {
         let playedCards: [PlayedTrickCard]
 
@@ -135,9 +125,13 @@ struct BotTurnCardHeuristicsService {
     }
 
     private let tuning: BotTuning
+    private let heuristicsPolicy: BotRuntimePolicy.Heuristics
+    private let jokerPolicy: BotTuning.JokerPolicy
 
     init(tuning: BotTuning) {
         self.tuning = tuning
+        self.heuristicsPolicy = tuning.runtimePolicy.heuristics
+        self.jokerPolicy = tuning.jokerPolicy
     }
 
     func candidateDecisions(
@@ -213,6 +207,7 @@ struct BotTurnCardHeuristicsService {
         playerCount: Int? = nil
     ) -> Double {
         let strategy = tuning.turnStrategy
+        let joker = jokerPolicy
         let phaseMultiplier = threatPhaseMultiplier(
             for: card,
             trump: trump,
@@ -232,8 +227,8 @@ struct BotTurnCardHeuristicsService {
         if card.isJoker {
             if decision.style == .faceDown {
                 let baseThreat = trick.playedCards.isEmpty
-                    ? strategy.threatFaceDownLeadJoker
-                    : strategy.threatFaceDownNonLeadJoker
+                    ? joker.threatFaceDownLeadJoker
+                    : joker.threatFaceDownNonLeadJoker
                 return baseThreat * phaseMultiplier * positionMultiplier * historyMultiplier
             }
 
@@ -241,16 +236,16 @@ struct BotTurnCardHeuristicsService {
                 let baseThreat: Double
                 switch decision.leadDeclaration {
                 case .takes:
-                    baseThreat = strategy.threatLeadTakesJoker
+                    baseThreat = joker.threatLeadTakesJoker
                 case .above:
-                    baseThreat = strategy.threatLeadAboveJoker
+                    baseThreat = joker.threatLeadAboveJoker
                 case .wish, .none:
-                    baseThreat = strategy.threatLeadWishJoker
+                    baseThreat = joker.threatLeadWishJoker
                 }
                 return baseThreat * phaseMultiplier * positionMultiplier * historyMultiplier
             }
 
-            return strategy.threatNonLeadFaceUpJoker *
+            return joker.threatNonLeadFaceUpJoker *
                 phaseMultiplier *
                 positionMultiplier *
                 historyMultiplier
@@ -469,13 +464,13 @@ struct BotTurnCardHeuristicsService {
         guard !opponentOrder.isEmpty else { return 1.0 }
 
         let sortedUnseen = unseenCards.sorted()
-        let useReducedBudget = handSizeBeforeMove > LegalAwareSampling.endgameHandSizeThreshold
+        let useReducedBudget = handSizeBeforeMove > heuristicsPolicy.endgameHandSizeThreshold
         let minimumIterations = useReducedBudget
-            ? LegalAwareSampling.reducedMinimumIterations
-            : LegalAwareSampling.minimumIterations
+            ? heuristicsPolicy.reducedMinimumIterations
+            : heuristicsPolicy.minimumIterations
         let maximumIterations = useReducedBudget
-            ? LegalAwareSampling.reducedMaximumIterations
-            : LegalAwareSampling.maximumIterations
+            ? heuristicsPolicy.reducedMaximumIterations
+            : heuristicsPolicy.maximumIterations
         let sampleIterations = min(
             maximumIterations,
             max(minimumIterations, sortedUnseen.count)
@@ -484,14 +479,14 @@ struct BotTurnCardHeuristicsService {
 
         var holdSuccessCount = 0
         for iteration in 0..<sampleIterations {
-            let offset = (iteration * LegalAwareSampling.rotationStride) % max(1, sortedUnseen.count)
+            let offset = (iteration * heuristicsPolicy.rotationStride) % max(1, sortedUnseen.count)
             var cardPool = rotatedCards(sortedUnseen, by: offset)
             var simulatedTrick = trickAfterMove
             var isBeaten = false
 
             for opponentIndex in opponentOrder {
                 let maxCardsPerOpponent = useReducedBudget
-                    ? LegalAwareSampling.reducedMaxCardsPerOpponentSample
+                    ? heuristicsPolicy.reducedMaxCardsPerOpponentSample
                     : max(1, handSizeBeforeMove)
                 let cardsToDraw = min(
                     max(
@@ -545,7 +540,7 @@ struct BotTurnCardHeuristicsService {
         if card.isJoker || decision.leadDeclaration != nil {
             return true
         }
-        return handSizeBeforeMove <= LegalAwareSampling.endgameHandSizeThreshold
+        return handSizeBeforeMove <= heuristicsPolicy.endgameHandSizeThreshold
     }
 
     private func resolvedOpponentOrder(
@@ -794,23 +789,24 @@ struct BotTurnCardHeuristicsService {
         trump: Suit?
     ) -> Int {
         let strategy = tuning.turnStrategy
+        let joker = jokerPolicy
         if card.isJoker {
             if decision.style == .faceDown {
-                return strategy.powerFaceDownJoker
+                return joker.powerFaceDownJoker
             }
 
             if trick.playedCards.isEmpty {
                 switch decision.leadDeclaration {
                 case .takes:
-                    return strategy.powerLeadTakesJoker
+                    return joker.powerLeadTakesJoker
                 case .above:
-                    return strategy.powerLeadAboveJoker
+                    return joker.powerLeadAboveJoker
                 case .wish, .none:
-                    return strategy.powerLeadWishJoker
+                    return joker.powerLeadWishJoker
                 }
             }
 
-            return strategy.powerNonLeadFaceUpJoker
+            return joker.powerNonLeadFaceUpJoker
         }
 
         guard case .regular(let suit, let rank) = card else { return 0 }

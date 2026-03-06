@@ -9,6 +9,27 @@ import Foundation
 
 /// Централизованные коэффициенты и тайминги для ИИ ботов.
 struct BotTuning {
+    struct JokerPolicy {
+        let chaseSpendJokerPenalty: Double
+        let chaseLeadWishBonus: Double
+        let dumpSpendJokerPenalty: Double
+        let dumpFaceUpNonLeadJokerPenalty: Double
+        let dumpLeadTakesNonTrumpBonus: Double
+
+        let threatFaceDownLeadJoker: Double
+        let threatFaceDownNonLeadJoker: Double
+        let threatLeadTakesJoker: Double
+        let threatLeadAboveJoker: Double
+        let threatLeadWishJoker: Double
+        let threatNonLeadFaceUpJoker: Double
+
+        let powerFaceDownJoker: Int
+        let powerLeadTakesJoker: Int
+        let powerLeadAboveJoker: Int
+        let powerLeadWishJoker: Int
+        let powerNonLeadFaceUpJoker: Int
+    }
+
     struct TurnStrategy {
         /// Допуск при сравнении utility-кандидатов.
         /// Пример: `0.001` чаще считает близкие варианты равными.
@@ -208,6 +229,8 @@ struct BotTuning {
     /// Коэффициенты выбора козыря по неполной руке.
     /// Пример: снижение порога делает объявления козыря более частыми.
     let trumpSelection: TrumpSelection
+    /// Единый runtime policy для ранее разбросанных `static let` конфигов ranking/bidding/heuristics/opponent modeling.
+    let runtimePolicy: BotRuntimePolicy
     /// Задержки, определяющие темп бота и визуальный ритм партии.
     /// Пример: уменьшение задержек делает игру динамичнее.
     let timing: Timing
@@ -221,13 +244,36 @@ struct BotTuning {
         turnStrategy: TurnStrategy,
         bidding: Bidding,
         trumpSelection: TrumpSelection,
+        runtimePolicy: BotRuntimePolicy? = nil,
         timing: Timing
     ) {
         self.difficulty = difficulty
         self.turnStrategy = turnStrategy
         self.bidding = bidding
         self.trumpSelection = trumpSelection
+        self.runtimePolicy = runtimePolicy ?? BotRuntimePolicy.preset(for: difficulty)
         self.timing = timing
+    }
+
+    var jokerPolicy: JokerPolicy {
+        JokerPolicy(
+            chaseSpendJokerPenalty: turnStrategy.chaseSpendJokerPenalty,
+            chaseLeadWishBonus: turnStrategy.chaseLeadWishBonus,
+            dumpSpendJokerPenalty: turnStrategy.dumpSpendJokerPenalty,
+            dumpFaceUpNonLeadJokerPenalty: turnStrategy.dumpFaceUpNonLeadJokerPenalty,
+            dumpLeadTakesNonTrumpBonus: turnStrategy.dumpLeadTakesNonTrumpBonus,
+            threatFaceDownLeadJoker: turnStrategy.threatFaceDownLeadJoker,
+            threatFaceDownNonLeadJoker: turnStrategy.threatFaceDownNonLeadJoker,
+            threatLeadTakesJoker: turnStrategy.threatLeadTakesJoker,
+            threatLeadAboveJoker: turnStrategy.threatLeadAboveJoker,
+            threatLeadWishJoker: turnStrategy.threatLeadWishJoker,
+            threatNonLeadFaceUpJoker: turnStrategy.threatNonLeadFaceUpJoker,
+            powerFaceDownJoker: turnStrategy.powerFaceDownJoker,
+            powerLeadTakesJoker: turnStrategy.powerLeadTakesJoker,
+            powerLeadAboveJoker: turnStrategy.powerLeadAboveJoker,
+            powerLeadWishJoker: turnStrategy.powerLeadWishJoker,
+            powerNonLeadFaceUpJoker: turnStrategy.powerNonLeadFaceUpJoker
+        )
     }
 
     private static func preset(for difficulty: BotDifficulty) -> BotTuning {
@@ -301,6 +347,7 @@ struct BotTuning {
                     cardBasePower: 0.35,
                     minimumPowerToDeclareTrump: 1.90
                 ),
+                runtimePolicy: BotRuntimePolicy.preset(for: .easy),
                 timing: Timing(
                     playingBotTurnDelay: 0.55,
                     biddingStepDelay: 0.35,
@@ -377,6 +424,7 @@ struct BotTuning {
                     cardBasePower: 0.45,
                     minimumPowerToDeclareTrump: 1.55
                 ),
+                runtimePolicy: BotRuntimePolicy.preset(for: .normal),
                 timing: Timing(
                     playingBotTurnDelay: 0.35,
                     biddingStepDelay: 0.25,
@@ -453,6 +501,7 @@ struct BotTuning {
                     cardBasePower: 0.464914,
                     minimumPowerToDeclareTrump: 1.977804
                 ),
+                runtimePolicy: BotRuntimePolicy.preset(for: .hard),
                 timing: Timing(
                     playingBotTurnDelay: 0.22,
                     biddingStepDelay: 0.15,

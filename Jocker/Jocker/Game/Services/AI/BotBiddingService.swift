@@ -35,14 +35,23 @@ final class BotBiddingService {
     }
 
     private struct DeterministicRNG {
+        private let multiplier: UInt64
+        private let increment: UInt64
         private var state: UInt64
 
-        init(seed: UInt64) {
-            self.state = seed == 0 ? BotBiddingConstants.defaultRNGSeed : seed
+        init(
+            seed: UInt64,
+            defaultSeed: UInt64,
+            multiplier: UInt64,
+            increment: UInt64
+        ) {
+            self.multiplier = multiplier
+            self.increment = increment
+            self.state = seed == 0 ? defaultSeed : seed
         }
 
         mutating func nextUInt64() -> UInt64 {
-            state = state &* BotBiddingConstants.rngMultiplier &+ BotBiddingConstants.rngIncrement
+            state = state &* multiplier &+ increment
             return state
         }
 
@@ -52,16 +61,13 @@ final class BotBiddingService {
         }
     }
 
-    private enum BlindMonteCarloConfig {
-        static let minimumIterations = BotBiddingConstants.blindMonteCarloMinIterations
-        static let maximumIterations = BotBiddingConstants.blindMonteCarloMaxIterations
-    }
-
     private let tuning: BotTuning
+    private let biddingPolicy: BotRuntimePolicy.Bidding
     private let handStrengthModel: BotHandStrengthModel
 
     init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
         self.tuning = tuning
+        self.biddingPolicy = tuning.runtimePolicy.bidding
         self.handStrengthModel = BotHandStrengthModel(tuning: tuning)
     }
 
@@ -121,12 +127,12 @@ final class BotBiddingService {
                 forbiddenTouchesOptimum: forbiddenTouchesOptimum,
                 matchContext: matchContext
             )
-            if candidateUtility > bestUtility + BotBiddingConstants.bidUtilityTieTolerance {
+            if candidateUtility > bestUtility + biddingPolicy.bidUtilityTieTolerance {
                 bestUtility = candidateUtility
                 bestCandidate = candidate
                 continue
             }
-            if abs(candidateUtility - bestUtility) <= BotBiddingConstants.bidUtilityTieTolerance {
+            if abs(candidateUtility - bestUtility) <= biddingPolicy.bidUtilityTieTolerance {
                 if candidate.projectedScore > bestCandidate.projectedScore {
                     bestCandidate = candidate
                     continue
@@ -194,54 +200,54 @@ final class BotBiddingService {
         let safeLeadThreshold = max(1, bidding.blindSafeLeadThreshold)
 
         // Risk score: positive values push the bot towards blind, negative values keep it conservative.
-        var blindRiskScore = BotBiddingConstants.blindRiskScoreBase
+        var blindRiskScore = biddingPolicy.blindRiskScoreBase
 
         if behindByLeader >= bidding.blindCatchUpBehindThreshold {
-            blindRiskScore += BotBiddingConstants.blindCatchUpThresholdBonus
+            blindRiskScore += biddingPolicy.blindCatchUpThresholdBonus
         }
         if behindByLeader >= bidding.blindDesperateBehindThreshold {
-            blindRiskScore += BotBiddingConstants.blindDesperateThresholdBonus
+            blindRiskScore += biddingPolicy.blindDesperateThresholdBonus
         }
 
         let catchUpPressure = Double(max(0, behindByLeader - catchUpThreshold)) / Double(catchUpThreshold)
-        blindRiskScore += catchUpPressure * BotBiddingConstants.blindCatchUpPressureMultiplier
+        blindRiskScore += catchUpPressure * biddingPolicy.blindCatchUpPressureMultiplier
 
         let desperatePressureDenominator = max(1, desperateThreshold - catchUpThreshold)
         let desperatePressure = Double(max(0, behindByLeader - desperateThreshold)) /
             Double(desperatePressureDenominator)
-        blindRiskScore += desperatePressure * BotBiddingConstants.blindDesperatePressureMultiplier
+        blindRiskScore += desperatePressure * biddingPolicy.blindDesperatePressureMultiplier
 
         let safetyPenalty = Double(aheadOfOpponent) / Double(safeLeadThreshold)
-        blindRiskScore -= safetyPenalty * BotBiddingConstants.blindSafetyPenaltyMultiplier
+        blindRiskScore -= safetyPenalty * biddingPolicy.blindSafetyPenaltyMultiplier
         if aheadOfOpponent >= bidding.blindSafeLeadThreshold &&
             behindByLeader < bidding.blindDesperateBehindThreshold {
-            blindRiskScore -= BotBiddingConstants.blindLeaderPenalty
+            blindRiskScore -= biddingPolicy.blindLeaderPenalty
         }
 
         if playerScore >= leaderScore {
-            blindRiskScore -= BotBiddingConstants.blindTableLeaderPenalty
+            blindRiskScore -= biddingPolicy.blindTableLeaderPenalty
         }
 
         if clampedPlayerIndex == clampedDealerIndex {
-            blindRiskScore -= BotBiddingConstants.blindDealerPenalty
+            blindRiskScore -= biddingPolicy.blindDealerPenalty
         } else {
-            blindRiskScore += BotBiddingConstants.blindNonDealerBonus
+            blindRiskScore += biddingPolicy.blindNonDealerBonus
         }
 
-        blindRiskScore += min(BotBiddingConstants.blindLongRoundBonusCap, Double(max(0, cards - BotBiddingConstants.blindLongRoundThreshold)) / BotBiddingConstants.blindLongRoundBonusDivisor)
+        blindRiskScore += min(biddingPolicy.blindLongRoundBonusCap, Double(max(0, cards - biddingPolicy.blindLongRoundThreshold)) / biddingPolicy.blindLongRoundBonusDivisor)
 
         let effectiveRoundCapacity = max(1, max(cards, maxAllowed))
-        blindRiskScore -= Double(minAllowed) / Double(effectiveRoundCapacity) * BotBiddingConstants.blindMinAllowedPenalty
+        blindRiskScore -= Double(minAllowed) / Double(effectiveRoundCapacity) * biddingPolicy.blindMinAllowedPenalty
 
         if allowedRange <= 2 {
-            blindRiskScore -= BotBiddingConstants.blindNarrowRangePenalty
+            blindRiskScore -= biddingPolicy.blindNarrowRangePenalty
         } else if allowedRange <= 4 {
-            blindRiskScore -= BotBiddingConstants.blindMediumRangePenalty
+            blindRiskScore -= biddingPolicy.blindMediumRangePenalty
         } else {
-            blindRiskScore += BotBiddingConstants.blindWideRangeBonus
+            blindRiskScore += biddingPolicy.blindWideRangeBonus
         }
 
-        guard blindRiskScore > BotBiddingConstants.blindRiskScoreThreshold else { return nil }
+        guard blindRiskScore > biddingPolicy.blindRiskScoreThreshold else { return nil }
 
         let conservativeShare = min(
             bidding.blindCatchUpTargetShare,
@@ -251,22 +257,22 @@ final class BotBiddingService {
         let desperateShare = max(catchUpShare, bidding.blindDesperateTargetShare)
 
         let modeTargetShare: Double
-        if behindByLeader >= desperateThreshold || blindRiskScore >= BotBiddingConstants.blindDesperateModeThreshold {
-            let overflow = min(1.0, max(0.0, (blindRiskScore - BotBiddingConstants.blindDesperateModeThreshold) / BotBiddingConstants.blindOverflowDivisor))
-            modeTargetShare = desperateShare + BotBiddingConstants.blindDesperateOverflowBonus * overflow
-        } else if behindByLeader >= catchUpThreshold || blindRiskScore >= BotBiddingConstants.blindCatchUpModeThreshold {
-            let modeProgress = min(1.0, max(0.0, (blindRiskScore - BotBiddingConstants.blindCatchUpModeThreshold) / BotBiddingConstants.blindModeProgressDivisor))
-            modeTargetShare = catchUpShare + (desperateShare - catchUpShare) * BotBiddingConstants.blindCatchUpToDesperateWeight * modeProgress
+        if behindByLeader >= desperateThreshold || blindRiskScore >= biddingPolicy.blindDesperateModeThreshold {
+            let overflow = min(1.0, max(0.0, (blindRiskScore - biddingPolicy.blindDesperateModeThreshold) / biddingPolicy.blindOverflowDivisor))
+            modeTargetShare = desperateShare + biddingPolicy.blindDesperateOverflowBonus * overflow
+        } else if behindByLeader >= catchUpThreshold || blindRiskScore >= biddingPolicy.blindCatchUpModeThreshold {
+            let modeProgress = min(1.0, max(0.0, (blindRiskScore - biddingPolicy.blindCatchUpModeThreshold) / biddingPolicy.blindModeProgressDivisor))
+            modeTargetShare = catchUpShare + (desperateShare - catchUpShare) * biddingPolicy.blindCatchUpToDesperateWeight * modeProgress
         } else {
-            let modeProgress = min(1.0, max(0.0, (blindRiskScore - BotBiddingConstants.blindRiskScoreThreshold) / BotBiddingConstants.blindConservativeProgressDivisor))
-            modeTargetShare = conservativeShare + (catchUpShare - conservativeShare) * BotBiddingConstants.blindConservativeToCatchUpWeight * modeProgress
+            let modeProgress = min(1.0, max(0.0, (blindRiskScore - biddingPolicy.blindRiskScoreThreshold) / biddingPolicy.blindConservativeProgressDivisor))
+            modeTargetShare = conservativeShare + (catchUpShare - conservativeShare) * biddingPolicy.blindConservativeToCatchUpWeight * modeProgress
         }
 
-        let positionAdjustment = clampedPlayerIndex == clampedDealerIndex ? BotBiddingConstants.blindDealerPositionAdjustment : BotBiddingConstants.blindNonDealerAdjustment
-        let longRoundAdjustment = cards >= BotBiddingConstants.blindLongRoundAdjustmentThreshold ? BotBiddingConstants.blindLongRoundAdjustment : 0.0
-        let safetyAdjustment = aheadOfOpponent >= bidding.blindSafeLeadThreshold ? BotBiddingConstants.blindSafetyAdjustment : 0.0
+        let positionAdjustment = clampedPlayerIndex == clampedDealerIndex ? biddingPolicy.blindDealerPositionAdjustment : biddingPolicy.blindNonDealerAdjustment
+        let longRoundAdjustment = cards >= biddingPolicy.blindLongRoundAdjustmentThreshold ? biddingPolicy.blindLongRoundAdjustment : 0.0
+        let safetyAdjustment = aheadOfOpponent >= bidding.blindSafeLeadThreshold ? biddingPolicy.blindSafetyAdjustment : 0.0
         let targetShare = min(
-            BotBiddingConstants.blindTargetShareCap,
+            biddingPolicy.blindTargetShareCap,
             max(0.0, modeTargetShare + positionAdjustment + longRoundAdjustment + safetyAdjustment)
         )
         let targetBid = nearestAllowedBid(
@@ -317,10 +323,10 @@ final class BotBiddingService {
 
         let blockProgress = matchContext?.blockProgressFraction ?? 0.0
         let optimalityPenaltyWeight = forbiddenTouchesOptimum
-            ? (BotBiddingConstants.bidUtilityOptimalityPenaltyBase + BotBiddingConstants.bidUtilityOptimalityPenaltyProgress * blockProgress)
-            : (BotBiddingConstants.bidUtilityOptimalityPenaltyBaseNoForbidden + BotBiddingConstants.bidUtilityOptimalityPenaltyProgressNoForbidden * blockProgress)
-        let expectedPenaltyWeight = BotBiddingConstants.bidUtilityExpectedPenaltyBase + BotBiddingConstants.bidUtilityExpectedPenaltyProgress * blockProgress
-        let scoreGapPenaltyWeight = forbiddenTouchesOptimum ? BotBiddingConstants.bidUtilityScoreGapPenaltyForbidden : BotBiddingConstants.bidUtilityScoreGapPenaltyNoForbidden
+            ? (biddingPolicy.bidUtilityOptimalityPenaltyBase + biddingPolicy.bidUtilityOptimalityPenaltyProgress * blockProgress)
+            : (biddingPolicy.bidUtilityOptimalityPenaltyBaseNoForbidden + biddingPolicy.bidUtilityOptimalityPenaltyProgressNoForbidden * blockProgress)
+        let expectedPenaltyWeight = biddingPolicy.bidUtilityExpectedPenaltyBase + biddingPolicy.bidUtilityExpectedPenaltyProgress * blockProgress
+        let scoreGapPenaltyWeight = forbiddenTouchesOptimum ? biddingPolicy.bidUtilityScoreGapPenaltyForbidden : biddingPolicy.bidUtilityScoreGapPenaltyNoForbidden
 
         return Double(candidate.projectedScore) -
             projectedGap * scoreGapPenaltyWeight -
@@ -346,10 +352,10 @@ final class BotBiddingService {
         guard !allowedBlindBids.isEmpty else { return nil }
 
         let iterations = min(
-            BlindMonteCarloConfig.maximumIterations,
+            biddingPolicy.blindMonteCarloMaxIterations,
             max(
-                BlindMonteCarloConfig.minimumIterations,
-                cardsInRound * BotBiddingConstants.blindMonteCarloIterationsPerCard + allowedBlindBids.count * BotBiddingConstants.blindMonteCarloIterationsPerBid
+                biddingPolicy.blindMonteCarloMinIterations,
+                cardsInRound * biddingPolicy.blindMonteCarloIterationsPerCard + allowedBlindBids.count * biddingPolicy.blindMonteCarloIterationsPerBid
             )
         )
         var rng = DeterministicRNG(
@@ -363,7 +369,10 @@ final class BotBiddingService {
                 playerIndex: playerIndex,
                 dealerIndex: dealerIndex,
                 totalScores: totalScores
-            )
+            ),
+            defaultSeed: biddingPolicy.defaultRNGSeed,
+            multiplier: biddingPolicy.rngMultiplier,
+            increment: biddingPolicy.rngIncrement
         )
 
         var statsByBid: [Int: BlindBidStats] = [:]
@@ -391,19 +400,19 @@ final class BotBiddingService {
             }
         }
 
-        let riskBudget = min(1.0, max(0.0, (blindRiskScore - BotBiddingConstants.blindRiskScoreThreshold) / 2.0))
+        let riskBudget = min(1.0, max(0.0, (blindRiskScore - biddingPolicy.blindRiskScoreThreshold) / 2.0))
         let catchUpPressure = Double(max(0, behindByLeader - catchUpThreshold)) / Double(max(1, catchUpThreshold))
         let safeLeadPressure = Double(max(0, aheadOfOpponent - safeLeadThreshold)) / Double(max(1, safeLeadThreshold))
         var variancePenaltyWeight =
-            BotBiddingConstants.mcVariancePenaltyBase +
-            safeLeadPressure * BotBiddingConstants.mcSafeLeadPressureMax -
-            Double(behindByLeader) / Double(max(1, desperateThreshold)) * BotBiddingConstants.mcDesperatePenaltyWeight
-        variancePenaltyWeight = min(BotBiddingConstants.mcVariancePenaltyWeightMax, max(BotBiddingConstants.mcVariancePenaltyWeightMin, variancePenaltyWeight))
-        variancePenaltyWeight *= (1.0 - BotBiddingConstants.mcVarianceRiskBudgetModifier * riskBudget)
+            biddingPolicy.mcVariancePenaltyBase +
+            safeLeadPressure * biddingPolicy.mcSafeLeadPressureMax -
+            Double(behindByLeader) / Double(max(1, desperateThreshold)) * biddingPolicy.mcDesperatePenaltyWeight
+        variancePenaltyWeight = min(biddingPolicy.mcVariancePenaltyWeightMax, max(biddingPolicy.mcVariancePenaltyWeightMin, variancePenaltyWeight))
+        variancePenaltyWeight *= (1.0 - biddingPolicy.mcVarianceRiskBudgetModifier * riskBudget)
 
-        let deviationPenaltyWeight = BotBiddingConstants.mcDeviationPenaltyBase + BotBiddingConstants.mcDeviationRiskBudgetMultiplier * (1.0 - riskBudget)
-        let overshootPenaltyWeight = BotBiddingConstants.mcOvershootPenaltyBase + safeLeadPressure * BotBiddingConstants.mcOvershootSafeLeadMultiplier
-        let catchUpAggressionWeight = BotBiddingConstants.mcCatchUpAggressionBase + catchUpPressure * BotBiddingConstants.mcCatchUpAggressionPressureMultiplier
+        let deviationPenaltyWeight = biddingPolicy.mcDeviationPenaltyBase + biddingPolicy.mcDeviationRiskBudgetMultiplier * (1.0 - riskBudget)
+        let overshootPenaltyWeight = biddingPolicy.mcOvershootPenaltyBase + safeLeadPressure * biddingPolicy.mcOvershootSafeLeadMultiplier
+        let catchUpAggressionWeight = biddingPolicy.mcCatchUpAggressionBase + catchUpPressure * biddingPolicy.mcCatchUpAggressionPressureMultiplier
 
         guard var bestBid = allowedBlindBids.first else { return nil }
         var bestUtility = -Double.greatestFiniteMagnitude
@@ -422,12 +431,12 @@ final class BotBiddingService {
                 utility -= Double(aggressiveDistance) * overshootPenaltyWeight
             }
 
-            if utility > bestUtility + BotBiddingConstants.bidUtilityTieTolerance {
+            if utility > bestUtility + biddingPolicy.bidUtilityTieTolerance {
                 bestUtility = utility
                 bestBid = bid
                 continue
             }
-            if abs(utility - bestUtility) <= BotBiddingConstants.bidUtilityTieTolerance &&
+            if abs(utility - bestUtility) <= biddingPolicy.bidUtilityTieTolerance &&
                 abs(bid - targetBid) < abs(bestBid - targetBid) {
                 bestBid = bid
             }
@@ -542,13 +551,13 @@ final class BotBiddingService {
         dealerIndex: Int,
         totalScores: [Int]
     ) -> UInt64 {
-        var seed = BotBiddingConstants.monteCarloBaseSeed
+        var seed = biddingPolicy.monteCarloBaseSeed
 
         func mix(_ value: Int) {
-            seed = seed &* BotBiddingConstants.rngMultiplier &+ UInt64(bitPattern: Int64(value))
-            seed ^= seed >> BotBiddingConstants.hashShiftRight1
-            seed ^= seed << BotBiddingConstants.hashShiftLeft
-            seed ^= seed >> BotBiddingConstants.hashShiftRight2
+            seed = seed &* biddingPolicy.rngMultiplier &+ UInt64(bitPattern: Int64(value))
+            seed ^= seed >> biddingPolicy.hashShiftRight1
+            seed ^= seed << biddingPolicy.hashShiftLeft
+            seed ^= seed >> biddingPolicy.hashShiftRight2
         }
 
         mix(cardsInRound)
@@ -593,12 +602,12 @@ final class BotBiddingService {
         riskBudget: Double
     ) -> Int {
         guard targetBid > 0 else { return 0 }
-        let isDesperateMode = behindByLeader >= desperateThreshold || blindRiskScore >= BotBiddingConstants.blindDesperateModeThreshold
+        let isDesperateMode = behindByLeader >= desperateThreshold || blindRiskScore >= biddingPolicy.blindDesperateModeThreshold
         if isDesperateMode {
-            return max(BotBiddingConstants.minAggressiveBidDesperateMin, Int((Double(targetBid) * BotBiddingConstants.minAggressiveBidDesperateShare).rounded(.down)))
+            return max(biddingPolicy.minAggressiveBidDesperateMin, Int((Double(targetBid) * biddingPolicy.minAggressiveBidDesperateShare).rounded(.down)))
         }
         guard behindByLeader >= catchUpThreshold else { return 0 }
-        let catchUpShare = BotBiddingConstants.minAggressiveBidCatchUpBase + BotBiddingConstants.minAggressiveBidCatchUpProgress * riskBudget
+        let catchUpShare = biddingPolicy.minAggressiveBidCatchUpBase + biddingPolicy.minAggressiveBidCatchUpProgress * riskBudget
         return max(1, Int((Double(targetBid) * catchUpShare).rounded(.down)))
     }
 

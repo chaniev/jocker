@@ -175,6 +175,14 @@
 
 ### P4. Привести AI policy/config к одной модели
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- Введён единый runtime policy model `BotRuntimePolicy`, а `BotTuning` теперь стал единственным владельцем как tunable коэффициентов, так и нетюнимых runtime policy groups.
+- `BotBiddingService`, `BotTurnCandidateRankingService` и `BotTurnCardHeuristicsService` переведены с `Bot*Constants` на dependency-based policy из `tuning.runtimePolicy`.
+- В `BotTuning` добавлен `jokerPolicy` projection, чтобы joker-specific runtime coefficients читались как отдельная policy group, но продолжали опираться на уже существующий `turnStrategy`.
+- Старые `BotBiddingConstants` / `BotRankingConstants` / `BotHeuristicsConstants` / `BotMatchContextConstants` удалены из runtime target, а policy baseline теперь задаётся в одном месте с difficulty-specific overrides.
+
 **Цель:** убрать ситуацию, где tuning и policy constants живут в разных системах.
 
 **Что видно сейчас**
