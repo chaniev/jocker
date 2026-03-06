@@ -12,16 +12,6 @@ final class BotTrumpSelectionService {
     private let tuning: BotTuning
     private let handFeatureExtractor = HandFeatureExtractor()
     private let handStrengthModel: BotHandStrengthModel
-    private enum BonusPower {
-        // Явный приоритет для блока выбора козыря (2/4):
-        // если из 3 открытых карт 2 одной масти, усиливаем эту масть.
-        static let twoOfThreeSameSuitInPlayerChoiceStage = 1.40
-        static let lengthFactor = 0.36
-        static let densityFactor = 0.90
-        static let sequenceFactor = 0.62
-        static let controlFactor = 0.46
-        static let jokerSynergyFactor = 0.48
-    }
 
     init(tuning: BotTuning = BotTuning(difficulty: .hard)) {
         self.tuning = tuning
@@ -50,13 +40,16 @@ final class BotTrumpSelectionService {
             // without explicit stage bonus or high-card support.
             let qualityMultiplier = max(0.0, profile.topRankStrength)
             let lengthBonus = profile.count >= 2
-                ? Double(profile.count - 1) * BonusPower.lengthFactor
+                ? Double(profile.count - 1) * trumpTuning.lengthBonusPerExtraCard
                 : 0.0
-            let densityBonus = profile.density * Double(profile.count) * BonusPower.densityFactor
-            let sequenceBonus = profile.sequenceStrength * BonusPower.sequenceFactor
-            let controlBonus = profile.controlPotential * BonusPower.controlFactor
+            let densityBonus = profile.density * Double(profile.count) * trumpTuning.densityBonusWeight
+            let sequenceBonus = profile.sequenceStrength * trumpTuning.sequenceBonusWeight
+            let controlBonus = profile.controlPotential * trumpTuning.controlBonusWeight
             let jokerSynergyBonus = Double(jokerCount) *
-                (0.40 + profile.controlPotential * BonusPower.jokerSynergyFactor) *
+                (
+                    trumpTuning.jokerSynergyBase +
+                        profile.controlPotential * trumpTuning.jokerSynergyControlWeight
+                ) *
                 qualityMultiplier
 
             suitPower[suit, default: 0.0] +=
@@ -107,6 +100,6 @@ final class BotTrumpSelectionService {
             return [:]
         }
 
-        return [targetSuit: BonusPower.twoOfThreeSameSuitInPlayerChoiceStage]
+        return [targetSuit: tuning.trumpSelection.playerChosenPairBonus]
     }
 }

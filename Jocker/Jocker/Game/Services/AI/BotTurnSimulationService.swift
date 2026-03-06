@@ -8,9 +8,14 @@
 import Foundation
 
 struct BotTurnSimulationService {
+    private let policy: BotRuntimePolicy.Simulation
     private let opponentOrderResolver: BotTurnOpponentOrderResolver
 
-    init(opponentOrderResolver: BotTurnOpponentOrderResolver) {
+    init(
+        policy: BotRuntimePolicy.Simulation,
+        opponentOrderResolver: BotTurnOpponentOrderResolver
+    ) {
+        self.policy = policy
         self.opponentOrderResolver = opponentOrderResolver
     }
 
@@ -212,19 +217,19 @@ struct BotTurnSimulationService {
         preferControl: Bool
     ) -> Double {
         if card.isJoker {
-            return preferControl ? 20_000 : 12_000
+            return preferControl ? policy.chaseJokerPower : policy.dumpJokerPower
         }
 
         guard case .regular(let suit, let rank) = card else { return 0.0 }
         var power = Double(rank.rawValue)
         if let trump, suit == trump {
-            power += 18.0
+            power += policy.trumpBonus
         }
         if let leadSuit = opponentOrderResolver.effectiveLeadSuit(from: trick), suit == leadSuit {
-            power += 5.0
+            power += policy.leadSuitBonus
         }
-        if rank.rawValue >= Rank.queen.rawValue {
-            power += 4.0
+        if rank.rawValue >= policy.highRankThreshold.rawValue {
+            power += policy.highRankBonus
         }
         return power
     }

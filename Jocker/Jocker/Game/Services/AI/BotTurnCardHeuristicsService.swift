@@ -396,9 +396,12 @@ struct BotTurnCardHeuristicsService {
         } else {
             legalAwareHoldFromSimulation = nil
         }
+        let holdBlend = heuristicsPolicy.holdBlend
         let holdProbability = legalAwareHoldFromSimulation.map {
-            // Сохраняем частичное влияние legacy-компоненты, чтобы переход к legal-aware был плавным.
-            $0 * 0.72 + holdFromDistribution * 0.28
+            // Сохраняем частичное влияние distribution-компоненты, чтобы legal-aware
+            // моделирование не переопределяло результат слишком резко.
+            $0 * holdBlend.legalAwareSimulationWeight +
+                holdFromDistribution * holdBlend.distributionWeight
         } ?? holdFromDistribution
 
         let strategy = tuning.turnStrategy
@@ -768,16 +771,17 @@ struct BotTurnCardHeuristicsService {
         trump: Suit?,
         trick: [PlayedTrickCard]
     ) -> Double {
+        let policy = heuristicsPolicy.legalAwareSimulationCardPower
         if card.isJoker {
-            return 10_000
+            return policy.jokerPower
         }
 
         guard case .regular(let suit, let rank) = card else { return 0.0 }
         var value = Double(rank.rawValue)
         if let trump, suit == trump {
-            value += 100.0
+            value += policy.trumpBonus
         } else if let leadSuit = effectiveLeadSuit(in: trick), suit == leadSuit {
-            value += 40.0
+            value += policy.leadSuitBonus
         }
         return value
     }
@@ -852,34 +856,35 @@ struct BotTurnCardHeuristicsService {
         let clampedHandSize = min(max(1, cardsRemainingInHandBeforeMove), clampedCardsInRound)
         let completedTricks = max(0, clampedCardsInRound - clampedHandSize)
         let phaseProgress = Double(completedTricks) / Double(max(1, clampedCardsInRound - 1))
+        let policy = heuristicsPolicy.threatPhase
 
         let resourceWeight: Double
         if card.isJoker {
-            resourceWeight = 1.0
+            resourceWeight = policy.jokerResourceWeight
         } else if let suit = card.suit, suit == trump {
-            resourceWeight = 0.8
-        } else if let rank = card.rank, rank.rawValue >= Rank.queen.rawValue {
-            resourceWeight = 0.65
-        } else if let rank = card.rank, rank.rawValue >= Rank.jack.rawValue {
-            resourceWeight = 0.35
+            resourceWeight = policy.trumpResourceWeight
+        } else if let rank = card.rank, rank.rawValue >= policy.highRankThreshold.rawValue {
+            resourceWeight = policy.highRankResourceWeight
+        } else if let rank = card.rank, rank.rawValue >= policy.midRankThreshold.rawValue {
+            resourceWeight = policy.midRankResourceWeight
         } else {
-            resourceWeight = 0.15
+            resourceWeight = policy.lowRankResourceWeight
         }
 
         // Early in the hand, preserve high-value resources longer.
-        let earlyPreservationBonus = 0.28 * resourceWeight
+        let earlyPreservationBonus = policy.earlyPreservationBonusWeight * resourceWeight
         // Late in the hand, convert resources into result instead of over-preserving.
-        let lateConversionDiscount = 0.38 * resourceWeight
+        let lateConversionDiscount = policy.lateConversionDiscountWeight * resourceWeight
 
         var multiplier = 1.0 +
             (1.0 - phaseProgress) * earlyPreservationBonus -
             phaseProgress * lateConversionDiscount
 
         if clampedHandSize == 1 {
-            multiplier -= 0.05 * resourceWeight
+            multiplier -= policy.finalCardReliefWeight * resourceWeight
         }
 
-        return min(1.35, max(0.55, multiplier))
+        return min(policy.maxMultiplier, max(policy.minMultiplier, multiplier))
     }
 
     private func threatPositionMultiplier(
@@ -888,16 +893,17 @@ struct BotTurnCardHeuristicsService {
     ) -> Double {
         let normalizedCount = max(0, playedCardsInCurrentTrick)
         let normalizedPlayerCount = max(2, playerCount ?? max(2, normalizedCount + 1))
+        let policy = heuristicsPolicy.threatPosition
         if normalizedCount == 0 {
-            return 1.08
+            return policy.leadMultiplier
         }
         if normalizedCount >= max(1, normalizedPlayerCount - 1) {
-            return 0.90
+            return policy.lastSeatMultiplier
         }
         if normalizedCount == 1 {
-            return 1.03
+            return policy.secondSeatMultiplier
         }
-        return 0.97
+        return policy.middleSeatMultiplier
     }
 
     private func threatHistoryMultiplier(
@@ -907,20 +913,31 @@ struct BotTurnCardHeuristicsService {
         completedTricksInRound: [[PlayedTrickCard]]
     ) -> Double {
         let allPlayedCards = completedTricksInRound.flatMap { $0 } + trick.playedCards
+        let policy = heuristicsPolicy.threatHistory
 
         if card.isJoker {
             let playedJokerCount = allPlayedCards.filter { $0.card.isJoker }.count
-            let jokerResourceBoost = playedJokerCount > 0 ? 1.08 : 1.0
-            let positionRelief = trick.playedCards.isEmpty ? 1.02 : 0.98
-            return min(1.16, max(0.86, jokerResourceBoost * positionRelief))
+            let jokerResourceBoost = playedJokerCount > 0 ? policy.jokerSeenBoost : 1.0
+            let positionRelief = trick.playedCards.isEmpty
+                ? policy.jokerLeadPositionMultiplier
+                : policy.jokerFollowPositionMultiplier
+            return min(
+                policy.jokerMaxMultiplier,
+                max(policy.jokerMinMultiplier, jokerResourceBoost * positionRelief)
+            )
         }
 
         guard case .regular(let suit, let rank) = card else { return 1.0 }
         let totalHigherCards = max(0, Rank.ace.rawValue - rank.rawValue)
         guard totalHigherCards > 0 else {
             // Для туза/самой старшей карты угрозу слегка снижаем, если ход уже почти завершён.
-            let terminalRelief = trick.playedCards.count >= 2 ? 0.96 : 1.02
-            return min(1.08, max(0.90, terminalRelief))
+            let terminalRelief = trick.playedCards.count >= 2
+                ? policy.topCardTerminalReliefLate
+                : policy.topCardTerminalReliefDefault
+            return min(
+                policy.topCardMaxMultiplier,
+                max(policy.topCardMinMultiplier, terminalRelief)
+            )
         }
 
         let higherCardsPlayedInRound = allPlayedCards.reduce(0) { partial, played in
@@ -938,16 +955,19 @@ struct BotTurnCardHeuristicsService {
             1.0,
             Double(higherCardsPlayedInRound) / Double(totalHigherCards)
         )
-        let roundContextBoost = 0.98 + 0.14 * depletion
+        let roundContextBoost = policy.roundContextBase + policy.roundContextDepletionWeight * depletion
         let inTrickRelief = max(
-            0.86,
-            1.0 - 0.05 * Double(min(2, higherCardsPlayedInCurrentTrick))
+            policy.inTrickReliefMin,
+            1.0 - policy.inTrickReliefPerHigherCard * Double(min(2, higherCardsPlayedInCurrentTrick))
         )
         let trumpResourceBoost: Double = {
             guard let trump, trump == suit else { return 1.0 }
-            return 1.04 + 0.06 * depletion
+            return policy.trumpResourceBase + policy.trumpResourceDepletionWeight * depletion
         }()
 
-        return min(1.22, max(0.80, roundContextBoost * inTrickRelief * trumpResourceBoost))
+        return min(
+            policy.regularMaxMultiplier,
+            max(policy.regularMinMultiplier, roundContextBoost * inTrickRelief * trumpResourceBoost)
+        )
     }
 }

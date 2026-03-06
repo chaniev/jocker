@@ -79,6 +79,84 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(hard.runtimePolicy.opponentModeling.opponentDisciplineNeutralValue, 0.50, accuracy: 0.000_1)
     }
 
+    func testRuntimePolicy_exposesEvaluatorRolloutEndgameSimulationHeuristicsAndHandStrengthGroups() {
+        let tuning = Jocker.BotTuning(difficulty: .hard)
+
+        XCTAssertEqual(
+            tuning.runtimePolicy.evaluator.leadControlReserve.trumpAceValue,
+            1.20,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.evaluator.preferredControlSuit.concentrationShareNormalizer,
+            0.55,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(tuning.runtimePolicy.rollout.topCandidateCount, 2)
+        XCTAssertEqual(tuning.runtimePolicy.rollout.maximumIterations, 8)
+        XCTAssertEqual(
+            tuning.runtimePolicy.rollout.utilityTieTolerance,
+            0.000_001,
+            accuracy: 0.000_000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.rollout.adjustmentUrgencyWeight,
+            10.0,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(tuning.runtimePolicy.endgame.maximumIterations, 12)
+        XCTAssertEqual(tuning.runtimePolicy.endgame.adjustmentCap, 55.0, accuracy: 0.000_1)
+        XCTAssertEqual(tuning.runtimePolicy.simulation.trumpBonus, 18.0, accuracy: 0.000_1)
+        XCTAssertEqual(
+            tuning.runtimePolicy.simulation.highRankThreshold,
+            .queen
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.heuristics.holdBlend.legalAwareSimulationWeight,
+            0.72,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.heuristics.legalAwareSimulationCardPower.leadSuitBonus,
+            40.0,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.heuristics.threatPhase.highRankThreshold,
+            .queen
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.heuristics.threatPosition.lastSeatMultiplier,
+            0.90,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.heuristics.threatHistory.regularMaxMultiplier,
+            1.22,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.handStrength.trumpSelectionControlTopRankWeight,
+            0.58,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.runtimePolicy.handStrength.noTrumpJokerSupportLongSuitWeight,
+            0.65,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.trumpSelection.playerChosenPairBonus,
+            1.40,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            tuning.trumpSelection.jokerSynergyControlWeight,
+            0.48,
+            accuracy: 0.000_1
+        )
+    }
+
     /// Тестирует, что custom initializer сохраняет предоставленные компоненты.
     /// Проверяет:
     /// - difficulty = .hard (новый)

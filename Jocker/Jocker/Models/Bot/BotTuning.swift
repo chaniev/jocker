@@ -203,6 +203,20 @@ struct BotTuning {
         /// Минимальная сила масти для объявления козыря.
         /// Пример: `1.20` заставляет бота чаще объявлять козырь.
         let minimumPowerToDeclareTrump: Double
+        /// Бонус для стадии выбора козыря игроком, когда в 3 открытых картах есть пара одной масти.
+        let playerChosenPairBonus: Double
+        /// Бонус за каждую карту масти сверх первой.
+        let lengthBonusPerExtraCard: Double
+        /// Вес плотности масти в оценке выбора козыря.
+        let densityBonusWeight: Double
+        /// Вес последовательности рангов внутри масти.
+        let sequenceBonusWeight: Double
+        /// Вес остаточного контроля масти.
+        let controlBonusWeight: Double
+        /// Базовая синергия джокера с потенциальным козырем.
+        let jokerSynergyBase: Double
+        /// Дополнительная синергия джокера от контроля масти.
+        let jokerSynergyControlWeight: Double
     }
 
     struct Timing {
@@ -345,7 +359,14 @@ struct BotTuning {
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.35,
-                    minimumPowerToDeclareTrump: 1.90
+                    minimumPowerToDeclareTrump: 1.90,
+                    playerChosenPairBonus: 1.40,
+                    lengthBonusPerExtraCard: 0.36,
+                    densityBonusWeight: 0.90,
+                    sequenceBonusWeight: 0.62,
+                    controlBonusWeight: 0.46,
+                    jokerSynergyBase: 0.40,
+                    jokerSynergyControlWeight: 0.48
                 ),
                 runtimePolicy: BotRuntimePolicy.preset(for: .easy),
                 timing: Timing(
@@ -422,7 +443,14 @@ struct BotTuning {
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.45,
-                    minimumPowerToDeclareTrump: 1.55
+                    minimumPowerToDeclareTrump: 1.55,
+                    playerChosenPairBonus: 1.40,
+                    lengthBonusPerExtraCard: 0.36,
+                    densityBonusWeight: 0.90,
+                    sequenceBonusWeight: 0.62,
+                    controlBonusWeight: 0.46,
+                    jokerSynergyBase: 0.40,
+                    jokerSynergyControlWeight: 0.48
                 ),
                 runtimePolicy: BotRuntimePolicy.preset(for: .normal),
                 timing: Timing(
@@ -499,7 +527,14 @@ struct BotTuning {
                 ),
                 trumpSelection: TrumpSelection(
                     cardBasePower: 0.464914,
-                    minimumPowerToDeclareTrump: 1.977804
+                    minimumPowerToDeclareTrump: 1.977804,
+                    playerChosenPairBonus: 1.40,
+                    lengthBonusPerExtraCard: 0.36,
+                    densityBonusWeight: 0.90,
+                    sequenceBonusWeight: 0.62,
+                    controlBonusWeight: 0.46,
+                    jokerSynergyBase: 0.40,
+                    jokerSynergyControlWeight: 0.48
                 ),
                 runtimePolicy: BotRuntimePolicy.preset(for: .hard),
                 timing: Timing(

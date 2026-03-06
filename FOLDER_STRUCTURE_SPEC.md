@@ -150,7 +150,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
 - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
-- `Jocker/Jocker/Models/Bot/BotRuntimePolicy.swift`: centralized runtime policy model for non-evolutionary AI config previously spread across ranking/bidding/heuristics/opponent constants, with baseline + difficulty overrides.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy.swift`: centralized runtime policy model for non-evolutionary AI config previously spread across ranking/bidding/evaluator/rollout/endgame/simulation/hand-strength/heuristics/opponent constants, with baseline + difficulty overrides.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized bot config root that owns tunable coefficients, timing presets, runtime policy, and joker-policy projection consumed by bot services and gameplay flow delays.
 - `Jocker/Jocker/Scoring/GameRoundResultsBuilder.swift`: shared mapper from `GameState` runtime round state to `[RoundResult]`, reused by flow recording and in-progress score-table snapshots.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).

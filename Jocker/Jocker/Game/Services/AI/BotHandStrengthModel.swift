@@ -102,6 +102,7 @@ struct BotHandStrengthModel {
             )
         }
 
+        let handStrengthPolicy = tuning.runtimePolicy.handStrength
         var profiles: [Suit: SuitProfile] = [:]
         for suit in Suit.allCases {
             let count = snapshot.features.suitCounts[suit] ?? 0
@@ -114,7 +115,11 @@ struct BotHandStrengthModel {
             let sequenceStrength = sequenceStrength(for: ranks)
             let controlPotential = min(
                 1.0,
-                max(0.0, topRankStrength * 0.58 + sequenceStrength * 0.42)
+                max(
+                    0.0,
+                    topRankStrength * handStrengthPolicy.trumpSelectionControlTopRankWeight +
+                        sequenceStrength * handStrengthPolicy.trumpSelectionControlSequenceWeight
+                )
             )
             profiles[suit] = SuitProfile(
                 suit: suit,
@@ -240,8 +245,10 @@ struct BotHandStrengthModel {
         } else {
             bonus += Double(features.highCardCount) * bidding.expectedNoTrumpHighCardBonus
             if features.jokerCount > 0 {
-                let controlSupport = Double(features.highCardCount) * 0.35 +
-                    Double(max(0, longestSuit - 2)) * 0.65
+                let handStrengthPolicy = tuning.runtimePolicy.handStrength
+                let controlSupport =
+                    Double(features.highCardCount) * handStrengthPolicy.noTrumpJokerSupportHighCardWeight +
+                    Double(max(0, longestSuit - 2)) * handStrengthPolicy.noTrumpJokerSupportLongSuitWeight
                 bonus += Double(features.jokerCount) * controlSupport * bidding.expectedNoTrumpJokerSynergy
             }
         }
@@ -264,6 +271,7 @@ struct BotHandStrengthModel {
 
     private func sequenceStrength(for ranks: [Rank]) -> Double {
         guard !ranks.isEmpty else { return 0.0 }
+        let handStrengthPolicy = tuning.runtimePolicy.handStrength
         let uniqueValues = Array(Set(ranks.map(\.rawValue))).sorted(by: >)
         guard !uniqueValues.isEmpty else { return 0.0 }
 
@@ -278,6 +286,12 @@ struct BotHandStrengthModel {
             }
         }
 
-        return min(1.0, max(0.0, Double(max(0, longestRun - 1)) / 3.0))
+        return min(
+            1.0,
+            max(
+                0.0,
+                Double(max(0, longestRun - 1)) / handStrengthPolicy.sequenceStrengthNormalizationDivisor
+            )
+        )
     }
 }

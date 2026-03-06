@@ -8,20 +8,18 @@
 import Foundation
 
 struct BotTurnEndgameSolver {
-    private enum Config {
-        static let minimumIterations = 6
-        static let maximumIterations = 12
-    }
-
+    private let policy: BotRuntimePolicy.Endgame
     private let samplingService: BotTurnSamplingService
     private let simulationService: BotTurnSimulationService
     private let opponentOrderResolver: BotTurnOpponentOrderResolver
 
     init(
+        policy: BotRuntimePolicy.Endgame,
         samplingService: BotTurnSamplingService,
         simulationService: BotTurnSimulationService,
         opponentOrderResolver: BotTurnOpponentOrderResolver
     ) {
+        self.policy = policy
         self.samplingService = samplingService
         self.simulationService = simulationService
         self.opponentOrderResolver = opponentOrderResolver
@@ -31,8 +29,8 @@ struct BotTurnEndgameSolver {
         context: BotTurnCandidateEvaluatorService.DecisionContext,
         scoredCandidates: [BotTurnCandidateEvaluatorService.CandidateScore]
     ) -> Bool {
-        guard context.handContext.handCards.count <= 3 else { return false }
-        guard scoredCandidates.count >= 2 else { return false }
+        guard context.handContext.handCards.count <= policy.solverHandSizeThreshold else { return false }
+        guard scoredCandidates.count >= policy.minimumCandidateCount else { return false }
         if let premium = context.tableContext.matchContext?.premium {
             let antiPremiumPressure = premium.leftNeighborIsPremiumCandidateSoFar ||
                 premium.opponentPremiumCandidatesSoFarCount > 0 ||
@@ -60,13 +58,15 @@ struct BotTurnEndgameSolver {
         guard !scoredCandidates.isEmpty else { return [] }
 
         let iterations = min(
-            Config.maximumIterations,
+            policy.maximumIterations,
             max(
-                Config.minimumIterations,
-                unseenCards.isEmpty ? Config.minimumIterations : unseenCards.count / 3
+                policy.minimumIterations,
+                unseenCards.isEmpty
+                    ? policy.minimumIterations
+                    : unseenCards.count / max(1, policy.unseenCardsIterationsDivisor)
             )
         )
-        let endgameWeight = 0.22 + 0.28 * urgencyWeight
+        let endgameWeight = policy.weightBase + policy.weightUrgencyMultiplier * urgencyWeight
 
         return scoredCandidates.map { candidate in
             var expectedEndgameScore = 0.0
@@ -91,7 +91,10 @@ struct BotTurnEndgameSolver {
             expectedEndgameScore /= Double(max(1, iterations))
 
             let scoreDelta = expectedEndgameScore - candidate.projectedScore
-            let endgameAdjustment = max(-55.0, min(55.0, scoreDelta * endgameWeight))
+            let endgameAdjustment = max(
+                -policy.adjustmentCap,
+                min(policy.adjustmentCap, scoreDelta * endgameWeight)
+            )
 
             return BotTurnCandidateRankingService.Evaluation(
                 move: candidate.evaluation.move,

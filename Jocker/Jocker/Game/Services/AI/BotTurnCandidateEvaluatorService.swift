@@ -109,6 +109,7 @@ struct BotTurnCandidateEvaluatorService {
     private let cardHeuristics: BotTurnCardHeuristicsService
     private let roundProjection: BotTurnRoundProjectionService
     private let candidateRanking: BotTurnCandidateRankingService
+    private let runtimePolicy: BotRuntimePolicy
     private let beliefStateBuilder: BotTurnBeliefStateBuilder
     private let opponentOrderResolver: BotTurnOpponentOrderResolver
     private let rolloutService: BotTurnRolloutService
@@ -125,6 +126,7 @@ struct BotTurnCandidateEvaluatorService {
     }
 
     init(
+        runtimePolicy: BotRuntimePolicy,
         cardHeuristics: BotTurnCardHeuristicsService,
         roundProjection: BotTurnRoundProjectionService,
         candidateRanking: BotTurnCandidateRankingService
@@ -133,20 +135,24 @@ struct BotTurnCandidateEvaluatorService {
         let opponentOrderResolver = BotTurnOpponentOrderResolver()
         let samplingService = BotTurnSamplingService()
         let simulationService = BotTurnSimulationService(
+            policy: runtimePolicy.simulation,
             opponentOrderResolver: opponentOrderResolver
         )
+        self.runtimePolicy = runtimePolicy
         self.cardHeuristics = cardHeuristics
         self.roundProjection = roundProjection
         self.candidateRanking = candidateRanking
         self.beliefStateBuilder = beliefStateBuilder
         self.opponentOrderResolver = opponentOrderResolver
         self.rolloutService = BotTurnRolloutService(
+            policy: runtimePolicy.rollout,
             candidateRanking: candidateRanking,
             samplingService: samplingService,
             simulationService: simulationService,
             opponentOrderResolver: opponentOrderResolver
         )
         self.endgameSolver = BotTurnEndgameSolver(
+            policy: runtimePolicy.endgame,
             samplingService: samplingService,
             simulationService: simulationService,
             opponentOrderResolver: opponentOrderResolver
@@ -414,12 +420,13 @@ struct BotTurnCandidateEvaluatorService {
         guard decision.leadDeclaration != nil else { return 0.0 }
         guard !remainingHand.isEmpty else { return 0.0 }
 
+        let policy = runtimePolicy.evaluator.leadControlReserve
         var rawControl = 0.0
         var trumpCount = 0
 
         for remainingCard in remainingHand {
             guard case .regular(let suit, let rank) = remainingCard else {
-                rawControl += 1.0
+                rawControl += policy.nonRegularCardValue
                 continue
             }
 
@@ -427,34 +434,35 @@ struct BotTurnCandidateEvaluatorService {
                 trumpCount += 1
                 switch rank {
                 case .ace:
-                    rawControl += 1.20
+                    rawControl += policy.trumpAceValue
                 case .king:
-                    rawControl += 1.00
+                    rawControl += policy.trumpKingValue
                 case .queen:
-                    rawControl += 0.85
+                    rawControl += policy.trumpQueenValue
                 case .jack:
-                    rawControl += 0.65
+                    rawControl += policy.trumpJackValue
                 default:
-                    rawControl += 0.35
+                    rawControl += policy.trumpLowValue
                 }
             } else {
                 switch rank {
                 case .ace:
-                    rawControl += 0.70
+                    rawControl += policy.nonTrumpAceValue
                 case .king:
-                    rawControl += 0.55
+                    rawControl += policy.nonTrumpKingValue
                 case .queen:
-                    rawControl += 0.40
+                    rawControl += policy.nonTrumpQueenValue
                 case .jack:
-                    rawControl += 0.22
+                    rawControl += policy.nonTrumpJackValue
                 default:
                     break
                 }
             }
         }
 
-        if trumpCount >= 2 {
-            rawControl += 0.20 * Double(trumpCount - 1)
+        if trumpCount >= policy.extraTrumpCountThreshold {
+            rawControl += policy.extraTrumpCountBonusPerCard *
+                Double(trumpCount - policy.extraTrumpCountThreshold + 1)
         }
 
         let normalizedByHandSize = rawControl / Double(max(1, remainingHand.count))
@@ -476,34 +484,35 @@ struct BotTurnCandidateEvaluatorService {
         guard decision.leadDeclaration != nil else { return (nil, 0.0) }
         guard !remainingHand.isEmpty else { return (nil, 0.0) }
 
+        let policy = runtimePolicy.evaluator.preferredControlSuit
         var suitScores: [Suit: Double] = [:]
         for remainingCard in remainingHand {
             guard case .regular(let suit, let rank) = remainingCard else { continue }
 
-            var score = 0.2
+            var score = policy.baseScore
             switch rank {
             case .ace:
-                score += 1.20
+                score += policy.aceBonus
             case .king:
-                score += 0.95
+                score += policy.kingBonus
             case .queen:
-                score += 0.75
+                score += policy.queenBonus
             case .jack:
-                score += 0.50
+                score += policy.jackBonus
             case .ten:
-                score += 0.35
+                score += policy.tenBonus
             default:
-                score += 0.12
+                score += policy.lowRankBonus
             }
             if let trump, suit == trump {
-                score += 0.45
+                score += policy.trumpBonus
             }
 
             suitScores[suit, default: 0.0] += score
         }
 
         guard let best = suitScores.max(by: { lhs, rhs in
-            if abs(lhs.value - rhs.value) > 0.000_001 {
+            if abs(lhs.value - rhs.value) > policy.tieTolerance {
                 return lhs.value < rhs.value
             }
             return lhs.key.rawValue < rhs.key.rawValue
@@ -514,7 +523,13 @@ struct BotTurnCandidateEvaluatorService {
         let totalScore = suitScores.values.reduce(0.0, +)
         guard totalScore > 0 else { return (best.key, 0.0) }
         let share = best.value / totalScore
-        let concentration = min(1.0, max(0.0, (share - 0.25) / 0.55))
+        let concentration = min(
+            1.0,
+            max(
+                0.0,
+                (share - policy.concentrationShareBaseline) / policy.concentrationShareNormalizer
+            )
+        )
         return (best.key, concentration)
     }
 }

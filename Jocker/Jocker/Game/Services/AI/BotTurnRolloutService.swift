@@ -8,25 +8,20 @@
 import Foundation
 
 struct BotTurnRolloutService {
-    private enum Config {
-        static let topCandidateCount = 2
-        static let minimumIterations = 4
-        static let maximumIterations = 8
-        static let maxCardsPerOpponentSample = 2
-        static let maxTrickHorizon = 2
-    }
-
+    private let policy: BotRuntimePolicy.Rollout
     private let candidateRanking: BotTurnCandidateRankingService
     private let samplingService: BotTurnSamplingService
     private let simulationService: BotTurnSimulationService
     private let opponentOrderResolver: BotTurnOpponentOrderResolver
 
     init(
+        policy: BotRuntimePolicy.Rollout,
         candidateRanking: BotTurnCandidateRankingService,
         samplingService: BotTurnSamplingService,
         simulationService: BotTurnSimulationService,
         opponentOrderResolver: BotTurnOpponentOrderResolver
     ) {
+        self.policy = policy
         self.candidateRanking = candidateRanking
         self.samplingService = samplingService
         self.simulationService = simulationService
@@ -39,12 +34,13 @@ struct BotTurnRolloutService {
         tricksNeededToMatchBid: Int
     ) -> Bool {
         let handSize = context.handContext.handCards.count
-        let handSizeGate = handSize <= 3
-        let jokerGate = handSize <= 4 && scoredCandidates.contains { $0.evaluation.move.card.isJoker }
-        let lateBlockUrgencyGate = handSize <= 4 &&
-            (context.tableContext.matchContext?.blockProgressFraction ?? 0.0) >= 0.90
-        let criticalDeficitGate = handSize <= 4 &&
-            tricksNeededToMatchBid >= max(2, context.handContext.handCards.count - 1)
+        let handSizeGate = handSize <= policy.handSizeGateThreshold
+        let jokerGate = handSize <= policy.jokerGateHandSizeThreshold &&
+            scoredCandidates.contains { $0.evaluation.move.card.isJoker }
+        let lateBlockUrgencyGate = handSize <= policy.lateBlockUrgencyHandSizeThreshold &&
+            (context.tableContext.matchContext?.blockProgressFraction ?? 0.0) >= policy.lateBlockProgressThreshold
+        let criticalDeficitGate = handSize <= policy.criticalDeficitHandSizeThreshold &&
+            tricksNeededToMatchBid >= max(policy.criticalDeficitMinimumFloor, context.handContext.handCards.count - 1)
         return handSizeGate || jokerGate || lateBlockUrgencyGate || criticalDeficitGate
     }
 
@@ -59,9 +55,25 @@ struct BotTurnRolloutService {
             Double(deficit) / Double(max(1, context.handContext.handCards.count))
         )
         if shouldChaseTrick {
-            return min(1.0, max(0.0, 0.45 + 0.35 * deficitPressure + 0.20 * lateBlock))
+            return min(
+                1.0,
+                max(
+                    0.0,
+                    policy.chaseUrgencyBase +
+                        policy.chaseUrgencyDeficitWeight * deficitPressure +
+                        policy.chaseUrgencyLateBlockWeight * lateBlock
+                )
+            )
         }
-        return min(1.0, max(0.0, 0.35 + 0.45 * lateBlock + 0.20 * deficitPressure))
+        return min(
+            1.0,
+            max(
+                0.0,
+                policy.dumpUrgencyBase +
+                    policy.dumpUrgencyLateBlockWeight * lateBlock +
+                    policy.dumpUrgencyDeficitWeight * deficitPressure
+            )
+        )
     }
 
     func applyAdjustments(
@@ -77,22 +89,24 @@ struct BotTurnRolloutService {
         let topIndices = scoredCandidates.indices.sorted { lhs, rhs in
             let left = scoredCandidates[lhs].evaluation
             let right = scoredCandidates[rhs].evaluation
-            if abs(left.utility - right.utility) > 0.000_001 {
+            if abs(left.utility - right.utility) > policy.utilityTieTolerance {
                 return left.utility > right.utility
             }
             return candidateRanking.isBetterCandidate(left, than: right, shouldChaseTrick: shouldChaseTrick)
         }
 
-        let selectedIndices = Set(topIndices.prefix(Config.topCandidateCount))
+        let selectedIndices = Set(topIndices.prefix(policy.topCandidateCount))
         let rolloutIterations = min(
-            Config.maximumIterations,
+            policy.maximumIterations,
             max(
-                Config.minimumIterations,
-                unseenCards.isEmpty ? Config.minimumIterations : unseenCards.count / 4
+                policy.minimumIterations,
+                unseenCards.isEmpty
+                    ? policy.minimumIterations
+                    : unseenCards.count / max(1, policy.unseenCardsIterationsDivisor)
             )
         )
         let rolloutHorizon = min(
-            Config.maxTrickHorizon,
+            policy.maxTrickHorizon,
             max(1, context.handContext.handCards.count)
         )
         let urgencyWeight = urgencyWeight(
@@ -135,7 +149,8 @@ struct BotTurnRolloutService {
                     Double(max(1, rolloutHorizon))
             }
             let centeredSuccess = min(1.0, max(0.0, normalizedSuccess)) - 0.5
-            let rolloutAdjustment = centeredSuccess * (6.0 + 10.0 * urgencyWeight)
+            let rolloutAdjustment = centeredSuccess *
+                (policy.adjustmentBase + policy.adjustmentUrgencyWeight * urgencyWeight)
 
             return BotTurnCandidateRankingService.Evaluation(
                 move: candidate.evaluation.move,
@@ -160,7 +175,7 @@ struct BotTurnRolloutService {
             remainingOpponentPlayerIndices: remainingOpponentPlayerIndices
         )
         let sampleCardsPerOpponent = min(
-            Config.maxCardsPerOpponentSample,
+            policy.maxCardsPerOpponentSample,
             max(1, rolloutHorizon)
         )
         var sampledHands = samplingService.sampleOpponentHands(

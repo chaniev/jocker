@@ -80,6 +80,7 @@ final class BotTurnStrategyService {
         self.roundProjection = roundProjection
         self.candidateRanking = candidateRanking
         self.candidateEvaluator = BotTurnCandidateEvaluatorService(
+            runtimePolicy: tuning.runtimePolicy,
             cardHeuristics: cardHeuristics,
             roundProjection: roundProjection,
             candidateRanking: candidateRanking

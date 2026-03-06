@@ -19,6 +19,7 @@ struct BotTurnCandidateEvaluatorServiceTestFixture {
 
         self.tuning = tuning
         self.evaluator = BotTurnCandidateEvaluatorService(
+            runtimePolicy: tuning.runtimePolicy,
             cardHeuristics: cardHeuristics,
             roundProjection: roundProjection,
             candidateRanking: candidateRanking

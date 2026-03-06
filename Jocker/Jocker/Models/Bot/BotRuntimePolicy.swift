@@ -520,7 +520,146 @@ struct BotRuntimePolicy {
         }
     }
 
+    struct Evaluator {
+        struct LeadControlReserve {
+            var nonRegularCardValue: Double
+            var trumpAceValue: Double
+            var trumpKingValue: Double
+            var trumpQueenValue: Double
+            var trumpJackValue: Double
+            var trumpLowValue: Double
+            var nonTrumpAceValue: Double
+            var nonTrumpKingValue: Double
+            var nonTrumpQueenValue: Double
+            var nonTrumpJackValue: Double
+            var extraTrumpCountThreshold: Int
+            var extraTrumpCountBonusPerCard: Double
+        }
+
+        struct PreferredControlSuit {
+            var baseScore: Double
+            var aceBonus: Double
+            var kingBonus: Double
+            var queenBonus: Double
+            var jackBonus: Double
+            var tenBonus: Double
+            var lowRankBonus: Double
+            var trumpBonus: Double
+            var concentrationShareBaseline: Double
+            var concentrationShareNormalizer: Double
+            var tieTolerance: Double
+        }
+
+        var leadControlReserve: LeadControlReserve
+        var preferredControlSuit: PreferredControlSuit
+    }
+
+    struct Rollout {
+        var topCandidateCount: Int
+        var utilityTieTolerance: Double
+        var minimumIterations: Int
+        var maximumIterations: Int
+        var unseenCardsIterationsDivisor: Int
+        var maxCardsPerOpponentSample: Int
+        var maxTrickHorizon: Int
+        var handSizeGateThreshold: Int
+        var jokerGateHandSizeThreshold: Int
+        var lateBlockUrgencyHandSizeThreshold: Int
+        var lateBlockProgressThreshold: Double
+        var criticalDeficitHandSizeThreshold: Int
+        var criticalDeficitMinimumFloor: Int
+        var chaseUrgencyBase: Double
+        var chaseUrgencyDeficitWeight: Double
+        var chaseUrgencyLateBlockWeight: Double
+        var dumpUrgencyBase: Double
+        var dumpUrgencyLateBlockWeight: Double
+        var dumpUrgencyDeficitWeight: Double
+        var adjustmentBase: Double
+        var adjustmentUrgencyWeight: Double
+    }
+
+    struct Endgame {
+        var solverHandSizeThreshold: Int
+        var minimumCandidateCount: Int
+        var minimumIterations: Int
+        var maximumIterations: Int
+        var unseenCardsIterationsDivisor: Int
+        var weightBase: Double
+        var weightUrgencyMultiplier: Double
+        var adjustmentCap: Double
+    }
+
+    struct Simulation {
+        var chaseJokerPower: Double
+        var dumpJokerPower: Double
+        var trumpBonus: Double
+        var leadSuitBonus: Double
+        var highRankThreshold: Rank
+        var highRankBonus: Double
+    }
+
+    struct HandStrength {
+        var trumpSelectionControlTopRankWeight: Double
+        var trumpSelectionControlSequenceWeight: Double
+        var noTrumpJokerSupportHighCardWeight: Double
+        var noTrumpJokerSupportLongSuitWeight: Double
+        var sequenceStrengthNormalizationDivisor: Double
+    }
+
     struct Heuristics {
+        struct HoldBlend {
+            var legalAwareSimulationWeight: Double
+            var distributionWeight: Double
+        }
+
+        struct LegalAwareSimulationCardPower {
+            var jokerPower: Double
+            var trumpBonus: Double
+            var leadSuitBonus: Double
+        }
+
+        struct ThreatPhase {
+            var jokerResourceWeight: Double
+            var trumpResourceWeight: Double
+            var highRankThreshold: Rank
+            var highRankResourceWeight: Double
+            var midRankThreshold: Rank
+            var midRankResourceWeight: Double
+            var lowRankResourceWeight: Double
+            var earlyPreservationBonusWeight: Double
+            var lateConversionDiscountWeight: Double
+            var finalCardReliefWeight: Double
+            var minMultiplier: Double
+            var maxMultiplier: Double
+        }
+
+        struct ThreatPosition {
+            var leadMultiplier: Double
+            var secondSeatMultiplier: Double
+            var middleSeatMultiplier: Double
+            var lastSeatMultiplier: Double
+        }
+
+        struct ThreatHistory {
+            var jokerSeenBoost: Double
+            var jokerLeadPositionMultiplier: Double
+            var jokerFollowPositionMultiplier: Double
+            var jokerMinMultiplier: Double
+            var jokerMaxMultiplier: Double
+            var topCardTerminalReliefLate: Double
+            var topCardTerminalReliefDefault: Double
+            var topCardMinMultiplier: Double
+            var topCardMaxMultiplier: Double
+            var roundContextBase: Double
+            var roundContextDepletionWeight: Double
+            var inTrickReliefPerHigherCard: Double
+            var inTrickReliefMin: Double
+            var trumpResourceBase: Double
+            var trumpResourceDepletionWeight: Double
+            var regularMinMultiplier: Double
+            var regularMaxMultiplier: Double
+        }
+
         var legalAwareMinIterations: Int
         var legalAwareMaxIterations: Int
         var legalAwareReducedMinIterations: Int
@@ -528,6 +667,11 @@ struct BotRuntimePolicy {
         var legalAwareRotationStride: Int
         var legalAwareReducedMaxCardsPerOpponentSample: Int
         var legalAwareEndgameHandSizeThreshold: Int
+        var holdBlend: HoldBlend
+        var legalAwareSimulationCardPower: LegalAwareSimulationCardPower
+        var threatPhase: ThreatPhase
+        var threatPosition: ThreatPosition
+        var threatHistory: ThreatHistory
 
         var minimumIterations: Int { legalAwareMinIterations }
         var maximumIterations: Int { legalAwareMaxIterations }
@@ -578,6 +722,11 @@ struct BotRuntimePolicy {
 
     let ranking: Ranking
     let bidding: Bidding
+    let evaluator: Evaluator
+    let rollout: Rollout
+    let endgame: Endgame
+    let simulation: Simulation
+    let handStrength: HandStrength
     let heuristics: Heuristics
     let opponentModeling: OpponentModeling
 
@@ -945,6 +1094,83 @@ struct BotRuntimePolicy {
             hashShiftLeft: 37,
             hashShiftRight2: 4
         ),
+        evaluator: Evaluator(
+            leadControlReserve: Evaluator.LeadControlReserve(
+                nonRegularCardValue: 1.0,
+                trumpAceValue: 1.20,
+                trumpKingValue: 1.00,
+                trumpQueenValue: 0.85,
+                trumpJackValue: 0.65,
+                trumpLowValue: 0.35,
+                nonTrumpAceValue: 0.70,
+                nonTrumpKingValue: 0.55,
+                nonTrumpQueenValue: 0.40,
+                nonTrumpJackValue: 0.22,
+                extraTrumpCountThreshold: 2,
+                extraTrumpCountBonusPerCard: 0.20
+            ),
+            preferredControlSuit: Evaluator.PreferredControlSuit(
+                baseScore: 0.20,
+                aceBonus: 1.20,
+                kingBonus: 0.95,
+                queenBonus: 0.75,
+                jackBonus: 0.50,
+                tenBonus: 0.35,
+                lowRankBonus: 0.12,
+                trumpBonus: 0.45,
+                concentrationShareBaseline: 0.25,
+                concentrationShareNormalizer: 0.55,
+                tieTolerance: 0.000_001
+            )
+        ),
+        rollout: Rollout(
+            topCandidateCount: 2,
+            utilityTieTolerance: 0.000_001,
+            minimumIterations: 4,
+            maximumIterations: 8,
+            unseenCardsIterationsDivisor: 4,
+            maxCardsPerOpponentSample: 2,
+            maxTrickHorizon: 2,
+            handSizeGateThreshold: 3,
+            jokerGateHandSizeThreshold: 4,
+            lateBlockUrgencyHandSizeThreshold: 4,
+            lateBlockProgressThreshold: 0.90,
+            criticalDeficitHandSizeThreshold: 4,
+            criticalDeficitMinimumFloor: 2,
+            chaseUrgencyBase: 0.45,
+            chaseUrgencyDeficitWeight: 0.35,
+            chaseUrgencyLateBlockWeight: 0.20,
+            dumpUrgencyBase: 0.35,
+            dumpUrgencyLateBlockWeight: 0.45,
+            dumpUrgencyDeficitWeight: 0.20,
+            adjustmentBase: 6.0,
+            adjustmentUrgencyWeight: 10.0
+        ),
+        endgame: Endgame(
+            solverHandSizeThreshold: 3,
+            minimumCandidateCount: 2,
+            minimumIterations: 6,
+            maximumIterations: 12,
+            unseenCardsIterationsDivisor: 3,
+            weightBase: 0.22,
+            weightUrgencyMultiplier: 0.28,
+            adjustmentCap: 55.0
+        ),
+        simulation: Simulation(
+            chaseJokerPower: 20_000.0,
+            dumpJokerPower: 12_000.0,
+            trumpBonus: 18.0,
+            leadSuitBonus: 5.0,
+            highRankThreshold: .queen,
+            highRankBonus: 4.0
+        ),
+        handStrength: HandStrength(
+            trumpSelectionControlTopRankWeight: 0.58,
+            trumpSelectionControlSequenceWeight: 0.42,
+            noTrumpJokerSupportHighCardWeight: 0.35,
+            noTrumpJokerSupportLongSuitWeight: 0.65,
+            sequenceStrengthNormalizationDivisor: 3.0
+        ),
         heuristics: Heuristics(
             legalAwareMinIterations: 20,
             legalAwareMaxIterations: 48,
@@ -952,7 +1178,55 @@ struct BotRuntimePolicy {
             legalAwareReducedMaxIterations: 20,
             legalAwareRotationStride: 7,
             legalAwareReducedMaxCardsPerOpponentSample: 3,
-            legalAwareEndgameHandSizeThreshold: 4
+            legalAwareEndgameHandSizeThreshold: 4,
+            holdBlend: Heuristics.HoldBlend(
+                legalAwareSimulationWeight: 0.72,
+                distributionWeight: 0.28
+            ),
+            legalAwareSimulationCardPower: Heuristics.LegalAwareSimulationCardPower(
+                jokerPower: 10_000.0,
+                trumpBonus: 100.0,
+                leadSuitBonus: 40.0
+            ),
+            threatPhase: Heuristics.ThreatPhase(
+                jokerResourceWeight: 1.0,
+                trumpResourceWeight: 0.8,
+                highRankThreshold: .queen,
+                highRankResourceWeight: 0.65,
+                midRankThreshold: .jack,
+                midRankResourceWeight: 0.35,
+                lowRankResourceWeight: 0.15,
+                earlyPreservationBonusWeight: 0.28,
+                lateConversionDiscountWeight: 0.38,
+                finalCardReliefWeight: 0.05,
+                minMultiplier: 0.55,
+                maxMultiplier: 1.35
+            ),
+            threatPosition: Heuristics.ThreatPosition(
+                leadMultiplier: 1.08,
+                secondSeatMultiplier: 1.03,
+                middleSeatMultiplier: 0.97,
+                lastSeatMultiplier: 0.90
+            ),
+            threatHistory: Heuristics.ThreatHistory(
+                jokerSeenBoost: 1.08,
+                jokerLeadPositionMultiplier: 1.02,
+                jokerFollowPositionMultiplier: 0.98,
+                jokerMinMultiplier: 0.86,
+                jokerMaxMultiplier: 1.16,
+                topCardTerminalReliefLate: 0.96,
+                topCardTerminalReliefDefault: 1.02,
+                topCardMinMultiplier: 0.90,
+                topCardMaxMultiplier: 1.08,
+                roundContextBase: 0.98,
+                roundContextDepletionWeight: 0.14,
+                inTrickReliefPerHigherCard: 0.05,
+                inTrickReliefMin: 0.86,
+                trumpResourceBase: 1.04,
+                trumpResourceDepletionWeight: 0.06,
+                regularMinMultiplier: 0.80,
+                regularMaxMultiplier: 1.22
+            )
         ),
         opponentModeling: OpponentModeling(
             opponentDisciplineNeutralValue: 0.5,
@@ -992,12 +1266,22 @@ struct BotRuntimePolicy {
     private func overriding(
         ranking: Ranking? = nil,
         bidding: Bidding? = nil,
+        evaluator: Evaluator? = nil,
+        rollout: Rollout? = nil,
+        endgame: Endgame? = nil,
+        simulation: Simulation? = nil,
+        handStrength: HandStrength? = nil,
         heuristics: Heuristics? = nil,
         opponentModeling: OpponentModeling? = nil
     ) -> BotRuntimePolicy {
         BotRuntimePolicy(
             ranking: ranking ?? self.ranking,
             bidding: bidding ?? self.bidding,
+            evaluator: evaluator ?? self.evaluator,
+            rollout: rollout ?? self.rollout,
+            endgame: endgame ?? self.endgame,
+            simulation: simulation ?? self.simulation,
+            handStrength: handStrength ?? self.handStrength,
             heuristics: heuristics ?? self.heuristics,
             opponentModeling: opponentModeling ?? self.opponentModeling
         )

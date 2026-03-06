@@ -900,7 +900,14 @@ extension BotSelfPlayEvolutionEngine {
             minimumPowerToDeclareTrump: clamp(
                 baseTrump.minimumPowerToDeclareTrump * genome.trumpThresholdScale,
                 to: 0.35...3.20
-            )
+            ),
+            playerChosenPairBonus: baseTrump.playerChosenPairBonus,
+            lengthBonusPerExtraCard: baseTrump.lengthBonusPerExtraCard,
+            densityBonusWeight: baseTrump.densityBonusWeight,
+            sequenceBonusWeight: baseTrump.sequenceBonusWeight,
+            controlBonusWeight: baseTrump.controlBonusWeight,
+            jokerSynergyBase: baseTrump.jokerSynergyBase,
+            jokerSynergyControlWeight: baseTrump.jokerSynergyControlWeight
         )
 
         return BotTuning(
