@@ -113,7 +113,10 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
 - `Jocker/Jocker.xcodeproj/project.pbxproj`: defines target boundaries; `JockerSelfPlayTools` (static library) owns self-play/training sources, while `Jocker` app target excludes them from runtime build.
 - `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
-- `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: bot bidding heuristic that projects expected tricks and selects bid with best projected score.
+- `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: thin facade over regular bid selection and pre-deal blind bidding policy services.
+- `Jocker/Jocker/Game/Services/AI/BotBidSelectionService.swift`: regular post-deal bid selection based on projected round score and block-progress-aware utility tie-breaking.
+- `Jocker/Jocker/Game/Services/AI/BotBlindBidPolicy.swift`: pre-deal blind bidding risk engine that translates match pressure into target share, aggressive floor, and Monte Carlo inputs.
+- `Jocker/Jocker/Game/Services/AI/BotBlindBidMonteCarloEstimator.swift`: deterministic blind bid estimator that samples pre-deal hands and ranks allowed blind bids under typed blind Monte Carlo policy.
 - `Jocker/Jocker/Game/Services/AI/HandFeatureExtractor.swift`: shared hand-analysis extractor for bot AI services (regular cards, suit counts, joker/high-card counts) reused by bidding, trump selection, and round projection heuristics.
 - `Jocker/Jocker/Game/Services/AI/BotHandStrengthModel.swift`: unified hand-strength model for bot AI services (shared bidding expected tricks, future-trick projection, and trump suit profile synthesis).
 - `Jocker/Jocker/Game/Services/AI/BotRankNormalization.swift`: centralized named rank-normalization helpers for bot AI modes (`bidding`, `future projection`, `trump selection`) and shared high-card threshold predicate, preserving legacy formulas.
@@ -221,6 +224,9 @@ Jocker/Jocker/
 │   │   └── GameScene+ModalFlow.swift
 │   └── Services/
 │       ├── AI/
+│       │   ├── BotBidSelectionService.swift
+│       │   ├── BotBlindBidMonteCarloEstimator.swift
+│       │   ├── BotBlindBidPolicy.swift
 │       │   ├── BotBiddingService.swift
 │       │   ├── BotRankNormalization.swift
 │       │   ├── HandFeatureExtractor.swift
@@ -365,6 +371,8 @@ Jocker/JockerTests/
 ├── AGENTS.md
 ├── Bot/
 │   ├── BotBiddingServiceTests.swift
+│   ├── BotBlindBidPolicyTestFixture.swift
+│   ├── BotBlindBidPolicyTests.swift
 │   ├── BotHandStrengthModelTests.swift
 │   ├── HandFeatureExtractorTests.swift
 │   ├── BotMatchContextBuilderTests.swift

@@ -256,6 +256,8 @@
 
 ### P6. Выделить blind bidding policy из `BotBiddingService`
 
+**Статус:** выполнено 2026-03-06
+
 **Цель:** отделить обычный bid selection от pre-deal blind risk engine.
 
 **Что видно сейчас**
@@ -276,6 +278,12 @@
 **Ожидаемый эффект**
 - изменения blind policy перестанут затрагивать обычные ставки;
 - проще развивать 4-й блок отдельно от обычных bidding rules.
+
+**Реализовано**
+- `BotBiddingService` сокращён до thin facade, который делегирует обычные ставки в `BotBidSelectionService`, а pre-deal blind decisions в `BotBlindBidPolicy`.
+- Blind risk scoring и target-share/floor logic вынесены в `BotBlindBidPolicy`, а deterministic blind Monte Carlo sampling и utility ranking в `BotBlindBidMonteCarloEstimator`.
+- Blind runtime config приведён к typed policy groups через `tuning.runtimePolicy.bidding.bidSelection`, `blindPolicy` и `blindMonteCarlo`; нормализация `riskBudget` больше не зашита отдельной магической константой внутри сервисов.
+- Добавлены узкие blind-only test artifacts: `BotBlindBidPolicyTestFixture` и `BotBlindBidPolicyTests`.
 
 **Риск:** средний  
 **Проверка:** `BotBiddingServiceTests`, blind-related regression scenarios

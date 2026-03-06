@@ -277,6 +277,85 @@ struct BotRuntimePolicy {
     }
 
     struct Bidding {
+        struct BidSelection {
+            let utilityTieTolerance: Double
+            let optimalityPenaltyBase: Double
+            let optimalityPenaltyProgress: Double
+            let optimalityPenaltyBaseNoForbidden: Double
+            let optimalityPenaltyProgressNoForbidden: Double
+            let expectedPenaltyBase: Double
+            let expectedPenaltyProgress: Double
+            let scoreGapPenaltyForbidden: Double
+            let scoreGapPenaltyNoForbidden: Double
+        }
+
+        struct BlindPolicy {
+            let riskScoreBase: Double
+            let catchUpThresholdBonus: Double
+            let desperateThresholdBonus: Double
+            let catchUpPressureMultiplier: Double
+            let desperatePressureMultiplier: Double
+            let safetyPenaltyMultiplier: Double
+            let leaderPenalty: Double
+            let dealerPenalty: Double
+            let nonDealerBonus: Double
+            let tableLeaderPenalty: Double
+            let longRoundBonusCap: Double
+            let longRoundThreshold: Int
+            let longRoundBonusDivisor: Double
+            let minAllowedPenalty: Double
+            let narrowRangePenalty: Double
+            let mediumRangePenalty: Double
+            let wideRangeBonus: Double
+            let riskScoreThreshold: Double
+            let desperateModeThreshold: Double
+            let overflowDivisor: Double
+            let desperateOverflowBonus: Double
+            let catchUpModeThreshold: Double
+            let modeProgressDivisor: Double
+            let catchUpToDesperateWeight: Double
+            let conservativeProgressDivisor: Double
+            let conservativeToCatchUpWeight: Double
+            let dealerPositionAdjustment: Double
+            let nonDealerAdjustment: Double
+            let longRoundAdjustment: Double
+            let longRoundAdjustmentThreshold: Int
+            let safetyAdjustment: Double
+            let targetShareCap: Double
+            let riskBudgetNormalizationDivisor: Double
+            let minAggressiveBidDesperateMin: Int
+            let minAggressiveBidDesperateShare: Double
+            let minAggressiveBidCatchUpBase: Double
+            let minAggressiveBidCatchUpProgress: Double
+        }
+
+        struct BlindMonteCarlo {
+            let minimumIterations: Int
+            let maximumIterations: Int
+            let iterationsPerCard: Int
+            let iterationsPerBid: Int
+            let utilityTieTolerance: Double
+            let variancePenaltyBase: Double
+            let safeLeadPressureMax: Double
+            let desperatePenaltyWeight: Double
+            let variancePenaltyWeightMin: Double
+            let variancePenaltyWeightMax: Double
+            let varianceRiskBudgetModifier: Double
+            let deviationPenaltyBase: Double
+            let deviationRiskBudgetMultiplier: Double
+            let overshootPenaltyBase: Double
+            let overshootSafeLeadMultiplier: Double
+            let catchUpAggressionBase: Double
+            let catchUpAggressionPressureMultiplier: Double
+            let defaultRNGSeed: UInt64
+            let rngMultiplier: UInt64
+            let rngIncrement: UInt64
+            let baseSeed: UInt64
+            let hashShiftRight1: UInt64
+            let hashShiftLeft: UInt64
+            let hashShiftRight2: UInt64
+        }
+
         var blindMonteCarloMinIterations: Int
         var blindMonteCarloMaxIterations: Int
         var blindMonteCarloIterationsPerCard: Int
@@ -318,6 +397,7 @@ struct BotRuntimePolicy {
         var blindLongRoundAdjustmentThreshold: Int
         var blindSafetyAdjustment: Double
         var blindTargetShareCap: Double
+        var blindRiskBudgetNormalizationDivisor: Double
 
         var bidUtilityOptimalityPenaltyBase: Double
         var bidUtilityOptimalityPenaltyProgress: Double
@@ -353,6 +433,91 @@ struct BotRuntimePolicy {
         var hashShiftRight1: UInt64
         var hashShiftLeft: UInt64
         var hashShiftRight2: UInt64
+
+        var bidSelection: BidSelection {
+            BidSelection(
+                utilityTieTolerance: bidUtilityTieTolerance,
+                optimalityPenaltyBase: bidUtilityOptimalityPenaltyBase,
+                optimalityPenaltyProgress: bidUtilityOptimalityPenaltyProgress,
+                optimalityPenaltyBaseNoForbidden: bidUtilityOptimalityPenaltyBaseNoForbidden,
+                optimalityPenaltyProgressNoForbidden: bidUtilityOptimalityPenaltyProgressNoForbidden,
+                expectedPenaltyBase: bidUtilityExpectedPenaltyBase,
+                expectedPenaltyProgress: bidUtilityExpectedPenaltyProgress,
+                scoreGapPenaltyForbidden: bidUtilityScoreGapPenaltyForbidden,
+                scoreGapPenaltyNoForbidden: bidUtilityScoreGapPenaltyNoForbidden
+            )
+        }
+
+        var blindPolicy: BlindPolicy {
+            BlindPolicy(
+                riskScoreBase: blindRiskScoreBase,
+                catchUpThresholdBonus: blindCatchUpThresholdBonus,
+                desperateThresholdBonus: blindDesperateThresholdBonus,
+                catchUpPressureMultiplier: blindCatchUpPressureMultiplier,
+                desperatePressureMultiplier: blindDesperatePressureMultiplier,
+                safetyPenaltyMultiplier: blindSafetyPenaltyMultiplier,
+                leaderPenalty: blindLeaderPenalty,
+                dealerPenalty: blindDealerPenalty,
+                nonDealerBonus: blindNonDealerBonus,
+                tableLeaderPenalty: blindTableLeaderPenalty,
+                longRoundBonusCap: blindLongRoundBonusCap,
+                longRoundThreshold: blindLongRoundThreshold,
+                longRoundBonusDivisor: blindLongRoundBonusDivisor,
+                minAllowedPenalty: blindMinAllowedPenalty,
+                narrowRangePenalty: blindNarrowRangePenalty,
+                mediumRangePenalty: blindMediumRangePenalty,
+                wideRangeBonus: blindWideRangeBonus,
+                riskScoreThreshold: blindRiskScoreThreshold,
+                desperateModeThreshold: blindDesperateModeThreshold,
+                overflowDivisor: blindOverflowDivisor,
+                desperateOverflowBonus: blindDesperateOverflowBonus,
+                catchUpModeThreshold: blindCatchUpModeThreshold,
+                modeProgressDivisor: blindModeProgressDivisor,
+                catchUpToDesperateWeight: blindCatchUpToDesperateWeight,
+                conservativeProgressDivisor: blindConservativeProgressDivisor,
+                conservativeToCatchUpWeight: blindConservativeToCatchUpWeight,
+                dealerPositionAdjustment: blindDealerPositionAdjustment,
+                nonDealerAdjustment: blindNonDealerAdjustment,
+                longRoundAdjustment: blindLongRoundAdjustment,
+                longRoundAdjustmentThreshold: blindLongRoundAdjustmentThreshold,
+                safetyAdjustment: blindSafetyAdjustment,
+                targetShareCap: blindTargetShareCap,
+                riskBudgetNormalizationDivisor: blindRiskBudgetNormalizationDivisor,
+                minAggressiveBidDesperateMin: minAggressiveBidDesperateMin,
+                minAggressiveBidDesperateShare: minAggressiveBidDesperateShare,
+                minAggressiveBidCatchUpBase: minAggressiveBidCatchUpBase,
+                minAggressiveBidCatchUpProgress: minAggressiveBidCatchUpProgress
+            )
+        }
+
+        var blindMonteCarlo: BlindMonteCarlo {
+            BlindMonteCarlo(
+                minimumIterations: blindMonteCarloMinIterations,
+                maximumIterations: blindMonteCarloMaxIterations,
+                iterationsPerCard: blindMonteCarloIterationsPerCard,
+                iterationsPerBid: blindMonteCarloIterationsPerBid,
+                utilityTieTolerance: bidUtilityTieTolerance,
+                variancePenaltyBase: mcVariancePenaltyBase,
+                safeLeadPressureMax: mcSafeLeadPressureMax,
+                desperatePenaltyWeight: mcDesperatePenaltyWeight,
+                variancePenaltyWeightMin: mcVariancePenaltyWeightMin,
+                variancePenaltyWeightMax: mcVariancePenaltyWeightMax,
+                varianceRiskBudgetModifier: mcVarianceRiskBudgetModifier,
+                deviationPenaltyBase: mcDeviationPenaltyBase,
+                deviationRiskBudgetMultiplier: mcDeviationRiskBudgetMultiplier,
+                overshootPenaltyBase: mcOvershootPenaltyBase,
+                overshootSafeLeadMultiplier: mcOvershootSafeLeadMultiplier,
+                catchUpAggressionBase: mcCatchUpAggressionBase,
+                catchUpAggressionPressureMultiplier: mcCatchUpAggressionPressureMultiplier,
+                defaultRNGSeed: defaultRNGSeed,
+                rngMultiplier: rngMultiplier,
+                rngIncrement: rngIncrement,
+                baseSeed: monteCarloBaseSeed,
+                hashShiftRight1: hashShiftRight1,
+                hashShiftLeft: hashShiftLeft,
+                hashShiftRight2: hashShiftRight2
+            )
+        }
     }
 
     struct Heuristics {
@@ -747,6 +912,7 @@ struct BotRuntimePolicy {
             blindLongRoundAdjustmentThreshold: 8,
             blindSafetyAdjustment: -0.05,
             blindTargetShareCap: 0.95,
+            blindRiskBudgetNormalizationDivisor: 2.0,
             bidUtilityOptimalityPenaltyBase: 7.4,
             bidUtilityOptimalityPenaltyProgress: 2.8,
             bidUtilityOptimalityPenaltyBaseNoForbidden: 3.0,
