@@ -387,21 +387,13 @@
 ### P10. Унифицировать AI test builders
 
 **Цель:** снизить стоимость рефакторинга AI сервисов.
+**Статус:** выполнено 2026-03-06
 
-**Что уже сделано**
-- ranking tests уже имеют хороший fixture layer.
-
-**Что ещё осталось**
-- Подобный builder/factory слой нужен и для:
-  - evaluator tests,
-  - strategy tests,
-  - bidding tests,
-  - context builder tests.
-- Нужен общий набор deterministic helpers:
-  - `TrickNode` builder без render-side effects,
-  - `BotMatchContext` builder,
-  - `BotTurnDecisionContext` builder,
-  - hand/trump/dealer preset factories.
+**Реализовано**
+- Добавлен общий deterministic AI test layer: `BotTrickNodeBuilder`, `BotMatchContextTestBuilder`, `BotTurnDecisionContextBuilder`, `BotTestCards`.
+- Добавлены thin service fixtures для evaluator/strategy/bidding/context-builder сценариев.
+- На общий fixture layer переведены `BotTurnCandidateEvaluatorServiceTests`, `BotTurnStrategyServiceTests`, `BotBiddingServiceTests`, `BotMatchContextBuilderTests`.
+- `BotTurnCandidateRankingServiceTestFixture` переведён на новые shared helpers, чтобы ranking tests тоже использовали тот же слой.
 
 **Ожидаемый эффект**
 - AI refactoring можно будет делать с меньшим объёмом механических правок в тестах;
@@ -432,7 +424,7 @@
 7. P7: общий UIKit panel/chrome слой (выполнено 2026-03-06)
 8. P8: presentation builders для крупных контроллеров (выполнено 2026-03-06)
 9. P9: self-play simulation cleanup  
-10. P10: общий AI test fixture layer
+10. P10: общий AI test fixture layer (выполнено 2026-03-06)
 
 ## Что не стоит делать сейчас
 

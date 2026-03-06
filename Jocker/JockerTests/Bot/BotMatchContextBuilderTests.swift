@@ -15,7 +15,7 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - playerIndex за пределами диапазона возвращает nil
     /// - playerCount = 0 возвращает nil
     func testBuildContext_invalidPlayer_returnsNil() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
 
         XCTAssertNil(
@@ -50,11 +50,11 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - Первые два игрока имеют реальные очки
     /// - Последние два игрока имеют нулевые очки (дополнены)
     func testBuildContext_totalScores_whenScoreManagerHasFewerPlayers_padsZerosToPlayerCount() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 2)
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 1),
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0)
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 1),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0)
         ])
 
         let context = BotMatchContextBuilder.build(
@@ -77,7 +77,7 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - tricksTaken массив со взятыми взятками
     /// - isBlindBid массив с флагами blind ставок
     func testBuildContext_roundSnapshot_capturesBidsTricksAndBlindFlags() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
 
         gameState.setBid(2, forPlayerAt: 0, isBlind: true, lockBeforeDeal: true)
@@ -108,7 +108,7 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - isZeroPremiumRelevantInBlock = true (блок 1 или 3)
     /// - isPenaltyTargetRiskSoFar = false
     func testBuildContext_premiumSnapshot_atBlockStart_hasNoPenaltyRiskAndZeroPremiumCandidate() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
 
         let context = BotMatchContextBuilder.build(
@@ -133,13 +133,13 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - isPremiumCandidateSoFar = true (все bid matched)
     /// - isZeroPremiumCandidateSoFar = true (все нулевые ставки)
     func testBuildContext_premiumSnapshot_detectsPremiumAndZeroPremiumCandidateCorrectly() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0),
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0),
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0),
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)
         ])
 
         let context = BotMatchContextBuilder.build(
@@ -162,13 +162,13 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - isPenaltyTargetRiskSoFar = true (p3 кандидат → target p0)
     /// - premiumCandidatesThreateningPenaltyCount = 1
     func testBuildContext_premiumSnapshot_marksPenaltyTargetRiskFromOpponentPremiumCandidate() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p0 not candidate
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p1 not candidate
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p2 not candidate
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0)  // p3 candidate -> target p0
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p0 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p1 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p2 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0)  // p3 candidate -> target p0
         ])
 
         let context = BotMatchContextBuilder.build(
@@ -191,13 +191,13 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - leftNeighborIsPremiumCandidateSoFar = true (p1 кандидат)
     /// - isPenaltyTargetRiskSoFar = false
     func testBuildContext_premiumSnapshot_leftNeighborPremiumCandidateFlagSetCorrectly() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p0 not candidate
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p1 candidate (left neighbor for p0)
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p2 not candidate
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)  // p3 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p0 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p1 candidate (left neighbor for p0)
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p2 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)  // p3 not candidate
         ])
 
         let context = BotMatchContextBuilder.build(
@@ -217,13 +217,13 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - isPremiumCandidateSoFar = true (p0 кандидат)
     /// - opponentPremiumCandidatesSoFarCount = 1 (только p2, исключая p0)
     func testBuildContext_premiumSnapshot_opponentPremiumCandidatesCount_excludesSelf() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p0 self candidate
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p1 not candidate
-            roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p2 opponent candidate
-            roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)  // p3 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p0 self candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p1 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p2 opponent candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)  // p3 not candidate
         ])
 
         let context = BotMatchContextBuilder.build(
@@ -244,20 +244,20 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - snapshots.count = 3 (для 3 оппонентов)
     /// - p1: blindBidRate = 0.5, overbidRate = 0.5, underbidRate = 0.5
     func testBuildContext_opponentModel_snapshotsBuiltFromRoundResults() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
 
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 2, bid: 1, tricksTaken: 1, isBlind: false), // p0
-            roundResult(cardsInRound: 2, bid: 2, tricksTaken: 1, isBlind: true),  // p1 underbid + blind
-            roundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false), // p2 exact
-            roundResult(cardsInRound: 2, bid: 1, tricksTaken: 2, isBlind: false)  // p3 overbid
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 2, bid: 1, tricksTaken: 1, isBlind: false), // p0
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 2, bid: 2, tricksTaken: 1, isBlind: true),  // p1 underbid + blind
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 2, bid: 0, tricksTaken: 0, isBlind: false), // p2 exact
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 2, bid: 1, tricksTaken: 2, isBlind: false)  // p3 overbid
         ])
         scoreManager.recordRoundResults([
-            roundResult(cardsInRound: 4, bid: 2, tricksTaken: 2, isBlind: false), // p0
-            roundResult(cardsInRound: 4, bid: 3, tricksTaken: 4, isBlind: false), // p1 overbid
-            roundResult(cardsInRound: 4, bid: 2, tricksTaken: 2, isBlind: false), // p2 exact
-            roundResult(cardsInRound: 4, bid: 1, tricksTaken: 0, isBlind: false)  // p3 underbid
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 4, bid: 2, tricksTaken: 2, isBlind: false), // p0
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 4, bid: 3, tricksTaken: 4, isBlind: false), // p1 overbid
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 4, bid: 2, tricksTaken: 2, isBlind: false), // p2 exact
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 4, bid: 1, tricksTaken: 0, isBlind: false)  // p3 underbid
         ])
 
         let context = BotMatchContextBuilder.build(
@@ -286,7 +286,7 @@ final class BotMatchContextBuilderTests: XCTestCase {
     /// - Все snapshots: hasEvidence = false, observedRounds = 0
     /// - Все rates = 0 (neutral)
     func testBuildContext_opponentModel_zeroEvidenceAtBlockStart_returnsNeutralSnapshots() {
-        let gameState = makeGameState(playerCount: 4)
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(playerCount: 4)
         let scoreManager = ScoreManager(playerCount: 4)
 
         let context = BotMatchContextBuilder.build(
@@ -305,25 +305,5 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertTrue(snapshots.allSatisfy { $0.overbidRate == 0 })
         XCTAssertTrue(snapshots.allSatisfy { $0.underbidRate == 0 })
         XCTAssertTrue(snapshots.allSatisfy { $0.averageBidAggression == 0 })
-    }
-
-    private func makeGameState(playerCount: Int) -> GameState {
-        let gameState = GameState(playerCount: playerCount)
-        gameState.startGame(initialDealerIndex: 0)
-        return gameState
-    }
-
-    private func roundResult(
-        cardsInRound: Int,
-        bid: Int,
-        tricksTaken: Int,
-        isBlind: Bool = false
-    ) -> RoundResult {
-        return RoundResult(
-            cardsInRound: cardsInRound,
-            bid: bid,
-            tricksTaken: tricksTaken,
-            isBlind: isBlind
-        )
     }
 }

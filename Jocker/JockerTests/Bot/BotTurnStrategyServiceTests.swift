@@ -10,9 +10,9 @@ import XCTest
 
 final class BotTurnStrategyServiceTests: XCTestCase {
     func testMakeTurnDecision_whenChasingChoosesWeakestWinningCard() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .queen), into: trickNode)
 
         let decision = service.makeTurnDecision(
             handCards: [
@@ -29,10 +29,10 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenDumpingPrefersLosingNonJokerCard() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .ace), fromPlayer: 1, animated: false)
-        _ = trickNode.playCard(card(.hearts, .king), fromPlayer: 2, animated: false)
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .ace), into: trickNode)
+        BotTrickNodeBuilder.play(card(.hearts, .king), fromPlayer: 2, into: trickNode)
 
         let decision = service.makeTurnDecision(
             handCards: [
@@ -49,9 +49,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenDumpingWithOnlyNonLeadJoker_usesFaceDownStyle() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .ace), fromPlayer: 1, animated: false)
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .ace), into: trickNode)
 
         let decision = service.makeTurnDecision(
             handCards: [.joker],
@@ -66,8 +66,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenLeadJokerAndNeedTricks_usesWishDeclaration() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
 
         let decision = service.makeTurnDecision(
             handCards: [.joker],
@@ -83,9 +83,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenChasingAndWinningNonJokerExists_doesNotSpendJoker() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .queen), into: trickNode)
 
         let decision = service.makeTurnDecision(
             handCards: [
@@ -102,9 +102,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenMustWinAllRemaining_prefersReliableJokerWin() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .ten), fromPlayer: 1, animated: false)
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .ten), into: trickNode)
 
         let decision = service.makeTurnDecision(
             handCards: [
@@ -124,13 +124,12 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenLeadJokerAboveWithTrumpRequested_playsHighestTrump() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(
             .joker,
-            fromPlayer: 1,
             jokerLeadDeclaration: .above(suit: .spades),
-            animated: false
+            into: trickNode
         )
 
         let decision = service.makeTurnDecision(
@@ -149,13 +148,12 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenLeadJokerAboveWithRequestedSuitInHand_playsHighestRequestedSuit() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(
             .joker,
-            fromPlayer: 1,
             jokerLeadDeclaration: .above(suit: .hearts),
-            animated: false
+            into: trickNode
         )
 
         let decision = service.makeTurnDecision(
@@ -174,8 +172,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenLeadJokerAndDumping_usesTakesDeclarationNotTrump() {
-        let service = BotTurnStrategyService()
-        let trickNode = TrickNode()
+        let service = BotTurnStrategyServiceTestFixture()
+        let trickNode = BotTrickNodeBuilder.make()
 
         let decision = service.makeTurnDecision(
             handCards: [.joker],
@@ -199,8 +197,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenEarlyOverbidDumpAndNoSafeNonJokerLead_prefersLeadJokerTakesNonTrump() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
         let handCards: [Card] = [
             .joker,
             card(.spades, .ace),
@@ -228,23 +226,16 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenEarlyOverbidDumpAndOwnPremiumProtection_prefersLeadJokerTakesNonTrump() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
         let handCards: [Card] = [
             .joker,
             card(.spades, .ace),
             card(.spades, .king),
             card(.spades, .queen)
         ]
-        let ownPremiumContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
+        let ownPremiumContext = BotMatchContextTestBuilder(
+            premium: BotMatchContextTestBuilder.premiumSnapshot(
                 completedRoundsInBlock: 7,
                 remainingRoundsInBlock: 1,
                 isPremiumCandidateSoFar: true,
@@ -256,7 +247,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 premiumCandidatesThreateningPenaltyCount: 0,
                 opponentPremiumCandidatesSoFarCount: 0
             )
-        )
+        ).build()
 
         let decision = service.makeTurnDecision(
             handCards: handCards,
@@ -278,9 +269,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenLateOwnPremiumCandidate_dumpingPrefersLosingFollowCard() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .six), fromPlayer: 1, animated: false)
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .six), into: trickNode)
 
         let handCards: [Card] = [
             card(.clubs, .ace),
@@ -295,16 +286,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             tricksTaken: 1,
             cardsInRound: 8,
             playerCount: 4,
-            matchContext: .init(
-                block: .fourth,
-                roundIndexInBlock: 7,
-                totalRoundsInBlock: 8,
-                totalScores: [100, 100, 100, 100],
-                playerIndex: 0,
-                dealerIndex: 2,
-                playerCount: 4,
-                premium: nil
-            )
+            matchContext: BotMatchContextTestBuilder().build()
         )
         let premiumDecision = service.makeTurnDecision(
             handCards: handCards,
@@ -314,22 +296,15 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             tricksTaken: 1,
             cardsInRound: 8,
             playerCount: 4,
-            matchContext: .init(
-                block: .fourth,
-                roundIndexInBlock: 7,
-                totalRoundsInBlock: 8,
-                totalScores: [100, 100, 100, 100],
-                playerIndex: 0,
-                dealerIndex: 2,
-                playerCount: 4,
-                premium: .init(
+            matchContext: BotMatchContextTestBuilder(
+                premium: BotMatchContextTestBuilder.premiumSnapshot(
                     completedRoundsInBlock: 7,
                     remainingRoundsInBlock: 1,
                     isPremiumCandidateSoFar: true,
                     isZeroPremiumRelevantInBlock: false,
                     isZeroPremiumCandidateSoFar: false
                 )
-            )
+            ).build()
         )
 
         XCTAssertEqual(neutralDecision?.card, card(.clubs, .ace))
@@ -337,9 +312,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenPenaltyTargetRisk_flipsLateDumpChoiceTowardSafeLoss() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
 
         let handCards: [Card] = [
             card(.clubs, .ace),
@@ -354,15 +329,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             tricksTaken: 1, // уже overbid -> антиштрафной сигнал уместнее
             cardsInRound: 8,
             playerCount: 4,
-            matchContext: .init(
-                block: .fourth,
-                roundIndexInBlock: 7,
-                totalRoundsInBlock: 8,
-                totalScores: [100, 100, 100, 100],
-                playerIndex: 0,
-                dealerIndex: 2,
-                playerCount: 4,
-                premium: .init(
+            matchContext: BotMatchContextTestBuilder(
+                premium: BotMatchContextTestBuilder.premiumSnapshot(
                     completedRoundsInBlock: 7,
                     remainingRoundsInBlock: 1,
                     isPremiumCandidateSoFar: false,
@@ -373,7 +341,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                     isPenaltyTargetRiskSoFar: false,
                     premiumCandidatesThreateningPenaltyCount: 0
                 )
-            )
+            ).build()
         )
         let penaltyRiskDecision = service.makeTurnDecision(
             handCards: handCards,
@@ -383,15 +351,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             tricksTaken: 1,
             cardsInRound: 8,
             playerCount: 4,
-            matchContext: .init(
-                block: .fourth,
-                roundIndexInBlock: 7,
-                totalRoundsInBlock: 8,
-                totalScores: [100, 100, 100, 100],
-                playerIndex: 0,
-                dealerIndex: 2,
-                playerCount: 4,
-                premium: .init(
+            matchContext: BotMatchContextTestBuilder(
+                premium: BotMatchContextTestBuilder.premiumSnapshot(
                     completedRoundsInBlock: 7,
                     remainingRoundsInBlock: 1,
                     isPremiumCandidateSoFar: false,
@@ -402,7 +363,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                     isPenaltyTargetRiskSoFar: true,
                     premiumCandidatesThreateningPenaltyCount: 1
                 )
-            )
+            ).build()
         )
 
         XCTAssertEqual(neutralDecision?.card, card(.clubs, .ace))
@@ -410,25 +371,18 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenStrongAntiPremiumPressureExists_flipsLastSeatDumpChoice() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
-        _ = trickNode.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
-        _ = trickNode.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
+        BotTrickNodeBuilder.play(card(.clubs, .king), fromPlayer: 2, into: trickNode)
+        BotTrickNodeBuilder.play(card(.clubs, .jack), fromPlayer: 3, into: trickNode)
 
         let handCards: [Card] = [
             card(.clubs, .ace),
             card(.clubs, .seven)
         ]
-        let neutralContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
+        let neutralContext = BotMatchContextTestBuilder(
+            premium: BotMatchContextTestBuilder.premiumSnapshot(
                 completedRoundsInBlock: 7,
                 remainingRoundsInBlock: 1,
                 isPremiumCandidateSoFar: false,
@@ -440,16 +394,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 premiumCandidatesThreateningPenaltyCount: 0,
                 opponentPremiumCandidatesSoFarCount: 0
             )
-        )
-        let strongAntiPremiumContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
+        ).build()
+        let strongAntiPremiumContext = BotMatchContextTestBuilder(
+            premium: BotMatchContextTestBuilder.premiumSnapshot(
                 completedRoundsInBlock: 7,
                 remainingRoundsInBlock: 1,
                 isPremiumCandidateSoFar: false,
@@ -461,7 +408,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 premiumCandidatesThreateningPenaltyCount: 0,
                 opponentPremiumCandidatesSoFarCount: 4
             )
-        )
+        ).build()
 
         let neutralDecision = service.makeTurnDecision(
             handCards: handCards,
@@ -489,15 +436,15 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenAllInChaseAntiPremiumContext_andOpponentModelHasNoEvidence_keepsDecisionUnchanged() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
         let handCards: [Card] = [
             .joker,
             card(.clubs, .six),
             card(.diamonds, .seven),
             card(.hearts, .eight)
         ]
-        let premium = BotMatchContext.PremiumSnapshot(
+        let premium = BotMatchContextTestBuilder.premiumSnapshot(
             completedRoundsInBlock: 5,
             remainingRoundsInBlock: 3,
             isPremiumCandidateSoFar: false,
@@ -509,25 +456,11 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             premiumCandidatesThreateningPenaltyCount: 1,
             opponentPremiumCandidatesSoFarCount: 2
         )
-        let withoutOpponents = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
+        let withoutOpponents = BotMatchContextTestBuilder(
             premium: premium,
             opponents: nil
-        )
-        let noEvidenceOpponents = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
+        ).build()
+        let noEvidenceOpponents = BotMatchContextTestBuilder(
             premium: premium,
             opponents: makeOpponentModel(
                 leftNeighborIndex: 1,
@@ -542,7 +475,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 ),
                 others: []
             )
-        )
+        ).build()
 
         let baselineDecision = service.makeTurnDecision(
             handCards: handCards,
@@ -571,16 +504,16 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testMakeTurnDecision_whenModeratePremiumDenyContext_andDisciplinedObservedLeftNeighborFlipsDumpChoiceComparedToErratic() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
-        _ = trickNode.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
-        _ = trickNode.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
+        BotTrickNodeBuilder.play(card(.clubs, .king), fromPlayer: 2, into: trickNode)
+        BotTrickNodeBuilder.play(card(.clubs, .jack), fromPlayer: 3, into: trickNode)
         let handCards: [Card] = [
             card(.clubs, .ace),
             card(.clubs, .seven)
         ]
-        let premium = BotMatchContext.PremiumSnapshot(
+        let premium = BotMatchContextTestBuilder.premiumSnapshot(
             completedRoundsInBlock: 7,
             remainingRoundsInBlock: 1,
             isPremiumCandidateSoFar: false,
@@ -592,14 +525,8 @@ final class BotTurnStrategyServiceTests: XCTestCase {
             premiumCandidatesThreateningPenaltyCount: 0,
             opponentPremiumCandidatesSoFarCount: 1
         )
-        let disciplinedContext = BotMatchContext(
-            block: .fourth,
+        let disciplinedContext = BotMatchContextTestBuilder(
             roundIndexInBlock: 5,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
             premium: premium,
             opponents: makeOpponentModel(
                 leftNeighborIndex: 1,
@@ -614,15 +541,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 ),
                 others: []
             )
-        )
-        let erraticContext = BotMatchContext(
-            block: .fourth,
+        ).build()
+        let erraticContext = BotMatchContextTestBuilder(
             roundIndexInBlock: 5,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
             premium: premium,
             opponents: makeOpponentModel(
                 leftNeighborIndex: 1,
@@ -637,7 +558,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 ),
                 others: []
             )
-        )
+        ).build()
 
         let disciplinedDecision = service.makeTurnDecision(
             handCards: handCards,
@@ -665,45 +586,31 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     func testLatencyBaseline_makeTurnDecision_reportsBatchAverage() {
-        let service = BotTurnStrategyService(tuning: BotTuning(difficulty: .hard))
+        let service = BotTurnStrategyServiceTestFixture(difficulty: .hard)
 
-        let leadJokerDumpTrick = TrickNode()
-        let latePremiumDumpTrick = TrickNode()
-        _ = latePremiumDumpTrick.playCard(card(.clubs, .six), fromPlayer: 1, animated: false)
-        let penaltyRiskTrick = TrickNode()
-        _ = penaltyRiskTrick.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
-        let antiPremiumLateDumpTrick = TrickNode()
-        _ = antiPremiumLateDumpTrick.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
-        _ = antiPremiumLateDumpTrick.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
-        _ = antiPremiumLateDumpTrick.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
-        let simpleFollowTrick = TrickNode()
-        _ = simpleFollowTrick.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let leadJokerDumpTrick = BotTrickNodeBuilder.make()
+        let latePremiumDumpTrick = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .six), into: latePremiumDumpTrick)
+        let penaltyRiskTrick = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: penaltyRiskTrick)
+        let antiPremiumLateDumpTrick = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: antiPremiumLateDumpTrick)
+        BotTrickNodeBuilder.play(card(.clubs, .king), fromPlayer: 2, into: antiPremiumLateDumpTrick)
+        BotTrickNodeBuilder.play(card(.clubs, .jack), fromPlayer: 3, into: antiPremiumLateDumpTrick)
+        let simpleFollowTrick = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .queen), into: simpleFollowTrick)
 
-        let latePremiumContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
+        let latePremiumContext = BotMatchContextTestBuilder(
+            premium: BotMatchContextTestBuilder.premiumSnapshot(
                 completedRoundsInBlock: 7,
                 remainingRoundsInBlock: 1,
                 isPremiumCandidateSoFar: true,
                 isZeroPremiumRelevantInBlock: false,
                 isZeroPremiumCandidateSoFar: false
             )
-        )
-        let penaltyRiskContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
+        ).build()
+        let penaltyRiskContext = BotMatchContextTestBuilder(
+            premium: BotMatchContextTestBuilder.premiumSnapshot(
                 completedRoundsInBlock: 7,
                 remainingRoundsInBlock: 1,
                 isPremiumCandidateSoFar: false,
@@ -714,16 +621,9 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 isPenaltyTargetRiskSoFar: true,
                 premiumCandidatesThreateningPenaltyCount: 1
             )
-        )
-        let antiPremiumContext = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
-            premium: .init(
+        ).build()
+        let antiPremiumContext = BotMatchContextTestBuilder(
+            premium: BotMatchContextTestBuilder.premiumSnapshot(
                 completedRoundsInBlock: 7,
                 remainingRoundsInBlock: 1,
                 isPremiumCandidateSoFar: false,
@@ -735,7 +635,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
                 premiumCandidatesThreateningPenaltyCount: 0,
                 opponentPremiumCandidatesSoFarCount: 4
             )
-        )
+        ).build()
 
         let scenarios: [() -> Void] = [
             {
@@ -832,7 +732,7 @@ final class BotTurnStrategyServiceTests: XCTestCase {
     }
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
-        return .regular(suit: suit, rank: rank)
+        return BotTestCards.card(suit, rank)
     }
 
     private func makeOpponentModel(
@@ -840,15 +740,11 @@ final class BotTurnStrategyServiceTests: XCTestCase {
         leftNeighbor: BotOpponentModel.OpponentSnapshot?,
         others: [BotOpponentModel.OpponentSnapshot]
     ) -> BotOpponentModel {
-        var snapshots = others
-        if let leftNeighbor {
-            snapshots.insert(leftNeighbor, at: 0)
-        }
-
-        return BotOpponentModel(
+        return BotMatchContextTestBuilder.opponentModel(
             perspectivePlayerIndex: 0,
             leftNeighborIndex: leftNeighborIndex,
-            snapshots: snapshots
+            leftNeighbor: leftNeighbor,
+            others: others
         )
     }
 }

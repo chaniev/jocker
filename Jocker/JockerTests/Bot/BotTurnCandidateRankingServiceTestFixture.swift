@@ -10,7 +10,7 @@ import XCTest
 
 enum BotTurnCandidateRankingServiceTestFixture {
     static func makeTrickNode() -> TrickNode {
-        return TrickNode(rendersCards: false)
+        return BotTrickNodeBuilder.make()
     }
 
     static func play(
@@ -18,7 +18,11 @@ enum BotTurnCandidateRankingServiceTestFixture {
         fromPlayer playerNumber: Int = 1,
         into trickNode: TrickNode
     ) {
-        _ = trickNode.playCard(card, fromPlayer: playerNumber, animated: false)
+        BotTrickNodeBuilder.play(
+            card,
+            fromPlayer: playerNumber,
+            into: trickNode
+        )
     }
 
     static func evaluation(
@@ -37,11 +41,11 @@ enum BotTurnCandidateRankingServiceTestFixture {
     }
 
     static func makeHand(_ cards: Card...) -> [Card] {
-        return cards
+        return BotTestCards.hand(cards)
     }
 
     static func makeHand(_ cards: [Card]) -> [Card] {
-        return cards
+        return BotTestCards.hand(cards)
     }
 
     static func makeContext(
@@ -55,7 +59,7 @@ enum BotTurnCandidateRankingServiceTestFixture {
         premium: BotMatchContext.PremiumSnapshot? = nil,
         opponents: BotOpponentModel? = nil
     ) -> BotMatchContext {
-        return BotMatchContext(
+        return BotMatchContextTestBuilder(
             block: block,
             roundIndexInBlock: roundIndexInBlock,
             totalRoundsInBlock: totalRoundsInBlock,
@@ -65,7 +69,7 @@ enum BotTurnCandidateRankingServiceTestFixture {
             playerCount: playerCount,
             premium: premium,
             opponents: opponents
-        )
+        ).build()
     }
 
     static func commonUtilityParams(
@@ -103,11 +107,11 @@ enum BotTurnCandidateRankingServiceTestFixture {
     }
 
     static func card(_ suit: Suit, _ rank: Rank) -> Card {
-        return .regular(suit: suit, rank: rank)
+        return BotTestCards.card(suit, rank)
     }
 
     static func sampleMatchContext() -> BotMatchContext {
-        return makeContext(
+        return BotMatchContextTestBuilder(
             block: .second,
             roundIndexInBlock: 1,
             totalRoundsInBlock: 8,
@@ -117,7 +121,7 @@ enum BotTurnCandidateRankingServiceTestFixture {
             playerCount: 4,
             premium: nil,
             opponents: nil
-        )
+        ).build()
     }
 
     static func makeOpponentModel(
@@ -125,15 +129,11 @@ enum BotTurnCandidateRankingServiceTestFixture {
         leftNeighbor: BotOpponentModel.OpponentSnapshot?,
         others: [BotOpponentModel.OpponentSnapshot]
     ) -> BotOpponentModel {
-        var snapshots = others
-        if let leftNeighbor {
-            snapshots.insert(leftNeighbor, at: 0)
-        }
-
-        return BotOpponentModel(
+        return BotMatchContextTestBuilder.opponentModel(
             perspectivePlayerIndex: 0,
             leftNeighborIndex: leftNeighborIndex,
-            snapshots: snapshots
+            leftNeighbor: leftNeighbor,
+            others: others
         )
     }
 }

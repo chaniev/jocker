@@ -9,19 +9,12 @@ import XCTest
 @testable import Jocker
 
 final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
-    private lazy var evaluator: BotTurnCandidateEvaluatorService = {
-        let tuning = BotTuning(difficulty: .hard)
-        return BotTurnCandidateEvaluatorService(
-            cardHeuristics: BotTurnCardHeuristicsService(tuning: tuning),
-            roundProjection: BotTurnRoundProjectionService(tuning: tuning),
-            candidateRanking: BotTurnCandidateRankingService(tuning: tuning)
-        )
-    }()
+    private let fixture = BotTurnCandidateEvaluatorServiceTestFixture()
 
     func testBestMove_whenLegalCardsEmpty_returnsNil() {
-        let trickNode = TrickNode()
+        let trickNode = BotTrickNodeBuilder.make()
 
-        let move = evaluator.bestMove(
+        let move = fixture.bestMove(
             legalCards: [],
             handCards: [card(.hearts, .ace)],
             trickNode: trickNode,
@@ -36,14 +29,14 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenChasingChoosesWeakestWinningCard() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .queen), into: trickNode)
         let hand = [
             card(.hearts, .ace),
             card(.hearts, .king)
         ]
 
-        let move = evaluator.bestMove(
+        let move = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -58,12 +51,12 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenDumpingPrefersLosingNonJoker() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .ace), fromPlayer: 1, animated: false)
-        _ = trickNode.playCard(card(.hearts, .king), fromPlayer: 2, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .ace), into: trickNode)
+        BotTrickNodeBuilder.play(card(.hearts, .king), fromPlayer: 2, into: trickNode)
         let hand: [Card] = [.joker, card(.hearts, .seven)]
 
-        let move = evaluator.bestMove(
+        let move = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -78,10 +71,10 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenDumpingWithOnlyNonLeadJoker_usesFaceDownStyle() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .ace), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .ace), into: trickNode)
 
-        let move = evaluator.bestMove(
+        let move = fixture.bestMove(
             legalCards: [.joker],
             handCards: [.joker],
             trickNode: trickNode,
@@ -97,9 +90,9 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenLeadJokerAndNeedTricks_usesWishDeclaration() {
-        let trickNode = TrickNode()
+        let trickNode = BotTrickNodeBuilder.make()
 
-        let move = evaluator.bestMove(
+        let move = fixture.bestMove(
             legalCards: [.joker],
             handCards: [.joker],
             trickNode: trickNode,
@@ -116,18 +109,18 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenForcedLeadJokerEarlyChase_prefersAboveTrumpOverWish() {
-        let move = evaluator.bestMove(
-            context: .init(
-                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+        let move = fixture.bestMove(
+            decisionContext: BotTurnDecisionContextBuilder(
                 handCards: [.joker, card(.clubs, .six), card(.diamonds, .seven), card(.hearts, .eight)],
-                trick: .init(playedCards: []),
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                trickNode: BotTrickNodeBuilder.make(),
                 trump: .spades,
-                targetBid: 1,
-                currentTricks: 0,
+                bid: 1,
+                tricksTaken: 0,
                 cardsInRound: 8,
                 playerCount: 4,
-                isBlind: false,
-                matchContext: nil
+                targetBid: 1,
+                currentTricks: 0
             )
         )
 
@@ -137,18 +130,18 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenForcedLeadJokerFinalAllInChase_preservesWishOverAbove() {
-        let move = evaluator.bestMove(
-            context: .init(
-                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+        let move = fixture.bestMove(
+            decisionContext: BotTurnDecisionContextBuilder(
                 handCards: [.joker],
-                trick: .init(playedCards: []),
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                trickNode: BotTrickNodeBuilder.make(),
                 trump: .spades,
-                targetBid: 1,
-                currentTricks: 0,
+                bid: 1,
+                tricksTaken: 0,
                 cardsInRound: 1,
                 playerCount: 4,
-                isBlind: false,
-                matchContext: nil
+                targetBid: 1,
+                currentTricks: 0
             )
         )
 
@@ -158,18 +151,18 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenForcedLeadJokerDumping_prefersTakesNonTrumpDeclaration() {
-        let move = evaluator.bestMove(
-            context: .init(
-                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+        let move = fixture.bestMove(
+            decisionContext: BotTurnDecisionContextBuilder(
                 handCards: [.joker, card(.clubs, .six), card(.diamonds, .seven), card(.hearts, .eight)],
-                trick: .init(playedCards: []),
+                legalCards: [.joker], // форсируем сравнение только объявлений джокера
+                trickNode: BotTrickNodeBuilder.make(),
                 trump: .spades,
-                targetBid: 0,
-                currentTricks: 0,
+                bid: 0,
+                tricksTaken: 0,
                 cardsInRound: 8,
                 playerCount: 4,
-                isBlind: false,
-                matchContext: nil
+                targetBid: 0,
+                currentTricks: 0
             )
         )
 
@@ -183,14 +176,14 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_withNeutralMatchContext_preservesDecision() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .queen), into: trickNode)
         let hand = [
             card(.hearts, .ace),
             card(.hearts, .king)
         ]
 
-        let baseline = evaluator.bestMove(
+        let baseline = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -201,7 +194,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             playerCount: 4,
             isBlind: true
         )
-        let withMatchContext = evaluator.bestMove(
+        let withMatchContext = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -219,7 +212,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenLeadJokerAntiPremiumContext_andOpponentModelHasNoEvidence_keepsDecisionUnchanged() {
-        let premium = BotMatchContext.PremiumSnapshot(
+        let premium = BotMatchContextTestBuilder.premiumSnapshot(
             completedRoundsInBlock: 5,
             remainingRoundsInBlock: 3,
             isPremiumCandidateSoFar: false,
@@ -231,25 +224,11 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             premiumCandidatesThreateningPenaltyCount: 1,
             opponentPremiumCandidatesSoFarCount: 2
         )
-        let withoutOpponents = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
+        let withoutOpponents = BotMatchContextTestBuilder(
             premium: premium,
             opponents: nil
-        )
-        let noEvidenceOpponents = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
+        ).build()
+        let noEvidenceOpponents = BotMatchContextTestBuilder(
             premium: premium,
             opponents: makeOpponentModel(
                 leftNeighborIndex: 1,
@@ -264,21 +243,22 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
                 ),
                 others: []
             )
-        )
+        ).build()
 
         func bestMove(matchContext: BotMatchContext) -> (card: Card, jokerDecision: JokerPlayDecision)? {
-            evaluator.bestMove(
-                context: .init(
-                    legalCards: [.joker],
+            fixture.bestMove(
+                decisionContext: BotTurnDecisionContextBuilder(
                     handCards: [.joker, card(.clubs, .six), card(.diamonds, .seven), card(.hearts, .eight)],
-                    trick: .init(playedCards: []),
+                    legalCards: [.joker],
+                    trickNode: BotTrickNodeBuilder.make(),
                     trump: .spades,
-                    targetBid: 4,
-                    currentTricks: 0,
+                    bid: 4,
+                    tricksTaken: 0,
                     cardsInRound: 8,
                     playerCount: 4,
-                    isBlind: false,
-                    matchContext: matchContext
+                    matchContext: matchContext,
+                    targetBid: 4,
+                    currentTricks: 0
                 )
             )
         }
@@ -292,7 +272,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenModeratePremiumDenyContext_andDisciplinedObservedLeftNeighborFlipsDumpChoiceComparedToErratic() {
-        let premium = BotMatchContext.PremiumSnapshot(
+        let premium = BotMatchContextTestBuilder.premiumSnapshot(
             completedRoundsInBlock: 7,
             remainingRoundsInBlock: 1,
             isPremiumCandidateSoFar: false,
@@ -330,37 +310,25 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             ),
             others: []
         )
-        let disciplinedContext = BotMatchContext(
-            block: .fourth,
+        let disciplinedContext = BotMatchContextTestBuilder(
             roundIndexInBlock: 5,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
             premium: premium,
             opponents: disciplinedOpponents
-        )
-        let erraticContext = BotMatchContext(
-            block: .fourth,
+        ).build()
+        let erraticContext = BotMatchContextTestBuilder(
             roundIndexInBlock: 5,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
             premium: premium,
             opponents: erraticOpponents
-        )
+        ).build()
 
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
-        _ = trickNode.playCard(card(.clubs, .king), fromPlayer: 2, animated: false)
-        _ = trickNode.playCard(card(.clubs, .jack), fromPlayer: 3, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
+        BotTrickNodeBuilder.play(card(.clubs, .king), fromPlayer: 2, into: trickNode)
+        BotTrickNodeBuilder.play(card(.clubs, .jack), fromPlayer: 3, into: trickNode)
         let hand = [card(.clubs, .ace), card(.clubs, .seven)]
 
         func bestMove(matchContext: BotMatchContext) -> (card: Card, jokerDecision: JokerPlayDecision)? {
-            evaluator.bestMove(
+            fixture.bestMove(
                 legalCards: hand,
                 handCards: hand,
                 trickNode: trickNode,
@@ -382,31 +350,24 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenRolloutTriggeredBySmallHand_isDeterministic() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.hearts, .queen), into: trickNode)
 
         let hand: [Card] = [
             card(.hearts, .ace),
             card(.hearts, .king),
             card(.hearts, .seven)
         ]
-        let roundState = BotMatchContext.RoundSnapshot(
+        let roundState = BotMatchContextTestBuilder.roundSnapshot(
             bids: [2, 2, 0, 0],
             tricksTaken: [1, 1, 0, 0],
             isBlindBid: [false, false, false, false]
         )
-        let context = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
+        let context = BotMatchContextTestBuilder(
             round: roundState
-        )
+        ).build()
 
-        let firstDecision = evaluator.bestMove(
+        let firstDecision = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -420,7 +381,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             roundState: roundState,
             actingPlayerIndex: 0
         )
-        let secondDecision = evaluator.bestMove(
+        let secondDecision = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -440,35 +401,29 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenRoundStateNeedsSingleTrickAhead_canPreferControlCard() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
 
         let hand: [Card] = [
             card(.clubs, .ace),
             card(.clubs, .seven)
         ]
-        let pressuredRoundState = BotMatchContext.RoundSnapshot(
+        let pressuredRoundState = BotMatchContextTestBuilder.roundSnapshot(
             bids: [0, 2, 0, 0],
             tricksTaken: [1, 1, 0, 0], // player 1 needs exactly one trick
             isBlindBid: [false, false, false, false]
         )
-        let neutralRoundState = BotMatchContext.RoundSnapshot(
+        let neutralRoundState = BotMatchContextTestBuilder.roundSnapshot(
             bids: [0, 2, 0, 0],
             tricksTaken: [1, 2, 0, 0],
             isBlindBid: [false, false, false, false]
         )
-        let matchContext = BotMatchContext(
-            block: .fourth,
+        let matchContext = BotMatchContextTestBuilder(
             roundIndexInBlock: 6,
-            totalRoundsInBlock: 8,
-            totalScores: [100, 100, 100, 100],
-            playerIndex: 0,
-            dealerIndex: 2,
-            playerCount: 4,
             round: pressuredRoundState
-        )
+        ).build()
 
-        let neutralDecision = evaluator.bestMove(
+        let neutralDecision = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -482,7 +437,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             roundState: neutralRoundState,
             actingPlayerIndex: 0
         )
-        let pressuredDecision = evaluator.bestMove(
+        let pressuredDecision = fixture.bestMove(
             legalCards: hand,
             handCards: hand,
             trickNode: trickNode,
@@ -507,25 +462,20 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenEndgameSolverTriggeredByHandSizeThree_isDeterministic() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
 
         let hand: [Card] = [
             card(.clubs, .ace),
             card(.clubs, .seven),
             card(.diamonds, .six)
         ]
-        let context = BotMatchContext(
-            block: .fourth,
-            roundIndexInBlock: 7,
-            totalRoundsInBlock: 8,
+        let context = BotMatchContextTestBuilder(
             totalScores: [120, 110, 95, 90],
-            playerIndex: 0,
-            dealerIndex: 2,
             playerCount: 4
-        )
+        ).build()
 
-        let firstDecision = evaluator.bestMove(
+        let firstDecision = fixture.bestMove(
             legalCards: [card(.clubs, .ace), card(.clubs, .seven)],
             handCards: hand,
             trickNode: trickNode,
@@ -538,7 +488,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             matchContext: context,
             actingPlayerIndex: 0
         )
-        let secondDecision = evaluator.bestMove(
+        let secondDecision = fixture.bestMove(
             legalCards: [card(.clubs, .ace), card(.clubs, .seven)],
             handCards: hand,
             trickNode: trickNode,
@@ -557,8 +507,8 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     func testBestMove_whenEndgameDumpAndExactBidAtRisk_prefersControlledLossCard() {
-        let trickNode = TrickNode()
-        _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
+        let trickNode = BotTrickNodeBuilder.make()
+        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
 
         let hand: [Card] = [
             card(.clubs, .ace),
@@ -566,7 +516,7 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             card(.diamonds, .six)
         ]
 
-        let decision = evaluator.bestMove(
+        let decision = fixture.bestMove(
             legalCards: [card(.clubs, .ace), card(.clubs, .seven)],
             handCards: hand,
             trickNode: trickNode,
@@ -584,20 +534,19 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
     }
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
-        return .regular(suit: suit, rank: rank)
+        return BotTestCards.card(suit, rank)
     }
 
     private func sampleMatchContext() -> BotMatchContext {
-        return BotMatchContext(
+        return BotMatchContextTestBuilder(
             block: .second,
             roundIndexInBlock: 1,
             totalRoundsInBlock: 8,
             totalScores: [100, 100, 100, 100],
             playerIndex: 2,
             dealerIndex: 1,
-            playerCount: 4,
-            premium: nil
-        )
+            playerCount: 4
+        ).build()
     }
 
     private func makeOpponentModel(
@@ -605,15 +554,11 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         leftNeighbor: BotOpponentModel.OpponentSnapshot?,
         others: [BotOpponentModel.OpponentSnapshot]
     ) -> BotOpponentModel {
-        var snapshots = others
-        if let leftNeighbor {
-            snapshots.insert(leftNeighbor, at: 0)
-        }
-
-        return BotOpponentModel(
+        return BotMatchContextTestBuilder.opponentModel(
             perspectivePlayerIndex: 0,
             leftNeighborIndex: leftNeighborIndex,
-            snapshots: snapshots
+            leftNeighbor: leftNeighbor,
+            others: others
         )
     }
 }

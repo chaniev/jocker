@@ -14,14 +14,14 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Возвращаемая ставка не равна запрещённой
     /// - Ставка находится в допустимом диапазоне [0, cardsInRound]
     func testMakeBid_respectsForbiddenDealerBid() {
-        let service = BotBiddingService()
-        let hand: [Card] = [
-            .regular(suit: .hearts, rank: .ace),
-            .regular(suit: .hearts, rank: .king),
-            .regular(suit: .spades, rank: .queen)
-        ]
+        let fixture = BotBiddingServiceTestFixture()
+        let hand = BotTestCards.hand(
+            BotTestCards.card(.hearts, .ace),
+            BotTestCards.card(.hearts, .king),
+            BotTestCards.card(.spades, .queen)
+        )
 
-        let bid = service.makeBid(
+        let bid = fixture.makeBid(
             hand: hand,
             cardsInRound: 3,
             trump: .hearts,
@@ -38,29 +38,29 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Рука с двумя джокерами и тузами получает более высокую ставку
     /// - Слабая рука с мелкими картами получает более низкую ставку
     func testMakeBid_strongerHandProducesHigherBidThanWeakHand() {
-        let service = BotBiddingService()
+        let fixture = BotBiddingServiceTestFixture()
 
-        let weakHand: [Card] = [
-            .regular(suit: .diamonds, rank: .seven),
-            .regular(suit: .clubs, rank: .eight),
-            .regular(suit: .spades, rank: .nine),
-            .regular(suit: .diamonds, rank: .ten)
-        ]
+        let weakHand = BotTestCards.hand(
+            BotTestCards.card(.diamonds, .seven),
+            BotTestCards.card(.clubs, .eight),
+            BotTestCards.card(.spades, .nine),
+            BotTestCards.card(.diamonds, .ten)
+        )
 
-        let strongHand: [Card] = [
+        let strongHand = BotTestCards.hand(
             .joker,
             .joker,
-            .regular(suit: .hearts, rank: .ace),
-            .regular(suit: .hearts, rank: .king)
-        ]
+            BotTestCards.card(.hearts, .ace),
+            BotTestCards.card(.hearts, .king)
+        )
 
-        let weakBid = service.makeBid(
+        let weakBid = fixture.makeBid(
             hand: weakHand,
             cardsInRound: 4,
             trump: .hearts,
             forbiddenBid: nil
         )
-        let strongBid = service.makeBid(
+        let strongBid = fixture.makeBid(
             hand: strongHand,
             cardsInRound: 4,
             trump: .hearts,
@@ -75,36 +75,36 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Trump-dense рука (6 червей) оценивается выше
     /// - Mixed рука с разбросанными мастями оценивается ниже
     func testMakeBid_trumpDenseHandProducesHigherBid() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let trumpDenseHand: [Card] = [
-            .regular(suit: .hearts, rank: .ace),
-            .regular(suit: .hearts, rank: .king),
-            .regular(suit: .hearts, rank: .queen),
-            .regular(suit: .hearts, rank: .jack),
-            .regular(suit: .hearts, rank: .nine),
-            .regular(suit: .clubs, rank: .seven),
-            .regular(suit: .diamonds, rank: .eight),
-            .regular(suit: .spades, rank: .ten)
-        ]
-        let mixedHand: [Card] = [
-            .regular(suit: .hearts, rank: .ace),
-            .regular(suit: .spades, rank: .king),
-            .regular(suit: .clubs, rank: .queen),
-            .regular(suit: .diamonds, rank: .jack),
-            .regular(suit: .hearts, rank: .nine),
-            .regular(suit: .clubs, rank: .seven),
-            .regular(suit: .diamonds, rank: .eight),
-            .regular(suit: .spades, rank: .ten)
-        ]
+        let trumpDenseHand = BotTestCards.hand(
+            BotTestCards.card(.hearts, .ace),
+            BotTestCards.card(.hearts, .king),
+            BotTestCards.card(.hearts, .queen),
+            BotTestCards.card(.hearts, .jack),
+            BotTestCards.card(.hearts, .nine),
+            BotTestCards.card(.clubs, .seven),
+            BotTestCards.card(.diamonds, .eight),
+            BotTestCards.card(.spades, .ten)
+        )
+        let mixedHand = BotTestCards.hand(
+            BotTestCards.card(.hearts, .ace),
+            BotTestCards.card(.spades, .king),
+            BotTestCards.card(.clubs, .queen),
+            BotTestCards.card(.diamonds, .jack),
+            BotTestCards.card(.hearts, .nine),
+            BotTestCards.card(.clubs, .seven),
+            BotTestCards.card(.diamonds, .eight),
+            BotTestCards.card(.spades, .ten)
+        )
 
-        let denseBid = service.makeBid(
+        let denseBid = fixture.makeBid(
             hand: trumpDenseHand,
             cardsInRound: 8,
             trump: .hearts,
             forbiddenBid: nil
         )
-        let mixedBid = service.makeBid(
+        let mixedBid = fixture.makeBid(
             hand: mixedHand,
             cardsInRound: 8,
             trump: .hearts,
@@ -119,36 +119,36 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Рука с джокером и сильными spades оценивается выше
     /// - Плоская рука с джокером но без контроля оценивается ниже
     func testMakeBid_noTrumpControlWithJokerProducesHigherBid() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let controlHand: [Card] = [
+        let controlHand = BotTestCards.hand(
             .joker,
-            .regular(suit: .spades, rank: .ace),
-            .regular(suit: .spades, rank: .king),
-            .regular(suit: .spades, rank: .queen),
-            .regular(suit: .spades, rank: .jack),
-            .regular(suit: .hearts, rank: .ace),
-            .regular(suit: .diamonds, rank: .queen),
-            .regular(suit: .clubs, rank: .ten)
-        ]
-        let flatHand: [Card] = [
+            BotTestCards.card(.spades, .ace),
+            BotTestCards.card(.spades, .king),
+            BotTestCards.card(.spades, .queen),
+            BotTestCards.card(.spades, .jack),
+            BotTestCards.card(.hearts, .ace),
+            BotTestCards.card(.diamonds, .queen),
+            BotTestCards.card(.clubs, .ten)
+        )
+        let flatHand = BotTestCards.hand(
             .joker,
-            .regular(suit: .spades, rank: .ace),
-            .regular(suit: .hearts, rank: .ten),
-            .regular(suit: .diamonds, rank: .nine),
-            .regular(suit: .clubs, rank: .eight),
-            .regular(suit: .clubs, rank: .seven),
-            .regular(suit: .diamonds, rank: .seven),
-            .regular(suit: .hearts, rank: .eight)
-        ]
+            BotTestCards.card(.spades, .ace),
+            BotTestCards.card(.hearts, .ten),
+            BotTestCards.card(.diamonds, .nine),
+            BotTestCards.card(.clubs, .eight),
+            BotTestCards.card(.clubs, .seven),
+            BotTestCards.card(.diamonds, .seven),
+            BotTestCards.card(.hearts, .eight)
+        )
 
-        let controlBid = service.makeBid(
+        let controlBid = fixture.makeBid(
             hand: controlHand,
             cardsInRound: 8,
             trump: nil,
             forbiddenBid: nil
         )
-        let flatBid = service.makeBid(
+        let flatBid = fixture.makeBid(
             hand: flatHand,
             cardsInRound: 8,
             trump: nil,
@@ -163,9 +163,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Игрок на первом месте с отрывом 250+ очков
     /// - Бот возвращает nil (отказывается от blind)
     func testMakePreDealBlindBid_returnsNilForLeaderWithBigAdvantage() {
-        let service = BotBiddingService()
+        let fixture = BotBiddingServiceTestFixture()
 
-        let blindBid = service.makePreDealBlindBid(
+        let blindBid = fixture.makePreDealBlindBid(
             playerIndex: 0,
             dealerIndex: 1,
             cardsInRound: 9,
@@ -182,9 +182,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Игрок на последнем месте с отставанием 350+ очков
     /// - Бот возвращает допустимую ставку из allowedBlindBids
     func testMakePreDealBlindBid_returnsAllowedBidWhenPlayerFarBehind() {
-        let service = BotBiddingService()
+        let fixture = BotBiddingServiceTestFixture()
 
-        let blindBid = service.makePreDealBlindBid(
+        let blindBid = fixture.makePreDealBlindBid(
             playerIndex: 3,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -205,9 +205,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Отрыв от следующего игрока 330 очков (безопасный gap)
     /// - Бот возвращает nil (консервативная стратегия)
     func testMakePreDealBlindBid_secondPlaceWithSafeGap_avoidsBlindToProtectPosition() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let blindBid = service.makePreDealBlindBid(
+        let blindBid = fixture.makePreDealBlindBid(
             playerIndex: 1,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -225,9 +225,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Отрыв от следующего игрока 150 очков (не безопасный gap)
     /// - Бот возвращает non-nil blind bid
     func testMakePreDealBlindBid_secondPlaceWithoutSafeGap_canStillChooseCatchUpBlind() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let blindBid = service.makePreDealBlindBid(
+        let blindBid = fixture.makePreDealBlindBid(
             playerIndex: 1,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -244,9 +244,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Не-дилер делает blind bid при отставании 210 очков
     /// - Дилер отказывается от blind bid в той же ситуации
     func testMakePreDealBlindBid_inSameCatchUpScenario_dealerIsMoreConservativeThanNonDealer() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let nonDealerBlindBid = service.makePreDealBlindBid(
+        let nonDealerBlindBid = fixture.makePreDealBlindBid(
             playerIndex: 1,
             dealerIndex: 0,
             cardsInRound: 4,
@@ -254,7 +254,7 @@ final class BotBiddingServiceTests: XCTestCase {
             canChooseBlind: true,
             totalScores: [1210, 1000, 980, 960] // behind leader: 210, safe gap отсутствует
         )
-        let dealerBlindBid = service.makePreDealBlindBid(
+        let dealerBlindBid = fixture.makePreDealBlindBid(
             playerIndex: 1,
             dealerIndex: 1,
             cardsInRound: 4,
@@ -272,9 +272,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Отставание 150 очков (catch-up зона)
     /// - Возвращаемая ставка ≤ 4 (консервативный bid)
     func testMakePreDealBlindBid_whenSlightlyBehind_usesLowerCatchUpBid() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let blindBid = service.makePreDealBlindBid(
+        let blindBid = fixture.makePreDealBlindBid(
             playerIndex: 2,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -295,9 +295,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - desperateBid при отставании 350 очков
     /// - desperateBid > catchUpBid
     func testMakePreDealBlindBid_whenGapGrows_bidAlsoGrows() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let catchUpBid = service.makePreDealBlindBid(
+        let catchUpBid = fixture.makePreDealBlindBid(
             playerIndex: 2,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -305,7 +305,7 @@ final class BotBiddingServiceTests: XCTestCase {
             canChooseBlind: true,
             totalScores: [1000, 980, 850, 840] // отставание: 150
         )
-        let desperateBid = service.makePreDealBlindBid(
+        let desperateBid = fixture.makePreDealBlindBid(
             playerIndex: 2,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -327,21 +327,21 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - forbiddenAdjusted ставка с запретом baseline
     /// - Разница между ставками ≤ 1
     func testMakeBid_whenBestBidForbidden_selectsClosestUtilityAlternative() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
-        let hand: [Card] = [
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
+        let hand = BotTestCards.hand(
             .joker,
-            .regular(suit: .hearts, rank: .ace),
-            .regular(suit: .hearts, rank: .king),
-            .regular(suit: .clubs, rank: .queen)
-        ]
+            BotTestCards.card(.hearts, .ace),
+            BotTestCards.card(.hearts, .king),
+            BotTestCards.card(.clubs, .queen)
+        )
 
-        let baseline = service.makeBid(
+        let baseline = fixture.makeBid(
             hand: hand,
             cardsInRound: 4,
             trump: .hearts,
             forbiddenBid: nil
         )
-        let forbiddenAdjusted = service.makeBid(
+        let forbiddenAdjusted = fixture.makeBid(
             hand: hand,
             cardsInRound: 4,
             trump: .hearts,
@@ -357,9 +357,9 @@ final class BotBiddingServiceTests: XCTestCase {
     /// - Одинаковые входы дают одинаковые результаты
     /// - Первый и второй запуск возвращают одно значение
     func testMakePreDealBlindBid_isDeterministicForSameInputsWithMonteCarloLayer() {
-        let service = BotBiddingService(tuning: BotTuning(difficulty: .hard))
+        let fixture = BotBiddingServiceTestFixture(difficulty: .hard)
 
-        let first = service.makePreDealBlindBid(
+        let first = fixture.makePreDealBlindBid(
             playerIndex: 3,
             dealerIndex: 0,
             cardsInRound: 9,
@@ -367,7 +367,7 @@ final class BotBiddingServiceTests: XCTestCase {
             canChooseBlind: true,
             totalScores: [1200, 1100, 980, 700]
         )
-        let second = service.makePreDealBlindBid(
+        let second = fixture.makePreDealBlindBid(
             playerIndex: 3,
             dealerIndex: 0,
             cardsInRound: 9,

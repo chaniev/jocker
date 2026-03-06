@@ -383,14 +383,20 @@ Jocker/Jocker/
 Jocker/JockerTests/
 ├── AGENTS.md
 ├── Bot/
+│   ├── BotBiddingServiceTestFixture.swift
 │   ├── BotBiddingServiceTests.swift
 │   ├── BotBlindBidPolicyTestFixture.swift
 │   ├── BotBlindBidPolicyTests.swift
 │   ├── BotHandStrengthModelTests.swift
 │   ├── HandFeatureExtractorTests.swift
+│   ├── BotMatchContextBuilderTestFixture.swift
 │   ├── BotMatchContextBuilderTests.swift
+│   ├── BotMatchContextTestBuilder.swift
 │   ├── BotOpponentModelTests.swift
 │   ├── BotRankNormalizationTests.swift
+│   ├── BotTestCards.swift
+│   ├── BotTrickNodeBuilder.swift
+│   ├── BotTurnCandidateEvaluatorServiceTestFixture.swift
 │   ├── BotTurnCandidateEvaluatorServiceTests.swift
 │   ├── BotTurnCandidateRankingServiceTests.swift
 │   ├── BotTurnCandidateRankingServiceTestFixture.swift
@@ -400,10 +406,12 @@ Jocker/JockerTests/
 │   ├── BotTurnCandidateRankingServiceTests_PhaseThreat.swift
 │   ├── BotTurnCandidateRankingServiceTests_PremiumPenalty.swift
 │   ├── BotTurnCardHeuristicsServiceTests.swift
+│   ├── BotTurnDecisionContextBuilder.swift
 │   ├── BotSelfPlayEvolutionEngineTests.swift
 │   ├── BotTrumpSelectionServiceTests.swift
 │   ├── BotTuningTests.swift
 │   ├── BotTurnRoundProjectionServiceTests.swift
+│   ├── BotTurnStrategyServiceTestFixture.swift
 │   └── BotTurnStrategyServiceTests.swift
 ├── Models/
 │   ├── CardModelTests.swift
@@ -468,6 +476,7 @@ Jocker/JockerUITests/
 - Domain and state models are grouped in `Jocker/Jocker/Models/Bot/`, `Jocker/Jocker/Models/Cards/`, `Jocker/Jocker/Models/Gameplay/`, `Jocker/Jocker/Models/History/`, `Jocker/Jocker/Models/Joker/`, `Jocker/Jocker/Models/Players/`, and `Jocker/Jocker/Models/Statistics/`.
 - Scoring logic is placed in `Jocker/Jocker/Scoring/`.
 - UIKit controllers and views are grouped by flow in `Jocker/Jocker/ViewControllers/Bidding/`, `Jocker/Jocker/ViewControllers/GameFlow/`, `Jocker/Jocker/ViewControllers/Results/`, and `Jocker/Jocker/ViewControllers/Statistics/`.
+- Shared AI test builders and service fixtures live in `Jocker/JockerTests/Bot/` next to the bot service regression suites they support.
 - Unit tests are grouped by feature under `Jocker/JockerTests/` subfolders.
 - Xcode Project Navigator groups under `Models/`, `Game/Services/`, `ViewControllers/`, and `JockerTests/` should mirror these filesystem subfolders 1:1.
 - Shared core primitives are placed in `Jocker/Jocker/Core/`.
