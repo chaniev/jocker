@@ -72,7 +72,13 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`: pure builder mapping `GameState` + `ScoreManager` to `BotMatchContext` (premium snapshot + opponent model), keeping `GameScene` UI-focused.
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that resolves legal cards, round context, and fallback move selection.
-- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`: runtime evaluator loop for bot turns (candidate enumeration, heuristic scoring, round projections, and best-move selection).
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`: runtime bot-turn evaluator facade that enumerates candidates, builds ranking context, delegates rollout/endgame/simulation work to extracted helpers, and chooses the final best move.
+- `Jocker/Jocker/Game/Services/AI/BotTurnBeliefStateBuilder.swift`: isolated belief-state inference helper for bot turns (`BotBeliefState.infer` plumbing from round/trick snapshots).
+- `Jocker/Jocker/Game/Services/AI/BotTurnOpponentOrderResolver.swift`: seat/order helper for runtime AI (remaining-opponent order, normalized player indices, lead-suit resolution, simulation seat context, and opponent-intention modeling).
+- `Jocker/Jocker/Game/Services/AI/BotTurnSamplingService.swift`: deterministic rollout/endgame sampling helper (stable seed builder, RNG, opponent-hand sampling, and shuffle utilities) shared by evaluator subsystems.
+- `Jocker/Jocker/Game/Services/AI/BotTurnSimulationService.swift`: extracted low-level simulation helper for sampled tricks/hands (legal cards, joker decisions, trick-win checks, and card-power ordering).
+- `Jocker/Jocker/Game/Services/AI/BotTurnRolloutService.swift`: rollout scoring helper for top bot-turn candidates (gating, urgency weighting, sampled future-trick simulation, and utility adjustments).
+- `Jocker/Jocker/Game/Services/AI/BotTurnEndgameSolver.swift`: small-hand endgame solver for bot turns (solver gating, sampled round completion, and endgame utility adjustments).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking helper for bot turns (utility calculation and deterministic tie-break policy).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`: low-level runtime card/trick heuristics for bot turns (joker decision variants, threat scoring, unseen-card modeling, and immediate trick-win probability).
 - `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`: runtime round projection helper for bot turns (bid normalization, future trick estimates, expected round score, and remaining-hand projection).
@@ -211,10 +217,16 @@ Jocker/Jocker/
 │       │   ├── HandFeatureExtractor.swift
 │       │   ├── BotHandStrengthModel.swift
 │       │   ├── BotMatchContextBuilder.swift
+│       │   ├── BotTurnBeliefStateBuilder.swift
 │       │   ├── BotTurnCandidateEvaluatorService.swift
 │       │   ├── BotTurnCandidateRankingService.swift
 │       │   ├── BotTurnCardHeuristicsService.swift
+│       │   ├── BotTurnEndgameSolver.swift
+│       │   ├── BotTurnOpponentOrderResolver.swift
+│       │   ├── BotTurnRolloutService.swift
 │       │   ├── BotSelfPlayEvolutionEngine.swift
+│       │   ├── BotTurnSamplingService.swift
+│       │   ├── BotTurnSimulationService.swift
 │       │   ├── BotTuning+SelfPlayEvolution.swift
 │       │   ├── BotTurnRoundProjectionService.swift
 │       │   ├── BotTrumpSelectionService.swift

@@ -164,6 +164,12 @@
 		D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D800022F8017010037CA75 /* BotTurnCardHeuristicsService.swift */; };
 		D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */; };
 		D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */; };
+		C82010012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift */; };
+		C82010022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift */; };
+		C82010032FE200010037CA75 /* BotTurnSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020032FE200010037CA75 /* BotTurnSamplingService.swift */; };
+		C82010042FE200010037CA75 /* BotTurnSimulationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020042FE200010037CA75 /* BotTurnSimulationService.swift */; };
+		C82010052FE200010037CA75 /* BotTurnRolloutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020052FE200010037CA75 /* BotTurnRolloutService.swift */; };
+		C82010062FE200010037CA75 /* BotTurnEndgameSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020062FE200010037CA75 /* BotTurnEndgameSolver.swift */; };
 		D4DB00012F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DB00022F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift */; };
 		D4DC00012F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DC00022F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift */; };
 			D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */; };
@@ -360,6 +366,12 @@
 		D3A000122F7600010037CA75 /* CardColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColor.swift; sourceTree = "<group>"; };
 		D3A000132F7600010037CA75 /* Rank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rank.swift; sourceTree = "<group>"; };
 		D4C100022F8000010037CA75 /* BiddingRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiddingRules.swift; sourceTree = "<group>"; };
+		C82020012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnBeliefStateBuilder.swift; sourceTree = "<group>"; };
+		C82020022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnOpponentOrderResolver.swift; sourceTree = "<group>"; };
+		C82020032FE200010037CA75 /* BotTurnSamplingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnSamplingService.swift; sourceTree = "<group>"; };
+		C82020042FE200010037CA75 /* BotTurnSimulationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnSimulationService.swift; sourceTree = "<group>"; };
+		C82020052FE200010037CA75 /* BotTurnRolloutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnRolloutService.swift; sourceTree = "<group>"; };
+		C82020062FE200010037CA75 /* BotTurnEndgameSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnEndgameSolver.swift; sourceTree = "<group>"; };
 		D4C100042F8000010037CA75 /* PremiumRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumRules.swift; sourceTree = "<group>"; };
 			D4C200022F8001010037CA75 /* BiddingRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiddingRulesTests.swift; sourceTree = "<group>"; };
 			D4C200042F8001010037CA75 /* PremiumRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumRulesTests.swift; sourceTree = "<group>"; };
@@ -713,9 +725,15 @@
 						D4E100022F8021010037CA75 /* HandFeatureExtractor.swift */,
 						F4A100012F9000010037CA75 /* BotHandStrengthModel.swift */,
 						C7F900E350594FD990CEB211 /* BotMatchContextBuilder.swift */,
+						C82020012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift */,
+						C82020022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift */,
 						D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */,
+						C82020052FE200010037CA75 /* BotTurnRolloutService.swift */,
+						C82020062FE200010037CA75 /* BotTurnEndgameSolver.swift */,
 						D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */,
 						D4D800022F8017010037CA75 /* BotTurnCardHeuristicsService.swift */,
+						C82020032FE200010037CA75 /* BotTurnSamplingService.swift */,
+						C82020042FE200010037CA75 /* BotTurnSimulationService.swift */,
 						D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */,
 						35497B8001334DC0854B97A2 /* BotSelfPlayEvolutionEngine+PublicTypes.swift */,
 					24624D49D8D64612975B72BD /* BotSelfPlayEvolutionEngine+Fitness.swift */,
@@ -1253,15 +1271,21 @@
 				AA0000212F2800010037CA75 /* BotBiddingConstants.swift in Sources */,
 				AA0000312F2800010037CA75 /* BotRankingConstants.swift in Sources */,
 				AA0000412F2800010037CA75 /* BotHeuristicsConstants.swift in Sources */,
-				AA0000512F2800010037CA75 /* BotMatchContextConstants.swift in Sources */,
-				F4A100042F9000010037CA75 /* BotHandStrengthModel.swift in Sources */,
+					AA0000512F2800010037CA75 /* BotMatchContextConstants.swift in Sources */,
+					F4A100042F9000010037CA75 /* BotHandStrengthModel.swift in Sources */,
 					D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */,
 					D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */,
 					E009650331E84562AC4DA317 /* BotMatchContextBuilder.swift in Sources */,
+					C82010012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift in Sources */,
+					C82010022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift in Sources */,
 					D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */,
+					C82010052FE200010037CA75 /* BotTurnRolloutService.swift in Sources */,
+					C82010062FE200010037CA75 /* BotTurnEndgameSolver.swift in Sources */,
 					D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,
 					7E141F4B2F4E2F7E00941285 /* ScoreTableLayout.swift in Sources */,
 						D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */,
+					C82010032FE200010037CA75 /* BotTurnSamplingService.swift in Sources */,
+					C82010042FE200010037CA75 /* BotTurnSimulationService.swift in Sources */,
 					D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
 					C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
 					C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
@@ -1427,9 +1451,15 @@
 				D4E200012F8022010037CA75 /* BotRankNormalization.swift in Sources */,
 				D4E100012F8021010037CA75 /* HandFeatureExtractor.swift in Sources */,
 				E009650331E84562AC4DA317 /* BotMatchContextBuilder.swift in Sources */,
+				C82010012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift in Sources */,
+				C82010022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift in Sources */,
 				D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */,
+				C82010052FE200010037CA75 /* BotTurnRolloutService.swift in Sources */,
+				C82010062FE200010037CA75 /* BotTurnEndgameSolver.swift in Sources */,
 				D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,
 				D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */,
+				C82010032FE200010037CA75 /* BotTurnSamplingService.swift in Sources */,
+				C82010042FE200010037CA75 /* BotTurnSimulationService.swift in Sources */,
 				D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
 				C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
 				C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,

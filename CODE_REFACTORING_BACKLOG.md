@@ -133,6 +133,14 @@
 
 ### P3. Разделить `BotTurnCandidateEvaluatorService` на подсистемы
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- `BotTurnCandidateEvaluatorService` оставлен тонким фасадом поверх подсистем `BotTurnBeliefStateBuilder`, `BotTurnOpponentOrderResolver`, `BotTurnRolloutService`, `BotTurnEndgameSolver`, `BotTurnSimulationService` и `BotTurnSamplingService`.
+- Широкий `DecisionContext` разрезан на `HandContext`, `TableContext` и `RoundContext`, чтобы rollout/endgame/belief-state зависимости читались как отдельные payloads, а не как один монолитный bag of fields.
+- Belief-state / opponent-order / simulation / sampling / rollout / endgame код физически вынесен из evaluator-монолита в отдельные source files и подключён в app + `JockerSelfPlayTools`.
+- Sampling seeds переведены со стандартного `Hasher` на локальный стабильный deterministic seed builder, чтобы rollout/endgame решения не плавали между процессами и regression tests были воспроизводимыми.
+
 **Цель:** превратить evaluator из монолита в набор узких сервисов с сохранением текущего публичного фасада.
 
 **Что видно сейчас**
