@@ -12,6 +12,61 @@ import XCTest
 
 final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
+    func testSimulateGame_fullMatchWithSameSeed_isDeterministic() {
+        let tunings = makeTunings(count: 4)
+
+        let first = BotSelfPlayEvolutionEngine.simulateGame(
+            tuningsBySeat: tunings,
+            rounds: 8,
+            cardsPerRoundRange: 1...9,
+            seed: 20260306,
+            useFullMatchRules: true
+        )
+        let second = BotSelfPlayEvolutionEngine.simulateGame(
+            tuningsBySeat: tunings,
+            rounds: 8,
+            cardsPerRoundRange: 1...9,
+            seed: 20260306,
+            useFullMatchRules: true
+        )
+
+        XCTAssertEqual(first.totalScores, second.totalScores)
+        XCTAssertEqual(first.underbidLosses, second.underbidLosses)
+        XCTAssertEqual(first.blindBidRatesBlock4, second.blindBidRatesBlock4)
+        XCTAssertEqual(first.leftNeighborPremiumAssistRates, second.leftNeighborPremiumAssistRates)
+    }
+
+    func testSimulateGame_legacyModeProducesSeatAlignedMetrics() {
+        let playerCount = 3
+        let outcome = BotSelfPlayEvolutionEngine.simulateGame(
+            tuningsBySeat: makeTunings(count: playerCount),
+            rounds: 4,
+            cardsPerRoundRange: 2...4,
+            seed: 20260307,
+            useFullMatchRules: false
+        )
+
+        XCTAssertEqual(outcome.totalScores.count, playerCount)
+        XCTAssertEqual(outcome.underbidLosses.count, playerCount)
+        XCTAssertEqual(outcome.trumpDensityUnderbidLosses.count, playerCount)
+        XCTAssertEqual(outcome.noTrumpControlUnderbidLosses.count, playerCount)
+        XCTAssertEqual(outcome.premiumAssistLosses.count, playerCount)
+        XCTAssertEqual(outcome.premiumPenaltyTargetLosses.count, playerCount)
+        XCTAssertEqual(outcome.premiumCaptureRates.count, playerCount)
+        XCTAssertEqual(outcome.blindSuccessRates.count, playerCount)
+        XCTAssertEqual(outcome.jokerWishWinRates.count, playerCount)
+        XCTAssertEqual(outcome.earlyJokerSpendRates.count, playerCount)
+        XCTAssertEqual(outcome.penaltyTargetRates.count, playerCount)
+        XCTAssertEqual(outcome.bidAccuracyRates.count, playerCount)
+        XCTAssertEqual(outcome.overbidRates.count, playerCount)
+        XCTAssertEqual(outcome.blindBidRatesBlock4.count, playerCount)
+        XCTAssertEqual(outcome.averageBlindBidSizes.count, playerCount)
+        XCTAssertEqual(outcome.blindBidWhenBehindRates.count, playerCount)
+        XCTAssertEqual(outcome.blindBidWhenLeadingRates.count, playerCount)
+        XCTAssertEqual(outcome.earlyLeadWishJokerRates.count, playerCount)
+        XCTAssertEqual(outcome.leftNeighborPremiumAssistRates.count, playerCount)
+    }
+
     func testDebugBiddingOrder_startsAfterDealerAndWraps() {
         let order = BotSelfPlayEvolutionEngine.debugBiddingOrder(
             dealer: 2,
@@ -104,8 +159,12 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     private func makeBiddingServices(count: Int) -> [BotBiddingService] {
+        return makeTunings(count: count).map { BotBiddingService(tuning: $0) }
+    }
+
+    private func makeTunings(count: Int) -> [BotTuning] {
         return (0..<count).map { _ in
-            BotBiddingService(tuning: BotTuning(difficulty: .hard))
+            BotTuning(difficulty: .hard)
         }
     }
 }

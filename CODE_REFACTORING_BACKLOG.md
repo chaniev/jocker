@@ -358,6 +358,14 @@
 
 ### P9. Дочистить devtools/self-play simulation
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- `BotSelfPlayEvolutionEngine+Simulation.swift` сокращён до shared types, debug API и верхнего `simulateGame`, а основной self-play runtime вынесен в узкие simulation extensions.
+- Метрики и premium/blind exposure tracking вынесены в `BotSelfPlayEvolutionEngine+SimulationMetrics.swift`; pre-deal blind/bidding orchestration в `BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift`.
+- Round-level penalties/play loop/scored-round assembly вынесены в `BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift`, а legacy/full-match dealing + orchestration в `BotSelfPlayEvolutionEngine+SimulationOrchestration.swift`.
+- Для self-play слоя добавлены дополнительные regression checks в `BotSelfPlayEvolutionEngineTests`: детерминизм full-match simulation и seat-aligned outcome metrics.
+
 **Цель:** уменьшить стоимость изменений в training/devtools коде без приоритета выше runtime.
 
 **Что изменить**

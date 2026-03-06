@@ -139,6 +139,10 @@
 			1D820245E0EB494587E51C4A /* BotSelfPlayEvolutionEngine+Genome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */; };
 			55DBCC2AF3CB4CB5A8691B99 /* BotSelfPlayEvolutionEngine+Evolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */; };
 			CF3657CE446742EDB89D493C /* BotSelfPlayEvolutionEngine+Simulation.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */; };
+			C86010012FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C86020012FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationMetrics.swift */; };
+			C86010022FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C86020022FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift */; };
+			C86010032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C86020032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift */; };
+			C86010042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C86020042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift */; };
 			D4C400032F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */; };
 			D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */; };
 			D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */; };
@@ -394,6 +398,10 @@
 			3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Genome.swift"; sourceTree = "<group>"; };
 			44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Evolution.swift"; sourceTree = "<group>"; };
 			EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+Simulation.swift"; sourceTree = "<group>"; };
+			C86020012FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+SimulationMetrics.swift"; sourceTree = "<group>"; };
+			C86020022FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift"; sourceTree = "<group>"; };
+			C86020032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift"; sourceTree = "<group>"; };
+			C86020042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotSelfPlayEvolutionEngine+SimulationOrchestration.swift"; sourceTree = "<group>"; };
 			D4C400042F8003010037CA75 /* BotSelfPlayEvolutionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotSelfPlayEvolutionEngineTests.swift; sourceTree = "<group>"; };
 			D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionBlockers.swift; sourceTree = "<group>"; };
 			D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneInteractionState.swift; sourceTree = "<group>"; };
@@ -765,12 +773,16 @@
 						D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */,
 						35497B8001334DC0854B97A2 /* BotSelfPlayEvolutionEngine+PublicTypes.swift */,
 					24624D49D8D64612975B72BD /* BotSelfPlayEvolutionEngine+Fitness.swift */,
-					3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */,
-					44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */,
-					EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */,
-					D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */,
-					D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */,
-					C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
+						3816F24ED274455A9C27941D /* BotSelfPlayEvolutionEngine+Genome.swift */,
+						44033D2C144549D39F01F479 /* BotSelfPlayEvolutionEngine+Evolution.swift */,
+						EA99B92647554B5590EDBD18 /* BotSelfPlayEvolutionEngine+Simulation.swift */,
+						C86020012FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationMetrics.swift */,
+						C86020022FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift */,
+						C86020032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift */,
+						C86020042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift */,
+						D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */,
+						D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */,
+						C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
 					C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
 				);
 				path = AI;
@@ -1517,6 +1529,10 @@
 				1D820245E0EB494587E51C4A /* BotSelfPlayEvolutionEngine+Genome.swift in Sources */,
 				55DBCC2AF3CB4CB5A8691B99 /* BotSelfPlayEvolutionEngine+Evolution.swift in Sources */,
 				CF3657CE446742EDB89D493C /* BotSelfPlayEvolutionEngine+Simulation.swift in Sources */,
+				C86010012FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationMetrics.swift in Sources */,
+				C86010022FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift in Sources */,
+				C86010032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift in Sources */,
+				C86010042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift in Sources */,
 				D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
