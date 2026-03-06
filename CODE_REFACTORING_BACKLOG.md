@@ -220,6 +220,14 @@
 
 ### P5. Разделить `BotTurnCandidateRankingService` на utility calculators
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- `BotTurnCandidateRankingService` оставлен thin facade: в нём остались только context-модели, DI helper-ов, thin `moveUtility(...)` orchestration и делегирование tie-break в отдельную policy.
+- Block/premium/opponent/joker ветви ranking вынесены в `BlockPlanResolver`, `PremiumPreserveAdjuster`, `PenaltyAvoidAdjuster`, `PremiumDenyAdjuster`, `OpponentPressureAdjuster` и `JokerDeclarationAdjuster`.
+- Финальная композиция utility вынесена в `MoveUtilityComposer`, а deterministic candidate comparison изолирован в `CandidateTieBreakPolicy`.
+- Новые ranking helper-ы подключены в app target и `JockerSelfPlayTools`, а структура зафиксирована в `FOLDER_STRUCTURE_SPEC.md`.
+
 **Цель:** разнести policy-ветви ranking-сервиса по отдельным сущностям.
 
 **Почему это отдельно от P4**

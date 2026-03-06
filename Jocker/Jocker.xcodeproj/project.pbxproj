@@ -161,6 +161,14 @@
 		D4D800012F8017010037CA75 /* BotTurnCardHeuristicsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D800022F8017010037CA75 /* BotTurnCardHeuristicsService.swift */; };
 		D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */; };
 		D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */; };
+		C83010012FF500010037CA75 /* BlockPlanResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020012FF500010037CA75 /* BlockPlanResolver.swift */; };
+		C83010022FF500010037CA75 /* CandidateTieBreakPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020022FF500010037CA75 /* CandidateTieBreakPolicy.swift */; };
+		C83010032FF500010037CA75 /* JokerDeclarationAdjuster.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020032FF500010037CA75 /* JokerDeclarationAdjuster.swift */; };
+		C83010042FF500010037CA75 /* MoveUtilityComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020042FF500010037CA75 /* MoveUtilityComposer.swift */; };
+		C83010052FF500010037CA75 /* OpponentPressureAdjuster.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020052FF500010037CA75 /* OpponentPressureAdjuster.swift */; };
+		C83010062FF500010037CA75 /* PenaltyAvoidAdjuster.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020062FF500010037CA75 /* PenaltyAvoidAdjuster.swift */; };
+		C83010072FF500010037CA75 /* PremiumDenyAdjuster.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020072FF500010037CA75 /* PremiumDenyAdjuster.swift */; };
+		C83010082FF500010037CA75 /* PremiumPreserveAdjuster.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83020082FF500010037CA75 /* PremiumPreserveAdjuster.swift */; };
 		C82010012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift */; };
 		C82010022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift */; };
 		C82010032FE200010037CA75 /* BotTurnSamplingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82020032FE200010037CA75 /* BotTurnSamplingService.swift */; };
@@ -403,6 +411,14 @@
 		D4D800022F8017010037CA75 /* BotTurnCardHeuristicsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCardHeuristicsService.swift; sourceTree = "<group>"; };
 		D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnRoundProjectionService.swift; sourceTree = "<group>"; };
 		D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateRankingService.swift; sourceTree = "<group>"; };
+		C83020012FF500010037CA75 /* BlockPlanResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockPlanResolver.swift; sourceTree = "<group>"; };
+		C83020022FF500010037CA75 /* CandidateTieBreakPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTieBreakPolicy.swift; sourceTree = "<group>"; };
+		C83020032FF500010037CA75 /* JokerDeclarationAdjuster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JokerDeclarationAdjuster.swift; sourceTree = "<group>"; };
+		C83020042FF500010037CA75 /* MoveUtilityComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveUtilityComposer.swift; sourceTree = "<group>"; };
+		C83020052FF500010037CA75 /* OpponentPressureAdjuster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpponentPressureAdjuster.swift; sourceTree = "<group>"; };
+		C83020062FF500010037CA75 /* PenaltyAvoidAdjuster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PenaltyAvoidAdjuster.swift; sourceTree = "<group>"; };
+		C83020072FF500010037CA75 /* PremiumDenyAdjuster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumDenyAdjuster.swift; sourceTree = "<group>"; };
+		C83020082FF500010037CA75 /* PremiumPreserveAdjuster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumPreserveAdjuster.swift; sourceTree = "<group>"; };
 		D4DB00022F801A010037CA75 /* BotTurnCardHeuristicsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCardHeuristicsServiceTests.swift; sourceTree = "<group>"; };
 		D4DC00022F801B010037CA75 /* BotTurnRoundProjectionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnRoundProjectionServiceTests.swift; sourceTree = "<group>"; };
 			D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnCandidateEvaluatorService.swift; sourceTree = "<group>"; };
@@ -719,6 +735,14 @@
 						C82020012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift */,
 						C82020022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift */,
 						D4DD00022F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift */,
+						C83020012FF500010037CA75 /* BlockPlanResolver.swift */,
+						C83020052FF500010037CA75 /* OpponentPressureAdjuster.swift */,
+						C83020082FF500010037CA75 /* PremiumPreserveAdjuster.swift */,
+						C83020062FF500010037CA75 /* PenaltyAvoidAdjuster.swift */,
+						C83020072FF500010037CA75 /* PremiumDenyAdjuster.swift */,
+						C83020032FF500010037CA75 /* JokerDeclarationAdjuster.swift */,
+						C83020042FF500010037CA75 /* MoveUtilityComposer.swift */,
+						C83020022FF500010037CA75 /* CandidateTieBreakPolicy.swift */,
 						C82020052FE200010037CA75 /* BotTurnRolloutService.swift */,
 						C82020062FE200010037CA75 /* BotTurnEndgameSolver.swift */,
 						D4DA00022F8019010037CA75 /* BotTurnCandidateRankingService.swift */,
@@ -1267,6 +1291,14 @@
 					C82010012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift in Sources */,
 					C82010022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift in Sources */,
 					D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */,
+					C83010012FF500010037CA75 /* BlockPlanResolver.swift in Sources */,
+					C83010052FF500010037CA75 /* OpponentPressureAdjuster.swift in Sources */,
+					C83010082FF500010037CA75 /* PremiumPreserveAdjuster.swift in Sources */,
+					C83010062FF500010037CA75 /* PenaltyAvoidAdjuster.swift in Sources */,
+					C83010072FF500010037CA75 /* PremiumDenyAdjuster.swift in Sources */,
+					C83010032FF500010037CA75 /* JokerDeclarationAdjuster.swift in Sources */,
+					C83010042FF500010037CA75 /* MoveUtilityComposer.swift in Sources */,
+					C83010022FF500010037CA75 /* CandidateTieBreakPolicy.swift in Sources */,
 					C82010052FE200010037CA75 /* BotTurnRolloutService.swift in Sources */,
 					C82010062FE200010037CA75 /* BotTurnEndgameSolver.swift in Sources */,
 					D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,
@@ -1439,6 +1471,14 @@
 				C82010012FE200010037CA75 /* BotTurnBeliefStateBuilder.swift in Sources */,
 				C82010022FE200010037CA75 /* BotTurnOpponentOrderResolver.swift in Sources */,
 				D4DD00012F801C010037CA75 /* BotTurnCandidateEvaluatorService.swift in Sources */,
+				C83010012FF500010037CA75 /* BlockPlanResolver.swift in Sources */,
+				C83010052FF500010037CA75 /* OpponentPressureAdjuster.swift in Sources */,
+				C83010082FF500010037CA75 /* PremiumPreserveAdjuster.swift in Sources */,
+				C83010062FF500010037CA75 /* PenaltyAvoidAdjuster.swift in Sources */,
+				C83010072FF500010037CA75 /* PremiumDenyAdjuster.swift in Sources */,
+				C83010032FF500010037CA75 /* JokerDeclarationAdjuster.swift in Sources */,
+				C83010042FF500010037CA75 /* MoveUtilityComposer.swift in Sources */,
+				C83010022FF500010037CA75 /* CandidateTieBreakPolicy.swift in Sources */,
 				C82010052FE200010037CA75 /* BotTurnRolloutService.swift in Sources */,
 				C82010062FE200010037CA75 /* BotTurnEndgameSolver.swift in Sources */,
 				D4DA00012F8019010037CA75 /* BotTurnCandidateRankingService.swift in Sources */,

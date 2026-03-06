@@ -79,7 +79,15 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/AI/BotTurnSimulationService.swift`: extracted low-level simulation helper for sampled tricks/hands (legal cards, joker decisions, trick-win checks, and card-power ordering).
 - `Jocker/Jocker/Game/Services/AI/BotTurnRolloutService.swift`: rollout scoring helper for top bot-turn candidates (gating, urgency weighting, sampled future-trick simulation, and utility adjustments).
 - `Jocker/Jocker/Game/Services/AI/BotTurnEndgameSolver.swift`: small-hand endgame solver for bot turns (solver gating, sampled round completion, and endgame utility adjustments).
-- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking helper for bot turns (utility calculation and deterministic tie-break policy).
+- `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking facade for bot turns that gathers utility adjustments from extracted ranking helpers and delegates deterministic tie-break comparison to a dedicated policy object.
+- `Jocker/Jocker/Game/Services/AI/BlockPlanResolver.swift`: block-level score-state/risk-budget helper for ranking (`match catch-up`, urgency, premium-preserve bias, and deny-opponent bias).
+- `Jocker/Jocker/Game/Services/AI/OpponentPressureAdjuster.swift`: opponent-style/intention pressure helper for ranking (premium-deny multipliers, blind contest pressure, and bid/intention utility adjustments).
+- `Jocker/Jocker/Game/Services/AI/PremiumPreserveAdjuster.swift`: premium/zero-premium preservation utility helper for ranking decisions.
+- `Jocker/Jocker/Game/Services/AI/PenaltyAvoidAdjuster.swift`: penalty-risk utility helper that deforms ranking away from score lines threatening premium penalties.
+- `Jocker/Jocker/Game/Services/AI/PremiumDenyAdjuster.swift`: anti-premium utility helper that biases ranking against preserving opponents' premium trajectories.
+- `Jocker/Jocker/Game/Services/AI/JokerDeclarationAdjuster.swift`: lead face-up joker declaration utility helper, including goal-oriented declaration shaping and early `wish` penalty.
+- `Jocker/Jocker/Game/Services/AI/MoveUtilityComposer.swift`: final ranking utility composer that merges tactical/risk/opponent/joker components into a stabilized utility score.
+- `Jocker/Jocker/Game/Services/AI/CandidateTieBreakPolicy.swift`: isolated deterministic tie-break policy for equal/near-equal ranked move candidates.
 - `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`: low-level runtime card/trick heuristics for bot turns (joker decision variants, threat scoring, unseen-card modeling, and immediate trick-win probability).
 - `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`: runtime round projection helper for bot turns (bid normalization, future trick estimates, expected round score, and remaining-hand projection).
 - `Jocker/Jocker/Game/Services/AI/BotTuning+SelfPlayEvolution.swift`: thin `BotTuning` adapter over self-play evolution/head-to-head APIs (typealiases + forwarding methods), compiled in `JockerSelfPlayTools` (not in runtime app target).
@@ -220,6 +228,14 @@ Jocker/Jocker/
 │       │   ├── BotMatchContextBuilder.swift
 │       │   ├── BotTurnBeliefStateBuilder.swift
 │       │   ├── BotTurnCandidateEvaluatorService.swift
+│       │   ├── BlockPlanResolver.swift
+│       │   ├── OpponentPressureAdjuster.swift
+│       │   ├── PremiumPreserveAdjuster.swift
+│       │   ├── PenaltyAvoidAdjuster.swift
+│       │   ├── PremiumDenyAdjuster.swift
+│       │   ├── JokerDeclarationAdjuster.swift
+│       │   ├── MoveUtilityComposer.swift
+│       │   ├── CandidateTieBreakPolicy.swift
 │       │   ├── BotTurnCandidateRankingService.swift
 │       │   ├── BotTurnCardHeuristicsService.swift
 │       │   ├── BotTurnEndgameSolver.swift
