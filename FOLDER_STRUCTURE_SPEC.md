@@ -51,17 +51,23 @@ This document is the source of truth for repository structure and file placement
 
 ## Key File Responsibilities
 
-- `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, top-level touch routing, and runtime-only state orchestration).
+- `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, top-level touch routing, and orchestration over extracted scene session/presentation/persistence helpers).
 - `Jocker/Jocker/Game/Scenes/GameSceneInputConfiguration.swift`: explicit external setup configuration for `GameScene` (player count/names/control modes/bot difficulty settings) applied before scene presentation.
+- `Jocker/Jocker/Game/Scenes/GameSceneLayoutResolver.swift`: pure geometry helper for `GameScene` (player seats, table-centered controls, bid-info sizing, trump/joker overlays, and first-dealer announcement layout).
+- `Jocker/Jocker/Game/Scenes/GameSceneNodeFactory.swift`: small SpriteKit node factory for `GameScene` reusable node setup (poker table and primary action buttons) so construction details do not live inline in scene orchestration.
+- `Jocker/Jocker/Game/Scenes/GameSceneSessionState.swift`: transient scene-owned runtime/session state (pending bids/blind selections, result-presentation flags, export markers, and did-deal markers) separated from domain game state.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionBlockers.swift`: `OptionSet` for centralized interaction-blocking flags used by `GameScene` flow and modal gating.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionState.swift`: explicit high-level interaction state (primary flow + pending modal) derived from blockers, used for safer `GameScene` flow-state reasoning and conflict assertions.
 - `Jocker/Jocker/Game/Scenes/GameSceneInteractionTransitionPolicy.swift`: pure blocker transition policy for setting/clearing high-level flow and pending-modal states while preserving unrelated blocker groups.
 - `Jocker/Jocker/Game/Scenes/GameScene+DealingFlow.swift`: dealing pipeline for each round (deck reset/shuffle, pre-deal blind step, staged dealing, and dealer-left trump choice stage).
 - `Jocker/Jocker/Game/Scenes/GameScene+BiddingFlow.swift`: bidding pipeline (bidding order, human/bot bid progression, dealer forbidden-bid rule, and bidding-to-playing transition).
 - `Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift`: trick-playing pipeline (tap hit-testing, bot autoplay scheduling, card placement, trick resolution, and trick-win registration).
-- `Jocker/Jocker/Game/Scenes/GameScene+ModalFlow.swift`: unified overlay-modal entrypoints and callbacks for trump selection, bid/blind input, and joker play-mode decision fallback.
+- `Jocker/Jocker/Game/Scenes/GameScene+ModalFlow.swift`: unified overlay-modal entrypoints and callbacks for trump selection, bid/blind input, joker play-mode decision fallback, and delegation into scene presentation/persistence coordinators.
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Coordinator/GameEnvironment.swift`: dependency container for `GameScene` infrastructure/services (coordinator, stores/export, and bot service factories), enabling explicit DI at scene creation.
+- `Jocker/Jocker/Game/Coordinator/GameSceneModalPresenter.swift`: UIKit modal presenter/navigation helper for `GameScene`, encapsulating root/top controller traversal and dismiss-to-start-screen behavior outside scene logic.
+- `Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift`: post-game persistence/export coordinator for `GameScene`, applying statistics saving and deal-history export rules against extracted session state.
+- `Jocker/Jocker/Game/Coordinator/DealHistoryPresentationCoordinator.swift`: presents deal-history details or a missing-history alert from score-table navigation without embedding UIKit routing into `GameScene`.
 - `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and score-manager recording via shared round-result snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
 - `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`: pure builder mapping `GameState` + `ScoreManager` to `BotMatchContext` (premium snapshot + opponent model), keeping `GameScene` UI-focused.
@@ -160,7 +166,10 @@ Jocker/Jocker/
 ├── Game/
 │   ├── Coordinator/
 │   │   ├── GameSceneCoordinator.swift
-│   │   └── GameEnvironment.swift
+│   │   ├── GameEnvironment.swift
+│   │   ├── GameSceneModalPresenter.swift
+│   │   ├── GameResultsPersistenceCoordinator.swift
+│   │   └── DealHistoryPresentationCoordinator.swift
 │   ├── Nodes/
 │   │   ├── CardHandNode.swift
 │   │   ├── CardNode.swift
@@ -174,6 +183,9 @@ Jocker/Jocker/
 │   │   ├── CardDemoScene.swift
 │   │   ├── GameScene.swift
 │   │   ├── GameSceneInputConfiguration.swift
+│   │   ├── GameSceneLayoutResolver.swift
+│   │   ├── GameSceneNodeFactory.swift
+│   │   ├── GameSceneSessionState.swift
 │   │   ├── GameSceneInteractionBlockers.swift
 │   │   ├── GameSceneInteractionState.swift
 │   │   ├── GameSceneInteractionTransitionPolicy.swift

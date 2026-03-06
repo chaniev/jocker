@@ -43,6 +43,12 @@
 		A90001092F7700010037CA75 /* DealHistoryExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A90000192F7700010037CA75 /* DealHistoryExportService.swift */; };
 		A900010A2F7700010037CA75 /* DealHistoryExportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */; };
 		C3A100012FD600010037CA75 /* GameRoundResultsBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3A100022FD600010037CA75 /* GameRoundResultsBuilder.swift */; };
+		C3B200012FD700010037CA75 /* GameSceneSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B200022FD700010037CA75 /* GameSceneSessionState.swift */; };
+		C3B200032FD700010037CA75 /* GameSceneModalPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B200042FD700010037CA75 /* GameSceneModalPresenter.swift */; };
+		C3B200052FD700010037CA75 /* GameResultsPersistenceCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B200062FD700010037CA75 /* GameResultsPersistenceCoordinator.swift */; };
+		C3B200072FD700010037CA75 /* DealHistoryPresentationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B200082FD700010037CA75 /* DealHistoryPresentationCoordinator.swift */; };
+		C3B200092FD700010037CA75 /* GameSceneLayoutResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B2000A2FD700010037CA75 /* GameSceneLayoutResolver.swift */; };
+		C3B2000B2FD700010037CA75 /* GameSceneNodeFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B2000C2FD700010037CA75 /* GameSceneNodeFactory.swift */; };
 		AA0000022F2800010037CA75 /* RoundResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000012F2800010037CA75 /* RoundResult.swift */; };
 		AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000032F2800010037CA75 /* ScoreCalculator.swift */; };
 		AA0000112F2800010037CA75 /* ScoringConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000102F2800010037CA75 /* ScoringConstants.swift */; };
@@ -257,6 +263,12 @@
 		A90000192F7700010037CA75 /* DealHistoryExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportService.swift; sourceTree = "<group>"; };
 		A900001A2F7700010037CA75 /* DealHistoryExportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryExportServiceTests.swift; sourceTree = "<group>"; };
 		C3A100022FD600010037CA75 /* GameRoundResultsBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRoundResultsBuilder.swift; sourceTree = "<group>"; };
+		C3B200022FD700010037CA75 /* GameSceneSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneSessionState.swift; sourceTree = "<group>"; };
+		C3B200042FD700010037CA75 /* GameSceneModalPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneModalPresenter.swift; sourceTree = "<group>"; };
+		C3B200062FD700010037CA75 /* GameResultsPersistenceCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsPersistenceCoordinator.swift; sourceTree = "<group>"; };
+		C3B200082FD700010037CA75 /* DealHistoryPresentationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealHistoryPresentationCoordinator.swift; sourceTree = "<group>"; };
+		C3B2000A2FD700010037CA75 /* GameSceneLayoutResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneLayoutResolver.swift; sourceTree = "<group>"; };
+		C3B2000C2FD700010037CA75 /* GameSceneNodeFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSceneNodeFactory.swift; sourceTree = "<group>"; };
 		AA0000012F2800010037CA75 /* RoundResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundResult.swift; sourceTree = "<group>"; };
 		AA0000032F2800010037CA75 /* ScoreCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreCalculator.swift; sourceTree = "<group>"; };
 		AA0000102F2800010037CA75 /* ScoringConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringConstants.swift; sourceTree = "<group>"; };
@@ -846,6 +858,9 @@
 				children = (
 					7E4AC94B2F268D820037CA75 /* GameScene.swift */,
 					95DFAC64BB98415BBEBB2D9C /* GameSceneInputConfiguration.swift */,
+					C3B2000A2FD700010037CA75 /* GameSceneLayoutResolver.swift */,
+					C3B2000C2FD700010037CA75 /* GameSceneNodeFactory.swift */,
+					C3B200022FD700010037CA75 /* GameSceneSessionState.swift */,
 					D4C500022F8004010037CA75 /* GameSceneInteractionBlockers.swift */,
 					D4C500042F8004010037CA75 /* GameSceneInteractionState.swift */,
 					D4C900022F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift */,
@@ -926,6 +941,9 @@
 				children = (
 					C0DE20012F5000010037CA75 /* GameSceneCoordinator.swift */,
 					6B251FD09B7E4CDEBEE61267 /* GameEnvironment.swift */,
+					C3B200042FD700010037CA75 /* GameSceneModalPresenter.swift */,
+					C3B200062FD700010037CA75 /* GameResultsPersistenceCoordinator.swift */,
+					C3B200082FD700010037CA75 /* DealHistoryPresentationCoordinator.swift */,
 				);
 				path = Coordinator;
 				sourceTree = "<group>";
@@ -1106,6 +1124,9 @@
 				files = (
 					7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
 					CD81814B49344F7A8CEC9784 /* GameSceneInputConfiguration.swift in Sources */,
+					C3B200092FD700010037CA75 /* GameSceneLayoutResolver.swift in Sources */,
+					C3B2000B2FD700010037CA75 /* GameSceneNodeFactory.swift in Sources */,
+					C3B200012FD700010037CA75 /* GameSceneSessionState.swift in Sources */,
 					D4C500012F8004010037CA75 /* GameSceneInteractionBlockers.swift in Sources */,
 					D4C500032F8004010037CA75 /* GameSceneInteractionState.swift in Sources */,
 					D4C900012F8008010037CA75 /* GameSceneInteractionTransitionPolicy.swift in Sources */,
@@ -1163,6 +1184,9 @@
 				7E4AC98A2F269A700037CA75 /* CardDemoScene.swift in Sources */,
 				C0DE10012F5000010037CA75 /* GameSceneCoordinator.swift in Sources */,
 				2D4CDAF8C5ED4354A7FA95D4 /* GameEnvironment.swift in Sources */,
+				C3B200032FD700010037CA75 /* GameSceneModalPresenter.swift in Sources */,
+				C3B200052FD700010037CA75 /* GameResultsPersistenceCoordinator.swift in Sources */,
+				C3B200072FD700010037CA75 /* DealHistoryPresentationCoordinator.swift in Sources */,
 				C0DE10042F5000010037CA75 /* GameAnimationService.swift in Sources */,
 				C0DE10052F5300010037CA75 /* BotBiddingService.swift in Sources */,
 				AA0000212F2800010037CA75 /* BotBiddingConstants.swift in Sources */,

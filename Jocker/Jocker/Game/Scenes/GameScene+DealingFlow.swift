@@ -54,8 +54,8 @@ extension GameScene {
         clearJokerLeadInfo()
         currentTrump = nil
 
-        pendingBids = Array(repeating: 0, count: playerCount)
-        pendingBlindSelections = Array(repeating: false, count: playerCount)
+        sessionState.pendingBids = Array(repeating: 0, count: playerCount)
+        sessionState.pendingBlindSelections = Array(repeating: false, count: playerCount)
 
         let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
         dealHistoryStore.startDeal(
@@ -165,10 +165,10 @@ extension GameScene {
         }
 
         let playerIndex = order[step]
-        let allowedBlindBids = gameState.allowedBids(forPlayer: playerIndex, bids: pendingBids)
+        let allowedBlindBids = gameState.allowedBids(forPlayer: playerIndex, bids: sessionState.pendingBids)
         let canChooseBlind = gameState.canChooseBlindBid(
             forPlayer: playerIndex,
-            blindSelections: pendingBlindSelections
+            blindSelections: sessionState.pendingBlindSelections
         )
 
         let applySelection: (_ isBlind: Bool, _ bid: Int?) -> Void = { [weak self] isBlind, bid in
@@ -183,12 +183,12 @@ extension GameScene {
                 } else {
                     resolvedBlindBid = fallbackBlindBid
                 }
-                self.pendingBlindSelections[playerIndex] = true
-                self.pendingBids[playerIndex] = resolvedBlindBid
+                self.sessionState.pendingBlindSelections[playerIndex] = true
+                self.sessionState.pendingBids[playerIndex] = resolvedBlindBid
                 self.players[playerIndex].setBid(resolvedBlindBid, isBlind: true, animated: true)
             } else {
-                self.pendingBlindSelections[playerIndex] = false
-                self.pendingBids[playerIndex] = 0
+                self.sessionState.pendingBlindSelections[playerIndex] = false
+                self.sessionState.pendingBids[playerIndex] = 0
             }
 
             self.updateGameInfoLabel()

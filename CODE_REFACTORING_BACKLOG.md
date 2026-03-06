@@ -92,6 +92,16 @@
 
 ### P2. Ужать ответственность `GameScene`
 
+**Статус:** выполнено 2026-03-06
+
+**Реализовано**
+- Вынесен `GameSceneSessionState`: pending bids / blind selections, result-presentation flags, export markers и `hasDealtAtLeastOnce` больше не размазаны по `GameScene`.
+- Вынесены `GameSceneLayoutResolver` и `GameSceneNodeFactory`: geometry/setup для player seats, action buttons, bid-info/trump overlays и poker table больше не живут как чистые layout calculations прямо в `GameScene`.
+- `GameScene+ModalFlow.swift` переведён на `GameSceneModalPresenter`, который инкапсулирует overlay presentation, top-controller lookup и dismiss-to-start-screen navigation.
+- Сохранение статистики и deal-history export вынесены в `GameResultsPersistenceCoordinator`.
+- Deal history routing из block results вынесен в `DealHistoryPresentationCoordinator`.
+- `GameScene` остался orchestration shell: flow по-прежнему живёт в scene/extensions, но UIKit traversal и post-game persistence больше не зашиты прямо в scene-level logic.
+
 **Цель:** оставить `GameScene` в роли orchestration shell, а не контейнера для всего runtime сразу.
 
 **Что видно сейчас**

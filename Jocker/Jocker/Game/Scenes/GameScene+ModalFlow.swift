@@ -37,7 +37,7 @@ extension GameScene {
         }
         guard !firstPlayerName.isEmpty else { return }
         let modal = FirstPlayerAnnouncementViewController(firstPlayerName: firstPlayerName)
-        _ = presentOverlayModal(modal)
+        _ = modalPresenter.presentOverlay(modal, from: view)
     }
 
     @discardableResult
@@ -49,11 +49,17 @@ extension GameScene {
             playerSummaries: playerSummaries,
             onClose: { [weak self] in
                 guard let self else { return }
-                self.persistGameStatisticsIfNeeded(playerSummaries: playerSummaries)
-                self.dismissGameViewControllerToStartScreen()
+                self.sessionState = self.gameResultsPersistenceCoordinator.persistGameStatisticsIfNeeded(
+                    sessionState: self.sessionState,
+                    playerSummaries: playerSummaries,
+                    playerCount: self.playerCount,
+                    completedBlocks: self.scoreManager.completedBlocks,
+                    statisticsStore: self.gameStatisticsStore
+                )
+                self.modalPresenter.dismissGameViewControllerToStartScreen(from: self.view)
             }
         )
-        return presentOverlayModal(modal)
+        return modalPresenter.presentOverlay(modal, from: view)
     }
 
     @discardableResult
@@ -78,13 +84,16 @@ extension GameScene {
         )
         modal.onDealSelected = { [weak self, weak modal] selectedBlockIndex, selectedRoundIndex in
             guard let self, let modal else { return }
-            self.presentDealHistoryModal(
+            self.dealHistoryPresentationCoordinator.presentDealHistory(
                 from: modal,
+                dealHistory: self.dealHistory(forBlockIndex: selectedBlockIndex, roundIndex: selectedRoundIndex),
+                playerNames: self.currentPlayerNames,
+                playerControlTypes: self.playerControlTypes,
                 blockIndex: selectedBlockIndex,
                 roundIndex: selectedRoundIndex
             )
         }
-        return presentOverlayModal(modal)
+        return modalPresenter.presentOverlay(modal, from: view)
     }
 
     func requestTrumpChoice(
@@ -310,7 +319,7 @@ extension GameScene {
             }
         )
 
-        if !presentOverlayModal(modal) {
+        if !modalPresenter.presentOverlay(modal, from: view) {
             completion(fallbackDecision)
         }
     }
@@ -329,106 +338,17 @@ extension GameScene {
         }
 
         let modal = makeModal(resolve)
-        if !presentOverlayModal(modal) {
+        if !modalPresenter.presentOverlay(modal, from: view) {
             clearPendingInteractionModal(pendingModal)
             completion(fallbackResult())
         }
     }
 
-    private func topPresentedViewController() -> UIViewController? {
-        guard let view = self.view else { return nil }
-        var topController = view.window?.rootViewController
-
-        while let presented = topController?.presentedViewController {
-            topController = presented
-        }
-
-        return topController
-    }
-
-    @discardableResult
-    private func presentOverlayModal(_ modal: UIViewController) -> Bool {
-        guard let presenter = topPresentedViewController() else { return false }
-        modal.modalPresentationStyle = .overFullScreen
-        modal.modalTransitionStyle = .crossDissolve
-        presenter.present(modal, animated: true)
-        return true
-    }
-
     private var isJokerDecisionModalPresented: Bool {
-        return topPresentedViewController() is JokerModeSelectionViewController
+        return modalPresenter.isTopPresented(JokerModeSelectionViewController.self, from: view)
     }
 
     private var isGameResultsModalPresented: Bool {
-        return topPresentedViewController() is GameResultsViewController
-    }
-
-    private func dismissGameViewControllerToStartScreen() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            guard let rootController = self.view?.window?.rootViewController else { return }
-            var topController = rootController
-            while let presented = topController.presentedViewController {
-                topController = presented
-            }
-
-            if let gameViewController = topController as? GameViewController {
-                gameViewController.dismiss(animated: true)
-                return
-            }
-
-            var currentController: UIViewController? = topController
-            while let controller = currentController {
-                if let gameViewController = controller as? GameViewController {
-                    gameViewController.dismiss(animated: true)
-                    return
-                }
-                currentController = controller.presentingViewController
-            }
-        }
-    }
-
-    private func persistGameStatisticsIfNeeded(playerSummaries: [GameFinalPlayerSummary]) {
-        guard !hasSavedGameStatistics else { return }
-        guard !playerSummaries.isEmpty else { return }
-        guard !scoreManager.completedBlocks.isEmpty else { return }
-
-        markGameStatisticsSaved()
-        gameStatisticsStore.recordCompletedGame(
-            playerCount: playerCount,
-            playerSummaries: playerSummaries,
-            completedBlocks: scoreManager.completedBlocks
-        )
-    }
-
-    private func presentDealHistoryModal(from presenter: UIViewController, blockIndex: Int, roundIndex: Int) {
-        guard let dealHistory = dealHistory(forBlockIndex: blockIndex, roundIndex: roundIndex) else {
-            showMissingDealHistoryAlert(
-                from: presenter,
-                blockIndex: blockIndex,
-                roundIndex: roundIndex
-            )
-            return
-        }
-
-        let historyViewController = DealHistoryViewController(
-            dealHistory: dealHistory,
-            playerNames: currentPlayerNames,
-            playerControlTypes: playerControlTypes
-        )
-        historyViewController.modalPresentationStyle = .fullScreen
-        historyViewController.modalTransitionStyle = .crossDissolve
-        presenter.present(historyViewController, animated: true)
-    }
-
-    private func showMissingDealHistoryAlert(from presenter: UIViewController, blockIndex: Int, roundIndex: Int) {
-        let alert = UIAlertController(
-            title: "История недоступна",
-            message: "Для блока \(blockIndex + 1), раздачи \(roundIndex + 1) ещё нет сохранённых ходов.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "ОК", style: .default))
-        presenter.present(alert, animated: true)
+        return modalPresenter.isTopPresented(GameResultsViewController.self, from: view)
     }
 }

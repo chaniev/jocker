@@ -14,27 +14,7 @@ class GameScene: SKScene {
         static let botTurn = "GameScene.botTurn"
     }
 
-    private enum LayoutMetrics {
-        static let roundBidInfoFontScale: CGFloat = 1.1
-        static let actionButtonSize = CGSize(width: 300, height: 86)
-        static let actionButtonHorizontalInset: CGFloat = 34
-        static let actionButtonBottomInset: CGFloat = 24
-        static let roundBidInfoWidth: CGFloat = 300
-        static let roundBidInfoTopSpacing: CGFloat = 14
-        static let roundBidInfoVerticalPadding: CGFloat = 12
-        static let roundBidInfoTitleHeight: CGFloat = 24 * roundBidInfoFontScale
-        static let roundBidInfoRowHeight: CGFloat = 26 * roundBidInfoFontScale
-        static let roundBidInfoRowSpacing: CGFloat = 6
-        static let roundBidInfoTitleToRowsSpacing: CGFloat = 10
-        static let roundBidInfoTitleFontSize: CGFloat = 21 * roundBidInfoFontScale
-        static let roundBidInfoRowFontSize: CGFloat = 20 * roundBidInfoFontScale
-        static let gameInfoTopInset: CGFloat = 34
-        static let trickCenterYOffset: CGFloat = 20
-        static let trumpIndicatorInset: CGFloat = 116
-        static let jokerLeadInfoSize = CGSize(width: 264, height: 156)
-        static let jokerLeadInfoHorizontalMargin: CGFloat = 18
-        static let jokerLeadInfoTopInset: CGFloat = 22
-    }
+    private typealias LayoutMetrics = GameSceneLayoutResolver.Metrics
 
     private(set) var inputConfiguration = GameSceneInputConfiguration()
     private var hasInitializedGameState = false
@@ -98,6 +78,11 @@ class GameScene: SKScene {
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
     private(set) var environment: GameEnvironment = .live
     private(set) var coordinator: GameSceneCoordinator = GameEnvironment.live.makeCoordinator()
+    var sessionState = GameSceneSessionState()
+    let nodeFactory = GameSceneNodeFactory()
+    let modalPresenter = GameSceneModalPresenter()
+    let gameResultsPersistenceCoordinator = GameResultsPersistenceCoordinator()
+    let dealHistoryPresentationCoordinator = DealHistoryPresentationCoordinator()
     private var botTuningsByDifficulty: [BotDifficulty: BotTuning] = [:]
     private var botBiddingServicesByDifficulty: [BotDifficulty: BotBiddingService] = [:]
     private var botTrumpSelectionServicesByDifficulty: [BotDifficulty: BotTrumpSelectionService] = [:]
@@ -140,17 +125,16 @@ class GameScene: SKScene {
         get { interactionBlockers.contains(.runningTrumpSelectionFlow) }
         set { setInteractionBlocker(.runningTrumpSelectionFlow, isActive: newValue) }
     }
-    var pendingBids: [Int] = []
-    var pendingBlindSelections: [Bool] = []
+    var pendingBids: [Int] { sessionState.pendingBids }
+    var pendingBlindSelections: [Bool] { sessionState.pendingBlindSelections }
     private var firstDealerAnnouncementNode: SKNode?
     private var firstDealerAnnouncementLabel: SKLabelNode?
     private var firstDealerSelectionCardsNode: SKNode?
-    private(set) var hasPresentedGameResultsModal = false
-    private(set) var lastPresentedBlockResultsCount = 0
-    private(set) var hasSavedGameStatistics = false
-    var exportedBlockIndices: Set<Int> = []
-    private(set) var hasExportedFinalGameHistory = false
-    private(set) var hasDealtAtLeastOnce = false
+    var hasPresentedGameResultsModal: Bool { sessionState.hasPresentedGameResultsModal }
+    var lastPresentedBlockResultsCount: Int { sessionState.lastPresentedBlockResultsCount }
+    var hasSavedGameStatistics: Bool { sessionState.hasSavedGameStatistics }
+    var hasExportedFinalGameHistory: Bool { sessionState.hasExportedFinalGameHistory }
+    var hasDealtAtLeastOnce: Bool { sessionState.hasDealtAtLeastOnce }
     var isUITestMode: Bool {
         return ProcessInfo.processInfo.arguments.contains("-uiTestMode")
     }
@@ -194,11 +178,11 @@ class GameScene: SKScene {
     }
 
     func markDidDealAtLeastOnce() {
-        hasDealtAtLeastOnce = true
+        sessionState.markDidDealAtLeastOnce()
     }
 
     func markGameStatisticsSaved() {
-        hasSavedGameStatistics = true
+        sessionState.markGameStatisticsSaved()
     }
 
     func seedSessionRuntimeStateForTesting(
@@ -209,12 +193,14 @@ class GameScene: SKScene {
         pendingBids: [Int],
         pendingBlindSelections: [Bool]
     ) {
-        self.hasPresentedGameResultsModal = hasPresentedGameResultsModal
-        self.lastPresentedBlockResultsCount = lastPresentedBlockResultsCount
-        self.hasSavedGameStatistics = hasSavedGameStatistics
-        self.hasDealtAtLeastOnce = hasDealtAtLeastOnce
-        self.pendingBids = pendingBids
-        self.pendingBlindSelections = pendingBlindSelections
+        sessionState.seedForTesting(
+            hasPresentedGameResultsModal: hasPresentedGameResultsModal,
+            lastPresentedBlockResultsCount: lastPresentedBlockResultsCount,
+            hasSavedGameStatistics: hasSavedGameStatistics,
+            hasDealtAtLeastOnce: hasDealtAtLeastOnce,
+            pendingBids: pendingBids,
+            pendingBlindSelections: pendingBlindSelections
+        )
     }
 
     func setInteractionBlocker(
@@ -236,15 +222,13 @@ class GameScene: SKScene {
 
     func resetTransientDealFlowState() {
         clearInteractionBlockers(.dealStartResettable)
-        pendingBids.removeAll()
-        pendingBlindSelections.removeAll()
+        sessionState.resetTransientDealFlowState()
     }
 
     func resetAllInteractionFlowState() {
         interactionBlockers = []
         syncInteractionStateFromBlockers()
-        pendingBids.removeAll()
-        pendingBlindSelections.removeAll()
+        sessionState.resetTransientDealFlowState()
     }
 
     func syncInteractionStateFromBlockers() {
@@ -317,11 +301,15 @@ class GameScene: SKScene {
         return dealHistoryStore.history(blockIndex: blockIndex, roundIndex: roundIndex)
     }
 
+    private var layoutResolver: GameSceneLayoutResolver {
+        GameSceneLayoutResolver(sceneSize: size, safeAreaInsets: safeInsets())
+    }
+
     var canDealCards: Bool {
         guard gameState.phase != .notStarted else { return false }
         guard gameState.phase != .gameEnd else { return false }
 
-        if hasDealtAtLeastOnce {
+        if sessionState.hasDealtAtLeastOnce {
             return gameState.phase == .roundEnd
         }
 
@@ -477,9 +465,10 @@ class GameScene: SKScene {
     // MARK: - Покерный стол
 
     private func setupPokerTable() {
-        let table = PokerTableNode(sceneSize: self.size)
-        table.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-
+        let table = nodeFactory.makePokerTable(
+            sceneSize: size,
+            position: layoutResolver.pokerTablePosition()
+        )
         self.pokerTable = table
         self.addChild(table)
     }
@@ -519,33 +508,17 @@ class GameScene: SKScene {
         players.forEach { $0.removeFromParent() }
         players.removeAll()
 
-        let center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
-
         guard let table = pokerTable else { return }
 
-        let insets = view?.safeAreaInsets ?? .zero
-        let minX = insets.left + 170
-        let maxX = size.width - insets.right - 170
-        let minY = insets.bottom + 145
-        let maxY = size.height - insets.top - 195
-
         let avatars = ["👨‍💼", "👩‍💼", "🧔", "👨‍🦰", "👩‍🦱"]
-        let verticalOffset = min(table.tableHeight / 2 + 20, (maxY - minY) / 2)
-        let topY = min(maxY, center.y + verticalOffset)
-        let bottomY = max(minY, center.y - verticalOffset)
-
-        let positions = wideSideSeatPositions(
-            for: playerCount,
-            centerX: center.x,
-            minX: minX,
-            maxX: maxX,
-            topY: topY,
-            bottomY: bottomY,
-            tableWidth: table.tableWidth
+        let positions = layoutResolver.playerSeatPositions(
+            playerCount: playerCount,
+            tableWidth: table.tableWidth,
+            tableHeight: table.tableHeight
         )
 
         for (index, position) in positions.enumerated() {
-            let direction = CGVector(dx: 0, dy: position.y >= center.y ? 1 : -1)
+            let direction = CGVector(dx: 0, dy: position.y >= layoutResolver.sceneCenter().y ? 1 : -1)
             let playerName = gameState.players.indices.contains(index)
                 ? gameState.players[index].name
                 : "Игрок \(index + 1)"
@@ -566,59 +539,6 @@ class GameScene: SKScene {
         }
     }
 
-    private func wideSideSeatPositions(
-        for count: Int,
-        centerX: CGFloat,
-        minX: CGFloat,
-        maxX: CGFloat,
-        topY: CGFloat,
-        bottomY: CGFloat,
-        tableWidth: CGFloat
-    ) -> [CGPoint] {
-        guard count > 0 else { return [] }
-
-        let halfSpan = max(80, min(tableWidth * 0.24, (maxX - minX) / 2 - 24))
-        let clampedCenterX = min(max(centerX, minX), maxX)
-        let clampX: (CGFloat) -> CGFloat = { x in
-            min(max(x, minX), maxX)
-        }
-
-        switch count {
-        case 3:
-            let topXs = symmetricXPositions(count: 2, centerX: clampedCenterX, halfSpan: halfSpan)
-            return [
-                CGPoint(x: clampedCenterX, y: bottomY),
-                CGPoint(x: clampX(topXs[0]), y: topY),
-                CGPoint(x: clampX(topXs[1]), y: topY)
-            ]
-        case 4:
-            let sideXs = symmetricXPositions(count: 2, centerX: clampedCenterX, halfSpan: halfSpan)
-            return [
-                CGPoint(x: clampX(sideXs[0]), y: bottomY),
-                CGPoint(x: clampX(sideXs[0]), y: topY),
-                CGPoint(x: clampX(sideXs[1]), y: topY),
-                CGPoint(x: clampX(sideXs[1]), y: bottomY)
-            ]
-        default:
-            let bottomCount = (count + 1) / 2
-            let topCount = count - bottomCount
-            let bottomXs = symmetricXPositions(count: bottomCount, centerX: clampedCenterX, halfSpan: halfSpan)
-            let topXs = symmetricXPositions(count: topCount, centerX: clampedCenterX, halfSpan: halfSpan)
-
-            return bottomXs.map { CGPoint(x: clampX($0), y: bottomY) } + topXs.map { CGPoint(x: clampX($0), y: topY) }
-        }
-    }
-
-    private func symmetricXPositions(count: Int, centerX: CGFloat, halfSpan: CGFloat) -> [CGFloat] {
-        guard count > 0 else { return [] }
-        guard count > 1 else { return [centerX] }
-
-        let step = (halfSpan * 2) / CGFloat(count - 1)
-        return (0..<count).map { index in
-            centerX - halfSpan + CGFloat(index) * step
-        }
-    }
-
     // MARK: - Информация об игре
 
     private func setupGameInfoLabel() {
@@ -628,7 +548,7 @@ class GameScene: SKScene {
         infoLabel.fontColor = GameColors.textPrimary
         infoLabel.horizontalAlignmentMode = .center
         infoLabel.verticalAlignmentMode = .center
-        infoLabel.position = gameInfoLabelPosition(insets: safeInsets())
+        infoLabel.position = layoutResolver.gameInfoLabelPosition()
         infoLabel.zPosition = 100
 
         self.gameInfoLabel = infoLabel
@@ -691,9 +611,9 @@ class GameScene: SKScene {
     // MARK: - Кнопки
 
     private func setupScoreButton() {
-        let button = makeActionButton(
+        let button = nodeFactory.makeActionButton(
             title: "Очки",
-            position: scoreButtonPosition(insets: safeInsets())
+            position: layoutResolver.scoreButtonPosition()
         ) { [weak self] in
             self?.onScoreButtonTapped?()
         }
@@ -703,9 +623,9 @@ class GameScene: SKScene {
     }
 
     private func setupDealButton() {
-        let button = makeActionButton(
+        let button = nodeFactory.makeActionButton(
             title: "Раздать карты",
-            position: dealButtonPosition(insets: safeInsets())
+            position: layoutResolver.dealButtonPosition()
         ) { [weak self] in
             self?.dealCards()
         }
@@ -722,14 +642,14 @@ class GameScene: SKScene {
     private func setupRoundBidInfoPanel() {
         guard roundBidInfoPanel == nil else { return }
 
-        let panelSize = roundBidInfoSize()
+        let panelSize = layoutResolver.roundBidInfoSize(playerCount: playerCount)
         let panel = SKShapeNode(rectOf: panelSize, cornerRadius: 16)
         panel.fillColor = SKColor(red: 0.03, green: 0.07, blue: 0.13, alpha: 0.96)
         panel.strokeColor = GameColors.gold.withAlphaComponent(0.8)
         panel.lineWidth = 2
         panel.zPosition = 102
         panel.isHidden = true
-        panel.position = roundBidInfoPosition(insets: safeInsets())
+        panel.position = layoutResolver.roundBidInfoPosition(playerCount: playerCount)
 
         let titleLabel = SKLabelNode(fontNamed: "AvenirNext-DemiBold")
         titleLabel.fontSize = LayoutMetrics.roundBidInfoTitleFontSize
@@ -813,18 +733,18 @@ class GameScene: SKScene {
         firstDealerIndex = gameState.currentDealer
         _ = scoreManager
 
-        trickNode.centerPosition = trickCenterPosition()
+        trickNode.centerPosition = layoutResolver.trickCenterPosition()
         if trickNode.parent == nil {
             addChild(trickNode)
         }
 
-        trumpIndicator.position = trumpIndicatorPosition(insets: safeInsets())
+        trumpIndicator.position = layoutResolver.trumpIndicatorPosition()
         if trumpIndicator.parent == nil {
             addChild(trumpIndicator)
         }
 
         setupJokerLeadInfoPanel()
-        jokerLeadInfoPanel?.position = jokerLeadInfoPosition(insets: safeInsets())
+        jokerLeadInfoPanel?.position = layoutResolver.jokerLeadInfoPosition()
         clearJokerLeadInfo()
     }
 
@@ -999,12 +919,7 @@ class GameScene: SKScene {
         clearInProgressRoundResultsForScoreTable()
         dealHistoryStore.reset()
 
-        hasPresentedGameResultsModal = false
-        lastPresentedBlockResultsCount = 0
-        hasSavedGameStatistics = false
-        exportedBlockIndices.removeAll()
-        hasExportedFinalGameHistory = false
-        hasDealtAtLeastOnce = false
+        sessionState.resetForNewGameSession()
         resetAllInteractionFlowState()
         updateDealButtonState()
     }
@@ -1048,11 +963,11 @@ class GameScene: SKScene {
     }
 
     private func firstDealerSelectionDeckPosition() -> CGPoint {
-        return CGPoint(x: size.width / 2, y: size.height / 2 + 164)
+        return layoutResolver.firstDealerSelectionDeckPosition()
     }
 
     private func firstDealerSelectionTableCardPosition() -> CGPoint {
-        return CGPoint(x: size.width / 2, y: size.height / 2 + 28)
+        return layoutResolver.firstDealerSelectionTableCardPosition()
     }
 
     private func firstDealerSelectionCardPosition(for playerIndex: Int) -> CGPoint {
@@ -1102,7 +1017,7 @@ class GameScene: SKScene {
         firstDealerAnnouncementLabel = nil
 
         let container = SKNode()
-        container.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        container.position = layoutResolver.firstDealerAnnouncementPosition()
         container.zPosition = 300
 
         let background = SKShapeNode(rectOf: CGSize(width: 460, height: 118), cornerRadius: 18)
@@ -1128,16 +1043,15 @@ class GameScene: SKScene {
     private func refreshLayout() {
         setupPlayers()
 
-        let insets = safeInsets()
-        gameInfoLabel?.position = gameInfoLabelPosition(insets: insets)
-        scoreButton?.position = scoreButtonPosition(insets: insets)
-        dealButton?.position = dealButtonPosition(insets: insets)
-        roundBidInfoPanel?.position = roundBidInfoPosition(insets: insets)
+        gameInfoLabel?.position = layoutResolver.gameInfoLabelPosition()
+        scoreButton?.position = layoutResolver.scoreButtonPosition()
+        dealButton?.position = layoutResolver.dealButtonPosition()
+        roundBidInfoPanel?.position = layoutResolver.roundBidInfoPosition(playerCount: playerCount)
 
-        trickNode.centerPosition = trickCenterPosition()
-        trumpIndicator.position = trumpIndicatorPosition(insets: insets)
-        jokerLeadInfoPanel?.position = jokerLeadInfoPosition(insets: insets)
-        firstDealerAnnouncementNode?.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        trickNode.centerPosition = layoutResolver.trickCenterPosition()
+        trumpIndicator.position = layoutResolver.trumpIndicatorPosition()
+        jokerLeadInfoPanel?.position = layoutResolver.jokerLeadInfoPosition()
+        firstDealerAnnouncementNode?.position = layoutResolver.firstDealerAnnouncementPosition()
 
         updateDealButtonState()
         updateRoundBidInfo()
@@ -1146,82 +1060,6 @@ class GameScene: SKScene {
 
     private func safeInsets() -> UIEdgeInsets {
         return view?.safeAreaInsets ?? .zero
-    }
-
-    private func actionButtonX(insets: UIEdgeInsets) -> CGFloat {
-        return insets.left + LayoutMetrics.actionButtonHorizontalInset + LayoutMetrics.actionButtonSize.width / 2
-    }
-
-    private func dealButtonPosition(insets: UIEdgeInsets) -> CGPoint {
-        return CGPoint(
-            x: actionButtonX(insets: insets),
-            y: insets.bottom + LayoutMetrics.actionButtonBottomInset + LayoutMetrics.actionButtonSize.height / 2
-        )
-    }
-
-    private func scoreButtonPosition(insets: UIEdgeInsets) -> CGPoint {
-        return CGPoint(
-            x: actionButtonX(insets: insets),
-            y: size.height - insets.top - LayoutMetrics.actionButtonBottomInset - LayoutMetrics.actionButtonSize.height / 2
-        )
-    }
-
-    private func roundBidInfoPosition(insets: UIEdgeInsets) -> CGPoint {
-        let scorePosition = scoreButtonPosition(insets: insets)
-        let panelSize = roundBidInfoSize()
-        let offset = LayoutMetrics.actionButtonSize.height / 2 +
-            LayoutMetrics.roundBidInfoTopSpacing +
-            panelSize.height / 2
-
-        return CGPoint(
-            x: scorePosition.x,
-            y: scorePosition.y - offset
-        )
-    }
-
-    private func roundBidInfoSize() -> CGSize {
-        let rowCount = max(playerCount, 1)
-        let rowsHeight = CGFloat(rowCount) * LayoutMetrics.roundBidInfoRowHeight +
-            CGFloat(max(0, rowCount - 1)) * LayoutMetrics.roundBidInfoRowSpacing
-        let height = LayoutMetrics.roundBidInfoVerticalPadding * 2 +
-            LayoutMetrics.roundBidInfoTitleHeight +
-            LayoutMetrics.roundBidInfoTitleToRowsSpacing +
-            rowsHeight
-
-        return CGSize(width: LayoutMetrics.roundBidInfoWidth, height: height)
-    }
-
-    private func gameInfoLabelPosition(insets: UIEdgeInsets) -> CGPoint {
-        return CGPoint(
-            x: size.width / 2,
-            y: size.height - insets.top - LayoutMetrics.gameInfoTopInset
-        )
-    }
-
-    private func trickCenterPosition() -> CGPoint {
-        return CGPoint(x: size.width / 2, y: size.height / 2 + LayoutMetrics.trickCenterYOffset)
-    }
-
-    private func trumpIndicatorPosition(insets: UIEdgeInsets) -> CGPoint {
-        return CGPoint(
-            x: size.width - insets.right - LayoutMetrics.trumpIndicatorInset,
-            y: insets.bottom + LayoutMetrics.trumpIndicatorInset
-        )
-    }
-
-    private func jokerLeadInfoPosition(insets: UIEdgeInsets) -> CGPoint {
-        let centerY = size.height
-            - insets.top
-            - LayoutMetrics.jokerLeadInfoTopInset
-            - LayoutMetrics.jokerLeadInfoSize.height / 2
-
-        return CGPoint(
-            x: size.width
-                - insets.right
-                - LayoutMetrics.jokerLeadInfoHorizontalMargin
-                - LayoutMetrics.jokerLeadInfoSize.width / 2,
-            y: centerY
-        )
     }
 
     private func setupJokerLeadInfoPanel() {
@@ -1316,18 +1154,6 @@ class GameScene: SKScene {
             return "Забирает: \(suit.name) \(suit.rawValue)"
         }
     }
-
-    private func makeActionButton(
-        title: String,
-        position: CGPoint,
-        onTap: @escaping () -> Void
-    ) -> GameButton {
-        let button = GameButton(title: title, size: LayoutMetrics.actionButtonSize)
-        button.position = position
-        button.onTap = onTap
-        return button
-    }
-
     func buildFinalGamePlayerSummaries() -> [GameFinalPlayerSummary] {
         return GameFinalPlayerSummary.build(
             playerNames: gameState.players.map(\.name),
@@ -1338,28 +1164,36 @@ class GameScene: SKScene {
 
     @discardableResult
     func tryPresentBlockResultsIfNeeded() -> Bool {
-        guard !hasPresentedGameResultsModal else { return false }
+        guard !sessionState.hasPresentedGameResultsModal else { return false }
         guard gameState.phase == .roundEnd else { return false }
 
         let completedBlockCount = scoreManager.completedBlocks.count
         guard completedBlockCount > 0 else { return false }
         guard completedBlockCount < GameConstants.totalBlocks else { return false }
-        guard completedBlockCount > lastPresentedBlockResultsCount else { return false }
+        guard completedBlockCount > sessionState.lastPresentedBlockResultsCount else { return false }
         guard gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock else { return false }
 
-        exportCompletedBlockHistoryIfNeeded(completedBlockCount: completedBlockCount)
+        sessionState = gameResultsPersistenceCoordinator.exportCompletedBlockHistoryIfNeeded(
+            sessionState: sessionState,
+            completedBlockCount: completedBlockCount,
+            histories: dealHistoryStore.allHistories(),
+            playerCount: playerCount,
+            playerNames: currentPlayerNames,
+            playerControlTypes: playerControlTypes,
+            exportService: dealHistoryExportService
+        )
 
         if !presentBlockResultsModal(forCompletedBlockCount: completedBlockCount) {
             return false
         }
 
-        lastPresentedBlockResultsCount = completedBlockCount
+        sessionState.lastPresentedBlockResultsCount = completedBlockCount
         return true
     }
 
     @discardableResult
     func tryPresentGameResultsIfNeeded() -> Bool {
-        guard !hasPresentedGameResultsModal else { return false }
+        guard !sessionState.hasPresentedGameResultsModal else { return false }
         guard scoreManager.completedBlocks.count >= GameConstants.totalBlocks else { return false }
 
         let isFinalRoundCompleted =
@@ -1373,9 +1207,16 @@ class GameScene: SKScene {
         let playerSummaries = buildFinalGamePlayerSummaries()
         guard !playerSummaries.isEmpty else { return false }
 
-        exportFinalGameHistoryIfNeeded()
+        sessionState = gameResultsPersistenceCoordinator.exportFinalGameHistoryIfNeeded(
+            sessionState: sessionState,
+            histories: dealHistoryStore.allHistories(),
+            playerCount: playerCount,
+            playerNames: currentPlayerNames,
+            playerControlTypes: playerControlTypes,
+            exportService: dealHistoryExportService
+        )
 
-        hasPresentedGameResultsModal = true
+        sessionState.hasPresentedGameResultsModal = true
         gameState.markGameEnded()
         updateGameInfoLabel()
         updateTurnUI(animated: true)
@@ -1388,39 +1229,11 @@ class GameScene: SKScene {
         }
 
         if !didPresentModal {
-            hasPresentedGameResultsModal = false
+            sessionState.hasPresentedGameResultsModal = false
             return false
         }
 
         return true
-    }
-
-    private func exportCompletedBlockHistoryIfNeeded(completedBlockCount: Int) {
-        let blockIndex = completedBlockCount - 1
-        guard blockIndex >= 0 else { return }
-        guard !exportedBlockIndices.contains(blockIndex) else { return }
-
-        exportedBlockIndices.insert(blockIndex)
-        exportDealHistorySnapshot(reason: .blockCompleted(blockIndex: blockIndex))
-    }
-
-    private func exportFinalGameHistoryIfNeeded() {
-        guard !hasExportedFinalGameHistory else { return }
-        hasExportedFinalGameHistory = true
-        exportDealHistorySnapshot(reason: .gameCompleted)
-    }
-
-    private func exportDealHistorySnapshot(reason: DealHistoryExportService.ExportReason) {
-        let histories = dealHistoryStore.allHistories()
-        guard !histories.isEmpty else { return }
-
-        _ = dealHistoryExportService.export(
-            histories: histories,
-            playerCount: playerCount,
-            playerNames: currentPlayerNames,
-            playerControlTypes: playerControlTypes,
-            reason: reason
-        )
     }
 
     private func phaseTitle(for phase: GamePhase) -> String {

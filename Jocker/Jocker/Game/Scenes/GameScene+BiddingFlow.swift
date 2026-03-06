@@ -16,19 +16,19 @@ extension GameScene {
 
         setPrimaryInteractionFlow(.bidding)
         if gameState.currentBlock != .fourth {
-            pendingBids = Array(repeating: 0, count: playerCount)
-            pendingBlindSelections = Array(repeating: false, count: playerCount)
+            sessionState.pendingBids = Array(repeating: 0, count: playerCount)
+            sessionState.pendingBlindSelections = Array(repeating: false, count: playerCount)
         } else {
-            if pendingBids.count != playerCount {
-                pendingBids = Array(repeating: 0, count: playerCount)
+            if sessionState.pendingBids.count != playerCount {
+                sessionState.pendingBids = Array(repeating: 0, count: playerCount)
             }
-            if pendingBlindSelections.count != playerCount {
-                pendingBlindSelections = Array(repeating: false, count: playerCount)
+            if sessionState.pendingBlindSelections.count != playerCount {
+                sessionState.pendingBlindSelections = Array(repeating: false, count: playerCount)
             }
         }
 
         let order = biddingOrder().filter { playerIndex in
-            gameState.currentBlock != .fourth || !pendingBlindSelections[playerIndex]
+            gameState.currentBlock != .fourth || !sessionState.pendingBlindSelections[playerIndex]
         }
         processBiddingStep(order: order, step: 0)
     }
@@ -36,27 +36,25 @@ extension GameScene {
     private func processBiddingStep(order: [Int], step: Int) {
         guard gameState.phase == .bidding else {
             clearPrimaryInteractionFlow(.bidding)
-            pendingBids.removeAll()
-            pendingBlindSelections.removeAll()
+            sessionState.resetTransientDealFlowState()
             return
         }
 
         guard step < order.count else {
-            let bids = pendingBids
-            let blindSelections = pendingBlindSelections
-            pendingBids.removeAll()
-            pendingBlindSelections.removeAll()
+            let bids = sessionState.pendingBids
+            let blindSelections = sessionState.pendingBlindSelections
+            sessionState.resetTransientDealFlowState()
             clearPrimaryInteractionFlow(.bidding)
             applyBidsToGameStateAndStartPlaying(bids, blindSelections: blindSelections)
             return
         }
 
         let playerIndex = order[step]
-        let allowedBids = gameState.allowedBids(forPlayer: playerIndex, bids: pendingBids)
+        let allowedBids = gameState.allowedBids(forPlayer: playerIndex, bids: sessionState.pendingBids)
         let fallbackBid = allowedBids.first ?? 0
         let forbidden = forbiddenDealerBidIfNeeded(
             for: playerIndex,
-            bids: pendingBids
+            bids: sessionState.pendingBids
         )
 
         if isHumanPlayer(playerIndex) {
@@ -75,7 +73,7 @@ extension GameScene {
                 guard self.gameState.phase == .bidding else { return }
 
                 let resolvedBid = allowedBids.contains(selectedBid) ? selectedBid : fallbackBid
-                self.pendingBids[playerIndex] = resolvedBid
+                self.sessionState.pendingBids[playerIndex] = resolvedBid
                 self.players[playerIndex].setBid(resolvedBid, isBlind: false, animated: true)
                 self.updateGameInfoLabel()
                 self.updateTurnUI(animated: true)
@@ -92,7 +90,7 @@ extension GameScene {
             matchContext: botMatchContext(for: playerIndex)
         )
         let bid = allowedBids.contains(candidateBid) ? candidateBid : fallbackBid
-        pendingBids[playerIndex] = bid
+        sessionState.pendingBids[playerIndex] = bid
         players[playerIndex].setBid(bid, isBlind: false, animated: true)
         updateGameInfoLabel()
         updateTurnUI(animated: true)
@@ -147,13 +145,13 @@ extension GameScene {
         let revealedPlayers = Set(order.prefix(step))
 
         for playerIndex in 0..<playerCount {
-            let isBlindBid = pendingBlindSelections.indices.contains(playerIndex)
-                ? pendingBlindSelections[playerIndex]
+            let isBlindBid = sessionState.pendingBlindSelections.indices.contains(playerIndex)
+                ? sessionState.pendingBlindSelections[playerIndex]
                 : false
             let isRevealedInCurrentFlow = revealedPlayers.contains(playerIndex)
             guard isBlindBid || isRevealedInCurrentFlow else { continue }
-            guard pendingBids.indices.contains(playerIndex) else { continue }
-            displayedBids[playerIndex] = pendingBids[playerIndex]
+            guard sessionState.pendingBids.indices.contains(playerIndex) else { continue }
+            displayedBids[playerIndex] = sessionState.pendingBids[playerIndex]
         }
 
         return displayedBids
