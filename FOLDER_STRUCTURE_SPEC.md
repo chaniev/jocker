@@ -22,6 +22,15 @@ This document is the source of truth for repository structure and file placement
 │   ├── BOT_AI_IMPROVEMENT_PLAN_REVIEW.md
 │   ├── BOT_AI_IMPROVEMENT_PROPOSALS_UNIFIED.md
 │   ├── BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md
+│   ├── BOT_AI_LEARNING_IMPROVEMENT_DETAILED_PLANS/
+│   │   ├── 01_TRAINING_PIPELINE_RECOVERY_PLAN.md
+│   │   ├── 02_FITNESS_GUARDRAILS_EXPANSION_PLAN.md
+│   │   ├── 03_RUNTIME_POLICY_EVOLUTION_SCOPE_PLAN.md
+│   │   ├── 04_PHASE_CONDITIONED_POLICY_MULTIPLIERS_PLAN.md
+│   │   ├── 05_PARALLEL_CANDIDATE_EVALUATION_PLAN.md
+│   │   ├── 06_EVOLUTION_SEARCH_STABILITY_PLAN.md
+│   │   ├── 07_OPPONENT_MODEL_V2_PLAN.md
+│   │   └── 08_EXPERIMENT_HARNESS_AND_REPORTING_PLAN.md
 │   ├── BOT_AI_TEST_SCENARIOS.md
 │   ├── BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md
 │   ├── CARDS_DOCUMENTATION.md
@@ -191,6 +200,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/BOT_AI_IMPROVEMENT_PLAN_REVIEW.md`: review notes and critique of `docs/BOT_AI_IMPROVEMENT_PLAN.md`.
 - `docs/BOT_AI_IMPROVEMENT_PROPOSALS_UNIFIED.md`: unified proposals backlog (best of mapped+consolidated) with runtime gaps taxonomy, metric definitions, and roadmap.
 - `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`: learning-centric proposals for bot improvements (training signal, evaluation, and self-play iteration ideas).
+- `docs/BOT_AI_LEARNING_IMPROVEMENT_DETAILED_PLANS/`: ordered, per-track execution plans derived from `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, with dependencies and sequencing aligned to `docs/BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md`.
 - `docs/BOT_AI_FULL_TEST_COVERAGE_PLAN.md`: plan for extending bot-related test coverage (gaps, priorities, and slicing).
 - `docs/BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
