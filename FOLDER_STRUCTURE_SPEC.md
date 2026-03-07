@@ -15,6 +15,7 @@ This document is the source of truth for repository structure and file placement
 ├── Makefile
 ├── FOLDER_STRUCTURE_SPEC.md
 ├── BOT_AI_IMPROVEMENT_PLAN.md
+├── BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md
 ├── BOT_AI_IMPROVEMENT_PLAN_REVIEW.md
 ├── BOT_AI_IMPROVEMENT_PROPOSALS_UNIFIED.md
 ├── BOT_AI_TEST_SCENARIOS.md
@@ -103,6 +104,7 @@ This document is the source of truth for repository structure and file placement
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+SimulationOrchestration.swift`: legacy/full-match self-play orchestration, dealing helpers, and seat-service bundling, compiled in `JockerSelfPlayTools`.
 - `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`generations=0`) with persisted artifacts. `make bot-compare` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
 - `BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
+- `BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md`: concrete step-by-step refactoring plan for `BotRuntimePolicy.swift` and `BotTuning.swift`, including fixed design decisions, execution order, and completion criteria.
 - `BOT_AI_IMPROVEMENT_PLAN_REVIEW.md`: review notes and critique of `BOT_AI_IMPROVEMENT_PLAN.md`.
 - `BOT_AI_IMPROVEMENT_PROPOSALS_UNIFIED.md`: unified proposals backlog (best of mapped+consolidated) with runtime gaps taxonomy, metric definitions, and roadmap.
 - `BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
