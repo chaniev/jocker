@@ -215,6 +215,77 @@ self.generations = max(1, generations)
 - многие уже доступные метрики (`blindSuccessRate`, `jokerWishWinRate`, `bidAccuracyRate`, `leftNeighborPremiumAssistRate` и др.) в итоговую таблицу не попадают;
 - скрипт полезен как витрина результатов, но пока не как полный experiment report.
 
+### 3.4 `Makefile`
+
+`Makefile` в проекте уже является важной частью training workflow, а не просто удобной обёрткой.
+
+Что в нём уже полезно:
+
+- есть единая точка входа `make bt` / `make train-bot` для ручного запуска `train_bot_tuning.sh`;
+- есть отдельные orchestration targets для baseline и A/B:
+  - `make bot-baseline`
+  - `make bot-compare`
+- есть full-match профили для `hard`:
+  - `bt-hard-fullgame-smoke`
+  - `bt-hard-fullgame-balanced`
+  - `bt-hard-fullgame-battle`
+  - `bt-hard-final`
+  - `bt-hard-*-esab`
+- есть regression harness targets:
+  - `joker-pack`
+  - `stage6b-pack`
+
+Подтверждённые проблемы:
+
+#### P1. В `Makefile` coexist-ят два несовпадающих режима обучения
+
+Сейчас в `Makefile` одновременно живут:
+
+- legacy random-round профили:
+  - `SMOKE_ARGS`
+  - `BALANCED_ARGS`
+  - `BATTLE_ARGS`
+- full-match профили:
+  - `FULLGAME_SMOKE_ARGS`
+  - `FULLGAME_BALANCED_ARGS`
+  - `FULLGAME_BATTLE_ARGS`
+
+Legacy-профили используют:
+
+- `--use-full-match-rules false`
+- `--rotate-candidate-across-seats false`
+- `--fitness-underbid-loss-weight 0.0`
+
+Следствие:
+
+- через короткие и очевидные targets вроде `bt-hard-smoke` и `bt-hard-balanced` легко запустить режим, который уже хуже отражает текущую целевую модель игры;
+- orchestration layer подталкивает разработчика к неканоническому training profile.
+
+#### P1. Нет одного явно обозначенного "рекомендуемого" training target
+
+Сейчас из `Makefile` неочевидно, какой путь считать основным:
+
+- `bt-hard-balanced`
+- `bt-hard-fullgame-balanced`
+- `bt-hard-final`
+- `bt-hard-final-esab`
+
+Следствие:
+
+- разные разработчики могут запускать разные профили и сравнивать несопоставимые результаты;
+- proposal-level улучшения сложнее привязывать к одному reproducible entrypoint.
+
+#### P1. `Makefile` наследует дефекты baseline/compare harness без явного предупреждения
+
+Пока `run_bot_baseline_snapshot.sh` и `train_bot_tuning.sh` содержат проблемы, описанные выше, targets:
+
+- `make bot-baseline`
+- `make bot-baseline-smoke`
+
+также нельзя считать полностью достоверными.
+
+То есть Make-уровень сейчас не изолирует пользователя от дефектов нижележащего training pipeline.
+
 ---
 
 ## 4. Обновлённые предложения по улучшению
@@ -238,11 +309,16 @@ self.generations = max(1, generations)
    - один короткий self-play прогон;
    - проверка, что baseline harness не выполняет эволюцию.
 5. По возможности вынести generated Swift из shell-скрипта в отдельный checked-in CLI/tool target.
+6. После исправления pipeline привести `Makefile` к одному каноническому training path:
+   - оставить legacy-профили только как явно помеченные `legacy`;
+   - основными сделать full-match профили;
+   - выделить один рекомендуемый target для основной тренировки и один для финальной валидации.
 
 Ожидаемый эффект:
 
 - воспроизводимые baseline и A/B;
 - исчезновение скрытых регрессий при изменении `BotTuning`;
+- orchestration layer в `Makefile` перестаёт вести в устаревшие training modes;
 - возможность безопасно развивать обучение дальше.
 
 ### 4.2 P1. Расширить fitness, используя уже собираемые метрики
@@ -435,6 +511,11 @@ self.generations = max(1, generations)
 5. После обучения запускать не только A/B, но и guardrail packs:
    - `run_joker_regression_pack.sh`;
    - `run_stage6b_ranking_guardrails.sh`.
+6. Синхронизировать `Makefile` с этим workflow:
+   - training target;
+   - baseline target;
+   - compare target;
+   - regression packs как post-training gate.
 
 ---
 
@@ -476,12 +557,14 @@ self.generations = max(1, generations)
 - починить `train_bot_tuning.sh`;
 - ввести честный baseline-only режим;
 - обновить baseline harness;
+- синхронизировать `Makefile` с исправленными scripts и убрать двусмысленность между legacy/full-match targets;
 - добавить smoke-check training runner в CI.
 
 Критерий завершения:
 
 - training script компилируется и делает минимальный self-play run;
 - baseline harness не запускает ни одного поколения эволюции;
+- `Makefile` имеет один явно рекомендуемый training path;
 - baseline и compare harness дают непротиворечивые summary.
 
 ### Фаза 1. Улучшение objective function
@@ -546,6 +629,7 @@ self.generations = max(1, generations)
 | `scripts/train_bot_tuning.sh` | убрать расхождение с актуальным `BotTuning`, перестать генерировать хрупкий runner | восстановить работоспособность pipeline |
 | `scripts/run_bot_baseline_snapshot.sh` | исправить baseline semantics и документацию | сделать baseline честным |
 | `scripts/run_bot_ab_comparison_snapshot.sh` | расширить итоговый отчёт метриками blind/joker/bid/premium | улучшить качество анализа результатов |
+| `Makefile` | выделить канонические full-match targets и явно пометить legacy-профили | синхронизировать orchestration layer с реальной стратегией обучения |
 
 ---
 
