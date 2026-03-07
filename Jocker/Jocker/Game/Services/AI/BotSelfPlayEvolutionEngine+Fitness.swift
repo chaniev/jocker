@@ -8,8 +8,50 @@
 import Foundation
 
 extension BotSelfPlayEvolutionEngine {
+    /// Веса и нормализации только для основной цели (winRate, scoreDiff, underbid, premiumAssist, premiumPenaltyTarget).
+    struct PrimaryFitnessWeights {
+        let winRateWeight: Double
+        let scoreDiffWeight: Double
+        let underbidLossWeight: Double
+        let premiumAssistWeight: Double
+        let premiumPenaltyTargetWeight: Double
+        let scoreDiffNormalization: Double
+        let underbidLossNormalization: Double
+        let premiumAssistNormalization: Double
+        let premiumPenaltyTargetNormalization: Double
+    }
+
+    /// Веса штрафов за guardrail-метрики (чем выше вклад — тем сильнее штраф за отклонение).
+    struct GuardrailPenaltyWeights {
+        let bidAccuracyWeight: Double
+        let overbidWeight: Double
+        let blindSuccessWeight: Double
+        let penaltyTargetWeight: Double
+        let earlyJokerSpendWeight: Double
+        let leftNeighborPremiumAssistWeight: Double
+        let jokerWishWinWeight: Double
+    }
+
+    /// Приемлемые диапазоны guardrail-метрик.
+    /// Для метрик "higher is better" штрафуется только часть ниже минимума.
+    /// Для метрик "lower is better" штрафуется только часть выше максимума.
+    struct GuardrailThresholds {
+        let bidAccuracyMinimum: Double
+        let overbidMaximum: Double
+        let blindSuccessMinimum: Double
+        let penaltyTargetMaximum: Double
+        let earlyJokerSpendMaximum: Double
+        let leftNeighborPremiumAssistMaximum: Double
+        let jokerWishWinMinimum: Double
+    }
+
     struct FitnessBreakdown {
+        /// Итоговый критерий отбора: primaryFitness - guardrailPenalty.
         let fitness: Double
+        let legacyFitness: Double
+        let primaryFitness: Double
+        let guardrailPenalty: Double
+        let finalFitness: Double
         let winRate: Double
         let averageScoreDiff: Double
         let averageUnderbidLoss: Double
@@ -33,6 +75,10 @@ extension BotSelfPlayEvolutionEngine {
 
         static let zero = FitnessBreakdown(
             fitness: 0.0,
+            legacyFitness: 0.0,
+            primaryFitness: 0.0,
+            guardrailPenalty: 0.0,
+            finalFitness: 0.0,
             winRate: 0.0,
             averageScoreDiff: 0.0,
             averageUnderbidLoss: 0.0,
@@ -57,37 +103,160 @@ extension BotSelfPlayEvolutionEngine {
     }
 
     struct FitnessScoringConfig {
-        let winRateWeight: Double
-        let scoreDiffWeight: Double
-        let underbidLossWeight: Double
-        let trumpDensityUnderbidWeight: Double
-        let noTrumpControlUnderbidWeight: Double
-        let premiumAssistWeight: Double
-        let premiumPenaltyTargetWeight: Double
-        let scoreDiffNormalization: Double
-        let underbidLossNormalization: Double
-        let trumpDensityUnderbidNormalization: Double
-        let noTrumpControlUnderbidNormalization: Double
-        let premiumAssistNormalization: Double
-        let premiumPenaltyTargetNormalization: Double
+        let primaryWeights: PrimaryFitnessWeights
+        let guardrailWeights: GuardrailPenaltyWeights
+        let guardrailThresholds: GuardrailThresholds
+        /// Legacy: все 7 компонент (включая trumpDensity и noTrumpControl).
+        let legacyWinRateWeight: Double
+        let legacyScoreDiffWeight: Double
+        let legacyUnderbidLossWeight: Double
+        let legacyTrumpDensityUnderbidWeight: Double
+        let legacyNoTrumpControlUnderbidWeight: Double
+        let legacyPremiumAssistWeight: Double
+        let legacyPremiumPenaltyTargetWeight: Double
+        let legacyScoreDiffNormalization: Double
+        let legacyUnderbidLossNormalization: Double
+        let legacyTrumpDensityUnderbidNormalization: Double
+        let legacyNoTrumpControlUnderbidNormalization: Double
+        let legacyPremiumAssistNormalization: Double
+        let legacyPremiumPenaltyTargetNormalization: Double
 
         init(config: SelfPlayEvolutionConfig) {
-            self.winRateWeight = config.fitnessWinRateWeight
-            self.scoreDiffWeight = config.fitnessScoreDiffWeight
-            self.underbidLossWeight = config.fitnessUnderbidLossWeight
-            self.trumpDensityUnderbidWeight = config.fitnessTrumpDensityUnderbidWeight
-            self.noTrumpControlUnderbidWeight = config.fitnessNoTrumpControlUnderbidWeight
-            self.premiumAssistWeight = config.fitnessPremiumAssistWeight
-            self.premiumPenaltyTargetWeight = config.fitnessPremiumPenaltyTargetWeight
-            self.scoreDiffNormalization = config.scoreDiffNormalization
-            self.underbidLossNormalization = config.underbidLossNormalization
-            self.trumpDensityUnderbidNormalization = config.trumpDensityUnderbidNormalization
-            self.noTrumpControlUnderbidNormalization = config.noTrumpControlUnderbidNormalization
-            self.premiumAssistNormalization = config.premiumAssistNormalization
-            self.premiumPenaltyTargetNormalization = config.premiumPenaltyTargetNormalization
+            self.primaryWeights = PrimaryFitnessWeights(
+                winRateWeight: config.fitnessWinRateWeight,
+                scoreDiffWeight: config.fitnessScoreDiffWeight,
+                underbidLossWeight: config.fitnessUnderbidLossWeight,
+                premiumAssistWeight: config.fitnessPremiumAssistWeight,
+                premiumPenaltyTargetWeight: config.fitnessPremiumPenaltyTargetWeight,
+                scoreDiffNormalization: config.scoreDiffNormalization,
+                underbidLossNormalization: config.underbidLossNormalization,
+                premiumAssistNormalization: config.premiumAssistNormalization,
+                premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization
+            )
+            self.guardrailWeights = GuardrailPenaltyWeights(
+                bidAccuracyWeight: config.guardrailBidAccuracyWeight,
+                overbidWeight: config.guardrailOverbidWeight,
+                blindSuccessWeight: config.guardrailBlindSuccessWeight,
+                penaltyTargetWeight: config.guardrailPenaltyTargetWeight,
+                earlyJokerSpendWeight: config.guardrailEarlyJokerSpendWeight,
+                leftNeighborPremiumAssistWeight: config.guardrailLeftNeighborPremiumAssistWeight,
+                jokerWishWinWeight: config.guardrailJokerWishWinWeight
+            )
+            self.guardrailThresholds = GuardrailThresholds(
+                bidAccuracyMinimum: config.guardrailBidAccuracyMinimum,
+                overbidMaximum: config.guardrailOverbidMaximum,
+                blindSuccessMinimum: config.guardrailBlindSuccessMinimum,
+                penaltyTargetMaximum: config.guardrailPenaltyTargetMaximum,
+                earlyJokerSpendMaximum: config.guardrailEarlyJokerSpendMaximum,
+                leftNeighborPremiumAssistMaximum: config.guardrailLeftNeighborPremiumAssistMaximum,
+                jokerWishWinMinimum: config.guardrailJokerWishWinMinimum
+            )
+            self.legacyWinRateWeight = config.fitnessWinRateWeight
+            self.legacyScoreDiffWeight = config.fitnessScoreDiffWeight
+            self.legacyUnderbidLossWeight = config.fitnessUnderbidLossWeight
+            self.legacyTrumpDensityUnderbidWeight = config.fitnessTrumpDensityUnderbidWeight
+            self.legacyNoTrumpControlUnderbidWeight = config.fitnessNoTrumpControlUnderbidWeight
+            self.legacyPremiumAssistWeight = config.fitnessPremiumAssistWeight
+            self.legacyPremiumPenaltyTargetWeight = config.fitnessPremiumPenaltyTargetWeight
+            self.legacyScoreDiffNormalization = config.scoreDiffNormalization
+            self.legacyUnderbidLossNormalization = config.underbidLossNormalization
+            self.legacyTrumpDensityUnderbidNormalization = config.trumpDensityUnderbidNormalization
+            self.legacyNoTrumpControlUnderbidNormalization = config.noTrumpControlUnderbidNormalization
+            self.legacyPremiumAssistNormalization = config.premiumAssistNormalization
+            self.legacyPremiumPenaltyTargetNormalization = config.premiumPenaltyTargetNormalization
         }
 
-        func fitness(
+        /// Только winRate, scoreDiff, underbidLoss, premiumAssist, premiumPenaltyTarget.
+        func primaryFitness(
+            winRate: Double,
+            averageScoreDiff: Double,
+            averageUnderbidLoss: Double,
+            averagePremiumAssistLoss: Double,
+            averagePremiumPenaltyTargetLoss: Double
+        ) -> Double {
+            let w = primaryWeights
+            return winRate * w.winRateWeight +
+                (averageScoreDiff / w.scoreDiffNormalization) * w.scoreDiffWeight +
+                -(averageUnderbidLoss / w.underbidLossNormalization) * w.underbidLossWeight +
+                -(averagePremiumAssistLoss / w.premiumAssistNormalization) * w.premiumAssistWeight +
+                -(averagePremiumPenaltyTargetLoss / w.premiumPenaltyTargetNormalization) * w.premiumPenaltyTargetWeight
+        }
+
+        /// Сумма штрафов по guardrail-метрикам. nil = нет данных, вклад по этой метрике 0.
+        func guardrailPenalty(
+            bidAccuracyRate: Double?,
+            overbidRate: Double?,
+            blindSuccessRate: Double?,
+            penaltyTargetRate: Double?,
+            earlyJokerSpendRate: Double?,
+            leftNeighborPremiumAssistRate: Double?,
+            jokerWishWinRate: Double?
+        ) -> Double {
+            let g = guardrailWeights
+            let t = guardrailThresholds
+            var sum = 0.0
+            sum += normalizedShortfallPenalty(
+                rate: bidAccuracyRate,
+                minimum: t.bidAccuracyMinimum,
+                weight: g.bidAccuracyWeight
+            )
+            sum += normalizedExcessPenalty(
+                rate: overbidRate,
+                maximum: t.overbidMaximum,
+                weight: g.overbidWeight
+            )
+            sum += normalizedShortfallPenalty(
+                rate: blindSuccessRate,
+                minimum: t.blindSuccessMinimum,
+                weight: g.blindSuccessWeight
+            )
+            sum += normalizedExcessPenalty(
+                rate: penaltyTargetRate,
+                maximum: t.penaltyTargetMaximum,
+                weight: g.penaltyTargetWeight
+            )
+            sum += normalizedExcessPenalty(
+                rate: earlyJokerSpendRate,
+                maximum: t.earlyJokerSpendMaximum,
+                weight: g.earlyJokerSpendWeight
+            )
+            sum += normalizedExcessPenalty(
+                rate: leftNeighborPremiumAssistRate,
+                maximum: t.leftNeighborPremiumAssistMaximum,
+                weight: g.leftNeighborPremiumAssistWeight
+            )
+            sum += normalizedShortfallPenalty(
+                rate: jokerWishWinRate,
+                minimum: t.jokerWishWinMinimum,
+                weight: g.jokerWishWinWeight
+            )
+            return sum
+        }
+
+        private func normalizedShortfallPenalty(
+            rate: Double?,
+            minimum: Double,
+            weight: Double
+        ) -> Double {
+            guard weight > 0, let rate else { return 0.0 }
+            guard minimum > 0 else { return 0.0 }
+            let shortfall = max(0.0, minimum - rate)
+            return min(1.0, shortfall / minimum) * weight
+        }
+
+        private func normalizedExcessPenalty(
+            rate: Double?,
+            maximum: Double,
+            weight: Double
+        ) -> Double {
+            guard weight > 0, let rate else { return 0.0 }
+            guard maximum < 1.0 else { return 0.0 }
+            let excess = max(0.0, rate - maximum)
+            return min(1.0, excess / max(1.0 - maximum, 1e-9)) * weight
+        }
+
+        /// Старая формула: все 7 компонент (включая trumpDensity и noTrumpControl).
+        func legacyFitness(
             winRate: Double,
             averageScoreDiff: Double,
             averageUnderbidLoss: Double,
@@ -96,13 +265,13 @@ extension BotSelfPlayEvolutionEngine {
             averagePremiumAssistLoss: Double,
             averagePremiumPenaltyTargetLoss: Double
         ) -> Double {
-            return winRate * winRateWeight +
-                (averageScoreDiff / scoreDiffNormalization) * scoreDiffWeight +
-                -(averageUnderbidLoss / underbidLossNormalization) * underbidLossWeight +
-                -(averageTrumpDensityUnderbidLoss / trumpDensityUnderbidNormalization) * trumpDensityUnderbidWeight +
-                -(averageNoTrumpControlUnderbidLoss / noTrumpControlUnderbidNormalization) * noTrumpControlUnderbidWeight +
-                -(averagePremiumAssistLoss / premiumAssistNormalization) * premiumAssistWeight +
-                -(averagePremiumPenaltyTargetLoss / premiumPenaltyTargetNormalization) * premiumPenaltyTargetWeight
+            return winRate * legacyWinRateWeight +
+                (averageScoreDiff / legacyScoreDiffNormalization) * legacyScoreDiffWeight +
+                -(averageUnderbidLoss / legacyUnderbidLossNormalization) * legacyUnderbidLossWeight +
+                -(averageTrumpDensityUnderbidLoss / legacyTrumpDensityUnderbidNormalization) * legacyTrumpDensityUnderbidWeight +
+                -(averageNoTrumpControlUnderbidLoss / legacyNoTrumpControlUnderbidNormalization) * legacyNoTrumpControlUnderbidWeight +
+                -(averagePremiumAssistLoss / legacyPremiumAssistNormalization) * legacyPremiumAssistWeight +
+                -(averagePremiumPenaltyTargetLoss / legacyPremiumPenaltyTargetNormalization) * legacyPremiumPenaltyTargetWeight
         }
     }
 
@@ -137,18 +306,18 @@ extension BotSelfPlayEvolutionEngine {
         let premiumAssistLoss: Double
         let premiumPenaltyTargetLoss: Double
         let premiumCaptureRate: Double
-        let blindSuccessRate: Double
-        let jokerWishWinRate: Double
-        let earlyJokerSpendRate: Double
-        let penaltyTargetRate: Double
-        let bidAccuracyRate: Double
-        let overbidRate: Double
+        let blindSuccessRate: Double?
+        let jokerWishWinRate: Double?
+        let earlyJokerSpendRate: Double?
+        let penaltyTargetRate: Double?
+        let bidAccuracyRate: Double?
+        let overbidRate: Double?
         let blindBidRateBlock4: Double
         let averageBlindBidSize: Double
         let blindBidWhenBehindRate: Double
         let blindBidWhenLeadingRate: Double
         let earlyLeadWishJokerRate: Double
-        let leftNeighborPremiumAssistRate: Double
+        let leftNeighborPremiumAssistRate: Double?
     }
 
     private struct FitnessAccumulator {
@@ -161,17 +330,24 @@ extension BotSelfPlayEvolutionEngine {
         private var totalPremiumPenaltyTargetLoss = 0.0
         private var totalPremiumCaptureRate = 0.0
         private var totalBlindSuccessRate = 0.0
+        private var blindSuccessRateSamplesCount = 0
         private var totalJokerWishWinRate = 0.0
+        private var jokerWishWinRateSamplesCount = 0
         private var totalEarlyJokerSpendRate = 0.0
+        private var earlyJokerSpendRateSamplesCount = 0
         private var totalPenaltyTargetRate = 0.0
+        private var penaltyTargetRateSamplesCount = 0
         private var totalBidAccuracyRate = 0.0
+        private var bidAccuracyRateSamplesCount = 0
         private var totalOverbidRate = 0.0
+        private var overbidRateSamplesCount = 0
         private var totalBlindBidRateBlock4 = 0.0
         private var totalAverageBlindBidSize = 0.0
         private var totalBlindBidWhenBehindRate = 0.0
         private var totalBlindBidWhenLeadingRate = 0.0
         private var totalEarlyLeadWishJokerRate = 0.0
         private var totalLeftNeighborPremiumAssistRate = 0.0
+        private var leftNeighborPremiumAssistRateSamplesCount = 0
         private var samplesCount = 0
 
         mutating func append(_ metrics: CandidateSeatMetrics) {
@@ -183,18 +359,46 @@ extension BotSelfPlayEvolutionEngine {
             totalPremiumAssistLoss += metrics.premiumAssistLoss
             totalPremiumPenaltyTargetLoss += metrics.premiumPenaltyTargetLoss
             totalPremiumCaptureRate += metrics.premiumCaptureRate
-            totalBlindSuccessRate += metrics.blindSuccessRate
-            totalJokerWishWinRate += metrics.jokerWishWinRate
-            totalEarlyJokerSpendRate += metrics.earlyJokerSpendRate
-            totalPenaltyTargetRate += metrics.penaltyTargetRate
-            totalBidAccuracyRate += metrics.bidAccuracyRate
-            totalOverbidRate += metrics.overbidRate
+            Self.appendOptionalMetric(
+                metrics.blindSuccessRate,
+                total: &totalBlindSuccessRate,
+                count: &blindSuccessRateSamplesCount
+            )
+            Self.appendOptionalMetric(
+                metrics.jokerWishWinRate,
+                total: &totalJokerWishWinRate,
+                count: &jokerWishWinRateSamplesCount
+            )
+            Self.appendOptionalMetric(
+                metrics.earlyJokerSpendRate,
+                total: &totalEarlyJokerSpendRate,
+                count: &earlyJokerSpendRateSamplesCount
+            )
+            Self.appendOptionalMetric(
+                metrics.penaltyTargetRate,
+                total: &totalPenaltyTargetRate,
+                count: &penaltyTargetRateSamplesCount
+            )
+            Self.appendOptionalMetric(
+                metrics.bidAccuracyRate,
+                total: &totalBidAccuracyRate,
+                count: &bidAccuracyRateSamplesCount
+            )
+            Self.appendOptionalMetric(
+                metrics.overbidRate,
+                total: &totalOverbidRate,
+                count: &overbidRateSamplesCount
+            )
             totalBlindBidRateBlock4 += metrics.blindBidRateBlock4
             totalAverageBlindBidSize += metrics.averageBlindBidSize
             totalBlindBidWhenBehindRate += metrics.blindBidWhenBehindRate
             totalBlindBidWhenLeadingRate += metrics.blindBidWhenLeadingRate
             totalEarlyLeadWishJokerRate += metrics.earlyLeadWishJokerRate
-            totalLeftNeighborPremiumAssistRate += metrics.leftNeighborPremiumAssistRate
+            Self.appendOptionalMetric(
+                metrics.leftNeighborPremiumAssistRate,
+                total: &totalLeftNeighborPremiumAssistRate,
+                count: &leftNeighborPremiumAssistRateSamplesCount
+            )
             samplesCount += 1
         }
 
@@ -210,19 +414,41 @@ extension BotSelfPlayEvolutionEngine {
             let averagePremiumAssistLoss = totalPremiumAssistLoss / denominator
             let averagePremiumPenaltyTargetLoss = totalPremiumPenaltyTargetLoss / denominator
             let premiumCaptureRate = totalPremiumCaptureRate / denominator
-            let blindSuccessRate = totalBlindSuccessRate / denominator
-            let jokerWishWinRate = totalJokerWishWinRate / denominator
-            let earlyJokerSpendRate = totalEarlyJokerSpendRate / denominator
-            let penaltyTargetRate = totalPenaltyTargetRate / denominator
-            let bidAccuracyRate = totalBidAccuracyRate / denominator
-            let overbidRate = totalOverbidRate / denominator
+            let blindSuccessRate = averagedOptionalMetric(
+                total: totalBlindSuccessRate,
+                count: blindSuccessRateSamplesCount
+            )
+            let jokerWishWinRate = averagedOptionalMetric(
+                total: totalJokerWishWinRate,
+                count: jokerWishWinRateSamplesCount
+            )
+            let earlyJokerSpendRate = averagedOptionalMetric(
+                total: totalEarlyJokerSpendRate,
+                count: earlyJokerSpendRateSamplesCount
+            )
+            let penaltyTargetRate = averagedOptionalMetric(
+                total: totalPenaltyTargetRate,
+                count: penaltyTargetRateSamplesCount
+            )
+            let bidAccuracyRate = averagedOptionalMetric(
+                total: totalBidAccuracyRate,
+                count: bidAccuracyRateSamplesCount
+            )
+            let overbidRate = averagedOptionalMetric(
+                total: totalOverbidRate,
+                count: overbidRateSamplesCount
+            )
             let blindBidRateBlock4 = totalBlindBidRateBlock4 / denominator
             let averageBlindBidSize = totalAverageBlindBidSize / denominator
             let blindBidWhenBehindRate = totalBlindBidWhenBehindRate / denominator
             let blindBidWhenLeadingRate = totalBlindBidWhenLeadingRate / denominator
             let earlyLeadWishJokerRate = totalEarlyLeadWishJokerRate / denominator
-            let leftNeighborPremiumAssistRate = totalLeftNeighborPremiumAssistRate / denominator
-            let fitness = fitnessScoring.fitness(
+            let leftNeighborPremiumAssistRate = averagedOptionalMetric(
+                total: totalLeftNeighborPremiumAssistRate,
+                count: leftNeighborPremiumAssistRateSamplesCount
+            )
+
+            let legacy = fitnessScoring.legacyFitness(
                 winRate: averageWinRate,
                 averageScoreDiff: averageScoreDiff,
                 averageUnderbidLoss: averageUnderbidLoss,
@@ -231,9 +457,30 @@ extension BotSelfPlayEvolutionEngine {
                 averagePremiumAssistLoss: averagePremiumAssistLoss,
                 averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
             )
+            let primary = fitnessScoring.primaryFitness(
+                winRate: averageWinRate,
+                averageScoreDiff: averageScoreDiff,
+                averageUnderbidLoss: averageUnderbidLoss,
+                averagePremiumAssistLoss: averagePremiumAssistLoss,
+                averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss
+            )
+            let guardrail = fitnessScoring.guardrailPenalty(
+                bidAccuracyRate: bidAccuracyRate,
+                overbidRate: overbidRate,
+                blindSuccessRate: blindSuccessRate,
+                penaltyTargetRate: penaltyTargetRate,
+                earlyJokerSpendRate: earlyJokerSpendRate,
+                leftNeighborPremiumAssistRate: leftNeighborPremiumAssistRate,
+                jokerWishWinRate: jokerWishWinRate
+            )
+            let finalFitness = primary - guardrail
 
             return FitnessBreakdown(
-                fitness: fitness,
+                fitness: finalFitness,
+                legacyFitness: legacy,
+                primaryFitness: primary,
+                guardrailPenalty: guardrail,
+                finalFitness: finalFitness,
                 winRate: averageWinRate,
                 averageScoreDiff: averageScoreDiff,
                 averageUnderbidLoss: averageUnderbidLoss,
@@ -242,19 +489,34 @@ extension BotSelfPlayEvolutionEngine {
                 averagePremiumAssistLoss: averagePremiumAssistLoss,
                 averagePremiumPenaltyTargetLoss: averagePremiumPenaltyTargetLoss,
                 premiumCaptureRate: premiumCaptureRate,
-                blindSuccessRate: blindSuccessRate,
-                jokerWishWinRate: jokerWishWinRate,
-                earlyJokerSpendRate: earlyJokerSpendRate,
-                penaltyTargetRate: penaltyTargetRate,
-                bidAccuracyRate: bidAccuracyRate,
-                overbidRate: overbidRate,
+                blindSuccessRate: blindSuccessRate ?? 0.0,
+                jokerWishWinRate: jokerWishWinRate ?? 0.0,
+                earlyJokerSpendRate: earlyJokerSpendRate ?? 0.0,
+                penaltyTargetRate: penaltyTargetRate ?? 0.0,
+                bidAccuracyRate: bidAccuracyRate ?? 0.0,
+                overbidRate: overbidRate ?? 0.0,
                 blindBidRateBlock4: blindBidRateBlock4,
                 averageBlindBidSize: averageBlindBidSize,
                 blindBidWhenBehindRate: blindBidWhenBehindRate,
                 blindBidWhenLeadingRate: blindBidWhenLeadingRate,
                 earlyLeadWishJokerRate: earlyLeadWishJokerRate,
-                leftNeighborPremiumAssistRate: leftNeighborPremiumAssistRate
+                leftNeighborPremiumAssistRate: leftNeighborPremiumAssistRate ?? 0.0
             )
+        }
+
+        private func averagedOptionalMetric(total: Double, count: Int) -> Double? {
+            guard count > 0 else { return nil }
+            return total / Double(count)
+        }
+
+        private static func appendOptionalMetric(
+            _ value: Double?,
+            total: inout Double,
+            count: inout Int
+        ) {
+            guard let value else { return }
+            total += value
+            count += 1
         }
     }
 
@@ -274,6 +536,14 @@ extension BotSelfPlayEvolutionEngine {
         at index: Int
     ) -> Double {
         guard values.indices.contains(index) else { return 0.0 }
+        return values[index]
+    }
+
+    private static func optionalDoubleMetricValue(
+        _ values: [Double?],
+        at index: Int
+    ) -> Double? {
+        guard values.indices.contains(index) else { return nil }
         return values[index]
     }
 
@@ -311,18 +581,18 @@ extension BotSelfPlayEvolutionEngine {
                 at: candidateSeat
             ),
             premiumCaptureRate: doubleMetricValue(gameOutcome.premiumCaptureRates, at: candidateSeat),
-            blindSuccessRate: doubleMetricValue(gameOutcome.blindSuccessRates, at: candidateSeat),
-            jokerWishWinRate: doubleMetricValue(gameOutcome.jokerWishWinRates, at: candidateSeat),
-            earlyJokerSpendRate: doubleMetricValue(gameOutcome.earlyJokerSpendRates, at: candidateSeat),
-            penaltyTargetRate: doubleMetricValue(gameOutcome.penaltyTargetRates, at: candidateSeat),
-            bidAccuracyRate: doubleMetricValue(gameOutcome.bidAccuracyRates, at: candidateSeat),
-            overbidRate: doubleMetricValue(gameOutcome.overbidRates, at: candidateSeat),
+            blindSuccessRate: optionalDoubleMetricValue(gameOutcome.blindSuccessRates, at: candidateSeat),
+            jokerWishWinRate: optionalDoubleMetricValue(gameOutcome.jokerWishWinRates, at: candidateSeat),
+            earlyJokerSpendRate: optionalDoubleMetricValue(gameOutcome.earlyJokerSpendRates, at: candidateSeat),
+            penaltyTargetRate: optionalDoubleMetricValue(gameOutcome.penaltyTargetRates, at: candidateSeat),
+            bidAccuracyRate: optionalDoubleMetricValue(gameOutcome.bidAccuracyRates, at: candidateSeat),
+            overbidRate: optionalDoubleMetricValue(gameOutcome.overbidRates, at: candidateSeat),
             blindBidRateBlock4: doubleMetricValue(gameOutcome.blindBidRatesBlock4, at: candidateSeat),
             averageBlindBidSize: doubleMetricValue(gameOutcome.averageBlindBidSizes, at: candidateSeat),
             blindBidWhenBehindRate: doubleMetricValue(gameOutcome.blindBidWhenBehindRates, at: candidateSeat),
             blindBidWhenLeadingRate: doubleMetricValue(gameOutcome.blindBidWhenLeadingRates, at: candidateSeat),
             earlyLeadWishJokerRate: doubleMetricValue(gameOutcome.earlyLeadWishJokerRates, at: candidateSeat),
-            leftNeighborPremiumAssistRate: doubleMetricValue(
+            leftNeighborPremiumAssistRate: optionalDoubleMetricValue(
                 gameOutcome.leftNeighborPremiumAssistRates,
                 at: candidateSeat
             )

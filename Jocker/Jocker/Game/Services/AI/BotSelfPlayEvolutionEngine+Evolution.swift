@@ -116,9 +116,9 @@ extension BotSelfPlayEvolutionEngine {
         completedWorkUnits += 1
         notifyProgress(
             stage: .baselineCompleted,
-            currentFitness: baselineBreakdown.fitness,
-            generationBestFitness: baselineBreakdown.fitness,
-            overallBestFitness: baselineBreakdown.fitness
+            currentFitness: baselineBreakdown.finalFitness,
+            generationBestFitness: baselineBreakdown.finalFitness,
+            overallBestFitness: baselineBreakdown.finalFitness
         )
 
         var bestGenome = EvolutionGenome.identity
@@ -133,7 +133,7 @@ extension BotSelfPlayEvolutionEngine {
             notifyProgress(
                 stage: .generationStarted,
                 generationIndex: generation,
-                overallBestFitness: bestBreakdown.fitness
+                overallBestFitness: bestBreakdown.finalFitness
             )
             let generationSeedMask = UInt64(generation + 1) &* 0x9E37_79B9_7F4A_7C15
             let generationSeeds = evaluationSeeds.map { $0 ^ generationSeedMask }
@@ -157,34 +157,36 @@ extension BotSelfPlayEvolutionEngine {
                 )
 
                 completedWorkUnits += 1
-                generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.fitness, breakdown.fitness)
-                let overallBestSoFar = max(bestBreakdown.fitness, generationBestFitnessSoFar ?? breakdown.fitness)
+                generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.finalFitness, breakdown.finalFitness)
+                let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? breakdown.finalFitness)
                 notifyProgress(
                     stage: .candidateEvaluated,
                     generationIndex: generation,
                     evaluatedCandidatesInGeneration: candidateOffset + 1,
-                    currentFitness: breakdown.fitness,
+                    currentFitness: breakdown.finalFitness,
                     generationBestFitness: generationBestFitnessSoFar,
                     overallBestFitness: overallBestSoFar
                 )
             }
 
             scoredPopulation.sort(by: { (lhs: ScoredGenome, rhs: ScoredGenome) -> Bool in
-                    if lhs.breakdown.fitness == rhs.breakdown.fitness {
+                    let lFinal = lhs.breakdown.finalFitness
+                    let rFinal = rhs.breakdown.finalFitness
+                    if lFinal == rFinal {
                         return isLexicographicallySmaller(
                             lhs.genome.lexicographicKey,
                             than: rhs.genome.lexicographicKey
                         )
                     }
-                    return lhs.breakdown.fitness > rhs.breakdown.fitness
+                    return lFinal > rFinal
                 })
 
             guard let generationBest = scoredPopulation.first else { continue }
-            generationBestFitness.append(generationBest.breakdown.fitness)
+            generationBestFitness.append(generationBest.breakdown.finalFitness)
             completedGenerations = generation + 1
 
-            let fitnessImprovement = generationBest.breakdown.fitness - bestBreakdown.fitness
-            if generationBest.breakdown.fitness > bestBreakdown.fitness {
+            let fitnessImprovement = generationBest.breakdown.finalFitness - bestBreakdown.finalFitness
+            if generationBest.breakdown.finalFitness > bestBreakdown.finalFitness {
                 bestBreakdown = generationBest.breakdown
                 bestGenome = generationBest.genome
                 if fitnessImprovement > config.earlyStoppingMinImprovement {
@@ -194,8 +196,8 @@ extension BotSelfPlayEvolutionEngine {
             notifyProgress(
                 stage: .generationCompleted,
                 generationIndex: generation,
-                generationBestFitness: generationBest.breakdown.fitness,
-                overallBestFitness: bestBreakdown.fitness
+                generationBestFitness: generationBest.breakdown.finalFitness,
+                overallBestFitness: bestBreakdown.finalFitness
             )
 
             let shouldEarlyStop = config.earlyStoppingPatience > 0 &&
@@ -241,13 +243,21 @@ extension BotSelfPlayEvolutionEngine {
         let bestTuning = tuning(byApplying: bestGenome, to: baseTuning)
         notifyProgress(
             stage: .finished,
-            overallBestFitness: bestBreakdown.fitness
+            overallBestFitness: bestBreakdown.finalFitness
         )
         return SelfPlayEvolutionResult(
             runMode: config.runMode,
             bestTuning: bestTuning,
-            baselineFitness: baselineBreakdown.fitness,
-            bestFitness: bestBreakdown.fitness,
+            baselineFitness: baselineBreakdown.finalFitness,
+            bestFitness: bestBreakdown.finalFitness,
+            baselineLegacyFitness: baselineBreakdown.legacyFitness,
+            bestLegacyFitness: bestBreakdown.legacyFitness,
+            baselinePrimaryFitness: baselineBreakdown.primaryFitness,
+            bestPrimaryFitness: bestBreakdown.primaryFitness,
+            baselineGuardrailPenalty: baselineBreakdown.guardrailPenalty,
+            bestGuardrailPenalty: bestBreakdown.guardrailPenalty,
+            baselineFinalFitness: baselineBreakdown.finalFitness,
+            bestFinalFitness: bestBreakdown.finalFitness,
             generationBestFitness: generationBestFitness,
             completedGenerations: completedGenerations,
             stoppedEarly: stoppedEarly,
@@ -369,19 +379,27 @@ extension BotSelfPlayEvolutionEngine {
         completedWorkUnits = 1
         notifyProgress(
             stage: .baselineCompleted,
-            currentFitness: baselineBreakdown.fitness,
-            overallBestFitness: baselineBreakdown.fitness
+            currentFitness: baselineBreakdown.finalFitness,
+            overallBestFitness: baselineBreakdown.finalFitness
         )
         notifyProgress(
             stage: .finished,
-            overallBestFitness: baselineBreakdown.fitness
+            overallBestFitness: baselineBreakdown.finalFitness
         )
 
         return SelfPlayEvolutionResult(
             runMode: config.runMode,
             bestTuning: baseTuning,
-            baselineFitness: baselineBreakdown.fitness,
-            bestFitness: baselineBreakdown.fitness,
+            baselineFitness: baselineBreakdown.finalFitness,
+            bestFitness: baselineBreakdown.finalFitness,
+            baselineLegacyFitness: baselineBreakdown.legacyFitness,
+            bestLegacyFitness: baselineBreakdown.legacyFitness,
+            baselinePrimaryFitness: baselineBreakdown.primaryFitness,
+            bestPrimaryFitness: baselineBreakdown.primaryFitness,
+            baselineGuardrailPenalty: baselineBreakdown.guardrailPenalty,
+            bestGuardrailPenalty: baselineBreakdown.guardrailPenalty,
+            baselineFinalFitness: baselineBreakdown.finalFitness,
+            bestFinalFitness: baselineBreakdown.finalFitness,
             generationBestFitness: [],
             completedGenerations: 0,
             stoppedEarly: false,
@@ -459,7 +477,11 @@ extension BotSelfPlayEvolutionEngine {
         from breakdown: FitnessBreakdown
     ) -> SelfPlayHeadToHeadValidationResult {
         return SelfPlayHeadToHeadValidationResult(
-            fitness: breakdown.fitness,
+            fitness: breakdown.finalFitness,
+            legacyFitness: breakdown.legacyFitness,
+            primaryFitness: breakdown.primaryFitness,
+            guardrailPenalty: breakdown.guardrailPenalty,
+            finalFitness: breakdown.finalFitness,
             winRate: breakdown.winRate,
             averageScoreDiff: breakdown.averageScoreDiff,
             averageUnderbidLoss: breakdown.averageUnderbidLoss,

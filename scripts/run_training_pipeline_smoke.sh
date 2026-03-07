@@ -89,6 +89,14 @@ bash "$train_script" \
 grep -q '^mode=baselineOnly$' "$baseline_log"
 grep -q '^generationCount=0$' "$baseline_log"
 grep -q '^generationBestFitness=\[\]$' "$baseline_log"
+grep -q '^baselineLegacyFitness=' "$baseline_log"
+grep -q '^bestLegacyFitness=' "$baseline_log"
+grep -q '^baselinePrimaryFitness=' "$baseline_log"
+grep -q '^bestPrimaryFitness=' "$baseline_log"
+grep -q '^baselineGuardrailPenalty=' "$baseline_log"
+grep -q '^bestGuardrailPenalty=' "$baseline_log"
+grep -q '^baselineFinalFitness=' "$baseline_log"
+grep -q '^bestFinalFitness=' "$baseline_log"
 
 bash "$train_script" \
   --difficulty hard \
@@ -111,13 +119,21 @@ bash "$train_script" \
 grep -q '^mode=evolution$' "$evolution_log"
 grep -q '^generationCount=1$' "$evolution_log"
 grep -Eq '^generationBestFitness=\[[^]]+\]$' "$evolution_log"
+grep -q '^baselineLegacyFitness=' "$evolution_log"
+grep -q '^bestLegacyFitness=' "$evolution_log"
+grep -q '^baselinePrimaryFitness=' "$evolution_log"
+grep -q '^bestPrimaryFitness=' "$evolution_log"
+grep -q '^baselineGuardrailPenalty=' "$evolution_log"
+grep -q '^bestGuardrailPenalty=' "$evolution_log"
+grep -q '^baselineFinalFitness=' "$evolution_log"
+grep -q '^bestFinalFitness=' "$evolution_log"
 
 cat > "$summary_path" <<EOF
 status=passed
 artifacts_dir=$run_dir
 baseline_log=$baseline_log
 evolution_log=$evolution_log
-checks=compile-only,baselineOnly,baseline-no-generation-loop,evolution-1-generation
+checks=compile-only,baselineOnly,baseline-no-generation-loop,baseline-fitness-quartet,evolution-1-generation,evolution-fitness-quartet
 EOF
 
 echo "=== Training pipeline smoke passed ==="

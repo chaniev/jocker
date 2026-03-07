@@ -341,6 +341,11 @@ metric_or_empty() {
 
 run_mode="$(metric_or_empty 'mode' "$log_path")"
 generation_count="$(metric_or_empty 'generationCount' "$log_path")"
+baseline_fitness="$(metric_or_empty 'ensembleAverageBestFitness' "$log_path")"
+baseline_legacy_fitness="$(metric_or_empty 'ensembleAverageBestLegacyFitness' "$log_path")"
+baseline_primary_fitness="$(metric_or_empty 'ensembleAverageBestPrimaryFitness' "$log_path")"
+baseline_guardrail_penalty="$(metric_or_empty 'ensembleAverageBestGuardrailPenalty' "$log_path")"
+baseline_final_fitness="$(metric_or_empty 'ensembleAverageBestFinalFitness' "$log_path")"
 baseline_win_rate="$(metric_or_empty 'ensembleAverageBestWinRate' "$log_path")"
 baseline_score_diff="$(metric_or_empty 'ensembleAverageBestScoreDiff' "$log_path")"
 baseline_underbid_loss="$(metric_or_empty 'ensembleAverageBestUnderbidLoss' "$log_path")"
@@ -362,6 +367,11 @@ baseline_left_neighbor_premium_assist_rate="$(metric_or_empty 'ensembleAverageBe
 
 if [[ -z "$baseline_win_rate" ]]; then
   metric_source="baseline(single-seed)"
+  baseline_fitness="$(metric_or_empty 'baselineFitness' "$log_path")"
+  baseline_legacy_fitness="$(metric_or_empty 'baselineLegacyFitness' "$log_path")"
+  baseline_primary_fitness="$(metric_or_empty 'baselinePrimaryFitness' "$log_path")"
+  baseline_guardrail_penalty="$(metric_or_empty 'baselineGuardrailPenalty' "$log_path")"
+  baseline_final_fitness="$(metric_or_empty 'baselineFinalFitness' "$log_path")"
   baseline_win_rate="$(metric_or_empty 'baselineWinRate' "$log_path")"
   baseline_score_diff="$(metric_or_empty 'baselineAverageScoreDiff' "$log_path")"
   baseline_underbid_loss="$(metric_or_empty 'baselineAverageUnderbidLoss' "$log_path")"
@@ -382,11 +392,24 @@ if [[ -z "$baseline_win_rate" ]]; then
   baseline_left_neighbor_premium_assist_rate="$(metric_or_empty 'baselineLeftNeighborPremiumAssistRate' "$log_path")"
 fi
 
+baseline_fitness="${baseline_fitness:-$baseline_final_fitness}"
+baseline_final_fitness="${baseline_final_fitness:-$baseline_fitness}"
+
 {
   echo "status=$status"
   echo "mode=${run_mode:-}"
   echo "generationCount=${generation_count:-}"
   echo "metric_source=$metric_source"
+  echo "baselineFitness=${baseline_fitness:-}"
+  echo "baselineLegacyFitness=${baseline_legacy_fitness:-}"
+  echo "baselinePrimaryFitness=${baseline_primary_fitness:-}"
+  echo "baselineGuardrailPenalty=${baseline_guardrail_penalty:-}"
+  echo "baselineFinalFitness=${baseline_final_fitness:-}"
+  echo "fitness=${baseline_final_fitness:-}"
+  echo "legacyFitness=${baseline_legacy_fitness:-}"
+  echo "primaryFitness=${baseline_primary_fitness:-}"
+  echo "guardrailPenalty=${baseline_guardrail_penalty:-}"
+  echo "finalFitness=${baseline_final_fitness:-}"
   echo "winRate=${baseline_win_rate:-}"
   echo "averageScoreDiff=${baseline_score_diff:-}"
   echo "averageUnderbidLoss=${baseline_underbid_loss:-}"
@@ -405,7 +428,7 @@ fi
   echo "blindBidWhenLeadingRate=${baseline_blind_bid_when_leading_rate:-}"
   echo "earlyLeadWishJokerRate=${baseline_early_lead_wish_joker_rate:-}"
   echo "leftNeighborPremiumAssistRate=${baseline_left_neighbor_premium_assist_rate:-}"
-  echo "supported_metrics=winRate,averageScoreDiff,averageUnderbidLoss,averagePremiumAssistLoss,averagePremiumPenaltyTargetLoss,premiumCaptureRate,blindSuccessRate,jokerWishWinRate,earlyJokerSpendRate,penaltyTargetRate,bidAccuracyRate,overbidRate,blindBidRateBlock4,averageBlindBidSize,blindBidWhenBehindRate,blindBidWhenLeadingRate,earlyLeadWishJokerRate,leftNeighborPremiumAssistRate"
+  echo "supported_metrics=baselineFitness,baselineLegacyFitness,baselinePrimaryFitness,baselineGuardrailPenalty,baselineFinalFitness,fitness,legacyFitness,primaryFitness,guardrailPenalty,finalFitness,winRate,averageScoreDiff,averageUnderbidLoss,averagePremiumAssistLoss,averagePremiumPenaltyTargetLoss,premiumCaptureRate,blindSuccessRate,jokerWishWinRate,earlyJokerSpendRate,penaltyTargetRate,bidAccuracyRate,overbidRate,blindBidRateBlock4,averageBlindBidSize,blindBidWhenBehindRate,blindBidWhenLeadingRate,earlyLeadWishJokerRate,leftNeighborPremiumAssistRate"
   echo "pending_stage0_metrics="
 } > "$metrics_path"
 
@@ -421,6 +444,11 @@ games_per_candidate=$games_per_candidate
 rounds_per_game=$rounds_per_game
 run_mode=${run_mode:-}
 generation_count=${generation_count:-}
+baselineFitness=${baseline_fitness:-}
+baselineLegacyFitness=${baseline_legacy_fitness:-}
+baselinePrimaryFitness=${baseline_primary_fitness:-}
+baselineGuardrailPenalty=${baseline_guardrail_penalty:-}
+baselineFinalFitness=${baseline_final_fitness:-}
 show_progress=$show_progress
 ab_validate=$ab_validate
 train_script=$train_script_abs

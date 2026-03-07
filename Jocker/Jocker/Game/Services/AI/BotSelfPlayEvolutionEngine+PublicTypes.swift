@@ -61,6 +61,34 @@ extension BotSelfPlayEvolutionEngine {
         let premiumAssistNormalization: Double
         /// Нормализация компоненты штрафа как цели чужой премии.
         let premiumPenaltyTargetNormalization: Double
+        /// Guardrail: вес штрафа за низкую точность заказа (1 - bidAccuracyRate).
+        let guardrailBidAccuracyWeight: Double
+        /// Guardrail: вес штрафа за перезаказ (overbidRate).
+        let guardrailOverbidWeight: Double
+        /// Guardrail: вес штрафа за низкий успех блайнда (1 - blindSuccessRate).
+        let guardrailBlindSuccessWeight: Double
+        /// Guardrail: вес штрафа за частоту цели премии (penaltyTargetRate).
+        let guardrailPenaltyTargetWeight: Double
+        /// Guardrail: вес штрафа за раннюю трату джокера (earlyJokerSpendRate).
+        let guardrailEarlyJokerSpendWeight: Double
+        /// Guardrail: вес штрафа за помощь соседу в премии (leftNeighborPremiumAssistRate).
+        let guardrailLeftNeighborPremiumAssistWeight: Double
+        /// Guardrail: вес штрафа за низкий выигрыш wish-джокера (1 - jokerWishWinRate).
+        let guardrailJokerWishWinWeight: Double
+        /// Guardrail floor: минимально приемлемая точность заказа.
+        let guardrailBidAccuracyMinimum: Double
+        /// Guardrail ceiling: максимально приемлемая частота перезаказа.
+        let guardrailOverbidMaximum: Double
+        /// Guardrail floor: минимально приемлемая успешность blind.
+        let guardrailBlindSuccessMinimum: Double
+        /// Guardrail ceiling: максимально приемлемая частота попадания под premium penalty.
+        let guardrailPenaltyTargetMaximum: Double
+        /// Guardrail ceiling: максимально приемлемая частота ранней траты джокера.
+        let guardrailEarlyJokerSpendMaximum: Double
+        /// Guardrail ceiling: максимально приемлемая частота помощи левому соседу в premium.
+        let guardrailLeftNeighborPremiumAssistMaximum: Double
+        /// Guardrail floor: минимально приемлемая успешность lead-wish джокера.
+        let guardrailJokerWishWinMinimum: Double
         /// Early stopping по числу поколений без значимого улучшения best fitness.
         /// `0` отключает early stopping.
         let earlyStoppingPatience: Int
@@ -102,6 +130,20 @@ extension BotSelfPlayEvolutionEngine {
             noTrumpControlUnderbidNormalization: Double = 2200.0,
             premiumAssistNormalization: Double = 1800.0,
             premiumPenaltyTargetNormalization: Double = 1600.0,
+            guardrailBidAccuracyWeight: Double = 0.0,
+            guardrailOverbidWeight: Double = 0.0,
+            guardrailBlindSuccessWeight: Double = 0.0,
+            guardrailPenaltyTargetWeight: Double = 0.0,
+            guardrailEarlyJokerSpendWeight: Double = 0.0,
+            guardrailLeftNeighborPremiumAssistWeight: Double = 0.0,
+            guardrailJokerWishWinWeight: Double = 0.0,
+            guardrailBidAccuracyMinimum: Double = 1.0,
+            guardrailOverbidMaximum: Double = 0.0,
+            guardrailBlindSuccessMinimum: Double = 1.0,
+            guardrailPenaltyTargetMaximum: Double = 0.0,
+            guardrailEarlyJokerSpendMaximum: Double = 0.0,
+            guardrailLeftNeighborPremiumAssistMaximum: Double = 0.0,
+            guardrailJokerWishWinMinimum: Double = 1.0,
             earlyStoppingPatience: Int = 0,
             earlyStoppingMinImprovement: Double = 0.0,
             earlyStoppingWarmupGenerations: Int = 0,
@@ -150,6 +192,41 @@ extension BotSelfPlayEvolutionEngine {
             self.noTrumpControlUnderbidNormalization = max(1.0, noTrumpControlUnderbidNormalization)
             self.premiumAssistNormalization = max(1.0, premiumAssistNormalization)
             self.premiumPenaltyTargetNormalization = max(1.0, premiumPenaltyTargetNormalization)
+            self.guardrailBidAccuracyWeight = max(0.0, guardrailBidAccuracyWeight)
+            self.guardrailOverbidWeight = max(0.0, guardrailOverbidWeight)
+            self.guardrailBlindSuccessWeight = max(0.0, guardrailBlindSuccessWeight)
+            self.guardrailPenaltyTargetWeight = max(0.0, guardrailPenaltyTargetWeight)
+            self.guardrailEarlyJokerSpendWeight = max(0.0, guardrailEarlyJokerSpendWeight)
+            self.guardrailLeftNeighborPremiumAssistWeight = max(0.0, guardrailLeftNeighborPremiumAssistWeight)
+            self.guardrailJokerWishWinWeight = max(0.0, guardrailJokerWishWinWeight)
+            self.guardrailBidAccuracyMinimum = SelfPlayEvolutionConfig.clamp(
+                guardrailBidAccuracyMinimum,
+                to: 0.0...1.0
+            )
+            self.guardrailOverbidMaximum = SelfPlayEvolutionConfig.clamp(
+                guardrailOverbidMaximum,
+                to: 0.0...1.0
+            )
+            self.guardrailBlindSuccessMinimum = SelfPlayEvolutionConfig.clamp(
+                guardrailBlindSuccessMinimum,
+                to: 0.0...1.0
+            )
+            self.guardrailPenaltyTargetMaximum = SelfPlayEvolutionConfig.clamp(
+                guardrailPenaltyTargetMaximum,
+                to: 0.0...1.0
+            )
+            self.guardrailEarlyJokerSpendMaximum = SelfPlayEvolutionConfig.clamp(
+                guardrailEarlyJokerSpendMaximum,
+                to: 0.0...1.0
+            )
+            self.guardrailLeftNeighborPremiumAssistMaximum = SelfPlayEvolutionConfig.clamp(
+                guardrailLeftNeighborPremiumAssistMaximum,
+                to: 0.0...1.0
+            )
+            self.guardrailJokerWishWinMinimum = SelfPlayEvolutionConfig.clamp(
+                guardrailJokerWishWinMinimum,
+                to: 0.0...1.0
+            )
             self.earlyStoppingPatience = max(0, earlyStoppingPatience)
             self.earlyStoppingMinImprovement = max(0.0, earlyStoppingMinImprovement)
             self.earlyStoppingWarmupGenerations = max(0, earlyStoppingWarmupGenerations)
@@ -176,6 +253,18 @@ extension BotSelfPlayEvolutionEngine {
         let bestTuning: BotTuning
         let baselineFitness: Double
         let bestFitness: Double
+        /// Legacy formula (all primary+underbid terms); для сравнения в переходный период.
+        let baselineLegacyFitness: Double
+        let bestLegacyFitness: Double
+        /// Только winRate/scoreDiff/underbid/premiumAssist/premiumPenaltyTarget.
+        let baselinePrimaryFitness: Double
+        let bestPrimaryFitness: Double
+        /// Сумма штрафов по guardrail-метрикам.
+        let baselineGuardrailPenalty: Double
+        let bestGuardrailPenalty: Double
+        /// primaryFitness - guardrailPenalty; критерий отбора.
+        let baselineFinalFitness: Double
+        let bestFinalFitness: Double
         let generationBestFitness: [Double]
         let completedGenerations: Int
         let stoppedEarly: Bool
@@ -227,7 +316,12 @@ extension BotSelfPlayEvolutionEngine {
 
     /// Метрики head-to-head валидации (кандидат против фиксированных оппонентов).
     struct SelfPlayHeadToHeadValidationResult {
+        /// Итоговый fitness для сравнения (finalFitness).
         let fitness: Double
+        let legacyFitness: Double
+        let primaryFitness: Double
+        let guardrailPenalty: Double
+        let finalFitness: Double
         let winRate: Double
         let averageScoreDiff: Double
         let averageUnderbidLoss: Double

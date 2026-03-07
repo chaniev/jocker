@@ -138,10 +138,22 @@ write_ab_metrics_file() {
     awk '
       /^summary\.mean / {
         metric = $2
+        delete values
         for (i = 3; i <= NF; i++) {
           split($i, kv, "=")
           if (length(kv[1]) > 0 && length(kv[2]) > 0) {
+            values[kv[1]] = kv[2]
             print metric "_" kv[1] "=" kv[2]
+            if (metric == "finalFitness") {
+              print "fitness_" kv[1] "=" kv[2]
+            }
+          }
+        }
+        if (!("Badv" in values) && ("BvA" in values) && ("AvB" in values)) {
+          delta = values["BvA"] - values["AvB"]
+          printf "%s_Badv=%.6f\n", metric, delta
+          if (metric == "finalFitness") {
+            printf "fitness_Badv=%.6f\n", delta
           }
         }
       }
@@ -202,7 +214,10 @@ write_comparison_table() {
           "$metric" "$baseline" "$candidate" "$delta" "$direction"
       }
 
-      render_row "fitness" "higher better"
+      render_row "finalFitness" "higher better"
+      render_row "legacyFitness" "higher better"
+      render_row "primaryFitness" "higher better"
+      render_row "guardrailPenalty" "lower better"
       render_row "winRate" "higher better"
       render_row "scoreDiff" "higher better"
       render_row "underbidLoss" "lower better"
@@ -507,6 +522,14 @@ completed_generations="$(extract_metric 'completedGenerations' "$log_path" 2>/de
 improvement="$(extract_metric 'improvement' "$log_path" 2>/dev/null || true)"
 best_fitness="$(extract_metric 'bestFitness' "$log_path" 2>/dev/null || true)"
 baseline_fitness="$(extract_metric 'baselineFitness' "$log_path" 2>/dev/null || true)"
+baseline_legacy_fitness="$(extract_metric 'baselineLegacyFitness' "$log_path" 2>/dev/null || true)"
+best_legacy_fitness="$(extract_metric 'bestLegacyFitness' "$log_path" 2>/dev/null || true)"
+baseline_primary_fitness="$(extract_metric 'baselinePrimaryFitness' "$log_path" 2>/dev/null || true)"
+best_primary_fitness="$(extract_metric 'bestPrimaryFitness' "$log_path" 2>/dev/null || true)"
+baseline_guardrail_penalty="$(extract_metric 'baselineGuardrailPenalty' "$log_path" 2>/dev/null || true)"
+best_guardrail_penalty="$(extract_metric 'bestGuardrailPenalty' "$log_path" 2>/dev/null || true)"
+baseline_final_fitness="$(extract_metric 'baselineFinalFitness' "$log_path" 2>/dev/null || true)"
+best_final_fitness="$(extract_metric 'bestFinalFitness' "$log_path" 2>/dev/null || true)"
 ab_primary_seeds_line="$(extract_metric 'abValidationPrimarySeeds' "$log_path" 2>/dev/null || true)"
 ab_holdout_seeds_line="$(extract_metric 'abValidationHoldoutSeeds' "$log_path" 2>/dev/null || true)"
 
@@ -521,8 +544,16 @@ write_ab_metrics_file "holdout" "$holdout_section_path" "$holdout_metrics_path"
   echo "generationCount=${generation_count:-}"
   echo "selectedSeed=${selected_seed:-}"
   echo "completedGenerations=${completed_generations:-}"
-  echo "baselineFitness=${baseline_fitness:-}"
-  echo "bestFitness=${best_fitness:-}"
+  echo "baselineFitness=${baseline_fitness:-${baseline_final_fitness:-}}"
+  echo "bestFitness=${best_fitness:-${best_final_fitness:-}}"
+  echo "baselineLegacyFitness=${baseline_legacy_fitness:-}"
+  echo "bestLegacyFitness=${best_legacy_fitness:-}"
+  echo "baselinePrimaryFitness=${baseline_primary_fitness:-}"
+  echo "bestPrimaryFitness=${best_primary_fitness:-}"
+  echo "baselineGuardrailPenalty=${baseline_guardrail_penalty:-}"
+  echo "bestGuardrailPenalty=${best_guardrail_penalty:-}"
+  echo "baselineFinalFitness=${baseline_final_fitness:-${baseline_fitness:-}}"
+  echo "bestFinalFitness=${best_final_fitness:-${best_fitness:-}}"
   echo "improvement=${improvement:-}"
 } > "$training_metrics_path"
 
@@ -550,6 +581,16 @@ games_per_candidate=$games_per_candidate
 rounds_per_game=$rounds_per_game
 run_mode=${run_mode:-}
 generation_count=${generation_count:-}
+baselineFitness=${baseline_fitness:-${baseline_final_fitness:-}}
+bestFitness=${best_fitness:-${best_final_fitness:-}}
+baselineLegacyFitness=${baseline_legacy_fitness:-}
+bestLegacyFitness=${best_legacy_fitness:-}
+baselinePrimaryFitness=${baseline_primary_fitness:-}
+bestPrimaryFitness=${best_primary_fitness:-}
+baselineGuardrailPenalty=${baseline_guardrail_penalty:-}
+bestGuardrailPenalty=${best_guardrail_penalty:-}
+baselineFinalFitness=${baseline_final_fitness:-${baseline_fitness:-}}
+bestFinalFitness=${best_final_fitness:-${best_fitness:-}}
 ab_validation_games_per_candidate=$ab_validation_games_per_candidate
 show_progress=$show_progress
 train_script=$train_script_abs

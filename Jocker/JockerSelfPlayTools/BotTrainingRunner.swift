@@ -51,6 +51,20 @@ struct BotTrainingRunner {
         var noTrumpControlUnderbidNormalization = 2_200.0
         var premiumAssistNormalization = 1_800.0
         var premiumPenaltyTargetNormalization = 1_600.0
+        var guardrailBidAccuracyWeight = 0.0
+        var guardrailOverbidWeight = 0.0
+        var guardrailBlindSuccessWeight = 0.0
+        var guardrailPenaltyTargetWeight = 0.0
+        var guardrailEarlyJokerSpendWeight = 0.0
+        var guardrailLeftNeighborPremiumAssistWeight = 0.0
+        var guardrailJokerWishWinWeight = 0.0
+        var guardrailBidAccuracyMinimum = 1.0
+        var guardrailOverbidMaximum = 0.0
+        var guardrailBlindSuccessMinimum = 1.0
+        var guardrailPenaltyTargetMaximum = 0.0
+        var guardrailEarlyJokerSpendMaximum = 0.0
+        var guardrailLeftNeighborPremiumAssistMaximum = 0.0
+        var guardrailJokerWishWinMinimum = 1.0
         var showProgress = true
         var progressCandidateStep = 1
         var earlyStoppingPatience = 0
@@ -170,6 +184,20 @@ struct BotTrainingRunner {
           --notrump-control-underbid-normalization <double>
           --premium-assist-normalization <double>
           --premium-penalty-target-normalization <double>
+          --guardrail-bid-accuracy-weight <double>
+          --guardrail-overbid-weight <double>
+          --guardrail-blind-success-weight <double>
+          --guardrail-penalty-target-weight <double>
+          --guardrail-early-joker-spend-weight <double>
+          --guardrail-left-neighbor-premium-assist-weight <double>
+          --guardrail-joker-wish-win-weight <double>
+          --guardrail-bid-accuracy-minimum <double>
+          --guardrail-overbid-maximum <double>
+          --guardrail-blind-success-minimum <double>
+          --guardrail-penalty-target-maximum <double>
+          --guardrail-early-joker-spend-maximum <double>
+          --guardrail-left-neighbor-premium-assist-maximum <double>
+          --guardrail-joker-wish-win-minimum <double>
           --show-progress <true|false>
           --progress-candidate-step <int>
           --early-stop-patience <int>
@@ -218,6 +246,20 @@ struct BotTrainingRunner {
             noTrumpControlUnderbidNormalization: invocation.noTrumpControlUnderbidNormalization,
             premiumAssistNormalization: invocation.premiumAssistNormalization,
             premiumPenaltyTargetNormalization: invocation.premiumPenaltyTargetNormalization,
+            guardrailBidAccuracyWeight: invocation.guardrailBidAccuracyWeight,
+            guardrailOverbidWeight: invocation.guardrailOverbidWeight,
+            guardrailBlindSuccessWeight: invocation.guardrailBlindSuccessWeight,
+            guardrailPenaltyTargetWeight: invocation.guardrailPenaltyTargetWeight,
+            guardrailEarlyJokerSpendWeight: invocation.guardrailEarlyJokerSpendWeight,
+            guardrailLeftNeighborPremiumAssistWeight: invocation.guardrailLeftNeighborPremiumAssistWeight,
+            guardrailJokerWishWinWeight: invocation.guardrailJokerWishWinWeight,
+            guardrailBidAccuracyMinimum: invocation.guardrailBidAccuracyMinimum,
+            guardrailOverbidMaximum: invocation.guardrailOverbidMaximum,
+            guardrailBlindSuccessMinimum: invocation.guardrailBlindSuccessMinimum,
+            guardrailPenaltyTargetMaximum: invocation.guardrailPenaltyTargetMaximum,
+            guardrailEarlyJokerSpendMaximum: invocation.guardrailEarlyJokerSpendMaximum,
+            guardrailLeftNeighborPremiumAssistMaximum: invocation.guardrailLeftNeighborPremiumAssistMaximum,
+            guardrailJokerWishWinMinimum: invocation.guardrailJokerWishWinMinimum,
             earlyStoppingPatience: invocation.earlyStoppingPatience,
             earlyStoppingMinImprovement: invocation.earlyStoppingMinImprovement,
             earlyStoppingWarmupGenerations: invocation.earlyStoppingWarmupGenerations,
@@ -253,6 +295,20 @@ struct BotTrainingRunner {
             noTrumpControlUnderbidNormalization: config.noTrumpControlUnderbidNormalization,
             premiumAssistNormalization: config.premiumAssistNormalization,
             premiumPenaltyTargetNormalization: config.premiumPenaltyTargetNormalization,
+            guardrailBidAccuracyWeight: config.guardrailBidAccuracyWeight,
+            guardrailOverbidWeight: config.guardrailOverbidWeight,
+            guardrailBlindSuccessWeight: config.guardrailBlindSuccessWeight,
+            guardrailPenaltyTargetWeight: config.guardrailPenaltyTargetWeight,
+            guardrailEarlyJokerSpendWeight: config.guardrailEarlyJokerSpendWeight,
+            guardrailLeftNeighborPremiumAssistWeight: config.guardrailLeftNeighborPremiumAssistWeight,
+            guardrailJokerWishWinWeight: config.guardrailJokerWishWinWeight,
+            guardrailBidAccuracyMinimum: config.guardrailBidAccuracyMinimum,
+            guardrailOverbidMaximum: config.guardrailOverbidMaximum,
+            guardrailBlindSuccessMinimum: config.guardrailBlindSuccessMinimum,
+            guardrailPenaltyTargetMaximum: config.guardrailPenaltyTargetMaximum,
+            guardrailEarlyJokerSpendMaximum: config.guardrailEarlyJokerSpendMaximum,
+            guardrailLeftNeighborPremiumAssistMaximum: config.guardrailLeftNeighborPremiumAssistMaximum,
+            guardrailJokerWishWinMinimum: config.guardrailJokerWishWinMinimum,
             earlyStoppingPatience: 0,
             earlyStoppingMinImprovement: 0.0,
             earlyStoppingWarmupGenerations: 0,
@@ -361,6 +417,20 @@ struct BotTrainingRunner {
         print("noTrumpControlUnderbidNormalization=\(fmt(config.noTrumpControlUnderbidNormalization))")
         print("premiumAssistNormalization=\(fmt(config.premiumAssistNormalization))")
         print("premiumPenaltyTargetNormalization=\(fmt(config.premiumPenaltyTargetNormalization))")
+        print("guardrailBidAccuracyWeight=\(fmt(config.guardrailBidAccuracyWeight))")
+        print("guardrailOverbidWeight=\(fmt(config.guardrailOverbidWeight))")
+        print("guardrailBlindSuccessWeight=\(fmt(config.guardrailBlindSuccessWeight))")
+        print("guardrailPenaltyTargetWeight=\(fmt(config.guardrailPenaltyTargetWeight))")
+        print("guardrailEarlyJokerSpendWeight=\(fmt(config.guardrailEarlyJokerSpendWeight))")
+        print("guardrailLeftNeighborPremiumAssistWeight=\(fmt(config.guardrailLeftNeighborPremiumAssistWeight))")
+        print("guardrailJokerWishWinWeight=\(fmt(config.guardrailJokerWishWinWeight))")
+        print("guardrailBidAccuracyMinimum=\(fmt(config.guardrailBidAccuracyMinimum))")
+        print("guardrailOverbidMaximum=\(fmt(config.guardrailOverbidMaximum))")
+        print("guardrailBlindSuccessMinimum=\(fmt(config.guardrailBlindSuccessMinimum))")
+        print("guardrailPenaltyTargetMaximum=\(fmt(config.guardrailPenaltyTargetMaximum))")
+        print("guardrailEarlyJokerSpendMaximum=\(fmt(config.guardrailEarlyJokerSpendMaximum))")
+        print("guardrailLeftNeighborPremiumAssistMaximum=\(fmt(config.guardrailLeftNeighborPremiumAssistMaximum))")
+        print("guardrailJokerWishWinMinimum=\(fmt(config.guardrailJokerWishWinMinimum))")
         print("showProgress=\(invocation.showProgress)")
         print("progressCandidateStep=\(invocation.progressCandidateStep)")
         print("earlyStopPatience=\(config.earlyStoppingPatience)")
@@ -380,6 +450,10 @@ struct BotTrainingRunner {
                 .joined(separator: ", ")
             print("perSeedStoppedEarly=[\(perSeedStoppedEarly)]")
             print("ensembleAverageBestFitness=\(fmt(average(seedRuns.map { $0.result.bestFitness })))")
+            print("ensembleAverageBestLegacyFitness=\(fmt(average(seedRuns.map { $0.result.bestLegacyFitness })))")
+            print("ensembleAverageBestPrimaryFitness=\(fmt(average(seedRuns.map { $0.result.bestPrimaryFitness })))")
+            print("ensembleAverageBestGuardrailPenalty=\(fmt(average(seedRuns.map { $0.result.bestGuardrailPenalty })))")
+            print("ensembleAverageBestFinalFitness=\(fmt(average(seedRuns.map { $0.result.bestFinalFitness })))")
             print("ensembleAverageBestWinRate=\(fmt(average(seedRuns.map { $0.result.bestWinRate })))")
             print("ensembleAverageBestScoreDiff=\(fmt(average(seedRuns.map { $0.result.bestAverageScoreDiff })))")
             print("ensembleAverageBestUnderbidLoss=\(fmt(average(seedRuns.map { $0.result.bestAverageUnderbidLoss })))")
@@ -404,6 +478,14 @@ struct BotTrainingRunner {
         print("selectedSeed=\(selectedRun.seed)")
         print("baselineFitness=\(fmt(selectedRun.result.baselineFitness))")
         print("bestFitness=\(fmt(selectedRun.result.bestFitness))")
+        print("baselineLegacyFitness=\(fmt(selectedRun.result.baselineLegacyFitness))")
+        print("bestLegacyFitness=\(fmt(selectedRun.result.bestLegacyFitness))")
+        print("baselinePrimaryFitness=\(fmt(selectedRun.result.baselinePrimaryFitness))")
+        print("bestPrimaryFitness=\(fmt(selectedRun.result.bestPrimaryFitness))")
+        print("baselineGuardrailPenalty=\(fmt(selectedRun.result.baselineGuardrailPenalty))")
+        print("bestGuardrailPenalty=\(fmt(selectedRun.result.bestGuardrailPenalty))")
+        print("baselineFinalFitness=\(fmt(selectedRun.result.baselineFinalFitness))")
+        print("bestFinalFitness=\(fmt(selectedRun.result.bestFinalFitness))")
         print("improvement=\(fmt(selectedRun.result.improvement))")
         print("generationCount=\(selectedRun.result.completedGenerations)")
         print("completedGenerations=\(selectedRun.result.completedGenerations)")
@@ -712,6 +794,97 @@ struct BotTrainingRunner {
                     flag: argument,
                     minimum: 1.0
                 )
+            case "--guardrail-bid-accuracy-weight":
+                invocation.guardrailBidAccuracyWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-overbid-weight":
+                invocation.guardrailOverbidWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-blind-success-weight":
+                invocation.guardrailBlindSuccessWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-penalty-target-weight":
+                invocation.guardrailPenaltyTargetWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-early-joker-spend-weight":
+                invocation.guardrailEarlyJokerSpendWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-left-neighbor-premium-assist-weight":
+                invocation.guardrailLeftNeighborPremiumAssistWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-joker-wish-win-weight":
+                invocation.guardrailJokerWishWinWeight = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
+            case "--guardrail-bid-accuracy-minimum":
+                invocation.guardrailBidAccuracyMinimum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
+            case "--guardrail-overbid-maximum":
+                invocation.guardrailOverbidMaximum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
+            case "--guardrail-blind-success-minimum":
+                invocation.guardrailBlindSuccessMinimum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
+            case "--guardrail-penalty-target-maximum":
+                invocation.guardrailPenaltyTargetMaximum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
+            case "--guardrail-early-joker-spend-maximum":
+                invocation.guardrailEarlyJokerSpendMaximum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
+            case "--guardrail-left-neighbor-premium-assist-maximum":
+                invocation.guardrailLeftNeighborPremiumAssistMaximum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
+            case "--guardrail-joker-wish-win-minimum":
+                invocation.guardrailJokerWishWinMinimum = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0,
+                    maximum: 1.0
+                )
             case "--show-progress":
                 invocation.showProgress = try parseBool(
                     try value(after: argument, in: arguments, at: &index),
@@ -813,14 +986,17 @@ struct BotTrainingRunner {
             )
             print(
                 "seed=\(seed) " +
-                "fit BvA=\(fmt(bVsA.fitness)) AvB=\(fmt(aVsB.fitness)) Badv=\(fmt(bVsA.fitness - aVsB.fitness)) | " +
+                "finalFitness BvA=\(fmt(bVsA.finalFitness)) AvB=\(fmt(aVsB.finalFitness)) Badv=\(fmt(bVsA.finalFitness - aVsB.finalFitness)) | " +
+                "legacyFitness BvA=\(fmt(bVsA.legacyFitness)) AvB=\(fmt(aVsB.legacyFitness)) | " +
+                "primaryFitness BvA=\(fmt(bVsA.primaryFitness)) AvB=\(fmt(aVsB.primaryFitness)) | " +
+                "guardrailPenalty BvA=\(fmt(bVsA.guardrailPenalty)) AvB=\(fmt(aVsB.guardrailPenalty)) | " +
                 "wr BvA=\(fmt(bVsA.winRate)) AvB=\(fmt(aVsB.winRate)) Badv=\(fmt(bVsA.winRate - aVsB.winRate)) | " +
                 "scoreDiff BvA=\(fmt(bVsA.averageScoreDiff)) AvB=\(fmt(aVsB.averageScoreDiff)) Badv=\(fmt(bVsA.averageScoreDiff - aVsB.averageScoreDiff))"
             )
         }
 
-        let bVaFitnessValues = runs.map(\.bVsA.fitness)
-        let aVbFitnessValues = runs.map(\.aVsB.fitness)
+        let bVaFitnessValues = runs.map(\.bVsA.finalFitness)
+        let aVbFitnessValues = runs.map(\.aVsB.finalFitness)
         let bVaWinRateValues = runs.map(\.bVsA.winRate)
         let aVbWinRateValues = runs.map(\.aVsB.winRate)
         let bVaScoreDiffValues = runs.map(\.bVsA.averageScoreDiff)
@@ -884,7 +1060,16 @@ struct BotTrainingRunner {
         let earlyLeadWishJokerRateDeltaValues = zip(bVaEarlyLeadWishJokerRateValues, aVbEarlyLeadWishJokerRateValues).map(-)
         let leftNeighborPremiumAssistRateDeltaValues = zip(bVaLeftNeighborPremiumAssistRateValues, aVbLeftNeighborPremiumAssistRateValues).map(-)
 
-        print("summary.mean fitness BvA=\(fmt(average(bVaFitnessValues))) AvB=\(fmt(average(aVbFitnessValues))) Badv=\(fmt(average(fitnessDeltaValues)))")
+        print("summary.mean finalFitness BvA=\(fmt(average(bVaFitnessValues))) AvB=\(fmt(average(aVbFitnessValues))) Badv=\(fmt(average(fitnessDeltaValues)))")
+        let bVaLegacyValues = runs.map(\.bVsA.legacyFitness)
+        let aVbLegacyValues = runs.map(\.aVsB.legacyFitness)
+        let bVaPrimaryValues = runs.map(\.bVsA.primaryFitness)
+        let aVbPrimaryValues = runs.map(\.aVsB.primaryFitness)
+        let bVaGuardrailValues = runs.map(\.bVsA.guardrailPenalty)
+        let aVbGuardrailValues = runs.map(\.aVsB.guardrailPenalty)
+        print("summary.mean legacyFitness BvA=\(fmt(average(bVaLegacyValues))) AvB=\(fmt(average(aVbLegacyValues)))")
+        print("summary.mean primaryFitness BvA=\(fmt(average(bVaPrimaryValues))) AvB=\(fmt(average(aVbPrimaryValues)))")
+        print("summary.mean guardrailPenalty BvA=\(fmt(average(bVaGuardrailValues))) AvB=\(fmt(average(aVbGuardrailValues)))")
         print("summary.mean winRate BvA=\(fmt(average(bVaWinRateValues))) AvB=\(fmt(average(aVbWinRateValues))) Badv=\(fmt(average(winRateDeltaValues)))")
         print("summary.mean scoreDiff BvA=\(fmt(average(bVaScoreDiffValues))) AvB=\(fmt(average(aVbScoreDiffValues))) Badv=\(fmt(average(scoreDiffDeltaValues)))")
         print("summary.mean underbidLoss BvA=\(fmt(average(bVaUnderbidValues))) AvB=\(fmt(average(aVbUnderbidValues))) Badv=\(fmt(average(underbidDeltaValues)))")
@@ -1200,9 +1385,13 @@ struct BotTrainingRunner {
     private static func parseDouble(
         _ rawValue: String,
         flag: String,
-        minimum: Double
+        minimum: Double,
+        maximum: Double? = nil
     ) throws -> Double {
         guard let value = Double(rawValue), value >= minimum else {
+            throw RunnerError.message("Invalid decimal for \(flag): \(rawValue)")
+        }
+        if let maximum, value > maximum {
             throw RunnerError.message("Invalid decimal for \(flag): \(rawValue)")
         }
         return value

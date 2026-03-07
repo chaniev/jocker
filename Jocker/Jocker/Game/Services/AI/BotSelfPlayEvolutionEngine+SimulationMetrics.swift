@@ -267,37 +267,37 @@ extension BotSelfPlayEvolutionEngine {
                 )
             }
             let blindSuccessRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(successfulBlindRoundsCount[playerIndex]),
                     Double(totalBlindRoundsCount[playerIndex])
                 )
             }
             let jokerWishWinRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(winningWishLeadDeclarationCounts[playerIndex]),
                     Double(totalWishLeadDeclarationCounts[playerIndex])
                 )
             }
             let earlyJokerSpendRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(earlyJokerPlayCounts[playerIndex]),
                     Double(totalJokerPlayCounts[playerIndex])
                 )
             }
             let penaltyTargetRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(penaltyTargetBlocksCount[playerIndex]),
                     Double(totalBlocksCount[playerIndex])
                 )
             }
             let bidAccuracyRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(exactBidRoundsCount[playerIndex]),
                     Double(totalRoundsCount[playerIndex])
                 )
             }
             let overbidRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(overbidRoundsCount[playerIndex]),
                     Double(totalRoundsCount[playerIndex])
                 )
@@ -333,7 +333,7 @@ extension BotSelfPlayEvolutionEngine {
                 )
             }
             let leftNeighborPremiumAssistRates = (0..<playerCount).map { playerIndex in
-                BotSelfPlayEvolutionEngine.ratio(
+                BotSelfPlayEvolutionEngine.optionalRatio(
                     Double(assistedLeftNeighborPremiumCount[playerIndex]),
                     Double(leftNeighborPremiumEventsCount[playerIndex])
                 )

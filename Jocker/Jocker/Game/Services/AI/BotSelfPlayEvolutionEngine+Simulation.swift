@@ -13,6 +13,11 @@ extension BotSelfPlayEvolutionEngine {
         return numerator / denominator
     }
 
+    static func optionalRatio(_ numerator: Double, _ denominator: Double) -> Double? {
+        guard denominator > 0 else { return nil }
+        return numerator / denominator
+    }
+
     struct PreDealBlindContext {
         let lockedBids: [Int]
         let blindSelections: [Bool]
@@ -30,18 +35,18 @@ extension BotSelfPlayEvolutionEngine {
         let premiumAssistLosses: [Double]
         let premiumPenaltyTargetLosses: [Double]
         let premiumCaptureRates: [Double]
-        let blindSuccessRates: [Double]
-        let jokerWishWinRates: [Double]
-        let earlyJokerSpendRates: [Double]
-        let penaltyTargetRates: [Double]
-        let bidAccuracyRates: [Double]
-        let overbidRates: [Double]
+        let blindSuccessRates: [Double?]
+        let jokerWishWinRates: [Double?]
+        let earlyJokerSpendRates: [Double?]
+        let penaltyTargetRates: [Double?]
+        let bidAccuracyRates: [Double?]
+        let overbidRates: [Double?]
         let blindBidRatesBlock4: [Double]
         let averageBlindBidSizes: [Double]
         let blindBidWhenBehindRates: [Double]
         let blindBidWhenLeadingRates: [Double]
         let earlyLeadWishJokerRates: [Double]
-        let leftNeighborPremiumAssistRates: [Double]
+        let leftNeighborPremiumAssistRates: [Double?]
     }
 
     struct SeatServiceBundle {

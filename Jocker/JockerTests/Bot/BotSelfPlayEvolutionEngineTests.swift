@@ -167,5 +167,172 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             BotTuning(difficulty: .hard)
         }
     }
+
+    // MARK: - Fitness / guardrail scoring semantics (plan 02)
+
+    func testFitnessScoring_samePrimaryFitness_worseGuardrailLosesToBetterGuardrail() {
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            guardrailBidAccuracyWeight: 0.5,
+            guardrailOverbidWeight: 0.3
+        )
+        let scoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let primary = 1.0
+        let worseGuardrail = scoring.guardrailPenalty(
+            bidAccuracyRate: 0.5,
+            overbidRate: 0.4,
+            blindSuccessRate: nil,
+            penaltyTargetRate: nil,
+            earlyJokerSpendRate: nil,
+            leftNeighborPremiumAssistRate: nil,
+            jokerWishWinRate: nil
+        )
+        let betterGuardrail = scoring.guardrailPenalty(
+            bidAccuracyRate: 0.9,
+            overbidRate: 0.1,
+            blindSuccessRate: nil,
+            penaltyTargetRate: nil,
+            earlyJokerSpendRate: nil,
+            leftNeighborPremiumAssistRate: nil,
+            jokerWishWinRate: nil
+        )
+        let finalWorse = primary - worseGuardrail
+        let finalBetter = primary - betterGuardrail
+        XCTAssertGreaterThan(finalBetter, finalWorse, "Better guardrail profile must yield higher final fitness")
+    }
+
+    func testFitnessScoring_strongWinRateDrop_notCompensatedBySecondaryMetrics() {
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            fitnessWinRateWeight: 1.0,
+            fitnessScoreDiffWeight: 0.5
+        )
+        let scoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let primaryLowWinRate = scoring.primaryFitness(
+            winRate: 0.2,
+            averageScoreDiff: 100,
+            averageUnderbidLoss: 0,
+            averagePremiumAssistLoss: 0,
+            averagePremiumPenaltyTargetLoss: 0
+        )
+        let primaryHighWinRate = scoring.primaryFitness(
+            winRate: 0.8,
+            averageScoreDiff: 0,
+            averageUnderbidLoss: 0,
+            averagePremiumAssistLoss: 0,
+            averagePremiumPenaltyTargetLoss: 0
+        )
+        XCTAssertGreaterThan(primaryHighWinRate, primaryLowWinRate, "High winRate must dominate over scoreDiff")
+    }
+
+    func testFitnessScoring_missingGuardrailData_givesZeroPenaltyForThatMetric() {
+        let config = BotTuning.SelfPlayEvolutionConfig(guardrailBidAccuracyWeight: 1.0)
+        let scoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let penaltyWithData = scoring.guardrailPenalty(
+            bidAccuracyRate: 0.5,
+            overbidRate: nil,
+            blindSuccessRate: nil,
+            penaltyTargetRate: nil,
+            earlyJokerSpendRate: nil,
+            leftNeighborPremiumAssistRate: nil,
+            jokerWishWinRate: nil
+        )
+        let penaltyWithoutData = scoring.guardrailPenalty(
+            bidAccuracyRate: nil,
+            overbidRate: nil,
+            blindSuccessRate: nil,
+            penaltyTargetRate: nil,
+            earlyJokerSpendRate: nil,
+            leftNeighborPremiumAssistRate: nil,
+            jokerWishWinRate: nil
+        )
+        XCTAssertEqual(penaltyWithData, 0.5, accuracy: 1e-6, "With data: (1 - 0.5) * 1 = 0.5")
+        XCTAssertEqual(penaltyWithoutData, 0.0, accuracy: 1e-6, "Missing data must contribute 0")
+    }
+
+    func testFitnessScoring_baselineConfig_zeroGuardrailReproducesFinalEqualsPrimary() {
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            guardrailBidAccuracyWeight: 0,
+            guardrailOverbidWeight: 0,
+            guardrailBlindSuccessWeight: 0,
+            guardrailPenaltyTargetWeight: 0,
+            guardrailEarlyJokerSpendWeight: 0,
+            guardrailLeftNeighborPremiumAssistWeight: 0,
+            guardrailJokerWishWinWeight: 0
+        )
+        let scoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let primary = scoring.primaryFitness(
+            winRate: 0.5,
+            averageScoreDiff: 0,
+            averageUnderbidLoss: 0,
+            averagePremiumAssistLoss: 0,
+            averagePremiumPenaltyTargetLoss: 0
+        )
+        let guardrail = scoring.guardrailPenalty(
+            bidAccuracyRate: 0.7,
+            overbidRate: 0.2,
+            blindSuccessRate: 0.8,
+            penaltyTargetRate: 0.1,
+            earlyJokerSpendRate: 0.3,
+            leftNeighborPremiumAssistRate: 0.1,
+            jokerWishWinRate: 0.6
+        )
+        XCTAssertEqual(guardrail, 0.0, accuracy: 1e-6, "Zero weights => no guardrail penalty")
+        XCTAssertEqual(primary - guardrail, primary, accuracy: 1e-6, "finalFitness equals primary when guardrail is 0")
+    }
+
+    func testFitnessScoring_guardrailThresholds_onlyPenalizeOutsideAcceptedBand() {
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            guardrailBidAccuracyWeight: 1.0,
+            guardrailOverbidWeight: 1.0,
+            guardrailBidAccuracyMinimum: 0.60,
+            guardrailOverbidMaximum: 0.40
+        )
+        let scoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+
+        let withinThreshold = scoring.guardrailPenalty(
+            bidAccuracyRate: 0.75,
+            overbidRate: 0.30,
+            blindSuccessRate: nil,
+            penaltyTargetRate: nil,
+            earlyJokerSpendRate: nil,
+            leftNeighborPremiumAssistRate: nil,
+            jokerWishWinRate: nil
+        )
+        let outsideThreshold = scoring.guardrailPenalty(
+            bidAccuracyRate: 0.30,
+            overbidRate: 0.70,
+            blindSuccessRate: nil,
+            penaltyTargetRate: nil,
+            earlyJokerSpendRate: nil,
+            leftNeighborPremiumAssistRate: nil,
+            jokerWishWinRate: nil
+        )
+
+        XCTAssertEqual(withinThreshold, 0.0, accuracy: 1e-6)
+        XCTAssertGreaterThan(outsideThreshold, 0.0)
+    }
+
+    func testEvaluateHeadToHead_missingGuardrailCoverageDoesNotApplyPenalty() {
+        let tuning = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            runMode: .baselineOnly,
+            gamesPerCandidate: 1,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false,
+            guardrailBlindSuccessWeight: 1.0,
+            guardrailJokerWishWinWeight: 1.0
+        )
+
+        let result = BotTuning.evaluateHeadToHead(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: config,
+            seed: 20260307
+        )
+
+        XCTAssertEqual(result.guardrailPenalty, 0.0, accuracy: 1e-6)
+        XCTAssertEqual(result.finalFitness, result.primaryFitness, accuracy: 1e-6)
+    }
 }
 #endif
