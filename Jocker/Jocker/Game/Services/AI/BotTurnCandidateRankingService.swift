@@ -126,7 +126,6 @@ struct BotTurnCandidateRankingService {
         )
         self.moveUtilityComposer = MoveUtilityComposer(
             strategy: tuning.turnStrategy,
-            jokerPolicy: tuning.jokerPolicy,
             policy: rankingPolicy.moveComposition,
             opponentPressureAdjuster: opponentPressureAdjuster
         )

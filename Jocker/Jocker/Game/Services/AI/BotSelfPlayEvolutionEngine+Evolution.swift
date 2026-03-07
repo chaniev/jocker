@@ -15,6 +15,15 @@ extension BotSelfPlayEvolutionEngine {
         seed: UInt64 = 0x5EED,
         progress: ((SelfPlayEvolutionProgress) -> Void)? = nil
     ) -> SelfPlayEvolutionResult {
+        if config.runMode == .baselineOnly {
+            return evaluateBaseline(
+                baseTuning: baseTuning,
+                config: config,
+                seed: seed,
+                progress: progress
+            )
+        }
+
         let playerCount = min(4, max(3, config.playerCount))
         let cardsRange = normalizedCardsPerRoundRange(
             from: config.cardsPerRoundRange,
@@ -57,7 +66,7 @@ extension BotSelfPlayEvolutionEngine {
         }
 
         let runStartedAt = Date()
-        let totalWorkUnits = 1 + config.generations * populationSize
+        let totalWorkUnits = 1 + config.generationCount * populationSize
         var completedWorkUnits = 0
 
         func notifyProgress(
@@ -83,7 +92,7 @@ extension BotSelfPlayEvolutionEngine {
                 SelfPlayEvolutionProgress(
                     stage: stage,
                     generationIndex: generationIndex,
-                    totalGenerations: config.generations,
+                    totalGenerations: config.generationCount,
                     evaluatedCandidatesInGeneration: evaluatedCandidatesInGeneration,
                     populationSize: populationSize,
                     currentFitness: currentFitness,
@@ -235,6 +244,7 @@ extension BotSelfPlayEvolutionEngine {
             overallBestFitness: bestBreakdown.fitness
         )
         return SelfPlayEvolutionResult(
+            runMode: config.runMode,
             bestTuning: bestTuning,
             baselineFitness: baselineBreakdown.fitness,
             bestFitness: bestBreakdown.fitness,
@@ -281,6 +291,140 @@ extension BotSelfPlayEvolutionEngine {
             bestEarlyLeadWishJokerRate: bestBreakdown.earlyLeadWishJokerRate,
             baselineLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate,
             bestLeftNeighborPremiumAssistRate: bestBreakdown.leftNeighborPremiumAssistRate
+        )
+    }
+
+    private static func evaluateBaseline(
+        baseTuning: BotTuning,
+        config: SelfPlayEvolutionConfig,
+        seed: UInt64,
+        progress: ((SelfPlayEvolutionProgress) -> Void)?
+    ) -> SelfPlayEvolutionResult {
+        let playerCount = min(4, max(3, config.playerCount))
+        let cardsRange = normalizedCardsPerRoundRange(
+            from: config.cardsPerRoundRange,
+            playerCount: playerCount
+        )
+        let fitnessScoring = FitnessScoringConfig(config: config)
+
+        var rng = SelfPlayRandomGenerator(seed: seed)
+        let evaluationSeeds = makeEvaluationSeeds(
+            count: config.gamesPerCandidate,
+            using: &rng
+        )
+        let evaluationContext = FitnessEvaluationContext(
+            playerCount: playerCount,
+            roundsPerGame: config.roundsPerGame,
+            cardsPerRoundRange: cardsRange,
+            evaluationSeeds: evaluationSeeds,
+            useFullMatchRules: config.useFullMatchRules,
+            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
+            fitnessScoring: fitnessScoring
+        )
+
+        let runStartedAt = Date()
+        let totalWorkUnits = 1
+        var completedWorkUnits = 0
+
+        func notifyProgress(
+            stage: SelfPlayEvolutionProgress.Stage,
+            currentFitness: Double? = nil,
+            overallBestFitness: Double? = nil
+        ) {
+            guard let progress else { return }
+            let elapsed = Date().timeIntervalSince(runStartedAt)
+            let estimatedRemaining: Double?
+            if completedWorkUnits > 0 {
+                let averagePerUnit = elapsed / Double(completedWorkUnits)
+                let unitsLeft = max(0, totalWorkUnits - completedWorkUnits)
+                estimatedRemaining = averagePerUnit * Double(unitsLeft)
+            } else {
+                estimatedRemaining = nil
+            }
+
+            progress(
+                SelfPlayEvolutionProgress(
+                    stage: stage,
+                    generationIndex: nil,
+                    totalGenerations: 0,
+                    evaluatedCandidatesInGeneration: nil,
+                    populationSize: 0,
+                    currentFitness: currentFitness,
+                    generationBestFitness: nil,
+                    overallBestFitness: overallBestFitness,
+                    completedWorkUnits: completedWorkUnits,
+                    totalWorkUnits: totalWorkUnits,
+                    elapsedSeconds: elapsed,
+                    estimatedRemainingSeconds: estimatedRemaining
+                )
+            )
+        }
+
+        notifyProgress(stage: .started)
+        let baselineBreakdown = evaluateGenome(
+            .identity,
+            baseTuning: baseTuning,
+            context: evaluationContext
+        )
+        completedWorkUnits = 1
+        notifyProgress(
+            stage: .baselineCompleted,
+            currentFitness: baselineBreakdown.fitness,
+            overallBestFitness: baselineBreakdown.fitness
+        )
+        notifyProgress(
+            stage: .finished,
+            overallBestFitness: baselineBreakdown.fitness
+        )
+
+        return SelfPlayEvolutionResult(
+            runMode: config.runMode,
+            bestTuning: baseTuning,
+            baselineFitness: baselineBreakdown.fitness,
+            bestFitness: baselineBreakdown.fitness,
+            generationBestFitness: [],
+            completedGenerations: 0,
+            stoppedEarly: false,
+            baselineWinRate: baselineBreakdown.winRate,
+            bestWinRate: baselineBreakdown.winRate,
+            baselineAverageScoreDiff: baselineBreakdown.averageScoreDiff,
+            bestAverageScoreDiff: baselineBreakdown.averageScoreDiff,
+            baselineAverageUnderbidLoss: baselineBreakdown.averageUnderbidLoss,
+            bestAverageUnderbidLoss: baselineBreakdown.averageUnderbidLoss,
+            baselineAverageTrumpDensityUnderbidLoss: baselineBreakdown.averageTrumpDensityUnderbidLoss,
+            bestAverageTrumpDensityUnderbidLoss: baselineBreakdown.averageTrumpDensityUnderbidLoss,
+            baselineAverageNoTrumpControlUnderbidLoss: baselineBreakdown.averageNoTrumpControlUnderbidLoss,
+            bestAverageNoTrumpControlUnderbidLoss: baselineBreakdown.averageNoTrumpControlUnderbidLoss,
+            baselineAveragePremiumAssistLoss: baselineBreakdown.averagePremiumAssistLoss,
+            bestAveragePremiumAssistLoss: baselineBreakdown.averagePremiumAssistLoss,
+            baselineAveragePremiumPenaltyTargetLoss: baselineBreakdown.averagePremiumPenaltyTargetLoss,
+            bestAveragePremiumPenaltyTargetLoss: baselineBreakdown.averagePremiumPenaltyTargetLoss,
+            baselinePremiumCaptureRate: baselineBreakdown.premiumCaptureRate,
+            bestPremiumCaptureRate: baselineBreakdown.premiumCaptureRate,
+            baselineBlindSuccessRate: baselineBreakdown.blindSuccessRate,
+            bestBlindSuccessRate: baselineBreakdown.blindSuccessRate,
+            baselineJokerWishWinRate: baselineBreakdown.jokerWishWinRate,
+            bestJokerWishWinRate: baselineBreakdown.jokerWishWinRate,
+            baselineEarlyJokerSpendRate: baselineBreakdown.earlyJokerSpendRate,
+            bestEarlyJokerSpendRate: baselineBreakdown.earlyJokerSpendRate,
+            baselinePenaltyTargetRate: baselineBreakdown.penaltyTargetRate,
+            bestPenaltyTargetRate: baselineBreakdown.penaltyTargetRate,
+            baselineBidAccuracyRate: baselineBreakdown.bidAccuracyRate,
+            bestBidAccuracyRate: baselineBreakdown.bidAccuracyRate,
+            baselineOverbidRate: baselineBreakdown.overbidRate,
+            bestOverbidRate: baselineBreakdown.overbidRate,
+            baselineBlindBidRateBlock4: baselineBreakdown.blindBidRateBlock4,
+            bestBlindBidRateBlock4: baselineBreakdown.blindBidRateBlock4,
+            baselineAverageBlindBidSize: baselineBreakdown.averageBlindBidSize,
+            bestAverageBlindBidSize: baselineBreakdown.averageBlindBidSize,
+            baselineBlindBidWhenBehindRate: baselineBreakdown.blindBidWhenBehindRate,
+            bestBlindBidWhenBehindRate: baselineBreakdown.blindBidWhenBehindRate,
+            baselineBlindBidWhenLeadingRate: baselineBreakdown.blindBidWhenLeadingRate,
+            bestBlindBidWhenLeadingRate: baselineBreakdown.blindBidWhenLeadingRate,
+            baselineEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
+            bestEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
+            baselineLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate,
+            bestLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate
         )
     }
 

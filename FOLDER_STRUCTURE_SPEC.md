@@ -42,6 +42,7 @@ This document is the source of truth for repository structure and file placement
 │   ├── run_bot_ab_comparison_snapshot.sh
 │   ├── run_bot_baseline_snapshot.sh
 │   ├── run_joker_regression_pack.sh
+│   ├── run_training_pipeline_smoke.sh
 │   ├── run_stage6b_ranking_guardrails.sh
 │   └── train_bot_tuning.sh
 ├── правила игры/
@@ -58,6 +59,7 @@ This document is the source of truth for repository structure and file placement
 │   └── ход.txt
 └── Jocker/
     ├── Jocker/                    (main app target sources)
+    ├── JockerSelfPlayTools/       (checked-in Swift CLI entrypoints for self-play/training automation)
     ├── JockerTests/               (unit tests)
     ├── JockerUITests/             (UI tests)
     └── Jocker.xcodeproj/          (Xcode project: `Jocker`, `JockerSelfPlayTools`, `JockerTests`, `JockerUITests` targets)
@@ -122,6 +124,8 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+SimulationBlindBidding.swift`: pre-deal blind context resolution and bidding-order helpers for self-play matches, compiled in `JockerSelfPlayTools`.
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift`: round-level self-play evaluation (play loop, bid-loss penalties, and scored round assembly), compiled in `JockerSelfPlayTools`.
 - `Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+SimulationOrchestration.swift`: legacy/full-match self-play orchestration, dealing helpers, and seat-service bundling, compiled in `JockerSelfPlayTools`.
+- `Jocker/JockerSelfPlayTools/BotTrainingRunner.swift`: checked-in Swift training CLI that parses self-play options, runs baseline/evolution modes, aggregates ensemble tunings, and prints training/A-B summaries without shell-generated Swift sources.
+- `Jocker/JockerSelfPlayTools/main.swift`: executable entrypoint for the checked-in training runner compiled by `scripts/train_bot_tuning.sh`.
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: thin facade over regular bid selection and pre-deal blind bidding policy services.
 - `Jocker/Jocker/Game/Services/AI/BotBidSelectionService.swift`: regular post-deal bid selection based on projected round score and block-progress-aware utility tie-breaking.
 - `Jocker/Jocker/Game/Services/AI/BotBlindBidPolicy.swift`: pre-deal blind bidding risk engine that translates match pressure into target share, aggressive floor, and Monte Carlo inputs.
@@ -155,8 +159,10 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
 - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
-- `Jocker/Jocker/Models/Bot/BotRuntimePolicy.swift`: centralized runtime policy model for non-evolutionary AI config previously spread across ranking/bidding/evaluator/rollout/endgame/simulation/hand-strength/heuristics/opponent constants, with baseline + difficulty overrides.
-- `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized bot config root that owns tunable coefficients, timing presets, runtime policy, and joker-policy projection consumed by bot services and gameplay flow delays.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy.swift`: centralized runtime policy model for non-evolutionary AI config previously spread across ranking/bidding/evaluator/rollout/endgame/simulation/hand-strength/heuristics/opponent constants, keeping the canonical `preset(for:)` entrypoint plus difficulty patch logic.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+PresetSections.swift`: section-by-section hard-baseline builders for `BotRuntimePolicy`, used by canonical preset assembly and training tooling without reintroducing monolithic literal initializers.
+- `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized bot config root that owns tunable coefficients, timing presets, runtime policy, and joker-policy projection consumed by bot services and gameplay flow delays, while keeping `BotTuning(difficulty:)` as the canonical preset entrypoint.
+- `Jocker/Jocker/Models/Bot/BotTuning+Presets.swift`: hard-baseline preset data plus `normal`/`easy` patch helpers for `BotTuning`, so preset values no longer live as three independent monolithic literals.
 - `Jocker/Jocker/Scoring/GameRoundResultsBuilder.swift`: shared mapper from `GameState` runtime round state to `[RoundResult]`, reused by flow recording and in-progress score-table snapshots.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
 - `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
@@ -194,7 +200,7 @@ Selected, non-exhaustive list of key files and what they own.
 
 ### Tooling & Documentation
 
-- `Makefile`: developer convenience targets; `make bt` (alias `make train-bot`) runs bot self-play training workflow. Legacy quick presets (`bt-<difficulty>-<smoke|balanced|battle>`) run short random-round profiles for `easy`/`normal`/`hard`; `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`generations=0`) with persisted artifacts. `make bot-compare` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
+- `Makefile`: developer convenience targets; `make bt` / `make train-bot` point to the canonical full-match training workflow, `make train-bot-final` runs the canonical final validation workflow, and legacy short random-round profiles are now prefixed `legacy-` (`legacy-bt-<difficulty>-<smoke|balanced|battle>`). `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make training-pipeline-smoke` runs compile/baseline/evolution smoke checks for the checked-in runner. `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`run-mode=baselineOnly`) with persisted artifacts. `make bot-compare` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
 - `docs/BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
 - `docs/BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md`: concrete step-by-step refactoring plan for `BotRuntimePolicy.swift` and `BotTuning.swift`, including fixed design decisions, execution order, and completion criteria.
 - `docs/BOT_AI_IMPROVEMENT_PLAN_REVIEW.md`: review notes and critique of `docs/BOT_AI_IMPROVEMENT_PLAN.md`.
@@ -210,10 +216,11 @@ Selected, non-exhaustive list of key files and what they own.
 - `.github/workflows/ios-tests.yml`: GitHub Actions CI workflow that runs Xcode tests on macOS for every `push` and uploads test run artifacts from `.derivedData/test-runs`.
 - `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
 - `scripts/run_bot_ab_comparison_snapshot.sh`: Stage-0 companion harness for reproducible `baseline vs candidate` A/B validation (`A=basePreset`, `B=tunedOutput`); runs `train_bot_tuning.sh` with fixed training/validation seed profiles and saves raw/parsed A/B artifacts (`ab-*-section.txt`, `ab-*-metrics.txt`, `comparison-table.md`) under `.derivedData/bot-ab-runs/<timestamp>/`.
-- `scripts/run_bot_baseline_snapshot.sh`: Stage-0 baseline harness for bot AI metrics; runs `train_bot_tuning.sh` in baseline-only mode (`--generations 0`) on fixed seed lists and stores artifacts (`train_bot_tuning.log`, `summary.txt`, `baseline-metrics.txt`, `command.txt`) under `.derivedData/bot-baseline-runs/<timestamp>/`.
+- `scripts/run_bot_baseline_snapshot.sh`: Stage-0 baseline harness for bot AI metrics; runs `train_bot_tuning.sh` in baseline-only mode (`--run-mode baselineOnly`) on fixed seed lists and stores artifacts (`train_bot_tuning.log`, `summary.txt`, `baseline-metrics.txt`, `command.txt`) under `.derivedData/bot-baseline-runs/<timestamp>/`.
 - `scripts/run_joker_regression_pack.sh`: developer CLI entrypoint for Stage-5 `JOKER` regression pack runs (selected `strict` tests and optional `probe` tests) with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, `summary.txt`, and `selected-tests.txt`) under `.derivedData/joker-regression-runs/<timestamp>/`.
+- `scripts/run_training_pipeline_smoke.sh`: checked-in smoke harness for the training pipeline; compiles the Swift runner, runs a short `baselineOnly` evaluation, runs a short 1-generation evolution, and asserts that baseline mode does not enter the generation loop.
 - `scripts/run_stage6b_ranking_guardrails.sh`: developer CLI entrypoint for Stage-6b opponent-aware ranking guardrails pack (selected `BotTurnCandidateRankingServiceTests` for `BLIND-004`, `PREMIUM-010/011`, `PHASE-003`, `JOKER-016`), with optional `--include-flow-plumbing` mode that adds cross-service Stage-6 guardrails (`GameScenePlayingFlowTests` opponent-model snapshot plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks); persists artifacts (`xcodebuild.log`, `TestResults.xcresult`, `summary.txt`, and `selected-tests.txt`) under `.derivedData/stage6b-ranking-runs/<timestamp>/`.
-- `scripts/train_bot_tuning.sh`: developer CLI entrypoint for offline self-play training; compiles a local runner and prints tuned `BotTuning` values.
+- `scripts/train_bot_tuning.sh`: thin shell entrypoint for offline self-play training; compiles the checked-in Swift runner from `Jocker/JockerSelfPlayTools/`, forwards CLI arguments, and optionally persists stdout logs.
 - `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
 - `Jocker/Jocker.xcodeproj/project.pbxproj`: defines target boundaries; `JockerSelfPlayTools` (static library) owns self-play/training sources, while `Jocker` app target excludes them from runtime build.
 

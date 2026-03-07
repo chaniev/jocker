@@ -8,14 +8,14 @@ usage() {
 
 Назначение:
   Stage 0 baseline harness для AI-метрик.
-  Запускает `scripts/train_bot_tuning.sh` в режиме baseline-only (`--generations 0`)
+  Запускает `scripts/train_bot_tuning.sh` в режиме baseline-only (`--run-mode baselineOnly`)
   на фиксированных seed и сохраняет артефакты прогона (лог, точную команду, summary, извлеченные метрики)
   в отдельную папку.
 
 Важно:
   - По умолчанию baseline собирается без A/B валидации (`--ab-validate false`).
   - Для multi-seed baseline используются `ensembleAverageBest*` метрики из `train_bot_tuning.sh`.
-    При `--generations 0` это эквивалент baseline-метрикам по seed-list.
+    При `--run-mode baselineOnly` это эквивалент baseline-метрикам по seed-list.
   - Расширенные Stage-0 операционные метрики (`premiumCaptureRate`, `blindSuccessRate`, и т.п.)
     этим harness пока не собираются — сохраняются только доступные self-play baseline метрики.
 
@@ -251,7 +251,7 @@ cmd=(
   "$train_script_abs"
   --difficulty "$difficulty"
   --seed-list "$seed_list"
-  --generations 0
+  --run-mode baselineOnly
   --population-size 2
   --elite-count 1
   --games-per-candidate "$games_per_candidate"
@@ -330,7 +330,7 @@ fi
 
 metric_source="baseline(single-seed)"
 if grep -q '^seedList=\[' "$log_path" 2>/dev/null; then
-  metric_source="ensembleAverageBest (generations=0 => baseline multi-seed aggregate)"
+  metric_source="ensembleAverageBest (baselineOnly => baseline multi-seed aggregate)"
 fi
 
 metric_or_empty() {
@@ -339,6 +339,8 @@ metric_or_empty() {
   extract_metric "$key" "$path" 2>/dev/null || true
 }
 
+run_mode="$(metric_or_empty 'mode' "$log_path")"
+generation_count="$(metric_or_empty 'generationCount' "$log_path")"
 baseline_win_rate="$(metric_or_empty 'ensembleAverageBestWinRate' "$log_path")"
 baseline_score_diff="$(metric_or_empty 'ensembleAverageBestScoreDiff' "$log_path")"
 baseline_underbid_loss="$(metric_or_empty 'ensembleAverageBestUnderbidLoss' "$log_path")"
@@ -382,6 +384,8 @@ fi
 
 {
   echo "status=$status"
+  echo "mode=${run_mode:-}"
+  echo "generationCount=${generation_count:-}"
   echo "metric_source=$metric_source"
   echo "winRate=${baseline_win_rate:-}"
   echo "averageScoreDiff=${baseline_score_diff:-}"
@@ -415,6 +419,8 @@ difficulty=$difficulty
 seed_list=$seed_list
 games_per_candidate=$games_per_candidate
 rounds_per_game=$rounds_per_game
+run_mode=${run_mode:-}
+generation_count=${generation_count:-}
 show_progress=$show_progress
 ab_validate=$ab_validate
 train_script=$train_script_abs

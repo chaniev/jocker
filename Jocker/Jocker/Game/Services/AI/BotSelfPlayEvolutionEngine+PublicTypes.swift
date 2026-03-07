@@ -10,6 +10,12 @@ import Foundation
 extension BotSelfPlayEvolutionEngine {
     /// Конфигурация эволюции параметров бота через self-play.
     struct SelfPlayEvolutionConfig {
+        enum RunMode: String {
+            case evolution
+            case baselineOnly
+        }
+
+        let runMode: RunMode
         let populationSize: Int
         /// Количество seed-сценариев для оценки одного кандидата.
         let gamesPerCandidate: Int
@@ -70,6 +76,7 @@ extension BotSelfPlayEvolutionEngine {
         let tuneTrumpSelection: Bool
 
         init(
+            runMode: RunMode = .evolution,
             populationSize: Int = 16,
             generations: Int = 10,
             gamesPerCandidate: Int = 32,
@@ -111,6 +118,7 @@ extension BotSelfPlayEvolutionEngine {
                 cardsPerRoundRange.upperBound
             )
 
+            self.runMode = runMode
             self.populationSize = max(2, populationSize)
             self.generations = max(1, generations)
             self.gamesPerCandidate = max(1, gamesPerCandidate)
@@ -150,6 +158,10 @@ extension BotSelfPlayEvolutionEngine {
             self.tuneTrumpSelection = tuneTrumpSelection
         }
 
+        var generationCount: Int {
+            runMode == .baselineOnly ? 0 : generations
+        }
+
         private static func clamp(
             _ value: Double,
             to range: ClosedRange<Double>
@@ -160,6 +172,7 @@ extension BotSelfPlayEvolutionEngine {
 
     /// Результат запуска self-play эволюции.
     struct SelfPlayEvolutionResult {
+        let runMode: SelfPlayEvolutionConfig.RunMode
         let bestTuning: BotTuning
         let baselineFitness: Double
         let bestFitness: Double

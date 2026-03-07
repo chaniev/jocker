@@ -17,18 +17,15 @@ struct MoveUtilityComposer {
     }
 
     private let strategy: BotTuning.TurnStrategy
-    private let jokerPolicy: BotTuning.JokerPolicy
     private let policy: BotRuntimePolicy.Ranking.MoveComposition
     private let opponentPressureAdjuster: OpponentPressureAdjuster
 
     init(
         strategy: BotTuning.TurnStrategy,
-        jokerPolicy: BotTuning.JokerPolicy,
         policy: BotRuntimePolicy.Ranking.MoveComposition,
         opponentPressureAdjuster: OpponentPressureAdjuster
     ) {
         self.strategy = strategy
-        self.jokerPolicy = jokerPolicy
         self.policy = policy
         self.opponentPressureAdjuster = opponentPressureAdjuster
     }
@@ -138,13 +135,13 @@ struct MoveUtilityComposer {
                 blindRiskMultiplier
 
             if move.card.isJoker && context.hasWinningNonJoker {
-                jokerComponent -= jokerPolicy.chaseSpendJokerPenalty *
+                jokerComponent -= strategy.chaseSpendJokerPenalty *
                     conservatism *
                     blindRiskMultiplier
             }
 
             if move.card.isJoker && context.hasWinningNonJoker && !mustWinAllRemaining {
-                jokerComponent -= jokerPolicy.chaseSpendJokerPenalty *
+                jokerComponent -= strategy.chaseSpendJokerPenalty *
                     (policy.chaseJokerExtraSpendBase +
                         policy.chaseJokerExtraSpendPressureWeight * context.chasePressure) *
                     blindRiskMultiplier
@@ -152,12 +149,12 @@ struct MoveUtilityComposer {
 
             if mustWinAllRemaining {
                 jokerComponent -= (1.0 - immediateWinProbability) *
-                    jokerPolicy.chaseSpendJokerPenalty *
+                    strategy.chaseSpendJokerPenalty *
                     blindRiskMultiplier
             }
 
             if isLeadJoker, case .some(.wish) = move.decision.leadDeclaration {
-                jokerComponent += jokerPolicy.chaseLeadWishBonus *
+                jokerComponent += strategy.chaseLeadWishBonus *
                     (policy.chaseLeadWishPressureBase +
                         context.chasePressure * policy.chaseLeadWishPressureWeight) *
                     (context.isBlindRound ? policy.chaseLeadWishBlindMultiplier : 1.0)
@@ -168,15 +165,15 @@ struct MoveUtilityComposer {
             tacticalComponent += threat * strategy.dumpThreatRewardWeight * blindRewardMultiplier
 
             if move.card.isJoker && context.hasLosingNonJoker {
-                jokerComponent -= jokerPolicy.dumpSpendJokerPenalty * blindRiskMultiplier
+                jokerComponent -= strategy.dumpSpendJokerPenalty * blindRiskMultiplier
             }
             if move.card.isJoker && move.decision.style == .faceUp && !context.trick.playedCards.isEmpty {
-                jokerComponent -= jokerPolicy.dumpFaceUpNonLeadJokerPenalty * blindRiskMultiplier
+                jokerComponent -= strategy.dumpFaceUpNonLeadJokerPenalty * blindRiskMultiplier
             }
 
             if isLeadJoker, case .some(.takes(let suit)) = move.decision.leadDeclaration {
                 if let trump = context.trump, suit != trump {
-                    jokerComponent += jokerPolicy.dumpLeadTakesNonTrumpBonus *
+                    jokerComponent += strategy.dumpLeadTakesNonTrumpBonus *
                         (context.isBlindRound ? policy.dumpLeadTakesBlindMultiplier : 1.0)
                 }
             }

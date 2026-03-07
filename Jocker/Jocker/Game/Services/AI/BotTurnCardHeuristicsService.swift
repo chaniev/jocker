@@ -126,12 +126,10 @@ struct BotTurnCardHeuristicsService {
 
     private let tuning: BotTuning
     private let heuristicsPolicy: BotRuntimePolicy.Heuristics
-    private let jokerPolicy: BotTuning.JokerPolicy
 
     init(tuning: BotTuning) {
         self.tuning = tuning
         self.heuristicsPolicy = tuning.runtimePolicy.heuristics
-        self.jokerPolicy = tuning.jokerPolicy
     }
 
     func candidateDecisions(
@@ -207,7 +205,6 @@ struct BotTurnCardHeuristicsService {
         playerCount: Int? = nil
     ) -> Double {
         let strategy = tuning.turnStrategy
-        let joker = jokerPolicy
         let phaseMultiplier = threatPhaseMultiplier(
             for: card,
             trump: trump,
@@ -227,8 +224,8 @@ struct BotTurnCardHeuristicsService {
         if card.isJoker {
             if decision.style == .faceDown {
                 let baseThreat = trick.playedCards.isEmpty
-                    ? joker.threatFaceDownLeadJoker
-                    : joker.threatFaceDownNonLeadJoker
+                    ? strategy.threatFaceDownLeadJoker
+                    : strategy.threatFaceDownNonLeadJoker
                 return baseThreat * phaseMultiplier * positionMultiplier * historyMultiplier
             }
 
@@ -236,16 +233,16 @@ struct BotTurnCardHeuristicsService {
                 let baseThreat: Double
                 switch decision.leadDeclaration {
                 case .takes:
-                    baseThreat = joker.threatLeadTakesJoker
+                    baseThreat = strategy.threatLeadTakesJoker
                 case .above:
-                    baseThreat = joker.threatLeadAboveJoker
+                    baseThreat = strategy.threatLeadAboveJoker
                 case .wish, .none:
-                    baseThreat = joker.threatLeadWishJoker
+                    baseThreat = strategy.threatLeadWishJoker
                 }
                 return baseThreat * phaseMultiplier * positionMultiplier * historyMultiplier
             }
 
-            return joker.threatNonLeadFaceUpJoker *
+            return strategy.threatNonLeadFaceUpJoker *
                 phaseMultiplier *
                 positionMultiplier *
                 historyMultiplier
@@ -793,24 +790,23 @@ struct BotTurnCardHeuristicsService {
         trump: Suit?
     ) -> Int {
         let strategy = tuning.turnStrategy
-        let joker = jokerPolicy
         if card.isJoker {
             if decision.style == .faceDown {
-                return joker.powerFaceDownJoker
+                return strategy.powerFaceDownJoker
             }
 
             if trick.playedCards.isEmpty {
                 switch decision.leadDeclaration {
                 case .takes:
-                    return joker.powerLeadTakesJoker
+                    return strategy.powerLeadTakesJoker
                 case .above:
-                    return joker.powerLeadAboveJoker
+                    return strategy.powerLeadAboveJoker
                 case .wish, .none:
-                    return joker.powerLeadWishJoker
+                    return strategy.powerLeadWishJoker
                 }
             }
 
-            return joker.powerNonLeadFaceUpJoker
+            return strategy.powerNonLeadFaceUpJoker
         }
 
         guard case .regular(let suit, let rank) = card else { return 0 }

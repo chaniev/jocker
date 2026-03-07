@@ -501,6 +501,8 @@ if [[ "$run_exit_code" -eq 0 ]]; then
 fi
 
 selected_seed="$(extract_metric 'selectedSeed' "$log_path" 2>/dev/null || true)"
+run_mode="$(extract_metric 'mode' "$log_path" 2>/dev/null || true)"
+generation_count="$(extract_metric 'generationCount' "$log_path" 2>/dev/null || true)"
 completed_generations="$(extract_metric 'completedGenerations' "$log_path" 2>/dev/null || true)"
 improvement="$(extract_metric 'improvement' "$log_path" 2>/dev/null || true)"
 best_fitness="$(extract_metric 'bestFitness' "$log_path" 2>/dev/null || true)"
@@ -515,6 +517,8 @@ write_ab_metrics_file "holdout" "$holdout_section_path" "$holdout_metrics_path"
 
 {
   echo "status=$status"
+  echo "mode=${run_mode:-}"
+  echo "generationCount=${generation_count:-}"
   echo "selectedSeed=${selected_seed:-}"
   echo "completedGenerations=${completed_generations:-}"
   echo "baselineFitness=${baseline_fitness:-}"
@@ -544,6 +548,8 @@ population_size=$population_size
 generations=$generations
 games_per_candidate=$games_per_candidate
 rounds_per_game=$rounds_per_game
+run_mode=${run_mode:-}
+generation_count=${generation_count:-}
 ab_validation_games_per_candidate=$ab_validation_games_per_candidate
 show_progress=$show_progress
 train_script=$train_script_abs

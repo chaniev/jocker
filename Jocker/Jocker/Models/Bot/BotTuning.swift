@@ -9,226 +9,205 @@ import Foundation
 
 /// Централизованные коэффициенты и тайминги для ИИ ботов.
 struct BotTuning {
-    struct JokerPolicy {
-        let chaseSpendJokerPenalty: Double
-        let chaseLeadWishBonus: Double
-        let dumpSpendJokerPenalty: Double
-        let dumpFaceUpNonLeadJokerPenalty: Double
-        let dumpLeadTakesNonTrumpBonus: Double
-
-        let threatFaceDownLeadJoker: Double
-        let threatFaceDownNonLeadJoker: Double
-        let threatLeadTakesJoker: Double
-        let threatLeadAboveJoker: Double
-        let threatLeadWishJoker: Double
-        let threatNonLeadFaceUpJoker: Double
-
-        let powerFaceDownJoker: Int
-        let powerLeadTakesJoker: Int
-        let powerLeadAboveJoker: Int
-        let powerLeadWishJoker: Int
-        let powerNonLeadFaceUpJoker: Int
-    }
-
     struct TurnStrategy {
         /// Допуск при сравнении utility-кандидатов.
         /// Пример: `0.001` чаще считает близкие варианты равными.
-        let utilityTieTolerance: Double
+        var utilityTieTolerance: Double
 
         /// Вес вероятности немедленной победы во взятке при доборе до заказа.
         /// Пример: `55` заставляет бота агрессивнее выбирать выигрышные карты.
-        let chaseWinProbabilityWeight: Double
+        var chaseWinProbabilityWeight: Double
         /// Штраф за розыгрыш "дорогих" карт в режиме добора.
         /// Пример: `0.20` дольше сохраняет сильные карты на руке.
-        let chaseThreatPenaltyWeight: Double
+        var chaseThreatPenaltyWeight: Double
         /// Дополнительный штраф за трату джокера, если можно выиграть без него.
         /// Пример: `80` резко снижает ранний розыгрыш джокера.
-        let chaseSpendJokerPenalty: Double
+        var chaseSpendJokerPenalty: Double
         /// Бонус за заход джокером с объявлением `wish` в режиме добора.
         /// Пример: `12` повышает приоритет этого объявления.
-        let chaseLeadWishBonus: Double
+        var chaseLeadWishBonus: Double
 
         /// Награда за проигрыш текущей взятки в режиме сброса.
         /// Пример: `60` уменьшает случайные "лишние" взятки.
-        let dumpAvoidWinWeight: Double
+        var dumpAvoidWinWeight: Double
         /// Награда за сброс карт с высокой угрозой в режиме сброса.
         /// Пример: `0.30` чаще избавляет от опасных карт.
-        let dumpThreatRewardWeight: Double
+        var dumpThreatRewardWeight: Double
         /// Штраф за трату джокера в режиме сброса, если есть проигрывающая альтернатива.
         /// Пример: `90` помогает не сжигать джокер зря.
-        let dumpSpendJokerPenalty: Double
+        var dumpSpendJokerPenalty: Double
         /// Штраф за неведущий джокер лицом вверх в режиме сброса.
         /// Пример: `50` смещает выбор к джокеру рубашкой вверх.
-        let dumpFaceUpNonLeadJokerPenalty: Double
+        var dumpFaceUpNonLeadJokerPenalty: Double
         /// Бонус за `takes` с некозырной мастью при заходе джокером в режиме сброса.
         /// Пример: `10` делает такую линию хода более частой.
-        let dumpLeadTakesNonTrumpBonus: Double
+        var dumpLeadTakesNonTrumpBonus: Double
 
         /// Вес комбинаторной оценки "удержания взятки" в вероятности победы.
         /// Пример: `0.90` больше доверяет моделированию распределения карт.
-        let holdFromDistributionWeight: Double
+        var holdFromDistributionWeight: Double
         /// Вес эвристической силы карты в вероятности победы.
         /// Пример: `0.30` повышает влияние оценки cardPower.
-        let powerConfidenceWeight: Double
+        var powerConfidenceWeight: Double
 
         /// Базовая ценность джокера при оценке будущих взяток.
         /// Пример: `1.4` делает один джокер почти "готовой взяткой".
-        let futureJokerPower: Double
+        var futureJokerPower: Double
         /// Базовая ценность любой обычной карты в прогнозе будущих взяток.
         /// Пример: `0.20` поднимает общий прогноз по любой руке.
-        let futureRegularBasePower: Double
+        var futureRegularBasePower: Double
         /// Вклад ранга обычной карты в прогноз будущих взяток.
         /// Пример: `0.90` сильнее разделяет младшие и старшие ранги.
-        let futureRegularRankWeight: Double
+        var futureRegularRankWeight: Double
         /// Базовый бонус за козырную карту в прогнозе.
         /// Пример: `0.50` увеличивает ценность козырной масти.
-        let futureTrumpBaseBonus: Double
+        var futureTrumpBaseBonus: Double
         /// Дополнительный ранговый бонус для козырных карт.
         /// Пример: `0.40` сильнее предпочитает старшие козыри.
-        let futureTrumpRankWeight: Double
+        var futureTrumpRankWeight: Double
         /// Бонус за старшие карты вне козыря (Q/K/A).
         /// Пример: `0.20` повышает ценность старших некозырных карт.
-        let futureHighRankBonus: Double
+        var futureHighRankBonus: Double
         /// Бонус за длину масти (для карт сверх двух в одной масти).
         /// Пример: `0.08` сильнее вознаграждает концентрацию по масти.
-        let futureLongSuitBonusPerCard: Double
+        var futureLongSuitBonusPerCard: Double
         /// Глобальный множитель прогноза будущих взяток.
         /// Пример: `0.75` делает итоговый прогноз более оптимистичным.
-        let futureTricksScale: Double
+        var futureTricksScale: Double
 
         /// Оценка угрозы для ведущего джокера рубашкой вверх.
         /// Пример: `30` делает такой ход более "дорогим" для расхода.
-        let threatFaceDownLeadJoker: Double
+        var threatFaceDownLeadJoker: Double
         /// Оценка угрозы для неведущего джокера рубашкой вверх.
         /// Пример: `4` уменьшает готовность сбрасывать его без нужды.
-        let threatFaceDownNonLeadJoker: Double
+        var threatFaceDownNonLeadJoker: Double
         /// Оценка угрозы для ведущего джокера с `takes`.
         /// Пример: `50` делает это объявление менее "дешёвым".
-        let threatLeadTakesJoker: Double
+        var threatLeadTakesJoker: Double
         /// Оценка угрозы для ведущего джокера с `above`.
         /// Пример: `100` трактует ход как расход очень сильного ресурса.
-        let threatLeadAboveJoker: Double
+        var threatLeadAboveJoker: Double
         /// Оценка угрозы для ведущего джокера с `wish`.
         /// Пример: `120` считает это самым дорогим вариантом розыгрыша.
-        let threatLeadWishJoker: Double
+        var threatLeadWishJoker: Double
         /// Оценка угрозы для неведущего джокера лицом вверх.
         /// Пример: `120` мешает тратить его в нейтральных позициях.
-        let threatNonLeadFaceUpJoker: Double
+        var threatNonLeadFaceUpJoker: Double
         /// Дополнительная угроза для обычных козырных карт.
         /// Пример: `12` заставляет дольше беречь козыри.
-        let threatTrumpBonus: Double
+        var threatTrumpBonus: Double
         /// Дополнительная угроза для старших обычных рангов.
         /// Пример: `5` усиливает сохранение Q/K/A.
-        let threatHighRankBonus: Double
+        var threatHighRankBonus: Double
 
         /// Эвристическая сила для джокера рубашкой вверх.
         /// Пример: `1` оставляет почти минимальную уверенность в силе хода.
-        let powerFaceDownJoker: Int
+        var powerFaceDownJoker: Int
         /// Эвристическая сила для ведущего джокера `takes`.
         /// Пример: `60` повышает уверенность в этом объявлении.
-        let powerLeadTakesJoker: Int
+        var powerLeadTakesJoker: Int
         /// Эвристическая сила для ведущего джокера `above`.
         /// Пример: `995` делает ход почти гарантированно сильным в оценке.
-        let powerLeadAboveJoker: Int
+        var powerLeadAboveJoker: Int
         /// Эвристическая сила для ведущего джокера `wish`.
         /// Пример: `1000` задаёт максимальную тактическую силу.
-        let powerLeadWishJoker: Int
+        var powerLeadWishJoker: Int
         /// Эвристическая сила для неведущего джокера лицом вверх.
         /// Пример: `1000` считает его максимально сильным прямо сейчас.
-        let powerNonLeadFaceUpJoker: Int
+        var powerNonLeadFaceUpJoker: Int
         /// Эвристический бонус силы для обычных козырей.
         /// Пример: `140` повышает уверенность при розыгрыше козыря.
-        let powerTrumpBonus: Int
+        var powerTrumpBonus: Int
         /// Эвристический бонус силы за попадание в масть хода.
         /// Пример: `60` повышает оценку ответов "в масть".
-        let powerLeadSuitBonus: Int
+        var powerLeadSuitBonus: Int
         /// Делитель нормализации для перевода силы в вероятность.
         /// Пример: `960` при той же raw-силе даёт более высокую уверенность.
-        let powerNormalizationValue: Double
+        var powerNormalizationValue: Double
     }
 
     struct Bidding {
         /// Вклад джокера в оценку ожидаемых взяток при заказе.
         /// Пример: `1.3` повышает заказ при наличии джокеров на руке.
-        let expectedJokerPower: Double
+        var expectedJokerPower: Double
         /// Вклад ранга в оценку заказа.
         /// Пример: `0.85` чаще поднимает заказ для "старшей" руки.
-        let expectedRankWeight: Double
+        var expectedRankWeight: Double
         /// Базовый козырный бонус в оценке заказа.
         /// Пример: `0.70` повышает заказ при сильной козырной масти.
-        let expectedTrumpBaseBonus: Double
+        var expectedTrumpBaseBonus: Double
         /// Ранговый козырный бонус в оценке заказа.
         /// Пример: `0.60` заметно увеличивает ценность старших козырей.
-        let expectedTrumpRankWeight: Double
+        var expectedTrumpRankWeight: Double
         /// Бонус за старшие некозырные карты в оценке заказа.
         /// Пример: `0.25` повышает заказ с Q/K/A вне козыря.
-        let expectedHighRankBonus: Double
+        var expectedHighRankBonus: Double
         /// Бонус за длину масти (карты сверх двух в самой длинной масти).
         /// Пример: `0.16` чаще повышает заказ при концентрации по масти.
-        let expectedLongSuitBonusPerCard: Double
+        var expectedLongSuitBonusPerCard: Double
         /// Дополнительный бонус за плотность козыря в руке.
         /// Пример: `0.45` сильнее поднимает заказ при большом числе козырей.
-        let expectedTrumpDensityBonus: Double
+        var expectedTrumpDensityBonus: Double
         /// Бонус за старшие карты в раскладах без козыря.
         /// Пример: `0.22` поднимает заказ при множестве Q/K/A без козыря.
-        let expectedNoTrumpHighCardBonus: Double
+        var expectedNoTrumpHighCardBonus: Double
         /// Синергия "джокер + контроль руки" в раскладах без козыря.
         /// Пример: `0.60` повышает заказ, если джокер подкреплён длиной/старшими картами.
-        let expectedNoTrumpJokerSynergy: Double
+        var expectedNoTrumpJokerSynergy: Double
 
         /// Порог отставания для "аврального" риска тёмной ставки.
         /// Пример: `200` включает риск тёмной ставки раньше при большом отставании.
-        let blindDesperateBehindThreshold: Int
+        var blindDesperateBehindThreshold: Int
         /// Порог отставания для "догоняющего" режима тёмной ставки.
         /// Пример: `90` раньше включает умеренный риск.
-        let blindCatchUpBehindThreshold: Int
+        var blindCatchUpBehindThreshold: Int
         /// Порог отрыва, после которого бот избегает риска тёмной ставки.
         /// Пример: `260` делает лидирующего бота более осторожным.
-        let blindSafeLeadThreshold: Int
+        var blindSafeLeadThreshold: Int
         /// Целевая доля тёмной ставки в авральном режиме.
         /// Пример: `0.80` стремится к почти максимальным заказам.
-        let blindDesperateTargetShare: Double
+        var blindDesperateTargetShare: Double
         /// Целевая доля тёмной ставки в догоняющем режиме.
         /// Пример: `0.55` чаще выбирает средне-высокие ставки.
-        let blindCatchUpTargetShare: Double
+        var blindCatchUpTargetShare: Double
         /// Консервативная доля тёмной ставки на нижней границе догоняющего режима.
         /// Пример: `0.30` при небольшом отставании снижает риск ради стабильного добора.
-        let blindCatchUpConservativeTargetShare: Double
+        var blindCatchUpConservativeTargetShare: Double
     }
 
     struct TrumpSelection {
         /// Базовая сила одной карты масти при выборе козыря.
         /// Пример: `0.60` делает даже средние мастевые наборы "сильнее".
-        let cardBasePower: Double
+        var cardBasePower: Double
         /// Минимальная сила масти для объявления козыря.
         /// Пример: `1.20` заставляет бота чаще объявлять козырь.
-        let minimumPowerToDeclareTrump: Double
+        var minimumPowerToDeclareTrump: Double
         /// Бонус для стадии выбора козыря игроком, когда в 3 открытых картах есть пара одной масти.
-        let playerChosenPairBonus: Double
+        var playerChosenPairBonus: Double
         /// Бонус за каждую карту масти сверх первой.
-        let lengthBonusPerExtraCard: Double
+        var lengthBonusPerExtraCard: Double
         /// Вес плотности масти в оценке выбора козыря.
-        let densityBonusWeight: Double
+        var densityBonusWeight: Double
         /// Вес последовательности рангов внутри масти.
-        let sequenceBonusWeight: Double
+        var sequenceBonusWeight: Double
         /// Вес остаточного контроля масти.
-        let controlBonusWeight: Double
+        var controlBonusWeight: Double
         /// Базовая синергия джокера с потенциальным козырем.
-        let jokerSynergyBase: Double
+        var jokerSynergyBase: Double
         /// Дополнительная синергия джокера от контроля масти.
-        let jokerSynergyControlWeight: Double
+        var jokerSynergyControlWeight: Double
     }
 
     struct Timing {
         /// Задержка перед ходом бота в фазе игры.
         /// Пример: `0.20` делает ходы бота визуально быстрее.
-        let playingBotTurnDelay: TimeInterval
+        var playingBotTurnDelay: TimeInterval
         /// Задержка между последовательными решениями в торгах.
         /// Пример: `0.40` замедляет темп анимации торгов.
-        let biddingStepDelay: TimeInterval
+        var biddingStepDelay: TimeInterval
         /// Задержка перед колбэком разбора взятки.
         /// Пример: `0.35` быстрее завершает взятку на столе.
-        let trickResolutionDelay: TimeInterval
+        var trickResolutionDelay: TimeInterval
     }
 
     /// Выбранный уровень пресета.
@@ -269,280 +248,18 @@ struct BotTuning {
         self.timing = timing
     }
 
-    var jokerPolicy: JokerPolicy {
-        JokerPolicy(
-            chaseSpendJokerPenalty: turnStrategy.chaseSpendJokerPenalty,
-            chaseLeadWishBonus: turnStrategy.chaseLeadWishBonus,
-            dumpSpendJokerPenalty: turnStrategy.dumpSpendJokerPenalty,
-            dumpFaceUpNonLeadJokerPenalty: turnStrategy.dumpFaceUpNonLeadJokerPenalty,
-            dumpLeadTakesNonTrumpBonus: turnStrategy.dumpLeadTakesNonTrumpBonus,
-            threatFaceDownLeadJoker: turnStrategy.threatFaceDownLeadJoker,
-            threatFaceDownNonLeadJoker: turnStrategy.threatFaceDownNonLeadJoker,
-            threatLeadTakesJoker: turnStrategy.threatLeadTakesJoker,
-            threatLeadAboveJoker: turnStrategy.threatLeadAboveJoker,
-            threatLeadWishJoker: turnStrategy.threatLeadWishJoker,
-            threatNonLeadFaceUpJoker: turnStrategy.threatNonLeadFaceUpJoker,
-            powerFaceDownJoker: turnStrategy.powerFaceDownJoker,
-            powerLeadTakesJoker: turnStrategy.powerLeadTakesJoker,
-            powerLeadAboveJoker: turnStrategy.powerLeadAboveJoker,
-            powerLeadWishJoker: turnStrategy.powerLeadWishJoker,
-            powerNonLeadFaceUpJoker: turnStrategy.powerNonLeadFaceUpJoker
-        )
-    }
-
     private static func preset(for difficulty: BotDifficulty) -> BotTuning {
+        let hard = hardBaselinePreset
+
         switch difficulty {
         case .easy:
-            return BotTuning(
-                difficulty: .easy,
-                turnStrategy: TurnStrategy(
-                    utilityTieTolerance: 0.001,
-
-                    chaseWinProbabilityWeight: 42.0,
-                    chaseThreatPenaltyWeight: 0.10,
-                    chaseSpendJokerPenalty: 35.0,
-                    chaseLeadWishBonus: 4.0,
-
-                    dumpAvoidWinWeight: 42.0,
-                    dumpThreatRewardWeight: 0.11,
-                    dumpSpendJokerPenalty: 45.0,
-                    dumpFaceUpNonLeadJokerPenalty: 20.0,
-                    dumpLeadTakesNonTrumpBonus: 2.0,
-
-                    holdFromDistributionWeight: 0.68,
-                    powerConfidenceWeight: 0.32,
-
-                    futureJokerPower: 1.05,
-                    futureRegularBasePower: 0.10,
-                    futureRegularRankWeight: 0.60,
-                    futureTrumpBaseBonus: 0.24,
-                    futureTrumpRankWeight: 0.20,
-                    futureHighRankBonus: 0.08,
-                    futureLongSuitBonusPerCard: 0.03,
-                    futureTricksScale: 0.52,
-
-                    threatFaceDownLeadJoker: 18.0,
-                    threatFaceDownNonLeadJoker: 1.0,
-                    threatLeadTakesJoker: 24.0,
-                    threatLeadAboveJoker: 72.0,
-                    threatLeadWishJoker: 90.0,
-                    threatNonLeadFaceUpJoker: 90.0,
-                    threatTrumpBonus: 7.0,
-                    threatHighRankBonus: 2.0,
-
-                    powerFaceDownJoker: 1,
-                    powerLeadTakesJoker: 24,
-                    powerLeadAboveJoker: 900,
-                    powerLeadWishJoker: 960,
-                    powerNonLeadFaceUpJoker: 960,
-                    powerTrumpBonus: 80,
-                    powerLeadSuitBonus: 24,
-                    powerNormalizationValue: 960.0
-                ),
-                bidding: Bidding(
-                    expectedJokerPower: 0.9,
-                    expectedRankWeight: 0.58,
-                    expectedTrumpBaseBonus: 0.35,
-                    expectedTrumpRankWeight: 0.28,
-                    expectedHighRankBonus: 0.10,
-                    expectedLongSuitBonusPerCard: 0.08,
-                    expectedTrumpDensityBonus: 0.25,
-                    expectedNoTrumpHighCardBonus: 0.10,
-                    expectedNoTrumpJokerSynergy: 0.30,
-
-                    blindDesperateBehindThreshold: 320,
-                    blindCatchUpBehindThreshold: 180,
-                    blindSafeLeadThreshold: 140,
-                    blindDesperateTargetShare: 0.45,
-                    blindCatchUpTargetShare: 0.30,
-                    blindCatchUpConservativeTargetShare: 0.20
-                ),
-                trumpSelection: TrumpSelection(
-                    cardBasePower: 0.35,
-                    minimumPowerToDeclareTrump: 1.90,
-                    playerChosenPairBonus: 1.40,
-                    lengthBonusPerExtraCard: 0.36,
-                    densityBonusWeight: 0.90,
-                    sequenceBonusWeight: 0.62,
-                    controlBonusWeight: 0.46,
-                    jokerSynergyBase: 0.40,
-                    jokerSynergyControlWeight: 0.48
-                ),
-                runtimePolicy: BotRuntimePolicy.preset(for: .easy),
-                timing: Timing(
-                    playingBotTurnDelay: 0.55,
-                    biddingStepDelay: 0.35,
-                    trickResolutionDelay: 0.65
-                )
-            )
+            return easyPreset(from: hard)
 
         case .normal:
-            return BotTuning(
-                difficulty: .normal,
-                turnStrategy: TurnStrategy(
-                    utilityTieTolerance: 0.000_1,
-
-                    chaseWinProbabilityWeight: 50.0,
-                    chaseThreatPenaltyWeight: 0.14,
-                    chaseSpendJokerPenalty: 55.0,
-                    chaseLeadWishBonus: 8.0,
-
-                    dumpAvoidWinWeight: 50.0,
-                    dumpThreatRewardWeight: 0.18,
-                    dumpSpendJokerPenalty: 70.0,
-                    dumpFaceUpNonLeadJokerPenalty: 35.0,
-                    dumpLeadTakesNonTrumpBonus: 6.0,
-
-                    holdFromDistributionWeight: 0.82,
-                    powerConfidenceWeight: 0.18,
-
-                    futureJokerPower: 1.25,
-                    futureRegularBasePower: 0.15,
-                    futureRegularRankWeight: 0.75,
-                    futureTrumpBaseBonus: 0.35,
-                    futureTrumpRankWeight: 0.30,
-                    futureHighRankBonus: 0.12,
-                    futureLongSuitBonusPerCard: 0.05,
-                    futureTricksScale: 0.62,
-
-                    threatFaceDownLeadJoker: 24.0,
-                    threatFaceDownNonLeadJoker: 2.0,
-                    threatLeadTakesJoker: 36.0,
-                    threatLeadAboveJoker: 88.0,
-                    threatLeadWishJoker: 100.0,
-                    threatNonLeadFaceUpJoker: 100.0,
-                    threatTrumpBonus: 9.0,
-                    threatHighRankBonus: 3.0,
-
-                    powerFaceDownJoker: 1,
-                    powerLeadTakesJoker: 30,
-                    powerLeadAboveJoker: 980,
-                    powerLeadWishJoker: 1000,
-                    powerNonLeadFaceUpJoker: 1000,
-                    powerTrumpBonus: 100,
-                    powerLeadSuitBonus: 40,
-                    powerNormalizationValue: 1000.0
-                ),
-                bidding: Bidding(
-                    expectedJokerPower: 1.1,
-                    expectedRankWeight: 0.72,
-                    expectedTrumpBaseBonus: 0.55,
-                    expectedTrumpRankWeight: 0.45,
-                    expectedHighRankBonus: 0.18,
-                    expectedLongSuitBonusPerCard: 0.12,
-                    expectedTrumpDensityBonus: 0.38,
-                    expectedNoTrumpHighCardBonus: 0.16,
-                    expectedNoTrumpJokerSynergy: 0.48,
-
-                    blindDesperateBehindThreshold: 250,
-                    blindCatchUpBehindThreshold: 130,
-                    blindSafeLeadThreshold: 180,
-                    blindDesperateTargetShare: 0.65,
-                    blindCatchUpTargetShare: 0.45,
-                    blindCatchUpConservativeTargetShare: 0.26
-                ),
-                trumpSelection: TrumpSelection(
-                    cardBasePower: 0.45,
-                    minimumPowerToDeclareTrump: 1.55,
-                    playerChosenPairBonus: 1.40,
-                    lengthBonusPerExtraCard: 0.36,
-                    densityBonusWeight: 0.90,
-                    sequenceBonusWeight: 0.62,
-                    controlBonusWeight: 0.46,
-                    jokerSynergyBase: 0.40,
-                    jokerSynergyControlWeight: 0.48
-                ),
-                runtimePolicy: BotRuntimePolicy.preset(for: .normal),
-                timing: Timing(
-                    playingBotTurnDelay: 0.35,
-                    biddingStepDelay: 0.25,
-                    trickResolutionDelay: 0.55
-                )
-            )
+            return normalPreset(from: hard)
 
         case .hard:
-            return BotTuning(
-                difficulty: .hard,
-                turnStrategy: TurnStrategy(
-                    utilityTieTolerance: 0.000_05,
-
-                    chaseWinProbabilityWeight: 91.964813,
-                    chaseThreatPenaltyWeight: 0.194321,
-                    chaseSpendJokerPenalty: 120.116961,
-                    chaseLeadWishBonus: 14.0,
-
-                    dumpAvoidWinWeight: 30.414311,
-                    dumpThreatRewardWeight: 0.642694,
-                    dumpSpendJokerPenalty: 93.217338,
-                    dumpFaceUpNonLeadJokerPenalty: 45.0,
-                    dumpLeadTakesNonTrumpBonus: 8.0,
-
-                    holdFromDistributionWeight: 0.921471,
-                    powerConfidenceWeight: 0.078529,
-
-                    futureJokerPower: 2.240398,
-                    futureRegularBasePower: 0.18,
-                    futureRegularRankWeight: 0.82,
-                    futureTrumpBaseBonus: 0.42,
-                    futureTrumpRankWeight: 0.35,
-                    futureHighRankBonus: 0.15,
-                    futureLongSuitBonusPerCard: 0.07,
-                    futureTricksScale: 0.205603,
-
-                    threatFaceDownLeadJoker: 28.0,
-                    threatFaceDownNonLeadJoker: 3.0,
-                    threatLeadTakesJoker: 45.0,
-                    threatLeadAboveJoker: 95.0,
-                    threatLeadWishJoker: 110.0,
-                    threatNonLeadFaceUpJoker: 110.0,
-                    threatTrumpBonus: 21.944013,
-                    threatHighRankBonus: 7.979640,
-
-                    powerFaceDownJoker: 1,
-                    powerLeadTakesJoker: 45,
-                    powerLeadAboveJoker: 995,
-                    powerLeadWishJoker: 1000,
-                    powerNonLeadFaceUpJoker: 1000,
-                    powerTrumpBonus: 120,
-                    powerLeadSuitBonus: 55,
-                    powerNormalizationValue: 1000.0
-                ),
-                bidding: Bidding(
-                    expectedJokerPower: 0.826323,
-                    expectedRankWeight: 0.100000,
-                    expectedTrumpBaseBonus: 0.050000,
-                    expectedTrumpRankWeight: 0.051622,
-                    expectedHighRankBonus: 0.020000,
-                    expectedLongSuitBonusPerCard: 0.040768,
-                    expectedTrumpDensityBonus: 0.798904,
-                    expectedNoTrumpHighCardBonus: 0.260075,
-                    expectedNoTrumpJokerSynergy: 0.156046,
-
-                    blindDesperateBehindThreshold: 362,
-                    blindCatchUpBehindThreshold: 145,
-                    blindSafeLeadThreshold: 305,
-                    blindDesperateTargetShare: 0.458452,
-                    blindCatchUpTargetShare: 0.374449,
-                    blindCatchUpConservativeTargetShare: 0.229112
-                ),
-                trumpSelection: TrumpSelection(
-                    cardBasePower: 0.464914,
-                    minimumPowerToDeclareTrump: 1.977804,
-                    playerChosenPairBonus: 1.40,
-                    lengthBonusPerExtraCard: 0.36,
-                    densityBonusWeight: 0.90,
-                    sequenceBonusWeight: 0.62,
-                    controlBonusWeight: 0.46,
-                    jokerSynergyBase: 0.40,
-                    jokerSynergyControlWeight: 0.48
-                ),
-                runtimePolicy: BotRuntimePolicy.preset(for: .hard),
-                timing: Timing(
-                    playingBotTurnDelay: 0.22,
-                    biddingStepDelay: 0.15,
-                    trickResolutionDelay: 0.45
-                )
-            )
+            return hard
         }
     }
 }

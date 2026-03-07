@@ -20,7 +20,7 @@ final class BotTuningTests: XCTestCase {
     /// - blindDesperateBehindThreshold = 250
     /// - minimumPowerToDeclareTrump = 1.55
     /// - playingBotTurnDelay = 0.35
-    /// - runtimePolicy.blindMonteCarloMaxIterations = 44
+    /// - runtimePolicy.bidding.blindMonteCarlo.maximumIterations = 44
     func testNormalPreset_matchesLegacyReferenceValues() {
         let tuning = Jocker.BotTuning(difficulty: .normal)
 
@@ -29,13 +29,13 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(tuning.bidding.blindDesperateBehindThreshold, 250)
         XCTAssertEqual(tuning.trumpSelection.minimumPowerToDeclareTrump, 1.55, accuracy: 0.000_1)
         XCTAssertEqual(tuning.timing.playingBotTurnDelay, 0.35, accuracy: 0.000_1)
-        XCTAssertEqual(tuning.runtimePolicy.bidding.blindMonteCarloMaxIterations, 44)
+        XCTAssertEqual(tuning.runtimePolicy.bidding.blindMonteCarlo.maximumIterations, 44)
     }
 
     /// Тестирует, что difficulty presets меняют aggressiveness и tempo.
     /// Проверяет:
     /// - easy < normal < hard для chaseSpendJokerPenalty
-    /// - easy > normal > hard для minimumPowerToDeclareTrump
+    /// - hard > easy > normal для minimumPowerToDeclareTrump
     /// - easy > normal > hard для playingBotTurnDelay
     /// - easy < normal < hard для runtime Monte Carlo budgets
     func testDifficultyPresets_changeAggressivenessAndTempo() {
@@ -46,14 +46,20 @@ final class BotTuningTests: XCTestCase {
         XCTAssertLessThan(easy.turnStrategy.chaseSpendJokerPenalty, normal.turnStrategy.chaseSpendJokerPenalty)
         XCTAssertLessThan(normal.turnStrategy.chaseSpendJokerPenalty, hard.turnStrategy.chaseSpendJokerPenalty)
 
+        XCTAssertGreaterThan(hard.trumpSelection.minimumPowerToDeclareTrump, easy.trumpSelection.minimumPowerToDeclareTrump)
         XCTAssertGreaterThan(easy.trumpSelection.minimumPowerToDeclareTrump, normal.trumpSelection.minimumPowerToDeclareTrump)
-        XCTAssertGreaterThan(normal.trumpSelection.minimumPowerToDeclareTrump, hard.trumpSelection.minimumPowerToDeclareTrump)
 
         XCTAssertGreaterThan(easy.timing.playingBotTurnDelay, normal.timing.playingBotTurnDelay)
         XCTAssertGreaterThan(normal.timing.playingBotTurnDelay, hard.timing.playingBotTurnDelay)
 
-        XCTAssertLessThan(easy.runtimePolicy.bidding.blindMonteCarloMaxIterations, normal.runtimePolicy.bidding.blindMonteCarloMaxIterations)
-        XCTAssertLessThan(normal.runtimePolicy.bidding.blindMonteCarloMaxIterations, hard.runtimePolicy.bidding.blindMonteCarloMaxIterations)
+        XCTAssertLessThan(
+            easy.runtimePolicy.bidding.blindMonteCarlo.maximumIterations,
+            normal.runtimePolicy.bidding.blindMonteCarlo.maximumIterations
+        )
+        XCTAssertLessThan(
+            normal.runtimePolicy.bidding.blindMonteCarlo.maximumIterations,
+            hard.runtimePolicy.bidding.blindMonteCarlo.maximumIterations
+        )
     }
 
     /// Тестирует, что easy preset совпадает с reference значениями и hard держит разумные границы.
@@ -157,6 +163,51 @@ final class BotTuningTests: XCTestCase {
         )
     }
 
+    func testRuntimePolicyPreset_matchesSectionedCanonicalValuesAcrossDifficulties() {
+        let easy = Jocker.BotTuning(difficulty: .easy)
+        let normal = Jocker.BotTuning(difficulty: .normal)
+        let hard = Jocker.BotTuning(difficulty: .hard)
+
+        XCTAssertEqual(hard.runtimePolicy.ranking.standardBlockScoreScale, 260.0, accuracy: 0.000_1)
+        XCTAssertEqual(
+            hard.runtimePolicy.bidding.bidSelection.utilityTieTolerance,
+            0.000_001,
+            accuracy: 0.000_000_1
+        )
+        XCTAssertEqual(
+            hard.runtimePolicy.bidding.blindPolicy.riskScoreBase,
+            -0.55,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(hard.runtimePolicy.rollout.maximumIterations, 8)
+        XCTAssertEqual(
+            hard.runtimePolicy.heuristics.threatPhase.highRankThreshold,
+            .queen
+        )
+        XCTAssertEqual(
+            hard.runtimePolicy.opponentModeling.opponentLeadJokerAntiPremiumWeight,
+            0.60,
+            accuracy: 0.000_1
+        )
+
+        XCTAssertEqual(normal.runtimePolicy.bidding.blindMonteCarlo.minimumIterations, 20)
+        XCTAssertEqual(normal.runtimePolicy.bidding.blindMonteCarlo.maximumIterations, 44)
+        XCTAssertEqual(
+            normal.runtimePolicy.opponentModeling.opponentLeadJokerAntiPremiumWeight,
+            0.52,
+            accuracy: 0.000_1
+        )
+
+        XCTAssertEqual(easy.runtimePolicy.bidding.blindMonteCarlo.minimumIterations, 16)
+        XCTAssertEqual(easy.runtimePolicy.bidding.blindMonteCarlo.maximumIterations, 32)
+        XCTAssertEqual(easy.runtimePolicy.heuristics.legalAwareMinIterations, 12)
+        XCTAssertEqual(
+            easy.runtimePolicy.opponentModeling.opponentBlindChaseContestWeight,
+            0.16,
+            accuracy: 0.000_1
+        )
+    }
+
     /// Тестирует, что custom initializer сохраняет предоставленные компоненты.
     /// Проверяет:
     /// - difficulty = .hard (новый)
@@ -177,17 +228,20 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(custom.turnStrategy.chaseWinProbabilityWeight, base.turnStrategy.chaseWinProbabilityWeight, accuracy: 0.000_1)
         XCTAssertEqual(custom.bidding.blindDesperateBehindThreshold, base.bidding.blindDesperateBehindThreshold)
         XCTAssertEqual(custom.trumpSelection.minimumPowerToDeclareTrump, base.trumpSelection.minimumPowerToDeclareTrump, accuracy: 0.000_1)
-        XCTAssertEqual(custom.runtimePolicy.bidding.blindMonteCarloMinIterations, base.runtimePolicy.bidding.blindMonteCarloMinIterations)
+        XCTAssertEqual(
+            custom.runtimePolicy.bidding.blindMonteCarlo.minimumIterations,
+            base.runtimePolicy.bidding.blindMonteCarlo.minimumIterations
+        )
         XCTAssertEqual(custom.timing.playingBotTurnDelay, base.timing.playingBotTurnDelay, accuracy: 0.000_1)
     }
 
-    func testJokerPolicy_exposesTurnStrategyJokerCoefficients() {
+    func testTurnStrategy_exposesJokerCoefficientsDirectly() {
         let tuning = Jocker.BotTuning(difficulty: .hard)
 
-        XCTAssertEqual(tuning.jokerPolicy.chaseSpendJokerPenalty, tuning.turnStrategy.chaseSpendJokerPenalty, accuracy: 0.000_1)
-        XCTAssertEqual(tuning.jokerPolicy.dumpLeadTakesNonTrumpBonus, tuning.turnStrategy.dumpLeadTakesNonTrumpBonus, accuracy: 0.000_1)
-        XCTAssertEqual(tuning.jokerPolicy.threatLeadWishJoker, tuning.turnStrategy.threatLeadWishJoker, accuracy: 0.000_1)
-        XCTAssertEqual(tuning.jokerPolicy.powerLeadAboveJoker, tuning.turnStrategy.powerLeadAboveJoker)
+        XCTAssertEqual(tuning.turnStrategy.chaseSpendJokerPenalty, 120.116_961, accuracy: 0.000_1)
+        XCTAssertEqual(tuning.turnStrategy.dumpLeadTakesNonTrumpBonus, 8.0, accuracy: 0.000_1)
+        XCTAssertEqual(tuning.turnStrategy.threatLeadWishJoker, 110.0, accuracy: 0.000_1)
+        XCTAssertEqual(tuning.turnStrategy.powerLeadAboveJoker, 995)
     }
 
 #if canImport(JockerSelfPlayTools)
@@ -273,6 +327,35 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(result.generationBestFitness.count, config.generations)
         XCTAssertGreaterThanOrEqual(result.bestFitness, result.baselineFitness)
         XCTAssertGreaterThanOrEqual(result.improvement, 0.0)
+    }
+
+    func testSelfPlayEvolution_baselineOnly_skipsGenerationLoop() {
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let config = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
+            runMode: .baselineOnly,
+            populationSize: 4,
+            generations: 3,
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...3,
+            eliteCount: 1,
+            mutationChance: 0.25,
+            mutationMagnitude: 0.12,
+            selectionPoolRatio: 0.5
+        )
+
+        let result = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: config,
+            seed: 2026_0307
+        )
+
+        XCTAssertEqual(result.runMode, .baselineOnly)
+        XCTAssertEqual(result.completedGenerations, 0)
+        XCTAssertTrue(result.generationBestFitness.isEmpty)
+        XCTAssertEqual(result.bestFitness, result.baselineFitness, accuracy: 0.000_001)
+        XCTAssertFalse(result.stoppedEarly)
     }
 
     /// Тестирует self-play evolution с 10 раундами и report fitness.
