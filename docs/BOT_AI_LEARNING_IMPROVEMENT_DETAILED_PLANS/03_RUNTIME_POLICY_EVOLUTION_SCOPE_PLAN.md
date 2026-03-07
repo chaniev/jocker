@@ -70,40 +70,62 @@
    - mutation delta.
 3. Обновить crossover и mutation так, чтобы значения не выходили за bounds.
 
-### 6. Зафиксировать identity semantics
+### 6. Ввести scope flags для runtimePolicy-групп
+
+1. Добавить в public config отдельные флаги:
+   - `tuneRankingPolicy`
+   - `tuneRolloutPolicy`
+   - `tuneEndgamePolicy`
+   - `tuneOpponentModelingPolicy`
+   - `tuneJokerDeclarationPolicy`
+2. Обновить `applyingEvolutionScopeMask`, чтобы он маскировал genes по этим флагам.
+3. В canonical training profile включить по умолчанию только:
+   - `tuneRankingPolicy`
+   - `tuneRolloutPolicy`
+   - `tuneOpponentModelingPolicy`
+4. Оставить `tuneEndgamePolicy` и `tuneJokerDeclarationPolicy` выключенными до завершения первой holdout-валидации.
+
+### 7. Зафиксировать identity semantics
 
 1. Оставить `EvolutionGenome.identity` полностью нейтральным.
 2. Добавить тест, что `identity` не меняет `BotRuntimePolicy`.
 3. Добавить тест, что мутация одного gene меняет только одну policy-группу.
 4. Добавить тест, что секции вне scope остаются неизменными.
 
-### 7. Обновить артефакты training run
+### 8. Обновить артефакты training run
 
 1. Выводить в summary значения всех новых genes.
 2. Выводить diff относительно baseline preset.
 3. Выводить секционный breakdown применённого runtime-policy patch.
 4. Сохранять эти значения в machine-readable артефактах training run.
 
-### 8. Провести валидацию нового genome scope
+### 9. Провести валидацию нового genome scope
 
 1. Прогнать old genome scope на canonical profile.
-2. Прогнать expanded genome scope на том же canonical profile.
+2. Прогнать runtimePolicy scope только с критическими группами:
+   - ranking
+   - rollout
+   - opponent modeling
 3. Сравнить результаты на training seeds.
 4. Сравнить результаты на holdout seeds.
-5. Зафиксировать итоговый effect size в summary.
+5. После успешной holdout-проверки включить `endgame` и `jokerDeclaration` группы.
+6. Повторить training и holdout сравнение для полного scope.
+7. Зафиксировать итоговый effect size в summary.
 
 ## Проверки
 
 1. Unit tests на presets `BotRuntimePolicy` и `BotTuning` проходят.
 2. Identity genome не меняет baseline policy.
 3. Mutation и crossover соблюдают bounds.
-4. Training runner печатает и сериализует новые runtime genes.
-5. Expanded genome scope проходит holdout-проверку.
+4. Scope flags корректно маскируют genes по policy-группам.
+5. Training runner печатает и сериализует новые runtime genes.
+6. Expanded genome scope проходит holdout-проверку.
 
 ## Критерии завершения
 
 1. `BotRuntimePolicy` и `BotTuning` имеют каноническую внутреннюю форму без дублирующих проекций.
 2. Training tooling синхронизирован с этой формой.
 3. `EvolutionGenome` управляет как минимум девятью runtime policy-кластерами.
-4. Patch применяется поверх baseline preset и не пересобирает policy вручную.
-5. Новый genome scope даёт измеримый эффект на holdout.
+4. Scope flags позволяют включать runtime policy-группы поэтапно.
+5. Patch применяется поверх baseline preset и не пересобирает policy вручную.
+6. Новый genome scope даёт измеримый эффект на holdout.

@@ -61,24 +61,34 @@
 3. Добавить тест, где отсутствие данных по guardrail-метрике даёт нулевой штраф.
 4. Добавить тест, где baseline config воспроизводит ожидаемый breakdown без скрытых штрафов.
 
-### 5. Обновить A/B validation
+### 5. Ввести переходный dual-scoring режим
+
+1. Добавить в `FitnessBreakdown` поле `legacyFitness`.
+2. Считать `legacyFitness` по текущей формуле до внедрения новой схемы.
+3. Использовать `finalFitness` как единственный критерий отбора кандидатов.
+4. Печатать `legacyFitness`, `primaryFitness`, `guardrailPenalty` и `finalFitness` в одном summary.
+5. Сохранять все четыре значения в machine-readable артефактах training run.
+
+### 6. Обновить A/B validation
 
 1. Прогнать baseline vs candidate на training seeds.
 2. Прогнать baseline vs candidate на holdout seeds.
-3. Сравнить `primaryFitness`, `guardrailPenalty` и `finalFitness` по обоим наборам.
+3. Сравнить `legacyFitness`, `primaryFitness`, `guardrailPenalty` и `finalFitness` по обоим наборам.
 4. Зафиксировать в summary отдельные блоки для training и holdout.
+5. Удалить `legacyFitness` из основного summary только после завершения holdout-проверки новой схемы.
 
 ## Проверки
 
 1. Все метрики из `primaryFitness` и `guardrailPenalty` видны в `FitnessBreakdown`.
 2. Unit tests на новый scoring semantics проходят.
-3. Training log показывает причину победы кандидата по компонентам.
+3. Training log показывает причину победы кандидата по компонентам и содержит `legacyFitness`.
 4. Holdout validation не показывает деградацию `finalFitness` относительно старой схемы.
 
 ## Критерии завершения
 
 1. Fitness разделён на основной objective и guardrail-штрафы.
 2. Уже собираемые blind/joker/bid/premium-метрики реально участвуют в оценке.
-3. Breakdown читается из training log без ручного анализа сырых метрик.
-4. Новая формула проходит holdout-проверку.
-5. Изменение весов и порогов не требует правки логики engine.
+3. В переходный период `legacyFitness` считается и публикуется вместе с новой схемой.
+4. Breakdown читается из training log без ручного анализа сырых метрик.
+5. Новая формула проходит holdout-проверку.
+6. Изменение весов и порогов не требует правки логики engine.

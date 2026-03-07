@@ -12,11 +12,13 @@
 
 ### 1. Ввести machine-readable артефакты
 
-1. Добавить run-level `summary.json`.
-2. Добавить `per-seed-metrics.json`.
-3. Добавить `comparison.json` для A/B compare.
-4. Добавить `metrics.csv` как табличный экспорт основных показателей.
-5. Сделать JSON-артефакты источником правды для scripts.
+1. Создать versioned schema для experiment artifacts с полем `schemaVersion`.
+2. Описать Swift `Codable`-структуры для всех артефактов.
+3. Добавить run-level `summary.json`.
+4. Добавить `per-seed-metrics.json`.
+5. Добавить `comparison.json` для A/B compare.
+6. Добавить `metrics.csv` как табличный экспорт основных показателей.
+7. Сделать JSON-артефакты источником правды для scripts.
 
 ### 2. Обновить training и baseline scripts
 
@@ -79,21 +81,24 @@
 
 1. Описать имена файлов и структуру каталогов для каждого типа запуска.
 2. Описать обязательные поля каждого JSON-артефакта.
-3. Добавить tests на генерацию и чтение этих артефактов.
-4. Сверить поля JSON-артефактов с markdown summary.
+3. Зафиксировать `schemaVersion` и правила его изменения.
+4. Добавить tests на генерацию и чтение этих артефактов.
+5. Сверить поля JSON-артефактов с markdown summary.
 
 ## Проверки
 
 1. Scripts читают structured output, а не парсят human-readable log как источник правды.
 2. Compare-profile всегда включает holdout.
-3. Markdown summary и JSON summary содержат одинаковые группы метрик.
-4. Guardrail gate запускается автоматически после compare.
-5. Один основной `make` target выполняет полный experiment workflow.
+3. JSON summary содержит `schemaVersion`.
+4. Markdown summary и JSON summary содержат одинаковые группы метрик.
+5. Guardrail gate запускается автоматически после compare.
+6. Один основной `make` target выполняет полный experiment workflow.
 
 ## Критерии завершения
 
 1. Baseline, training и compare порождают machine-readable артефакты.
-2. Holdout входит в compare-profile по умолчанию.
-3. Отчёты содержат outcome, bid, blind, joker и premium-метрики.
-4. Post-training guardrail gate встроен в workflow.
-5. `Makefile` отражает один канонический исследовательский путь.
+2. Все JSON-артефакты имеют versioned schema и Swift `Codable`-модель.
+3. Holdout входит в compare-profile по умолчанию.
+4. Отчёты содержат outcome, bid, blind, joker и premium-метрики.
+5. Post-training guardrail gate встроен в workflow.
+6. `Makefile` отражает один канонический исследовательский путь.
