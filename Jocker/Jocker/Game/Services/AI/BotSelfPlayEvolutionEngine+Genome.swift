@@ -49,6 +49,11 @@ extension BotSelfPlayEvolutionEngine {
         var endgameAdjustmentScale: Double
         var opponentPressureScale: Double
 
+        var phaseRankingScale: Double
+        var phaseRolloutScale: Double
+        var phaseJokerScale: Double
+        var phaseBlindScale: Double
+
         static let identity = EvolutionGenome(
             chaseWinProbabilityScale: 1.0,
             chaseThreatPenaltyScale: 1.0,
@@ -85,7 +90,11 @@ extension BotSelfPlayEvolutionEngine {
             rolloutAdjustmentScale: 1.0,
             endgameActivationScale: 1.0,
             endgameAdjustmentScale: 1.0,
-            opponentPressureScale: 1.0
+            opponentPressureScale: 1.0,
+            phaseRankingScale: 1.0,
+            phaseRolloutScale: 1.0,
+            phaseJokerScale: 1.0,
+            phaseBlindScale: 1.0
         )
 
         var lexicographicKey: [Double] {
@@ -125,7 +134,11 @@ extension BotSelfPlayEvolutionEngine {
                 rolloutAdjustmentScale,
                 endgameActivationScale,
                 endgameAdjustmentScale,
-                opponentPressureScale
+                opponentPressureScale,
+                phaseRankingScale,
+                phaseRolloutScale,
+                phaseJokerScale,
+                phaseBlindScale
             ]
         }
     }
@@ -163,6 +176,7 @@ extension BotSelfPlayEvolutionEngine {
         static let endgameActivationRange = 0.65...1.50
         static let endgameAdjustmentRange = 0.60...1.60
         static let opponentPressureRange = 0.60...1.60
+        static let phaseScaleRange = 0.60...1.60
 
         static let rankingMatchCatchUpMutationDelta = 0.12
         static let rankingPremiumMutationDelta = 0.12
@@ -173,6 +187,7 @@ extension BotSelfPlayEvolutionEngine {
         static let endgameActivationMutationDelta = 0.10
         static let endgameAdjustmentMutationDelta = 0.12
         static let opponentPressureMutationDelta = 0.12
+        static let phaseScaleMutationDelta = 0.10
     }
 
     struct RuntimePolicyEvolutionPatch {
@@ -185,6 +200,10 @@ extension BotSelfPlayEvolutionEngine {
         var endgameActivationScale: Double
         var endgameAdjustmentScale: Double
         var opponentPressureScale: Double
+        var phaseRankingScale: Double
+        var phaseRolloutScale: Double
+        var phaseJokerScale: Double
+        var phaseBlindScale: Double
 
         static let identity = RuntimePolicyEvolutionPatch(
             rankingMatchCatchUpScale: 1.0,
@@ -195,7 +214,11 @@ extension BotSelfPlayEvolutionEngine {
             rolloutAdjustmentScale: 1.0,
             endgameActivationScale: 1.0,
             endgameAdjustmentScale: 1.0,
-            opponentPressureScale: 1.0
+            opponentPressureScale: 1.0,
+            phaseRankingScale: 1.0,
+            phaseRolloutScale: 1.0,
+            phaseJokerScale: 1.0,
+            phaseBlindScale: 1.0
         )
 
         static func extract(
@@ -285,10 +308,14 @@ extension BotSelfPlayEvolutionEngine {
                         (policy.opponentModeling.opponentIntentionChaseBase, baseline.opponentModeling.opponentIntentionChaseBase),
                         (policy.opponentModeling.opponentIntentionChaseProgress, baseline.opponentModeling.opponentIntentionChaseProgress),
                         (policy.opponentModeling.opponentIntentionDumpBase, baseline.opponentModeling.opponentIntentionDumpBase),
-                        (policy.opponentModeling.opponentIntentionDumpProgress, baseline.opponentModeling.opponentIntentionDumpProgress)
+                        (policy.                opponentModeling.opponentIntentionDumpProgress, baseline.opponentModeling.opponentIntentionDumpProgress)
                     ],
                     range: RuntimePolicyGeneSpec.opponentPressureRange
-                )
+                ),
+                phaseRankingScale: 1.0,
+                phaseRolloutScale: 1.0,
+                phaseJokerScale: 1.0,
+                phaseBlindScale: 1.0
             )
         }
 
@@ -320,18 +347,59 @@ extension BotSelfPlayEvolutionEngine {
             ranking.penaltyAvoidProjectedScoreWeight *= rankingPenaltyAvoidScale
             ranking.penaltyAvoidLateBlockBoost *= rankingPenaltyAvoidScale
 
+            ranking.phaseMatchCatchUp = PhaseMultipliers(
+                early: ranking.phaseMatchCatchUp.early * phaseRankingScale,
+                mid: ranking.phaseMatchCatchUp.mid * phaseRankingScale,
+                late: ranking.phaseMatchCatchUp.late * phaseRankingScale
+            )
+            ranking.phasePremiumPressure = PhaseMultipliers(
+                early: ranking.phasePremiumPressure.early * phaseRankingScale,
+                mid: ranking.phasePremiumPressure.mid * phaseRankingScale,
+                late: ranking.phasePremiumPressure.late * phaseRankingScale
+            )
+            ranking.phasePenaltyAvoid = PhaseMultipliers(
+                early: ranking.phasePenaltyAvoid.early * phaseRankingScale,
+                mid: ranking.phasePenaltyAvoid.mid * phaseRankingScale,
+                late: ranking.phasePenaltyAvoid.late * phaseRankingScale
+            )
+
             ranking.jokerDeclaration.wishFinalChaseBonusBase *= jokerDeclarationScale
             ranking.jokerDeclaration.aboveChaseBonusBase *= jokerDeclarationScale
             ranking.jokerDeclaration.takesDumpBonusBase *= jokerDeclarationScale
             ranking.jokerDeclaration.goalChaseScaleBase *= jokerDeclarationScale
             ranking.jokerDeclaration.goalDumpScaleBase *= jokerDeclarationScale
             ranking.jokerDeclaration.earlyWishPenaltyBase *= jokerDeclarationScale
+            ranking.jokerDeclaration.phaseEarlySpend = PhaseMultipliers(
+                early: ranking.jokerDeclaration.phaseEarlySpend.early * phaseJokerScale,
+                mid: ranking.jokerDeclaration.phaseEarlySpend.mid * phaseJokerScale,
+                late: ranking.jokerDeclaration.phaseEarlySpend.late * phaseJokerScale
+            )
+            ranking.jokerDeclaration.phaseLateSpend = PhaseMultipliers(
+                early: ranking.jokerDeclaration.phaseLateSpend.early * phaseJokerScale,
+                mid: ranking.jokerDeclaration.phaseLateSpend.mid * phaseJokerScale,
+                late: ranking.jokerDeclaration.phaseLateSpend.late * phaseJokerScale
+            )
+            ranking.jokerDeclaration.phaseDeclarationPressure = PhaseMultipliers(
+                early: ranking.jokerDeclaration.phaseDeclarationPressure.early * phaseJokerScale,
+                mid: ranking.jokerDeclaration.phaseDeclarationPressure.mid * phaseJokerScale,
+                late: ranking.jokerDeclaration.phaseDeclarationPressure.late * phaseJokerScale
+            )
 
             var rollout = baseline.rollout
             rollout.chaseUrgencyBase *= rolloutActivationScale
             rollout.dumpUrgencyBase *= rolloutActivationScale
             rollout.adjustmentBase *= rolloutAdjustmentScale
             rollout.adjustmentUrgencyWeight *= rolloutAdjustmentScale
+            rollout.phaseActivation = PhaseMultipliers(
+                early: rollout.phaseActivation.early * phaseRolloutScale,
+                mid: rollout.phaseActivation.mid * phaseRolloutScale,
+                late: rollout.phaseActivation.late * phaseRolloutScale
+            )
+            rollout.phaseUtilityAdjustment = PhaseMultipliers(
+                early: rollout.phaseUtilityAdjustment.early * phaseRolloutScale,
+                mid: rollout.phaseUtilityAdjustment.mid * phaseRolloutScale,
+                late: rollout.phaseUtilityAdjustment.late * phaseRolloutScale
+            )
 
             var endgame = baseline.endgame
             endgame.weightBase *= endgameActivationScale
@@ -348,9 +416,18 @@ extension BotSelfPlayEvolutionEngine {
             opponentModeling.opponentIntentionDumpBase *= opponentPressureScale
             opponentModeling.opponentIntentionDumpProgress *= opponentPressureScale
 
+            var bidding = baseline.bidding
+            var blindPolicy = bidding.blindPolicy
+            blindPolicy.phaseBlock4 = PhaseMultipliers(
+                early: blindPolicy.phaseBlock4.early * phaseBlindScale,
+                mid: blindPolicy.phaseBlock4.mid * phaseBlindScale,
+                late: blindPolicy.phaseBlock4.late * phaseBlindScale
+            )
+            bidding.blindPolicy = blindPolicy
+
             return BotRuntimePolicy(
                 ranking: ranking,
-                bidding: baseline.bidding,
+                bidding: bidding,
                 evaluator: baseline.evaluator,
                 rollout: rollout,
                 endgame: endgame,
@@ -374,7 +451,11 @@ extension BotSelfPlayEvolutionEngine {
             rolloutAdjustmentScale: genome.rolloutAdjustmentScale,
             endgameActivationScale: genome.endgameActivationScale,
             endgameAdjustmentScale: genome.endgameAdjustmentScale,
-            opponentPressureScale: genome.opponentPressureScale
+            opponentPressureScale: genome.opponentPressureScale,
+            phaseRankingScale: genome.phaseRankingScale,
+            phaseRolloutScale: genome.phaseRolloutScale,
+            phaseJokerScale: genome.phaseJokerScale,
+            phaseBlindScale: genome.phaseBlindScale
         )
     }
 
@@ -462,6 +543,13 @@ extension BotSelfPlayEvolutionEngine {
 
         if !config.tuneJokerDeclarationPolicy {
             masked.jokerDeclarationScale = 1.0
+        }
+
+        if !config.tunePhasePolicy {
+            masked.phaseRankingScale = 1.0
+            masked.phaseRolloutScale = 1.0
+            masked.phaseJokerScale = 1.0
+            masked.phaseBlindScale = 1.0
         }
 
         return masked
@@ -688,6 +776,30 @@ extension BotSelfPlayEvolutionEngine {
                 magnitude: magnitude,
                 range: RuntimePolicyGeneSpec.opponentPressureRange,
                 using: &rng
+            ),
+            phaseRankingScale: randomizedScale(
+                base.phaseRankingScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
+            ),
+            phaseRolloutScale: randomizedScale(
+                base.phaseRolloutScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
+            ),
+            phaseJokerScale: randomizedScale(
+                base.phaseJokerScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
+            ),
+            phaseBlindScale: randomizedScale(
+                base.phaseBlindScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
             )
         )
     }
@@ -912,6 +1024,30 @@ extension BotSelfPlayEvolutionEngine {
                 first.opponentPressureScale,
                 second.opponentPressureScale,
                 range: RuntimePolicyGeneSpec.opponentPressureRange,
+                using: &rng
+            ),
+            phaseRankingScale: mixedScale(
+                first.phaseRankingScale,
+                second.phaseRankingScale,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
+            ),
+            phaseRolloutScale: mixedScale(
+                first.phaseRolloutScale,
+                second.phaseRolloutScale,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
+            ),
+            phaseJokerScale: mixedScale(
+                first.phaseJokerScale,
+                second.phaseJokerScale,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
+                using: &rng
+            ),
+            phaseBlindScale: mixedScale(
+                first.phaseBlindScale,
+                second.phaseBlindScale,
+                range: RuntimePolicyGeneSpec.phaseScaleRange,
                 using: &rng
             )
         )
@@ -1201,6 +1337,46 @@ extension BotSelfPlayEvolutionEngine {
                 delta: RuntimePolicyGeneSpec.opponentPressureMutationDelta
             ),
             range: RuntimePolicyGeneSpec.opponentPressureRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.phaseRankingScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.phaseScaleMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.phaseScaleRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.phaseRolloutScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.phaseScaleMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.phaseScaleRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.phaseJokerScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.phaseScaleMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.phaseScaleRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.phaseBlindScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.phaseScaleMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.phaseScaleRange,
             using: &rng
         )
 

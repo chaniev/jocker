@@ -29,6 +29,9 @@ struct PenaltyAvoidAdjuster {
         guard premium.isPenaltyTargetRiskSoFar else { return 0.0 }
         guard premium.premiumCandidatesThreateningPenaltyCount > 0 else { return 0.0 }
 
+        let phase = BotBlockPhase.from(blockProgressFraction: matchContext.blockProgressFraction)
+        let phaseMultiplier = rankingPolicy.phasePenaltyAvoid.multiplier(for: phase)
+
         let threatCountWeight = min(
             rankingPolicy.penaltyAvoidThreatCountMax,
             rankingPolicy.penaltyAvoidThreatCountMin +
@@ -76,6 +79,6 @@ struct PenaltyAvoidAdjuster {
                 lateBlockPenaltyAvoidBoost
         }
 
-        return adjustment
+        return adjustment * phaseMultiplier
     }
 }

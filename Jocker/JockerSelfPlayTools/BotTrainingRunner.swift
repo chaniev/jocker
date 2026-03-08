@@ -1172,6 +1172,10 @@ struct BotTrainingRunner {
         print("runtimeGene.endgameActivationScale=\(fmt(patch.endgameActivationScale))")
         print("runtimeGene.endgameAdjustmentScale=\(fmt(patch.endgameAdjustmentScale))")
         print("runtimeGene.opponentPressureScale=\(fmt(patch.opponentPressureScale))")
+        print("runtimeGene.phaseRankingScale=\(fmt(patch.phaseRankingScale))")
+        print("runtimeGene.phaseRolloutScale=\(fmt(patch.phaseRolloutScale))")
+        print("runtimeGene.phaseJokerScale=\(fmt(patch.phaseJokerScale))")
+        print("runtimeGene.phaseBlindScale=\(fmt(patch.phaseBlindScale))")
 
         print("runtimePolicyPatch.ranking.matchCatchUpScale=\(fmt(patch.rankingMatchCatchUpScale))")
         print("runtimePolicyPatch.ranking.premiumScale=\(fmt(patch.rankingPremiumScale))")
@@ -1182,6 +1186,10 @@ struct BotTrainingRunner {
         print("runtimePolicyPatch.endgame.activationScale=\(fmt(patch.endgameActivationScale))")
         print("runtimePolicyPatch.endgame.adjustmentScale=\(fmt(patch.endgameAdjustmentScale))")
         print("runtimePolicyPatch.opponentModeling.pressureScale=\(fmt(patch.opponentPressureScale))")
+        print("runtimePolicyPatch.phase.rankingScale=\(fmt(patch.phaseRankingScale))")
+        print("runtimePolicyPatch.phase.rolloutScale=\(fmt(patch.phaseRolloutScale))")
+        print("runtimePolicyPatch.phase.jokerScale=\(fmt(patch.phaseJokerScale))")
+        print("runtimePolicyPatch.phase.blindScale=\(fmt(patch.phaseBlindScale))")
     }
 
     private static func logRuntimePolicyDiffs(
@@ -1489,6 +1497,22 @@ struct BotTrainingRunner {
             ),
             opponentPressureScale: aggregate(
                 patches.map(\.opponentPressureScale),
+                method: method
+            ),
+            phaseRankingScale: aggregate(
+                patches.map(\.phaseRankingScale),
+                method: method
+            ),
+            phaseRolloutScale: aggregate(
+                patches.map(\.phaseRolloutScale),
+                method: method
+            ),
+            phaseJokerScale: aggregate(
+                patches.map(\.phaseJokerScale),
+                method: method
+            ),
+            phaseBlindScale: aggregate(
+                patches.map(\.phaseBlindScale),
                 method: method
             )
         )

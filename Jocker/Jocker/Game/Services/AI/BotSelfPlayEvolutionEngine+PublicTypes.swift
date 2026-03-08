@@ -112,6 +112,8 @@ extension BotSelfPlayEvolutionEngine {
         let tuneOpponentModelingPolicy: Bool
         /// Разрешить эволюции менять joker declaration utility.
         let tuneJokerDeclarationPolicy: Bool
+        /// Разрешить эволюции менять фазовые множители (ranking / rollout / joker / blind).
+        let tunePhasePolicy: Bool
 
         init(
             runMode: RunMode = .evolution,
@@ -164,7 +166,8 @@ extension BotSelfPlayEvolutionEngine {
             tuneRolloutPolicy: Bool = true,
             tuneEndgamePolicy: Bool = false,
             tuneOpponentModelingPolicy: Bool = true,
-            tuneJokerDeclarationPolicy: Bool = false
+            tuneJokerDeclarationPolicy: Bool = false,
+            tunePhasePolicy: Bool = false
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -253,6 +256,7 @@ extension BotSelfPlayEvolutionEngine {
             self.tuneEndgamePolicy = tuneEndgamePolicy
             self.tuneOpponentModelingPolicy = tuneOpponentModelingPolicy
             self.tuneJokerDeclarationPolicy = tuneJokerDeclarationPolicy
+            self.tunePhasePolicy = tunePhasePolicy
         }
 
         var generationCount: Int {

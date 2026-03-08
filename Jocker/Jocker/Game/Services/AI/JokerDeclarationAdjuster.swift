@@ -27,7 +27,13 @@ struct JokerDeclarationAdjuster {
         move: BotTurnCandidateRankingService.Move,
         context: BotTurnCandidateRankingService.UtilityContext
     ) -> Double {
-        declarationUtilityAdjustment(
+        let phase = context.matchContext.map {
+            BotBlockPhase.from(blockProgressFraction: $0.blockProgressFraction)
+        } ?? .mid
+        let declarationPressureMult = policy.phaseDeclarationPressure.multiplier(for: phase)
+        let earlySpendMult = policy.phaseEarlySpend.multiplier(for: phase)
+
+        let declarationPart = declarationUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             leadControlReserveAfterMove: leadControlReserveAfterMove,
             leadPreferredControlSuitAfterMove: leadPreferredControlSuitAfterMove,
@@ -41,11 +47,13 @@ struct JokerDeclarationAdjuster {
             leadPreferredControlSuitStrengthAfterMove: leadPreferredControlSuitStrengthAfterMove,
             move: move,
             context: context
-        ) + earlyWishPenalty(
+        )
+        let earlyPart = earlyWishPenalty(
             leadControlReserveAfterMove: leadControlReserveAfterMove,
             move: move,
             context: context
         )
+        return declarationPart * declarationPressureMult + earlyPart * earlySpendMult
     }
 
     private func declarationUtilityAdjustment(

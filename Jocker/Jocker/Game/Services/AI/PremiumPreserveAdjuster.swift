@@ -45,6 +45,8 @@ struct PremiumPreserveAdjuster {
                 rankingPolicy.premiumPreserveEvidenceProgressWeight * matchContext.blockProgressFraction) *
             evidenceWeight *
             closingRoundsWeight
+        let phase = BotBlockPhase.from(blockProgressFraction: matchContext.blockProgressFraction)
+        let phaseMultiplier = rankingPolicy.phasePremiumPressure.multiplier(for: phase)
         var adjustment = 0.0
         let bidTrajectoryDelta = context.trickDeltaToBidBeforeMove
         let isExactlyOnBidBeforeMove = bidTrajectoryDelta == 0
@@ -110,6 +112,6 @@ struct PremiumPreserveAdjuster {
             }
         }
 
-        return adjustment
+        return adjustment * phaseMultiplier
     }
 }

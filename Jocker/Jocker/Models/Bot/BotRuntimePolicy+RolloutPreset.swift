@@ -29,7 +29,9 @@ extension BotRuntimePolicy {
         dumpUrgencyLateBlockWeight: 0.45,
         dumpUrgencyDeficitWeight: 0.20,
         adjustmentBase: 6.0,
-        adjustmentUrgencyWeight: 10.0
+        adjustmentUrgencyWeight: 10.0,
+        phaseActivation: .neutral,
+        phaseUtilityAdjustment: .neutral
     )
 
     static let hardBaselineEndgame = Endgame(

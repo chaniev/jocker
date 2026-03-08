@@ -15,6 +15,12 @@ struct BotRuntimePolicy {
         struct JokerDeclaration {
             var earlyPhaseTrickCap: Double
             var blindUtilityMultiplier: Double
+            /// Фазовые множители early spend (baseline 1.0).
+            var phaseEarlySpend: PhaseMultipliers
+            /// Фазовые множители late spend (baseline 1.0).
+            var phaseLateSpend: PhaseMultipliers
+            /// Фазовые множители declaration pressure (baseline 1.0).
+            var phaseDeclarationPressure: PhaseMultipliers
 
             var wishFinalChaseBonusBase: Double
             var wishFinalChaseImmediateWinBase: Double
@@ -260,6 +266,13 @@ struct BotRuntimePolicy {
         var penaltyAvoidDumpBonus: Double
         var penaltyAvoidLateBlockBoost: Double
 
+        /// Фазовые множители для match catch-up (early/mid/late). Baseline 1.0.
+        var phaseMatchCatchUp: PhaseMultipliers
+        /// Фазовые множители для premium pressure. Baseline 1.0.
+        var phasePremiumPressure: PhaseMultipliers
+        /// Фазовые множители для penalty avoid. Baseline 1.0.
+        var phasePenaltyAvoid: PhaseMultipliers
+
         var premiumDenyEvidenceBase: Double
         var premiumDenyEvidenceProgress: Double
         var premiumDenyEndBlockBase: Double
@@ -327,6 +340,8 @@ struct BotRuntimePolicy {
             var minAggressiveBidDesperateShare: Double
             var minAggressiveBidCatchUpBase: Double
             var minAggressiveBidCatchUpProgress: Double
+            /// Фазовые множители для блока 4 (blind pressure). Baseline 1.0.
+            var phaseBlock4: PhaseMultipliers
         }
 
         struct BlindMonteCarlo {
@@ -417,6 +432,10 @@ struct BotRuntimePolicy {
         var dumpUrgencyDeficitWeight: Double
         var adjustmentBase: Double
         var adjustmentUrgencyWeight: Double
+        /// Фазовые множители порога активации rollout (baseline 1.0).
+        var phaseActivation: PhaseMultipliers
+        /// Фазовые множители utility adjustment (baseline 1.0).
+        var phaseUtilityAdjustment: PhaseMultipliers
     }
 
     struct Endgame {

@@ -35,6 +35,11 @@ struct BlockPlanResolver {
         guard let plan = blockPlan(from: context.matchContext) else { return 0.0 }
         guard abs(plan.riskBudget) > rankingPolicy.utilityTieTolerance else { return 0.0 }
 
+        let phase = context.matchContext.map {
+            BotBlockPhase.from(blockProgressFraction: $0.blockProgressFraction)
+        } ?? .mid
+        let phaseMultiplier = rankingPolicy.phaseMatchCatchUp.multiplier(for: phase)
+
         let chaseAggressionSignal =
             immediateWinProbability * rankingPolicy.matchCatchUpChaseAggressionBase -
             threat * rankingPolicy.matchCatchUpChaseAggressionThreatWeight +
@@ -78,7 +83,7 @@ struct BlockPlanResolver {
                 rankingPolicy.matchCatchUpDenyOpponentPenaltyBase *
                 plan.denyOpponentPremiumBias
         }
-        return adjustment
+        return adjustment * phaseMultiplier
     }
 
     private func blockPlan(from matchContext: BotMatchContext?) -> BlockPlan? {

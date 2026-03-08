@@ -158,6 +158,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Models/Players/PlayerDisplayNameFormatter.swift`: centralized trim/fallback player-name formatting shared by settings, flow models, export, and UIKit table/controllers.
 - `Jocker/Jocker/Models/Bot/BotDifficulty.swift`: bot difficulty presets (`easy` / `normal` / `hard`) used to select AI behavior profile.
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
+- `Jocker/Jocker/Models/Bot/BotBlockPhase.swift`: block phase enum (early/mid/late) and deterministic mapping from `blockProgressFraction`; `PhaseMultipliers` for phase-conditioned policy scaling.
 - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
 - `Jocker/Jocker/Models/Bot/BotRuntimePolicy.swift`: centralized runtime policy model for non-evolutionary AI config previously spread across ranking/bidding/evaluator/rollout/endgame/simulation/hand-strength/heuristics/opponent constants, keeping the canonical `preset(for:)` entrypoint plus difficulty patch logic.
 - `Jocker/Jocker/Models/Bot/BotRuntimePolicy+PresetSections.swift`: assembles `hardBaselinePreset` from per-section constants; no longer holds section definitions directly.
@@ -438,6 +439,7 @@ Jocker/JockerTests/
 │   ├── BotBiddingServiceTests.swift
 │   ├── BotBlindBidPolicyTestFixture.swift
 │   ├── BotBlindBidPolicyTests.swift
+│   ├── BotBlockPhaseTests.swift
 │   ├── BotHandStrengthModelTests.swift
 │   ├── HandFeatureExtractorTests.swift
 │   ├── BotMatchContextBuilderTestFixture.swift

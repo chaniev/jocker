@@ -57,7 +57,8 @@ extension BotRuntimePolicy {
             minAggressiveBidDesperateMin: 2,
             minAggressiveBidDesperateShare: 0.62,
             minAggressiveBidCatchUpBase: 0.28,
-            minAggressiveBidCatchUpProgress: 0.20
+            minAggressiveBidCatchUpProgress: 0.20,
+            phaseBlock4: .neutral
         ),
         blindMonteCarlo: Bidding.BlindMonteCarlo(
             minimumIterations: 24,

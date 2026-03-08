@@ -109,10 +109,15 @@ struct BotTurnRolloutService {
             policy.maxTrickHorizon,
             max(1, context.handContext.handCards.count)
         )
-        let urgencyWeight = urgencyWeight(
+        var urgencyWeight = urgencyWeight(
             context: context,
             shouldChaseTrick: shouldChaseTrick
         )
+        let phase = context.tableContext.matchContext.map {
+            BotBlockPhase.from(blockProgressFraction: $0.blockProgressFraction)
+        } ?? .mid
+        urgencyWeight *= policy.phaseActivation.multiplier(for: phase)
+        let phaseUtilityMult = policy.phaseUtilityAdjustment.multiplier(for: phase)
 
         return scoredCandidates.enumerated().map { entry in
             let index = entry.offset
@@ -150,7 +155,8 @@ struct BotTurnRolloutService {
             }
             let centeredSuccess = min(1.0, max(0.0, normalizedSuccess)) - 0.5
             let rolloutAdjustment = centeredSuccess *
-                (policy.adjustmentBase + policy.adjustmentUrgencyWeight * urgencyWeight)
+                (policy.adjustmentBase + policy.adjustmentUrgencyWeight * urgencyWeight) *
+                phaseUtilityMult
 
             return BotTurnCandidateRankingService.Evaluation(
                 move: candidate.evaluation.move,
