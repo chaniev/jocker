@@ -102,6 +102,16 @@ extension BotSelfPlayEvolutionEngine {
         let tuneBidding: Bool
         /// Разрешить эволюции менять веса `trumpSelection`.
         let tuneTrumpSelection: Bool
+        /// Разрешить эволюции менять ranking match catch-up / premium / penalty avoid.
+        let tuneRankingPolicy: Bool
+        /// Разрешить эволюции менять rollout activation и adjustment.
+        let tuneRolloutPolicy: Bool
+        /// Разрешить эволюции менять endgame activation и adjustment.
+        let tuneEndgamePolicy: Bool
+        /// Разрешить эволюции менять opponent modeling pressure.
+        let tuneOpponentModelingPolicy: Bool
+        /// Разрешить эволюции менять joker declaration utility.
+        let tuneJokerDeclarationPolicy: Bool
 
         init(
             runMode: RunMode = .evolution,
@@ -149,7 +159,12 @@ extension BotSelfPlayEvolutionEngine {
             earlyStoppingWarmupGenerations: Int = 0,
             tuneTurnStrategy: Bool = true,
             tuneBidding: Bool = true,
-            tuneTrumpSelection: Bool = true
+            tuneTrumpSelection: Bool = true,
+            tuneRankingPolicy: Bool = true,
+            tuneRolloutPolicy: Bool = true,
+            tuneEndgamePolicy: Bool = false,
+            tuneOpponentModelingPolicy: Bool = true,
+            tuneJokerDeclarationPolicy: Bool = false
         ) {
             let normalizedLowerBound = max(
                 1,
@@ -233,6 +248,11 @@ extension BotSelfPlayEvolutionEngine {
             self.tuneTurnStrategy = tuneTurnStrategy
             self.tuneBidding = tuneBidding
             self.tuneTrumpSelection = tuneTrumpSelection
+            self.tuneRankingPolicy = tuneRankingPolicy
+            self.tuneRolloutPolicy = tuneRolloutPolicy
+            self.tuneEndgamePolicy = tuneEndgamePolicy
+            self.tuneOpponentModelingPolicy = tuneOpponentModelingPolicy
+            self.tuneJokerDeclarationPolicy = tuneJokerDeclarationPolicy
         }
 
         var generationCount: Int {

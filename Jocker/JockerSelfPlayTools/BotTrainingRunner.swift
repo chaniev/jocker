@@ -16,6 +16,7 @@ struct BotTrainingRunner {
     enum TuningScope: String {
         case all
         case turnStrategyOnly = "turnStrategy-only"
+        case runtimePolicyOnly = "runtimePolicy-only"
     }
 
     struct Invocation {
@@ -79,9 +80,14 @@ struct BotTrainingRunner {
             cardsMin...max(cardsMin, cardsMax)
         }
 
-        var tuneTurnStrategy: Bool { true }
+        var tuneTurnStrategy: Bool { tuningScope != .runtimePolicyOnly }
         var tuneBidding: Bool { tuningScope == .all }
         var tuneTrumpSelection: Bool { tuningScope == .all }
+        var tuneRankingPolicy: Bool = true
+        var tuneRolloutPolicy: Bool = true
+        var tuneEndgamePolicy: Bool = false
+        var tuneOpponentModelingPolicy: Bool = true
+        var tuneJokerDeclarationPolicy: Bool = false
 
         var runSeeds: [UInt64] {
             seedList.isEmpty ? [seed] : seedList
@@ -168,7 +174,7 @@ struct BotTrainingRunner {
           --mutation-chance <double>
           --mutation-magnitude <double>
           --selection-pool-ratio <double>
-          --tuning-scope <all|turnStrategy-only>
+          --tuning-scope <all|turnStrategy-only|runtimePolicy-only>
           --use-full-match-rules <true|false>
           --rotate-candidate-across-seats <true|false>
           --fitness-win-rate-weight <double>
@@ -207,6 +213,11 @@ struct BotTrainingRunner {
           --ab-validation-seed-list <a,b,c>
           --ab-validation-holdout-seed-list <a,b,c>
           --ab-validation-games-per-candidate <int>
+          --tune-ranking-policy <true|false>
+          --tune-rollout-policy <true|false>
+          --tune-endgame-policy <true|false>
+          --tune-opponent-modeling-policy <true|false>
+          --tune-joker-declaration-policy <true|false>
           -h, --help
 
         Examples:
@@ -265,7 +276,12 @@ struct BotTrainingRunner {
             earlyStoppingWarmupGenerations: invocation.earlyStoppingWarmupGenerations,
             tuneTurnStrategy: invocation.tuneTurnStrategy,
             tuneBidding: invocation.tuneBidding,
-            tuneTrumpSelection: invocation.tuneTrumpSelection
+            tuneTrumpSelection: invocation.tuneTrumpSelection,
+            tuneRankingPolicy: invocation.tuneRankingPolicy,
+            tuneRolloutPolicy: invocation.tuneRolloutPolicy,
+            tuneEndgamePolicy: invocation.tuneEndgamePolicy,
+            tuneOpponentModelingPolicy: invocation.tuneOpponentModelingPolicy,
+            tuneJokerDeclarationPolicy: invocation.tuneJokerDeclarationPolicy
         )
 
         let abValidationConfig = BotTuning.SelfPlayEvolutionConfig(
@@ -314,7 +330,12 @@ struct BotTrainingRunner {
             earlyStoppingWarmupGenerations: 0,
             tuneTurnStrategy: config.tuneTurnStrategy,
             tuneBidding: config.tuneBidding,
-            tuneTrumpSelection: config.tuneTrumpSelection
+            tuneTrumpSelection: config.tuneTrumpSelection,
+            tuneRankingPolicy: config.tuneRankingPolicy,
+            tuneRolloutPolicy: config.tuneRolloutPolicy,
+            tuneEndgamePolicy: config.tuneEndgamePolicy,
+            tuneOpponentModelingPolicy: config.tuneOpponentModelingPolicy,
+            tuneJokerDeclarationPolicy: config.tuneJokerDeclarationPolicy
         )
 
         let seedRuns = invocation.runSeeds.map { runSeed in
@@ -402,7 +423,12 @@ struct BotTrainingRunner {
             "tuningScopeFlags " +
             "turnStrategy=\(config.tuneTurnStrategy) " +
             "bidding=\(config.tuneBidding) " +
-            "trumpSelection=\(config.tuneTrumpSelection)"
+            "trumpSelection=\(config.tuneTrumpSelection) " +
+            "rankingPolicy=\(config.tuneRankingPolicy) " +
+            "rolloutPolicy=\(config.tuneRolloutPolicy) " +
+            "endgamePolicy=\(config.tuneEndgamePolicy) " +
+            "opponentModelingPolicy=\(config.tuneOpponentModelingPolicy) " +
+            "jokerDeclarationPolicy=\(config.tuneJokerDeclarationPolicy)"
         )
         print("fitnessWinRateWeight=\(fmt(config.fitnessWinRateWeight))")
         print("fitnessScoreDiffWeight=\(fmt(config.fitnessScoreDiffWeight))")
@@ -569,6 +595,22 @@ struct BotTrainingRunner {
         print("trumpSelection.controlBonusWeight=\(fmt(trump.controlBonusWeight))")
         print("trumpSelection.jokerSynergyBase=\(fmt(trump.jokerSynergyBase))")
         print("trumpSelection.jokerSynergyControlWeight=\(fmt(trump.jokerSynergyControlWeight))")
+        print("")
+        let baselinePolicy = BotRuntimePolicy.preset(for: invocation.difficulty)
+        let tunedPolicy = tunedForOutput.runtimePolicy
+        let effectiveRuntimePolicyPatch = BotSelfPlayEvolutionEngine.runtimePolicyPatch(
+            from: tunedPolicy,
+            relativeTo: baselinePolicy
+        )
+        print("=== Runtime Policy Genes ===")
+        print("runtimeGeneSource=\(invocation.runSeeds.count > 1 ? "ensembleAggregate" : "selectedSeed")")
+        logRuntimePolicyPatchMetrics(effectiveRuntimePolicyPatch)
+        print("")
+        print("=== Runtime Policy Patch (diff vs baseline) ===")
+        logRuntimePolicyDiffs(
+            baseline: baselinePolicy,
+            tuned: tunedPolicy
+        )
         print("")
         print("=== Post-Training A/B Validation ===")
         print("abValidate=\(invocation.abValidate)")
@@ -935,6 +977,31 @@ struct BotTrainingRunner {
                     flag: argument,
                     minimum: 0
                 )
+            case "--tune-ranking-policy":
+                invocation.tuneRankingPolicy = try parseBool(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
+            case "--tune-rollout-policy":
+                invocation.tuneRolloutPolicy = try parseBool(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
+            case "--tune-endgame-policy":
+                invocation.tuneEndgamePolicy = try parseBool(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
+            case "--tune-opponent-modeling-policy":
+                invocation.tuneOpponentModelingPolicy = try parseBool(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
+            case "--tune-joker-declaration-policy":
+                invocation.tuneJokerDeclarationPolicy = try parseBool(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
             default:
                 throw RunnerError.message("Unknown option: \(argument)")
             }
@@ -1091,6 +1158,103 @@ struct BotTrainingRunner {
         print("summary.mean earlyLeadWishJokerRate BvA=\(fmt(average(bVaEarlyLeadWishJokerRateValues))) AvB=\(fmt(average(aVbEarlyLeadWishJokerRateValues))) Badv=\(fmt(average(earlyLeadWishJokerRateDeltaValues)))")
         print("summary.mean leftNeighborPremiumAssistRate BvA=\(fmt(average(bVaLeftNeighborPremiumAssistRateValues))) AvB=\(fmt(average(aVbLeftNeighborPremiumAssistRateValues))) Badv=\(fmt(average(leftNeighborPremiumAssistRateDeltaValues)))")
         print("")
+    }
+
+    private static func logRuntimePolicyPatchMetrics(
+        _ patch: BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch
+    ) {
+        print("runtimeGene.rankingMatchCatchUpScale=\(fmt(patch.rankingMatchCatchUpScale))")
+        print("runtimeGene.rankingPremiumScale=\(fmt(patch.rankingPremiumScale))")
+        print("runtimeGene.rankingPenaltyAvoidScale=\(fmt(patch.rankingPenaltyAvoidScale))")
+        print("runtimeGene.jokerDeclarationScale=\(fmt(patch.jokerDeclarationScale))")
+        print("runtimeGene.rolloutActivationScale=\(fmt(patch.rolloutActivationScale))")
+        print("runtimeGene.rolloutAdjustmentScale=\(fmt(patch.rolloutAdjustmentScale))")
+        print("runtimeGene.endgameActivationScale=\(fmt(patch.endgameActivationScale))")
+        print("runtimeGene.endgameAdjustmentScale=\(fmt(patch.endgameAdjustmentScale))")
+        print("runtimeGene.opponentPressureScale=\(fmt(patch.opponentPressureScale))")
+
+        print("runtimePolicyPatch.ranking.matchCatchUpScale=\(fmt(patch.rankingMatchCatchUpScale))")
+        print("runtimePolicyPatch.ranking.premiumScale=\(fmt(patch.rankingPremiumScale))")
+        print("runtimePolicyPatch.ranking.penaltyAvoidScale=\(fmt(patch.rankingPenaltyAvoidScale))")
+        print("runtimePolicyPatch.ranking.jokerDeclarationScale=\(fmt(patch.jokerDeclarationScale))")
+        print("runtimePolicyPatch.rollout.activationScale=\(fmt(patch.rolloutActivationScale))")
+        print("runtimePolicyPatch.rollout.adjustmentScale=\(fmt(patch.rolloutAdjustmentScale))")
+        print("runtimePolicyPatch.endgame.activationScale=\(fmt(patch.endgameActivationScale))")
+        print("runtimePolicyPatch.endgame.adjustmentScale=\(fmt(patch.endgameAdjustmentScale))")
+        print("runtimePolicyPatch.opponentModeling.pressureScale=\(fmt(patch.opponentPressureScale))")
+    }
+
+    private static func logRuntimePolicyDiffs(
+        baseline: BotRuntimePolicy,
+        tuned: BotRuntimePolicy
+    ) {
+        logRuntimePolicyDiff(
+            "ranking.matchCatchUpChaseAggressionBase",
+            baseline: baseline.ranking.matchCatchUpChaseAggressionBase,
+            tuned: tuned.ranking.matchCatchUpChaseAggressionBase
+        )
+        logRuntimePolicyDiff(
+            "ranking.premiumPreserveChaseBonusBase",
+            baseline: baseline.ranking.premiumPreserveChaseBonusBase,
+            tuned: tuned.ranking.premiumPreserveChaseBonusBase
+        )
+        logRuntimePolicyDiff(
+            "ranking.premiumDenyChaseBonus",
+            baseline: baseline.ranking.premiumDenyChaseBonus,
+            tuned: tuned.ranking.premiumDenyChaseBonus
+        )
+        logRuntimePolicyDiff(
+            "ranking.penaltyAvoidOverbidPenalty",
+            baseline: baseline.ranking.penaltyAvoidOverbidPenalty,
+            tuned: tuned.ranking.penaltyAvoidOverbidPenalty
+        )
+        logRuntimePolicyDiff(
+            "ranking.jokerDeclaration.goalChaseScaleBase",
+            baseline: baseline.ranking.jokerDeclaration.goalChaseScaleBase,
+            tuned: tuned.ranking.jokerDeclaration.goalChaseScaleBase
+        )
+        logRuntimePolicyDiff(
+            "rollout.chaseUrgencyBase",
+            baseline: baseline.rollout.chaseUrgencyBase,
+            tuned: tuned.rollout.chaseUrgencyBase
+        )
+        logRuntimePolicyDiff(
+            "rollout.adjustmentBase",
+            baseline: baseline.rollout.adjustmentBase,
+            tuned: tuned.rollout.adjustmentBase
+        )
+        logRuntimePolicyDiff(
+            "endgame.weightBase",
+            baseline: baseline.endgame.weightBase,
+            tuned: tuned.endgame.weightBase
+        )
+        logRuntimePolicyDiff(
+            "endgame.adjustmentCap",
+            baseline: baseline.endgame.adjustmentCap,
+            tuned: tuned.endgame.adjustmentCap
+        )
+        logRuntimePolicyDiff(
+            "opponentModeling.opponentBidPressureChaseBase",
+            baseline: baseline.opponentModeling.opponentBidPressureChaseBase,
+            tuned: tuned.opponentModeling.opponentBidPressureChaseBase
+        )
+        logRuntimePolicyDiff(
+            "opponentModeling.opponentIntentionChaseBase",
+            baseline: baseline.opponentModeling.opponentIntentionChaseBase,
+            tuned: tuned.opponentModeling.opponentIntentionChaseBase
+        )
+    }
+
+    private static func logRuntimePolicyDiff(
+        _ key: String,
+        baseline: Double,
+        tuned: Double
+    ) {
+        let delta = tuned - baseline
+        print("\(key) baseline=\(fmt(baseline)) tuned=\(fmt(tuned)) delta=\(fmt(delta))")
+        print("runtimePolicyDiff.\(key).baseline=\(fmt(baseline))")
+        print("runtimePolicyDiff.\(key).tuned=\(fmt(tuned))")
+        print("runtimePolicyDiff.\(key).delta=\(fmt(delta))")
     }
 
     private static func logProgress(
@@ -1261,7 +1425,8 @@ struct BotTrainingRunner {
         trumpSelection.jokerSynergyControlWeight = aggregate(tunings.map { $0.trumpSelection.jokerSynergyControlWeight }, method: method)
         let runtimePolicy = aggregateRuntimePolicy(
             tunings.map(\.runtimePolicy),
-            difficulty: template.difficulty
+            difficulty: template.difficulty,
+            method: method
         )
 
         return BotTuning(
@@ -1276,28 +1441,58 @@ struct BotTrainingRunner {
 
     private static func aggregateRuntimePolicy(
         _ policies: [BotRuntimePolicy],
-        difficulty: BotDifficulty
+        difficulty: BotDifficulty,
+        method: EnsembleMethod
     ) -> BotRuntimePolicy {
-        let fallback = BotRuntimePolicy.preset(for: difficulty)
-        guard let template = policies.first else {
-            return fallback
+        guard !policies.isEmpty else {
+            return BotRuntimePolicy.preset(for: difficulty)
         }
-
-        // Runtime policy is not part of the evolvable genome yet, so the
-        // ensemble preserves the first canonical section while rebuilding the
-        // final policy through the canonical sectioned assembly API.
-        return BotRuntimePolicy.assembled(
-            difficulty: difficulty,
-            ranking: template.ranking,
-            bidding: template.bidding,
-            evaluator: template.evaluator,
-            rollout: template.rollout,
-            endgame: template.endgame,
-            simulation: template.simulation,
-            handStrength: template.handStrength,
-            heuristics: template.heuristics,
-            opponentModeling: template.opponentModeling
+        let baseline = BotRuntimePolicy.preset(for: difficulty)
+        let patches = policies.map {
+            BotSelfPlayEvolutionEngine.runtimePolicyPatch(
+                from: $0,
+                relativeTo: baseline
+            )
+        }
+        let aggregatedPatch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: aggregate(
+                patches.map(\.rankingMatchCatchUpScale),
+                method: method
+            ),
+            rankingPremiumScale: aggregate(
+                patches.map(\.rankingPremiumScale),
+                method: method
+            ),
+            rankingPenaltyAvoidScale: aggregate(
+                patches.map(\.rankingPenaltyAvoidScale),
+                method: method
+            ),
+            jokerDeclarationScale: aggregate(
+                patches.map(\.jokerDeclarationScale),
+                method: method
+            ),
+            rolloutActivationScale: aggregate(
+                patches.map(\.rolloutActivationScale),
+                method: method
+            ),
+            rolloutAdjustmentScale: aggregate(
+                patches.map(\.rolloutAdjustmentScale),
+                method: method
+            ),
+            endgameActivationScale: aggregate(
+                patches.map(\.endgameActivationScale),
+                method: method
+            ),
+            endgameAdjustmentScale: aggregate(
+                patches.map(\.endgameAdjustmentScale),
+                method: method
+            ),
+            opponentPressureScale: aggregate(
+                patches.map(\.opponentPressureScale),
+                method: method
+            )
         )
+        return aggregatedPatch.apply(to: baseline)
     }
 
     private static func average(_ values: [Double]) -> Double {

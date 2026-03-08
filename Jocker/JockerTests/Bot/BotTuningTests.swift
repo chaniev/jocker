@@ -244,6 +244,52 @@ final class BotTuningTests: XCTestCase {
         XCTAssertEqual(tuning.turnStrategy.powerLeadAboveJoker, 995)
     }
 
+    func testRuntimePolicyPresets_allDifficulties_haveConsistentSections() {
+        for difficulty in [Jocker.BotDifficulty.easy, Jocker.BotDifficulty.normal, Jocker.BotDifficulty.hard] {
+            let tuning = Jocker.BotTuning(difficulty: difficulty)
+            let policy = tuning.runtimePolicy
+
+            XCTAssertGreaterThan(policy.ranking.standardBlockScoreScale, 0)
+            XCTAssertGreaterThan(policy.bidding.bidSelection.optimalityPenaltyBase, 0)
+            XCTAssertGreaterThan(policy.evaluator.leadControlReserve.trumpAceValue, 0)
+            XCTAssertGreaterThan(policy.rollout.maximumIterations, 0)
+            XCTAssertGreaterThan(policy.endgame.maximumIterations, 0)
+            XCTAssertGreaterThan(policy.simulation.trumpBonus, 0)
+            XCTAssertGreaterThan(policy.handStrength.trumpSelectionControlTopRankWeight, 0)
+            XCTAssertGreaterThan(policy.heuristics.legalAwareMaxIterations, 0)
+            XCTAssertGreaterThan(policy.opponentModeling.opponentStyleEvidenceSaturationRounds, 0)
+        }
+    }
+
+    func testBotTuningPresets_allDifficulties_havePositiveTurnStrategyWeights() {
+        for difficulty in [Jocker.BotDifficulty.easy, Jocker.BotDifficulty.normal, Jocker.BotDifficulty.hard] {
+            let tuning = Jocker.BotTuning(difficulty: difficulty)
+            XCTAssertGreaterThan(tuning.turnStrategy.chaseWinProbabilityWeight, 0)
+            XCTAssertGreaterThan(tuning.turnStrategy.dumpAvoidWinWeight, 0)
+            XCTAssertGreaterThan(tuning.turnStrategy.holdFromDistributionWeight, 0)
+            XCTAssertGreaterThan(tuning.turnStrategy.futureTricksScale, 0)
+        }
+    }
+
+    func testBotTuningPresets_allDifficulties_havePositiveBiddingWeights() {
+        for difficulty in [Jocker.BotDifficulty.easy, Jocker.BotDifficulty.normal, Jocker.BotDifficulty.hard] {
+            let tuning = Jocker.BotTuning(difficulty: difficulty)
+            XCTAssertGreaterThan(tuning.bidding.expectedJokerPower, 0)
+            XCTAssertGreaterThan(tuning.bidding.blindDesperateBehindThreshold, 0)
+            XCTAssertGreaterThan(tuning.bidding.blindCatchUpBehindThreshold, 0)
+            XCTAssertGreaterThan(tuning.bidding.blindSafeLeadThreshold, 0)
+            XCTAssertGreaterThan(tuning.bidding.blindDesperateTargetShare, 0)
+        }
+    }
+
+    func testBotTuningPresets_allDifficulties_havePositiveTrumpSelectionWeights() {
+        for difficulty in [Jocker.BotDifficulty.easy, Jocker.BotDifficulty.normal, Jocker.BotDifficulty.hard] {
+            let tuning = Jocker.BotTuning(difficulty: difficulty)
+            XCTAssertGreaterThan(tuning.trumpSelection.cardBasePower, 0)
+            XCTAssertGreaterThan(tuning.trumpSelection.minimumPowerToDeclareTrump, 0)
+        }
+    }
+
 #if canImport(JockerSelfPlayTools)
     /// Тестирует, что self-play evolution с одинаковым seed детерминирован.
     /// Проверяет:

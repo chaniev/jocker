@@ -39,6 +39,16 @@ extension BotSelfPlayEvolutionEngine {
         var trumpCardBasePowerScale: Double
         var trumpThresholdScale: Double
 
+        var rankingMatchCatchUpScale: Double
+        var rankingPremiumScale: Double
+        var rankingPenaltyAvoidScale: Double
+        var jokerDeclarationScale: Double
+        var rolloutActivationScale: Double
+        var rolloutAdjustmentScale: Double
+        var endgameActivationScale: Double
+        var endgameAdjustmentScale: Double
+        var opponentPressureScale: Double
+
         static let identity = EvolutionGenome(
             chaseWinProbabilityScale: 1.0,
             chaseThreatPenaltyScale: 1.0,
@@ -66,7 +76,16 @@ extension BotSelfPlayEvolutionEngine {
             blindCatchUpTargetShareScale: 1.0,
             blindCatchUpConservativeTargetShareScale: 1.0,
             trumpCardBasePowerScale: 1.0,
-            trumpThresholdScale: 1.0
+            trumpThresholdScale: 1.0,
+            rankingMatchCatchUpScale: 1.0,
+            rankingPremiumScale: 1.0,
+            rankingPenaltyAvoidScale: 1.0,
+            jokerDeclarationScale: 1.0,
+            rolloutActivationScale: 1.0,
+            rolloutAdjustmentScale: 1.0,
+            endgameActivationScale: 1.0,
+            endgameAdjustmentScale: 1.0,
+            opponentPressureScale: 1.0
         )
 
         var lexicographicKey: [Double] {
@@ -97,7 +116,16 @@ extension BotSelfPlayEvolutionEngine {
                 blindCatchUpTargetShareScale,
                 blindCatchUpConservativeTargetShareScale,
                 trumpCardBasePowerScale,
-                trumpThresholdScale
+                trumpThresholdScale,
+                rankingMatchCatchUpScale,
+                rankingPremiumScale,
+                rankingPenaltyAvoidScale,
+                jokerDeclarationScale,
+                rolloutActivationScale,
+                rolloutAdjustmentScale,
+                endgameActivationScale,
+                endgameAdjustmentScale,
+                opponentPressureScale
             ]
         }
     }
@@ -125,14 +153,255 @@ extension BotSelfPlayEvolutionEngine {
         }
     }
 
+    private enum RuntimePolicyGeneSpec {
+        static let rankingMatchCatchUpRange = 0.60...1.60
+        static let rankingPremiumRange = 0.60...1.60
+        static let rankingPenaltyAvoidRange = 0.60...1.60
+        static let jokerDeclarationRange = 0.60...1.60
+        static let rolloutActivationRange = 0.65...1.50
+        static let rolloutAdjustmentRange = 0.60...1.60
+        static let endgameActivationRange = 0.65...1.50
+        static let endgameAdjustmentRange = 0.60...1.60
+        static let opponentPressureRange = 0.60...1.60
+
+        static let rankingMatchCatchUpMutationDelta = 0.12
+        static let rankingPremiumMutationDelta = 0.12
+        static let rankingPenaltyAvoidMutationDelta = 0.12
+        static let jokerDeclarationMutationDelta = 0.10
+        static let rolloutActivationMutationDelta = 0.10
+        static let rolloutAdjustmentMutationDelta = 0.12
+        static let endgameActivationMutationDelta = 0.10
+        static let endgameAdjustmentMutationDelta = 0.12
+        static let opponentPressureMutationDelta = 0.12
+    }
+
+    struct RuntimePolicyEvolutionPatch {
+        var rankingMatchCatchUpScale: Double
+        var rankingPremiumScale: Double
+        var rankingPenaltyAvoidScale: Double
+        var jokerDeclarationScale: Double
+        var rolloutActivationScale: Double
+        var rolloutAdjustmentScale: Double
+        var endgameActivationScale: Double
+        var endgameAdjustmentScale: Double
+        var opponentPressureScale: Double
+
+        static let identity = RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: 1.0,
+            rankingPremiumScale: 1.0,
+            rankingPenaltyAvoidScale: 1.0,
+            jokerDeclarationScale: 1.0,
+            rolloutActivationScale: 1.0,
+            rolloutAdjustmentScale: 1.0,
+            endgameActivationScale: 1.0,
+            endgameAdjustmentScale: 1.0,
+            opponentPressureScale: 1.0
+        )
+
+        static func extract(
+            from policy: BotRuntimePolicy,
+            relativeTo baseline: BotRuntimePolicy
+        ) -> RuntimePolicyEvolutionPatch {
+            RuntimePolicyEvolutionPatch(
+                rankingMatchCatchUpScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.ranking.matchCatchUpChaseAggressionBase, baseline.ranking.matchCatchUpChaseAggressionBase),
+                        (policy.ranking.matchCatchUpChaseAggressionPressureWeight, baseline.ranking.matchCatchUpChaseAggressionPressureWeight),
+                        (policy.ranking.matchCatchUpFinalTrickUrgencyBonus, baseline.ranking.matchCatchUpFinalTrickUrgencyBonus),
+                        (policy.ranking.matchCatchUpOpponentUrgencyBase, baseline.ranking.matchCatchUpOpponentUrgencyBase),
+                        (policy.ranking.matchCatchUpPreservePremiumPenalty, baseline.ranking.matchCatchUpPreservePremiumPenalty),
+                        (policy.ranking.matchCatchUpUrgencyWeightBase, baseline.ranking.matchCatchUpUrgencyWeightBase),
+                        (policy.ranking.matchCatchUpUrgencyWeightProgress, baseline.ranking.matchCatchUpUrgencyWeightProgress),
+                        (policy.ranking.matchCatchUpConservativeDumpBase, baseline.ranking.matchCatchUpConservativeDumpBase),
+                        (policy.ranking.matchCatchUpConservativeDumpThreatWeight, baseline.ranking.matchCatchUpConservativeDumpThreatWeight),
+                        (policy.ranking.matchCatchUpConservativeDumpScoreWeight, baseline.ranking.matchCatchUpConservativeDumpScoreWeight),
+                        (policy.ranking.matchCatchUpDenyOpponentPenaltyBase, baseline.ranking.matchCatchUpDenyOpponentPenaltyBase)
+                    ],
+                    range: RuntimePolicyGeneSpec.rankingMatchCatchUpRange
+                ),
+                rankingPremiumScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.ranking.premiumPreserveChaseBonusBase, baseline.ranking.premiumPreserveChaseBonusBase),
+                        (policy.ranking.premiumPreserveChaseBonusProgress, baseline.ranking.premiumPreserveChaseBonusProgress),
+                        (policy.ranking.premiumPreserveDumpBonus, baseline.ranking.premiumPreserveDumpBonus),
+                        (policy.ranking.premiumPreserveZeroChasePenalty, baseline.ranking.premiumPreserveZeroChasePenalty),
+                        (policy.ranking.premiumPreserveZeroDumpBonus, baseline.ranking.premiumPreserveZeroDumpBonus),
+                        (policy.ranking.premiumDenyChaseBonus, baseline.ranking.premiumDenyChaseBonus),
+                        (policy.ranking.premiumDenyDumpPenalty, baseline.ranking.premiumDenyDumpPenalty)
+                    ],
+                    range: RuntimePolicyGeneSpec.rankingPremiumRange
+                ),
+                rankingPenaltyAvoidScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.ranking.penaltyAvoidOverbidPenalty, baseline.ranking.penaltyAvoidOverbidPenalty),
+                        (policy.ranking.penaltyAvoidDumpBonus, baseline.ranking.penaltyAvoidDumpBonus),
+                        (policy.ranking.penaltyAvoidProjectedScoreWeight, baseline.ranking.penaltyAvoidProjectedScoreWeight),
+                        (policy.ranking.penaltyAvoidLateBlockBoost, baseline.ranking.penaltyAvoidLateBlockBoost)
+                    ],
+                    range: RuntimePolicyGeneSpec.rankingPenaltyAvoidRange
+                ),
+                jokerDeclarationScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.ranking.jokerDeclaration.wishFinalChaseBonusBase, baseline.ranking.jokerDeclaration.wishFinalChaseBonusBase),
+                        (policy.ranking.jokerDeclaration.aboveChaseBonusBase, baseline.ranking.jokerDeclaration.aboveChaseBonusBase),
+                        (policy.ranking.jokerDeclaration.takesDumpBonusBase, baseline.ranking.jokerDeclaration.takesDumpBonusBase),
+                        (policy.ranking.jokerDeclaration.goalChaseScaleBase, baseline.ranking.jokerDeclaration.goalChaseScaleBase),
+                        (policy.ranking.jokerDeclaration.goalDumpScaleBase, baseline.ranking.jokerDeclaration.goalDumpScaleBase),
+                        (policy.ranking.jokerDeclaration.earlyWishPenaltyBase, baseline.ranking.jokerDeclaration.earlyWishPenaltyBase)
+                    ],
+                    range: RuntimePolicyGeneSpec.jokerDeclarationRange
+                ),
+                rolloutActivationScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.rollout.chaseUrgencyBase, baseline.rollout.chaseUrgencyBase),
+                        (policy.rollout.dumpUrgencyBase, baseline.rollout.dumpUrgencyBase)
+                    ],
+                    range: RuntimePolicyGeneSpec.rolloutActivationRange
+                ),
+                rolloutAdjustmentScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.rollout.adjustmentBase, baseline.rollout.adjustmentBase),
+                        (policy.rollout.adjustmentUrgencyWeight, baseline.rollout.adjustmentUrgencyWeight)
+                    ],
+                    range: RuntimePolicyGeneSpec.rolloutAdjustmentRange
+                ),
+                endgameActivationScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.endgame.weightBase, baseline.endgame.weightBase),
+                        (policy.endgame.weightUrgencyMultiplier, baseline.endgame.weightUrgencyMultiplier)
+                    ],
+                    range: RuntimePolicyGeneSpec.endgameActivationRange
+                ),
+                endgameAdjustmentScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [(policy.endgame.adjustmentCap, baseline.endgame.adjustmentCap)],
+                    range: RuntimePolicyGeneSpec.endgameAdjustmentRange
+                ),
+                opponentPressureScale: BotSelfPlayEvolutionEngine.averageScale(
+                    [
+                        (policy.opponentModeling.opponentBidPressureChaseBase, baseline.opponentModeling.opponentBidPressureChaseBase),
+                        (policy.opponentModeling.opponentBidPressureChaseProgress, baseline.opponentModeling.opponentBidPressureChaseProgress),
+                        (policy.opponentModeling.opponentBidPressureDumpBase, baseline.opponentModeling.opponentBidPressureDumpBase),
+                        (policy.opponentModeling.opponentBidPressureDumpProgress, baseline.opponentModeling.opponentBidPressureDumpProgress),
+                        (policy.opponentModeling.opponentIntentionChaseBase, baseline.opponentModeling.opponentIntentionChaseBase),
+                        (policy.opponentModeling.opponentIntentionChaseProgress, baseline.opponentModeling.opponentIntentionChaseProgress),
+                        (policy.opponentModeling.opponentIntentionDumpBase, baseline.opponentModeling.opponentIntentionDumpBase),
+                        (policy.opponentModeling.opponentIntentionDumpProgress, baseline.opponentModeling.opponentIntentionDumpProgress)
+                    ],
+                    range: RuntimePolicyGeneSpec.opponentPressureRange
+                )
+            )
+        }
+
+        func apply(to baseline: BotRuntimePolicy) -> BotRuntimePolicy {
+            var ranking = baseline.ranking
+
+            ranking.matchCatchUpChaseAggressionBase *= rankingMatchCatchUpScale
+            ranking.matchCatchUpChaseAggressionPressureWeight *= rankingMatchCatchUpScale
+            ranking.matchCatchUpFinalTrickUrgencyBonus *= rankingMatchCatchUpScale
+            ranking.matchCatchUpOpponentUrgencyBase *= rankingMatchCatchUpScale
+            ranking.matchCatchUpPreservePremiumPenalty *= rankingMatchCatchUpScale
+            ranking.matchCatchUpUrgencyWeightBase *= rankingMatchCatchUpScale
+            ranking.matchCatchUpUrgencyWeightProgress *= rankingMatchCatchUpScale
+            ranking.matchCatchUpConservativeDumpBase *= rankingMatchCatchUpScale
+            ranking.matchCatchUpConservativeDumpThreatWeight *= rankingMatchCatchUpScale
+            ranking.matchCatchUpConservativeDumpScoreWeight *= rankingMatchCatchUpScale
+            ranking.matchCatchUpDenyOpponentPenaltyBase *= rankingMatchCatchUpScale
+
+            ranking.premiumPreserveChaseBonusBase *= rankingPremiumScale
+            ranking.premiumPreserveChaseBonusProgress *= rankingPremiumScale
+            ranking.premiumPreserveDumpBonus *= rankingPremiumScale
+            ranking.premiumPreserveZeroChasePenalty *= rankingPremiumScale
+            ranking.premiumPreserveZeroDumpBonus *= rankingPremiumScale
+            ranking.premiumDenyChaseBonus *= rankingPremiumScale
+            ranking.premiumDenyDumpPenalty *= rankingPremiumScale
+
+            ranking.penaltyAvoidOverbidPenalty *= rankingPenaltyAvoidScale
+            ranking.penaltyAvoidDumpBonus *= rankingPenaltyAvoidScale
+            ranking.penaltyAvoidProjectedScoreWeight *= rankingPenaltyAvoidScale
+            ranking.penaltyAvoidLateBlockBoost *= rankingPenaltyAvoidScale
+
+            ranking.jokerDeclaration.wishFinalChaseBonusBase *= jokerDeclarationScale
+            ranking.jokerDeclaration.aboveChaseBonusBase *= jokerDeclarationScale
+            ranking.jokerDeclaration.takesDumpBonusBase *= jokerDeclarationScale
+            ranking.jokerDeclaration.goalChaseScaleBase *= jokerDeclarationScale
+            ranking.jokerDeclaration.goalDumpScaleBase *= jokerDeclarationScale
+            ranking.jokerDeclaration.earlyWishPenaltyBase *= jokerDeclarationScale
+
+            var rollout = baseline.rollout
+            rollout.chaseUrgencyBase *= rolloutActivationScale
+            rollout.dumpUrgencyBase *= rolloutActivationScale
+            rollout.adjustmentBase *= rolloutAdjustmentScale
+            rollout.adjustmentUrgencyWeight *= rolloutAdjustmentScale
+
+            var endgame = baseline.endgame
+            endgame.weightBase *= endgameActivationScale
+            endgame.weightUrgencyMultiplier *= endgameActivationScale
+            endgame.adjustmentCap *= endgameAdjustmentScale
+
+            var opponentModeling = baseline.opponentModeling
+            opponentModeling.opponentBidPressureChaseBase *= opponentPressureScale
+            opponentModeling.opponentBidPressureChaseProgress *= opponentPressureScale
+            opponentModeling.opponentBidPressureDumpBase *= opponentPressureScale
+            opponentModeling.opponentBidPressureDumpProgress *= opponentPressureScale
+            opponentModeling.opponentIntentionChaseBase *= opponentPressureScale
+            opponentModeling.opponentIntentionChaseProgress *= opponentPressureScale
+            opponentModeling.opponentIntentionDumpBase *= opponentPressureScale
+            opponentModeling.opponentIntentionDumpProgress *= opponentPressureScale
+
+            return BotRuntimePolicy(
+                ranking: ranking,
+                bidding: baseline.bidding,
+                evaluator: baseline.evaluator,
+                rollout: rollout,
+                endgame: endgame,
+                simulation: baseline.simulation,
+                handStrength: baseline.handStrength,
+                heuristics: baseline.heuristics,
+                opponentModeling: opponentModeling
+            )
+        }
+    }
+
+    static func runtimePolicyPatch(
+        from genome: EvolutionGenome
+    ) -> RuntimePolicyEvolutionPatch {
+        RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: genome.rankingMatchCatchUpScale,
+            rankingPremiumScale: genome.rankingPremiumScale,
+            rankingPenaltyAvoidScale: genome.rankingPenaltyAvoidScale,
+            jokerDeclarationScale: genome.jokerDeclarationScale,
+            rolloutActivationScale: genome.rolloutActivationScale,
+            rolloutAdjustmentScale: genome.rolloutAdjustmentScale,
+            endgameActivationScale: genome.endgameActivationScale,
+            endgameAdjustmentScale: genome.endgameAdjustmentScale,
+            opponentPressureScale: genome.opponentPressureScale
+        )
+    }
+
+    static func runtimePolicyPatch(
+        from policy: BotRuntimePolicy,
+        difficulty: BotDifficulty
+    ) -> RuntimePolicyEvolutionPatch {
+        runtimePolicyPatch(
+            from: policy,
+            relativeTo: BotRuntimePolicy.preset(for: difficulty)
+        )
+    }
+
+    static func runtimePolicyPatch(
+        from policy: BotRuntimePolicy,
+        relativeTo baseline: BotRuntimePolicy
+    ) -> RuntimePolicyEvolutionPatch {
+        RuntimePolicyEvolutionPatch.extract(
+            from: policy,
+            relativeTo: baseline
+        )
+    }
+
     static func applyingEvolutionScopeMask(
         _ genome: EvolutionGenome,
         config: SelfPlayEvolutionConfig
     ) -> EvolutionGenome {
-        if config.tuneTurnStrategy && config.tuneBidding && config.tuneTrumpSelection {
-            return genome
-        }
-
         var masked = genome
 
         if !config.tuneTurnStrategy {
@@ -169,6 +438,30 @@ extension BotSelfPlayEvolutionEngine {
         if !config.tuneTrumpSelection {
             masked.trumpCardBasePowerScale = 1.0
             masked.trumpThresholdScale = 1.0
+        }
+
+        if !config.tuneRankingPolicy {
+            masked.rankingMatchCatchUpScale = 1.0
+            masked.rankingPremiumScale = 1.0
+            masked.rankingPenaltyAvoidScale = 1.0
+        }
+
+        if !config.tuneRolloutPolicy {
+            masked.rolloutActivationScale = 1.0
+            masked.rolloutAdjustmentScale = 1.0
+        }
+
+        if !config.tuneEndgamePolicy {
+            masked.endgameActivationScale = 1.0
+            masked.endgameAdjustmentScale = 1.0
+        }
+
+        if !config.tuneOpponentModelingPolicy {
+            masked.opponentPressureScale = 1.0
+        }
+
+        if !config.tuneJokerDeclarationPolicy {
+            masked.jokerDeclarationScale = 1.0
         }
 
         return masked
@@ -341,6 +634,60 @@ extension BotSelfPlayEvolutionEngine {
                 magnitude: magnitude,
                 range: 0.55...1.65,
                 using: &rng
+            ),
+            rankingMatchCatchUpScale: randomizedScale(
+                base.rankingMatchCatchUpScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.rankingMatchCatchUpRange,
+                using: &rng
+            ),
+            rankingPremiumScale: randomizedScale(
+                base.rankingPremiumScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.rankingPremiumRange,
+                using: &rng
+            ),
+            rankingPenaltyAvoidScale: randomizedScale(
+                base.rankingPenaltyAvoidScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.rankingPenaltyAvoidRange,
+                using: &rng
+            ),
+            jokerDeclarationScale: randomizedScale(
+                base.jokerDeclarationScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.jokerDeclarationRange,
+                using: &rng
+            ),
+            rolloutActivationScale: randomizedScale(
+                base.rolloutActivationScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.rolloutActivationRange,
+                using: &rng
+            ),
+            rolloutAdjustmentScale: randomizedScale(
+                base.rolloutAdjustmentScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.rolloutAdjustmentRange,
+                using: &rng
+            ),
+            endgameActivationScale: randomizedScale(
+                base.endgameActivationScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.endgameActivationRange,
+                using: &rng
+            ),
+            endgameAdjustmentScale: randomizedScale(
+                base.endgameAdjustmentScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.endgameAdjustmentRange,
+                using: &rng
+            ),
+            opponentPressureScale: randomizedScale(
+                base.opponentPressureScale,
+                magnitude: magnitude,
+                range: RuntimePolicyGeneSpec.opponentPressureRange,
+                using: &rng
             )
         )
     }
@@ -511,6 +858,60 @@ extension BotSelfPlayEvolutionEngine {
                 first.trumpThresholdScale,
                 second.trumpThresholdScale,
                 range: 0.55...1.65,
+                using: &rng
+            ),
+            rankingMatchCatchUpScale: mixedScale(
+                first.rankingMatchCatchUpScale,
+                second.rankingMatchCatchUpScale,
+                range: RuntimePolicyGeneSpec.rankingMatchCatchUpRange,
+                using: &rng
+            ),
+            rankingPremiumScale: mixedScale(
+                first.rankingPremiumScale,
+                second.rankingPremiumScale,
+                range: RuntimePolicyGeneSpec.rankingPremiumRange,
+                using: &rng
+            ),
+            rankingPenaltyAvoidScale: mixedScale(
+                first.rankingPenaltyAvoidScale,
+                second.rankingPenaltyAvoidScale,
+                range: RuntimePolicyGeneSpec.rankingPenaltyAvoidRange,
+                using: &rng
+            ),
+            jokerDeclarationScale: mixedScale(
+                first.jokerDeclarationScale,
+                second.jokerDeclarationScale,
+                range: RuntimePolicyGeneSpec.jokerDeclarationRange,
+                using: &rng
+            ),
+            rolloutActivationScale: mixedScale(
+                first.rolloutActivationScale,
+                second.rolloutActivationScale,
+                range: RuntimePolicyGeneSpec.rolloutActivationRange,
+                using: &rng
+            ),
+            rolloutAdjustmentScale: mixedScale(
+                first.rolloutAdjustmentScale,
+                second.rolloutAdjustmentScale,
+                range: RuntimePolicyGeneSpec.rolloutAdjustmentRange,
+                using: &rng
+            ),
+            endgameActivationScale: mixedScale(
+                first.endgameActivationScale,
+                second.endgameActivationScale,
+                range: RuntimePolicyGeneSpec.endgameActivationRange,
+                using: &rng
+            ),
+            endgameAdjustmentScale: mixedScale(
+                first.endgameAdjustmentScale,
+                second.endgameAdjustmentScale,
+                range: RuntimePolicyGeneSpec.endgameAdjustmentRange,
+                using: &rng
+            ),
+            opponentPressureScale: mixedScale(
+                first.opponentPressureScale,
+                second.opponentPressureScale,
+                range: RuntimePolicyGeneSpec.opponentPressureRange,
                 using: &rng
             )
         )
@@ -712,6 +1113,96 @@ extension BotSelfPlayEvolutionEngine {
             range: 0.55...1.65,
             using: &rng
         )
+        mutateScale(
+            &mutated.rankingMatchCatchUpScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.rankingMatchCatchUpMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.rankingMatchCatchUpRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.rankingPremiumScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.rankingPremiumMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.rankingPremiumRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.rankingPenaltyAvoidScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.rankingPenaltyAvoidMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.rankingPenaltyAvoidRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.jokerDeclarationScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.jokerDeclarationMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.jokerDeclarationRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.rolloutActivationScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.rolloutActivationMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.rolloutActivationRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.rolloutAdjustmentScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.rolloutAdjustmentMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.rolloutAdjustmentRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.endgameActivationScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.endgameActivationMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.endgameActivationRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.endgameAdjustmentScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.endgameAdjustmentMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.endgameAdjustmentRange,
+            using: &rng
+        )
+        mutateScale(
+            &mutated.opponentPressureScale,
+            chance: chance,
+            magnitude: mutationMagnitude(
+                base: magnitude,
+                delta: RuntimePolicyGeneSpec.opponentPressureMutationDelta
+            ),
+            range: RuntimePolicyGeneSpec.opponentPressureRange,
+            using: &rng
+        )
 
         return mutated
     }
@@ -910,11 +1401,15 @@ extension BotSelfPlayEvolutionEngine {
             jokerSynergyControlWeight: baseTrump.jokerSynergyControlWeight
         )
 
+        let patch = runtimePolicyPatch(from: genome)
+        let patchedRuntimePolicy = patch.apply(to: base.runtimePolicy)
+
         return BotTuning(
             difficulty: base.difficulty,
             turnStrategy: turnStrategy,
             bidding: bidding,
             trumpSelection: trumpSelection,
+            runtimePolicy: patchedRuntimePolicy,
             timing: base.timing
         )
     }
@@ -950,6 +1445,29 @@ extension BotSelfPlayEvolutionEngine {
         guard chance > 0.0 else { return }
         guard rng.nextUnit() < chance else { return }
         value = randomizedScale(value, magnitude: magnitude, range: range, using: &rng)
+    }
+
+    private static func mutationMagnitude(
+        base: Double,
+        delta: Double
+    ) -> Double {
+        guard base > 0.0 else { return 0.0 }
+        let referenceMagnitude = 0.18
+        return base * (delta / referenceMagnitude)
+    }
+
+    private static func averageScale(
+        _ pairs: [(Double, Double)],
+        range: ClosedRange<Double>
+    ) -> Double {
+        let ratios = pairs.compactMap { current, baseline -> Double? in
+            guard abs(baseline) > 1e-9 else { return nil }
+            return current / baseline
+        }
+
+        guard !ratios.isEmpty else { return 1.0 }
+        let meanRatio = ratios.reduce(0.0, +) / Double(ratios.count)
+        return clamp(meanRatio, to: range)
     }
 
     private static func clamp(

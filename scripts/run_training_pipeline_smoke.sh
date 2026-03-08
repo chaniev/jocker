@@ -97,6 +97,9 @@ grep -q '^baselineGuardrailPenalty=' "$baseline_log"
 grep -q '^bestGuardrailPenalty=' "$baseline_log"
 grep -q '^baselineFinalFitness=' "$baseline_log"
 grep -q '^bestFinalFitness=' "$baseline_log"
+grep -q '^runtimeGene.rankingMatchCatchUpScale=' "$baseline_log"
+grep -q '^runtimePolicyPatch.rollout.activationScale=' "$baseline_log"
+grep -q '^runtimePolicyDiff.rollout.chaseUrgencyBase.delta=' "$baseline_log"
 
 bash "$train_script" \
   --difficulty hard \
@@ -127,13 +130,16 @@ grep -q '^baselineGuardrailPenalty=' "$evolution_log"
 grep -q '^bestGuardrailPenalty=' "$evolution_log"
 grep -q '^baselineFinalFitness=' "$evolution_log"
 grep -q '^bestFinalFitness=' "$evolution_log"
+grep -q '^runtimeGene.rankingMatchCatchUpScale=' "$evolution_log"
+grep -q '^runtimePolicyPatch.rollout.activationScale=' "$evolution_log"
+grep -q '^runtimePolicyDiff.rollout.chaseUrgencyBase.delta=' "$evolution_log"
 
 cat > "$summary_path" <<EOF
 status=passed
 artifacts_dir=$run_dir
 baseline_log=$baseline_log
 evolution_log=$evolution_log
-checks=compile-only,baselineOnly,baseline-no-generation-loop,baseline-fitness-quartet,evolution-1-generation,evolution-fitness-quartet
+checks=compile-only,baselineOnly,baseline-no-generation-loop,baseline-fitness-quartet,baseline-runtime-policy-artifacts,evolution-1-generation,evolution-fitness-quartet,evolution-runtime-policy-artifacts
 EOF
 
 echo "=== Training pipeline smoke passed ==="

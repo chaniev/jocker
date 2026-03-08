@@ -160,7 +160,13 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Models/Bot/BotMatchContext.swift`: normalized runtime match/block context payload for bot decisions (block index/progress, scores, dealer-relative seat position), used as feature-plumbing for stage 4a+.
 - `Jocker/Jocker/Models/Bot/BotOpponentModel.swift`: Stage-6 MVP opponent-style snapshot model (per-opponent observed blind/bid outcome/aggression rates within current block) built for runtime AI feature-plumbing.
 - `Jocker/Jocker/Models/Bot/BotRuntimePolicy.swift`: centralized runtime policy model for non-evolutionary AI config previously spread across ranking/bidding/evaluator/rollout/endgame/simulation/hand-strength/heuristics/opponent constants, keeping the canonical `preset(for:)` entrypoint plus difficulty patch logic.
-- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+PresetSections.swift`: section-by-section hard-baseline builders for `BotRuntimePolicy`, used by canonical preset assembly and training tooling without reintroducing monolithic literal initializers.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+PresetSections.swift`: assembles `hardBaselinePreset` from per-section constants; no longer holds section definitions directly.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+RankingPreset.swift`: `hardBaselineRanking` preset for `BotRuntimePolicy`.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+BiddingPreset.swift`: `hardBaselineBidding` preset for `BotRuntimePolicy`.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+EvaluatorPreset.swift`: `hardBaselineEvaluator` preset for `BotRuntimePolicy`.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+RolloutPreset.swift`: `hardBaselineRollout` and `hardBaselineEndgame` presets for `BotRuntimePolicy`.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+HeuristicsPreset.swift`: `hardBaselineSimulation`, `hardBaselineHandStrength`, and `hardBaselineHeuristics` presets for `BotRuntimePolicy`.
+- `Jocker/Jocker/Models/Bot/BotRuntimePolicy+OpponentModelingPreset.swift`: `hardBaselineOpponentModeling` preset for `BotRuntimePolicy`.
 - `Jocker/Jocker/Models/Bot/BotTuning.swift`: centralized bot config root that owns tunable coefficients, timing presets, runtime policy, and joker-policy projection consumed by bot services and gameplay flow delays, while keeping `BotTuning(difficulty:)` as the canonical preset entrypoint.
 - `Jocker/Jocker/Models/Bot/BotTuning+Presets.swift`: hard-baseline preset data plus `normal`/`easy` patch helpers for `BotTuning`, so preset values no longer live as three independent monolithic literals.
 - `Jocker/Jocker/Scoring/GameRoundResultsBuilder.swift`: shared mapper from `GameState` runtime round state to `[RoundResult]`, reused by flow recording and in-progress score-table snapshots.
@@ -322,7 +328,15 @@ Jocker/Jocker/
 │   │   ├── BotMatchContext.swift
 │   │   ├── BotOpponentModel.swift
 │   │   ├── BotRuntimePolicy.swift
-│   │   └── BotTuning.swift
+│   │   ├── BotRuntimePolicy+PresetSections.swift
+│   │   ├── BotRuntimePolicy+RankingPreset.swift
+│   │   ├── BotRuntimePolicy+BiddingPreset.swift
+│   │   ├── BotRuntimePolicy+EvaluatorPreset.swift
+│   │   ├── BotRuntimePolicy+RolloutPreset.swift
+│   │   ├── BotRuntimePolicy+HeuristicsPreset.swift
+│   │   ├── BotRuntimePolicy+OpponentModelingPreset.swift
+│   │   ├── BotTuning.swift
+│   │   └── BotTuning+Presets.swift
 │   ├── Cards/
 │   │   ├── Card.swift
 │   │   ├── CardColor.swift

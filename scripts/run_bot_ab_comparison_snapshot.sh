@@ -167,6 +167,11 @@ metrics_kv_or_na() {
   extract_metric "$key" "$file" 2>/dev/null || printf 'N/A\n'
 }
 
+append_runtime_metrics() {
+  local source_file="$1"
+  grep -E '^(runtimeGene\.|runtimePolicyPatch\.|runtimePolicyDiff\.|runtimeGeneSource=)' "$source_file" || true
+}
+
 write_comparison_table() {
   local output_file="$1"
   local primary_metrics_file="$2"
@@ -538,6 +543,15 @@ extract_ab_section "holdout" "$log_path" "$holdout_section_path"
 write_ab_metrics_file "primary" "$primary_section_path" "$primary_metrics_path"
 write_ab_metrics_file "holdout" "$holdout_section_path" "$holdout_metrics_path"
 
+primary_final_fitness_badv="$(extract_metric 'finalFitness_Badv' "$primary_metrics_path" 2>/dev/null || true)"
+primary_legacy_fitness_badv="$(extract_metric 'legacyFitness_Badv' "$primary_metrics_path" 2>/dev/null || true)"
+primary_primary_fitness_badv="$(extract_metric 'primaryFitness_Badv' "$primary_metrics_path" 2>/dev/null || true)"
+primary_guardrail_penalty_badv="$(extract_metric 'guardrailPenalty_Badv' "$primary_metrics_path" 2>/dev/null || true)"
+holdout_final_fitness_badv="$(extract_metric 'finalFitness_Badv' "$holdout_metrics_path" 2>/dev/null || true)"
+holdout_legacy_fitness_badv="$(extract_metric 'legacyFitness_Badv' "$holdout_metrics_path" 2>/dev/null || true)"
+holdout_primary_fitness_badv="$(extract_metric 'primaryFitness_Badv' "$holdout_metrics_path" 2>/dev/null || true)"
+holdout_guardrail_penalty_badv="$(extract_metric 'guardrailPenalty_Badv' "$holdout_metrics_path" 2>/dev/null || true)"
+
 {
   echo "status=$status"
   echo "mode=${run_mode:-}"
@@ -555,6 +569,15 @@ write_ab_metrics_file "holdout" "$holdout_section_path" "$holdout_metrics_path"
   echo "baselineFinalFitness=${baseline_final_fitness:-${baseline_fitness:-}}"
   echo "bestFinalFitness=${best_final_fitness:-${best_fitness:-}}"
   echo "improvement=${improvement:-}"
+  echo "abPrimaryFinalFitnessEffectSize=${primary_final_fitness_badv:-}"
+  echo "abPrimaryLegacyFitnessEffectSize=${primary_legacy_fitness_badv:-}"
+  echo "abPrimaryPrimaryFitnessEffectSize=${primary_primary_fitness_badv:-}"
+  echo "abPrimaryGuardrailPenaltyEffectSize=${primary_guardrail_penalty_badv:-}"
+  echo "abHoldoutFinalFitnessEffectSize=${holdout_final_fitness_badv:-}"
+  echo "abHoldoutLegacyFitnessEffectSize=${holdout_legacy_fitness_badv:-}"
+  echo "abHoldoutPrimaryFitnessEffectSize=${holdout_primary_fitness_badv:-}"
+  echo "abHoldoutGuardrailPenaltyEffectSize=${holdout_guardrail_penalty_badv:-}"
+  append_runtime_metrics "$log_path"
 } > "$training_metrics_path"
 
 write_comparison_table \
@@ -566,48 +589,57 @@ write_comparison_table \
   "$seed_list" \
   "$holdout_seed_list"
 
-cat > "$summary_path" <<EOF
-status=$status
-exit_code=$run_exit_code
-started_at_utc=$start_iso
-finished_at_utc=$end_iso
-profile=$profile
-difficulty=$difficulty
-seed_list=$seed_list
-holdout_seed_list=$holdout_seed_list
-population_size=$population_size
-generations=$generations
-games_per_candidate=$games_per_candidate
-rounds_per_game=$rounds_per_game
-run_mode=${run_mode:-}
-generation_count=${generation_count:-}
-baselineFitness=${baseline_fitness:-${baseline_final_fitness:-}}
-bestFitness=${best_fitness:-${best_final_fitness:-}}
-baselineLegacyFitness=${baseline_legacy_fitness:-}
-bestLegacyFitness=${best_legacy_fitness:-}
-baselinePrimaryFitness=${baseline_primary_fitness:-}
-bestPrimaryFitness=${best_primary_fitness:-}
-baselineGuardrailPenalty=${baseline_guardrail_penalty:-}
-bestGuardrailPenalty=${best_guardrail_penalty:-}
-baselineFinalFitness=${baseline_final_fitness:-${baseline_fitness:-}}
-bestFinalFitness=${best_final_fitness:-${best_fitness:-}}
-ab_validation_games_per_candidate=$ab_validation_games_per_candidate
-show_progress=$show_progress
-train_script=$train_script_abs
-artifacts_dir=$run_dir
-command_file=$command_path
-log_file=$log_path
-comparison_table_file=$comparison_table_path
-training_metrics_file=$training_metrics_path
-ab_primary_section_file=$primary_section_path
-ab_primary_metrics_file=$primary_metrics_path
-ab_holdout_section_file=$holdout_section_path
-ab_holdout_metrics_file=$holdout_metrics_path
-abValidationPrimarySeeds=${ab_primary_seeds_line:-}
-abValidationHoldoutSeeds=${ab_holdout_seeds_line:-}
-sandbox_home=$sandbox_home
-clang_module_cache_path=$module_cache_dir
-EOF
+{
+  echo "status=$status"
+  echo "exit_code=$run_exit_code"
+  echo "started_at_utc=$start_iso"
+  echo "finished_at_utc=$end_iso"
+  echo "profile=$profile"
+  echo "difficulty=$difficulty"
+  echo "seed_list=$seed_list"
+  echo "holdout_seed_list=$holdout_seed_list"
+  echo "population_size=$population_size"
+  echo "generations=$generations"
+  echo "games_per_candidate=$games_per_candidate"
+  echo "rounds_per_game=$rounds_per_game"
+  echo "run_mode=${run_mode:-}"
+  echo "generation_count=${generation_count:-}"
+  echo "baselineFitness=${baseline_fitness:-${baseline_final_fitness:-}}"
+  echo "bestFitness=${best_fitness:-${best_final_fitness:-}}"
+  echo "baselineLegacyFitness=${baseline_legacy_fitness:-}"
+  echo "bestLegacyFitness=${best_legacy_fitness:-}"
+  echo "baselinePrimaryFitness=${baseline_primary_fitness:-}"
+  echo "bestPrimaryFitness=${best_primary_fitness:-}"
+  echo "baselineGuardrailPenalty=${baseline_guardrail_penalty:-}"
+  echo "bestGuardrailPenalty=${best_guardrail_penalty:-}"
+  echo "baselineFinalFitness=${baseline_final_fitness:-${baseline_fitness:-}}"
+  echo "bestFinalFitness=${best_final_fitness:-${best_fitness:-}}"
+  echo "abPrimaryFinalFitnessEffectSize=${primary_final_fitness_badv:-}"
+  echo "abPrimaryLegacyFitnessEffectSize=${primary_legacy_fitness_badv:-}"
+  echo "abPrimaryPrimaryFitnessEffectSize=${primary_primary_fitness_badv:-}"
+  echo "abPrimaryGuardrailPenaltyEffectSize=${primary_guardrail_penalty_badv:-}"
+  echo "abHoldoutFinalFitnessEffectSize=${holdout_final_fitness_badv:-}"
+  echo "abHoldoutLegacyFitnessEffectSize=${holdout_legacy_fitness_badv:-}"
+  echo "abHoldoutPrimaryFitnessEffectSize=${holdout_primary_fitness_badv:-}"
+  echo "abHoldoutGuardrailPenaltyEffectSize=${holdout_guardrail_penalty_badv:-}"
+  echo "ab_validation_games_per_candidate=$ab_validation_games_per_candidate"
+  echo "show_progress=$show_progress"
+  echo "train_script=$train_script_abs"
+  echo "artifacts_dir=$run_dir"
+  echo "command_file=$command_path"
+  echo "log_file=$log_path"
+  echo "comparison_table_file=$comparison_table_path"
+  echo "training_metrics_file=$training_metrics_path"
+  echo "ab_primary_section_file=$primary_section_path"
+  echo "ab_primary_metrics_file=$primary_metrics_path"
+  echo "ab_holdout_section_file=$holdout_section_path"
+  echo "ab_holdout_metrics_file=$holdout_metrics_path"
+  echo "abValidationPrimarySeeds=${ab_primary_seeds_line:-}"
+  echo "abValidationHoldoutSeeds=${ab_holdout_seeds_line:-}"
+  echo "sandbox_home=$sandbox_home"
+  echo "clang_module_cache_path=$module_cache_dir"
+  append_runtime_metrics "$log_path"
+} > "$summary_path"
 
 echo "=== A/B comparison snapshot finished ($status) ==="
 echo "Summary: $summary_path"

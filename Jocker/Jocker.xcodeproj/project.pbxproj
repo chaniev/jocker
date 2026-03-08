@@ -118,6 +118,12 @@
 		F400000D2F5600010037CA75 /* BotRuntimePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400000E2F5600010037CA75 /* BotRuntimePolicy.swift */; };
 		F40000142F5600010037CA75 /* BotTuning+Presets.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000152F5600010037CA75 /* BotTuning+Presets.swift */; };
 		F40000162F5600010037CA75 /* BotRuntimePolicy+PresetSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000172F5600010037CA75 /* BotRuntimePolicy+PresetSections.swift */; };
+		F40000182F5600010037CA75 /* BotRuntimePolicy+BiddingPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000192F5600010037CA75 /* BotRuntimePolicy+BiddingPreset.swift */; };
+		F400001A2F5600010037CA75 /* BotRuntimePolicy+EvaluatorPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400001B2F5600010037CA75 /* BotRuntimePolicy+EvaluatorPreset.swift */; };
+		F400001C2F5600010037CA75 /* BotRuntimePolicy+RolloutPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400001D2F5600010037CA75 /* BotRuntimePolicy+RolloutPreset.swift */; };
+		F400001E2F5600010037CA75 /* BotRuntimePolicy+HeuristicsPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400001F2F5600010037CA75 /* BotRuntimePolicy+HeuristicsPreset.swift */; };
+		F40000202F5600010037CA75 /* BotRuntimePolicy+OpponentModelingPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000212F5600010037CA75 /* BotRuntimePolicy+OpponentModelingPreset.swift */; };
+		F40000222F5600010037CA75 /* BotRuntimePolicy+RankingPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000232F5600010037CA75 /* BotRuntimePolicy+RankingPreset.swift */; };
 		C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */; };
 		C0DE50022F5300010037CA75 /* BotBiddingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */; };
 		C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */; };
@@ -381,6 +387,12 @@
 		F400000E2F5600010037CA75 /* BotRuntimePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotRuntimePolicy.swift; sourceTree = "<group>"; };
 		F40000152F5600010037CA75 /* BotTuning+Presets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotTuning+Presets.swift"; sourceTree = "<group>"; };
 		F40000172F5600010037CA75 /* BotRuntimePolicy+PresetSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+PresetSections.swift"; sourceTree = "<group>"; };
+		F40000192F5600010037CA75 /* BotRuntimePolicy+BiddingPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+BiddingPreset.swift"; sourceTree = "<group>"; };
+		F400001B2F5600010037CA75 /* BotRuntimePolicy+EvaluatorPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+EvaluatorPreset.swift"; sourceTree = "<group>"; };
+		F400001D2F5600010037CA75 /* BotRuntimePolicy+RolloutPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+RolloutPreset.swift"; sourceTree = "<group>"; };
+		F400001F2F5600010037CA75 /* BotRuntimePolicy+HeuristicsPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+HeuristicsPreset.swift"; sourceTree = "<group>"; };
+		F40000212F5600010037CA75 /* BotRuntimePolicy+OpponentModelingPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+OpponentModelingPreset.swift"; sourceTree = "<group>"; };
+		F40000232F5600010037CA75 /* BotRuntimePolicy+RankingPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BotRuntimePolicy+RankingPreset.swift"; sourceTree = "<group>"; };
 		C0DE60012F5000010037CA75 /* GameFlowIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameFlowIntegrationTests.swift; sourceTree = "<group>"; };
 		C0DE60022F5300010037CA75 /* BotBiddingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBiddingServiceTests.swift; sourceTree = "<group>"; };
 		C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTurnStrategyService.swift; sourceTree = "<group>"; };
@@ -612,6 +624,12 @@
 				F40000152F5600010037CA75 /* BotTuning+Presets.swift */,
 				F400000E2F5600010037CA75 /* BotRuntimePolicy.swift */,
 				F40000172F5600010037CA75 /* BotRuntimePolicy+PresetSections.swift */,
+				F40000232F5600010037CA75 /* BotRuntimePolicy+RankingPreset.swift */,
+				F40000192F5600010037CA75 /* BotRuntimePolicy+BiddingPreset.swift */,
+				F400001B2F5600010037CA75 /* BotRuntimePolicy+EvaluatorPreset.swift */,
+				F400001D2F5600010037CA75 /* BotRuntimePolicy+RolloutPreset.swift */,
+				F400001F2F5600010037CA75 /* BotRuntimePolicy+HeuristicsPreset.swift */,
+				F40000212F5600010037CA75 /* BotRuntimePolicy+OpponentModelingPreset.swift */,
 				F400000B2F5600010037CA75 /* BotMatchContext.swift */,
 				F400000C2F5600010037CA75 /* BotOpponentModel.swift */,
 			);
@@ -1332,6 +1350,12 @@
 				F40000142F5600010037CA75 /* BotTuning+Presets.swift in Sources */,
 				F400000D2F5600010037CA75 /* BotRuntimePolicy.swift in Sources */,
 				F40000162F5600010037CA75 /* BotRuntimePolicy+PresetSections.swift in Sources */,
+				F40000222F5600010037CA75 /* BotRuntimePolicy+RankingPreset.swift in Sources */,
+				F40000182F5600010037CA75 /* BotRuntimePolicy+BiddingPreset.swift in Sources */,
+				F400001A2F5600010037CA75 /* BotRuntimePolicy+EvaluatorPreset.swift in Sources */,
+				F400001C2F5600010037CA75 /* BotRuntimePolicy+RolloutPreset.swift in Sources */,
+				F400001E2F5600010037CA75 /* BotRuntimePolicy+HeuristicsPreset.swift in Sources */,
+				F40000202F5600010037CA75 /* BotRuntimePolicy+OpponentModelingPreset.swift in Sources */,
 				F40000092F5600010037CA75 /* BotMatchContext.swift in Sources */,
 				F400000A2F5600010037CA75 /* BotOpponentModel.swift in Sources */,
 				C0DE91022F5500010037CA75 /* TrumpSelectionRules.swift in Sources */,
@@ -1531,6 +1555,12 @@
 				F40000142F5600010037CA75 /* BotTuning+Presets.swift in Sources */,
 				F400000D2F5600010037CA75 /* BotRuntimePolicy.swift in Sources */,
 				F40000162F5600010037CA75 /* BotRuntimePolicy+PresetSections.swift in Sources */,
+				F40000222F5600010037CA75 /* BotRuntimePolicy+RankingPreset.swift in Sources */,
+				F40000182F5600010037CA75 /* BotRuntimePolicy+BiddingPreset.swift in Sources */,
+				F400001A2F5600010037CA75 /* BotRuntimePolicy+EvaluatorPreset.swift in Sources */,
+				F400001C2F5600010037CA75 /* BotRuntimePolicy+RolloutPreset.swift in Sources */,
+				F400001E2F5600010037CA75 /* BotRuntimePolicy+HeuristicsPreset.swift in Sources */,
+				F40000202F5600010037CA75 /* BotRuntimePolicy+OpponentModelingPreset.swift in Sources */,
 				F40000092F5600010037CA75 /* BotMatchContext.swift in Sources */,
 				F400000A2F5600010037CA75 /* BotOpponentModel.swift in Sources */,
 				AA0000042F2800010037CA75 /* ScoreCalculator.swift in Sources */,

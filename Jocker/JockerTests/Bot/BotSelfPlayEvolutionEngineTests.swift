@@ -168,6 +168,285 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         }
     }
 
+    // MARK: - Identity and scope semantics (plan 03)
+
+    func testIdentityGenome_doesNotChangeBotRuntimePolicy() {
+        let baseTuning = BotTuning(difficulty: .hard)
+        let baselinePolicy = baseTuning.runtimePolicy
+
+        let tuned = BotSelfPlayEvolutionEngine.tuning(
+            byApplying: .identity,
+            to: baseTuning
+        )
+        let patchedPolicy = tuned.runtimePolicy
+
+        XCTAssertEqual(
+            patchedPolicy.ranking.matchCatchUpChaseAggressionBase,
+            baselinePolicy.ranking.matchCatchUpChaseAggressionBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.ranking.premiumPreserveChaseBonusBase,
+            baselinePolicy.ranking.premiumPreserveChaseBonusBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.ranking.penaltyAvoidOverbidPenalty,
+            baselinePolicy.ranking.penaltyAvoidOverbidPenalty,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.ranking.jokerDeclaration.goalChaseScaleBase,
+            baselinePolicy.ranking.jokerDeclaration.goalChaseScaleBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.rollout.chaseUrgencyBase,
+            baselinePolicy.rollout.chaseUrgencyBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.rollout.adjustmentBase,
+            baselinePolicy.rollout.adjustmentBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.endgame.weightBase,
+            baselinePolicy.endgame.weightBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.endgame.adjustmentCap,
+            baselinePolicy.endgame.adjustmentCap,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.opponentModeling.opponentBidPressureChaseBase,
+            baselinePolicy.opponentModeling.opponentBidPressureChaseBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.bidding.bidSelection.utilityTieTolerance,
+            baselinePolicy.bidding.bidSelection.utilityTieTolerance,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.evaluator.leadControlReserve.trumpAceValue,
+            baselinePolicy.evaluator.leadControlReserve.trumpAceValue,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.simulation.trumpBonus,
+            baselinePolicy.simulation.trumpBonus,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.heuristics.holdBlend.legalAwareSimulationWeight,
+            baselinePolicy.heuristics.holdBlend.legalAwareSimulationWeight,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patchedPolicy.handStrength.trumpSelectionControlTopRankWeight,
+            baselinePolicy.handStrength.trumpSelectionControlTopRankWeight,
+            accuracy: 1e-9
+        )
+    }
+
+    func testSingleRankingGeneMutation_onlyChangesRankingPolicyGroup() {
+        let baseTuning = BotTuning(difficulty: .hard)
+        let baselinePolicy = baseTuning.runtimePolicy
+
+        var genome = BotSelfPlayEvolutionEngine.EvolutionGenome.identity
+        genome.rankingMatchCatchUpScale = 1.3
+
+        let tuned = BotSelfPlayEvolutionEngine.tuning(
+            byApplying: genome,
+            to: baseTuning
+        )
+        let patched = tuned.runtimePolicy
+
+        XCTAssertNotEqual(
+            patched.ranking.matchCatchUpChaseAggressionBase,
+            baselinePolicy.ranking.matchCatchUpChaseAggressionBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.rollout.chaseUrgencyBase,
+            baselinePolicy.rollout.chaseUrgencyBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.endgame.weightBase,
+            baselinePolicy.endgame.weightBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.opponentModeling.opponentBidPressureChaseBase,
+            baselinePolicy.opponentModeling.opponentBidPressureChaseBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.bidding.bidSelection.utilityTieTolerance,
+            baselinePolicy.bidding.bidSelection.utilityTieTolerance,
+            accuracy: 1e-9
+        )
+    }
+
+    func testScopeMask_disabledGroups_remainNeutral() {
+        var genome = BotSelfPlayEvolutionEngine.EvolutionGenome.identity
+        genome.rankingMatchCatchUpScale = 1.5
+        genome.rankingPremiumScale = 0.8
+        genome.rolloutActivationScale = 1.4
+        genome.endgameActivationScale = 0.7
+        genome.opponentPressureScale = 1.3
+        genome.jokerDeclarationScale = 0.9
+
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            tuneRankingPolicy: false,
+            tuneRolloutPolicy: false,
+            tuneEndgamePolicy: false,
+            tuneOpponentModelingPolicy: false,
+            tuneJokerDeclarationPolicy: false
+        )
+
+        let masked = BotSelfPlayEvolutionEngine.applyingEvolutionScopeMask(
+            genome,
+            config: config
+        )
+
+        XCTAssertEqual(masked.rankingMatchCatchUpScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.rankingPremiumScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.rankingPenaltyAvoidScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.rolloutActivationScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.rolloutAdjustmentScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.endgameActivationScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.endgameAdjustmentScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.opponentPressureScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.jokerDeclarationScale, 1.0, accuracy: 1e-9)
+    }
+
+    func testScopeMask_enabledGroups_preserveValues() {
+        var genome = BotSelfPlayEvolutionEngine.EvolutionGenome.identity
+        genome.rankingMatchCatchUpScale = 1.3
+        genome.rolloutActivationScale = 1.2
+        genome.opponentPressureScale = 0.9
+
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            tuneRankingPolicy: true,
+            tuneRolloutPolicy: true,
+            tuneEndgamePolicy: false,
+            tuneOpponentModelingPolicy: true,
+            tuneJokerDeclarationPolicy: false
+        )
+
+        let masked = BotSelfPlayEvolutionEngine.applyingEvolutionScopeMask(
+            genome,
+            config: config
+        )
+
+        XCTAssertEqual(masked.rankingMatchCatchUpScale, 1.3, accuracy: 1e-9)
+        XCTAssertEqual(masked.rolloutActivationScale, 1.2, accuracy: 1e-9)
+        XCTAssertEqual(masked.opponentPressureScale, 0.9, accuracy: 1e-9)
+        XCTAssertEqual(masked.endgameActivationScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.jokerDeclarationScale, 1.0, accuracy: 1e-9)
+    }
+
+    func testMutationAndCrossover_respectBounds() {
+        var rng = BotSelfPlayEvolutionEngine.SelfPlayRandomGenerator(seed: 42)
+        let runtimeBounds: [(ClosedRange<Double>, KeyPath<BotSelfPlayEvolutionEngine.EvolutionGenome, Double>)] = [
+            (0.60...1.60, \.rankingMatchCatchUpScale),
+            (0.60...1.60, \.rankingPremiumScale),
+            (0.60...1.60, \.rankingPenaltyAvoidScale),
+            (0.60...1.60, \.jokerDeclarationScale),
+            (0.65...1.50, \.rolloutActivationScale),
+            (0.60...1.60, \.rolloutAdjustmentScale),
+            (0.65...1.50, \.endgameActivationScale),
+            (0.60...1.60, \.endgameAdjustmentScale),
+            (0.60...1.60, \.opponentPressureScale)
+        ]
+
+        for _ in 0..<20 {
+            let randomized = BotSelfPlayEvolutionEngine.randomGenome(
+                around: .identity,
+                magnitude: 0.30,
+                using: &rng
+            )
+            for (range, keyPath) in runtimeBounds {
+                let value = randomized[keyPath: keyPath]
+                XCTAssertGreaterThanOrEqual(value, range.lowerBound, "\(keyPath) = \(value) < \(range.lowerBound)")
+                XCTAssertLessThanOrEqual(value, range.upperBound, "\(keyPath) = \(value) > \(range.upperBound)")
+            }
+        }
+
+        let parent1 = BotSelfPlayEvolutionEngine.randomGenome(around: .identity, magnitude: 0.25, using: &rng)
+        let parent2 = BotSelfPlayEvolutionEngine.randomGenome(around: .identity, magnitude: 0.25, using: &rng)
+        for _ in 0..<20 {
+            let child = BotSelfPlayEvolutionEngine.crossover(parent1, parent2, using: &rng)
+            for (range, keyPath) in runtimeBounds {
+                let value = child[keyPath: keyPath]
+                XCTAssertGreaterThanOrEqual(value, range.lowerBound, "crossover \(keyPath) = \(value) < \(range.lowerBound)")
+                XCTAssertLessThanOrEqual(value, range.upperBound, "crossover \(keyPath) = \(value) > \(range.upperBound)")
+            }
+        }
+    }
+
+    func testRuntimePolicyEvolutionPatch_identityPreservesPolicy() {
+        let baseline = BotRuntimePolicy.preset(for: .hard)
+        let patched = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch.identity.apply(to: baseline)
+
+        XCTAssertEqual(
+            patched.ranking.matchCatchUpChaseAggressionBase,
+            baseline.ranking.matchCatchUpChaseAggressionBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.rollout.adjustmentBase,
+            baseline.rollout.adjustmentBase,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.endgame.adjustmentCap,
+            baseline.endgame.adjustmentCap,
+            accuracy: 1e-9
+        )
+        XCTAssertEqual(
+            patched.opponentModeling.opponentBidPressureChaseBase,
+            baseline.opponentModeling.opponentBidPressureChaseBase,
+            accuracy: 1e-9
+        )
+    }
+
+    func testRuntimePolicyEvolutionPatch_extractRecoversAppliedScales() {
+        let baseline = BotRuntimePolicy.preset(for: .hard)
+        let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: 1.22,
+            rankingPremiumScale: 0.91,
+            rankingPenaltyAvoidScale: 1.14,
+            jokerDeclarationScale: 0.95,
+            rolloutActivationScale: 1.18,
+            rolloutAdjustmentScale: 0.88,
+            endgameActivationScale: 1.10,
+            endgameAdjustmentScale: 0.93,
+            opponentPressureScale: 1.16
+        )
+        let patched = patch.apply(to: baseline)
+
+        let extracted = BotSelfPlayEvolutionEngine.runtimePolicyPatch(
+            from: patched,
+            relativeTo: baseline
+        )
+
+        XCTAssertEqual(extracted.rankingMatchCatchUpScale, patch.rankingMatchCatchUpScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.rankingPremiumScale, patch.rankingPremiumScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.rankingPenaltyAvoidScale, patch.rankingPenaltyAvoidScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.jokerDeclarationScale, patch.jokerDeclarationScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.rolloutActivationScale, patch.rolloutActivationScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.rolloutAdjustmentScale, patch.rolloutAdjustmentScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.endgameActivationScale, patch.endgameActivationScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.endgameAdjustmentScale, patch.endgameAdjustmentScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.opponentPressureScale, patch.opponentPressureScale, accuracy: 1e-9)
+    }
+
     // MARK: - Fitness / guardrail scoring semantics (plan 02)
 
     func testFitnessScoring_samePrimaryFitness_worseGuardrailLosesToBetterGuardrail() {

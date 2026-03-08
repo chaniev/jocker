@@ -92,6 +92,11 @@ resolve_abs_path() {
   fi
 }
 
+append_runtime_metrics() {
+  local source_file="$1"
+  grep -E '^(runtimeGene\.|runtimePolicyPatch\.|runtimePolicyDiff\.|runtimeGeneSource=)' "$source_file" || true
+}
+
 extract_metric() {
   local key="$1"
   local file="$2"
@@ -429,36 +434,39 @@ baseline_final_fitness="${baseline_final_fitness:-$baseline_fitness}"
   echo "earlyLeadWishJokerRate=${baseline_early_lead_wish_joker_rate:-}"
   echo "leftNeighborPremiumAssistRate=${baseline_left_neighbor_premium_assist_rate:-}"
   echo "supported_metrics=baselineFitness,baselineLegacyFitness,baselinePrimaryFitness,baselineGuardrailPenalty,baselineFinalFitness,fitness,legacyFitness,primaryFitness,guardrailPenalty,finalFitness,winRate,averageScoreDiff,averageUnderbidLoss,averagePremiumAssistLoss,averagePremiumPenaltyTargetLoss,premiumCaptureRate,blindSuccessRate,jokerWishWinRate,earlyJokerSpendRate,penaltyTargetRate,bidAccuracyRate,overbidRate,blindBidRateBlock4,averageBlindBidSize,blindBidWhenBehindRate,blindBidWhenLeadingRate,earlyLeadWishJokerRate,leftNeighborPremiumAssistRate"
+  echo "runtime_metric_prefixes=runtimeGene.,runtimePolicyPatch.,runtimePolicyDiff."
   echo "pending_stage0_metrics="
+  append_runtime_metrics "$log_path"
 } > "$metrics_path"
 
-cat > "$summary_path" <<EOF
-status=$status
-exit_code=$run_exit_code
-started_at_utc=$start_iso
-finished_at_utc=$end_iso
-profile=$profile
-difficulty=$difficulty
-seed_list=$seed_list
-games_per_candidate=$games_per_candidate
-rounds_per_game=$rounds_per_game
-run_mode=${run_mode:-}
-generation_count=${generation_count:-}
-baselineFitness=${baseline_fitness:-}
-baselineLegacyFitness=${baseline_legacy_fitness:-}
-baselinePrimaryFitness=${baseline_primary_fitness:-}
-baselineGuardrailPenalty=${baseline_guardrail_penalty:-}
-baselineFinalFitness=${baseline_final_fitness:-}
-show_progress=$show_progress
-ab_validate=$ab_validate
-train_script=$train_script_abs
-artifacts_dir=$run_dir
-command_file=$command_path
-log_file=$log_path
-metrics_file=$metrics_path
-sandbox_home=$sandbox_home
-clang_module_cache_path=$module_cache_dir
-EOF
+{
+  echo "status=$status"
+  echo "exit_code=$run_exit_code"
+  echo "started_at_utc=$start_iso"
+  echo "finished_at_utc=$end_iso"
+  echo "profile=$profile"
+  echo "difficulty=$difficulty"
+  echo "seed_list=$seed_list"
+  echo "games_per_candidate=$games_per_candidate"
+  echo "rounds_per_game=$rounds_per_game"
+  echo "run_mode=${run_mode:-}"
+  echo "generation_count=${generation_count:-}"
+  echo "baselineFitness=${baseline_fitness:-}"
+  echo "baselineLegacyFitness=${baseline_legacy_fitness:-}"
+  echo "baselinePrimaryFitness=${baseline_primary_fitness:-}"
+  echo "baselineGuardrailPenalty=${baseline_guardrail_penalty:-}"
+  echo "baselineFinalFitness=${baseline_final_fitness:-}"
+  echo "show_progress=$show_progress"
+  echo "ab_validate=$ab_validate"
+  echo "train_script=$train_script_abs"
+  echo "artifacts_dir=$run_dir"
+  echo "command_file=$command_path"
+  echo "log_file=$log_path"
+  echo "metrics_file=$metrics_path"
+  echo "sandbox_home=$sandbox_home"
+  echo "clang_module_cache_path=$module_cache_dir"
+  append_runtime_metrics "$log_path"
+} > "$summary_path"
 
 echo "=== Baseline snapshot finished ($status) ==="
 echo "Summary: $summary_path"
