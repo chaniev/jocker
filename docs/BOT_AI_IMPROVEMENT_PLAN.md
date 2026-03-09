@@ -86,6 +86,8 @@
 | 6 (Opponent model MVP) | MVP есть (6a done, 6b scope frozen) | удерживать зелёным `stage6b-pack-all` (`18` tests) и не расширять Stage 6b сигналы до Stage 7 review |
 | 7 (Self-play retuning) | protocol активен, latest #3 = reject (working snapshot = #2) | новые итерации запускать только под отдельную гипотезу; `#2` остаётся текущим promoted snapshot |
 
+**Stage 05 (параллелизация оценки кандидатов):** закрыт. Benchmark и automation введены: canonical profile `bt-hard-fullgame-balanced`, `make stage5-benchmark`, `scripts/run_stage5_parallel_benchmark.sh`, parity/speedup summary в `.derivedData/stage5-parallel-benchmark/`. См. `docs/BOT_AI_LEARNING_IMPROVEMENT_DETAILED_PLANS/05_PARALLEL_CANDIDATE_EVALUATION_PLAN.md`.
+
 ### Macro-долги до Stage 7 (диаграмма)
 
 ```mermaid

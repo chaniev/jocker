@@ -88,3 +88,17 @@
 3. Parallelism настраивается публичным параметром.
 4. В логах и артефактах нет interleaved шума.
 5. Canonical training profile ускорен по wall-clock времени.
+
+## Canonical Stage-05 profile (benchmark reference)
+
+Отдельного stage-05 profile в Makefile нет. **Canonical profile для Stage 05** — тот же, что для полного full-match training: **`bt-hard-fullgame-balanced`** (Makefile target, строка ~135). Параметры: `FULLGAME_BALANCED_ARGS`, один seed `20260220`, `--difficulty hard`. Используется для воспроизводимого benchmark sequential vs parallel и для артефактов закрытия Stage 05.
+
+## Done (PR4: Benchmark and automation)
+
+Stage 05 можно считать закрытым при наличии воспроизводимого benchmark summary и артефактов:
+
+- **Canonical profile:** `bt-hard-fullgame-balanced` (без отдельного stage-05 profile).
+- **Benchmark:** `scripts/run_stage5_parallel_benchmark.sh`; warmup через `--compile-only`, прогоны с `--max-parallel-evaluations 1`, `2`, `4`; raw logs и `summary.txt` с parity (aggregated metrics, best candidate) и speedup в `.derivedData/stage5-parallel-benchmark/<timestamp>/`.
+- **Makefile:** `make stage5-benchmark` — отдельный target для Stage 05 benchmark.
+- **Smoke:** в `run_training_pipeline_smoke.sh` добавлен tiny parallel smoke (`--max-parallel-evaluations 2`), чтобы регрессии не ломали parallel path незаметно.
+- **Критерии:** sequential и parallel дают одинаковые aggregated metrics и тот же best candidate; parallel даёт измеримый wall-clock speedup. По итогам прогона можно ссылаться на summary при закрытии Stage 05.

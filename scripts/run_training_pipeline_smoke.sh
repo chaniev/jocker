@@ -13,6 +13,7 @@ Purpose:
   2. run a short baselineOnly evaluation
   3. run a short 1-generation evolution
   4. verify baselineOnly does not enter the generation loop
+  5. run a tiny parallel evolution (max-parallel-evaluations 2) so future regressions do not break the parallel path
 EOF
 }
 
@@ -65,6 +66,7 @@ run_dir="$output_root_abs/$timestamp"
 summary_path="$run_dir/summary.txt"
 baseline_log="$run_dir/baseline-only.log"
 evolution_log="$run_dir/evolution-1gen.log"
+parallel_log="$run_dir/evolution-parallel-2.log"
 
 mkdir -p "$run_dir"
 
@@ -134,12 +136,37 @@ grep -q '^runtimeGene.rankingMatchCatchUpScale=' "$evolution_log"
 grep -q '^runtimePolicyPatch.rollout.activationScale=' "$evolution_log"
 grep -q '^runtimePolicyDiff.rollout.chaseUrgencyBase.delta=' "$evolution_log"
 
+# Tiny parallel smoke: 1 generation with max-parallel-evaluations 2 so parallel path is exercised.
+bash "$train_script" \
+  --difficulty hard \
+  --seed 20260307 \
+  --max-parallel-evaluations 2 \
+  --population-size 2 \
+  --generations 1 \
+  --games-per-candidate 1 \
+  --rounds-per-game 2 \
+  --player-count 3 \
+  --cards-min 1 \
+  --cards-max 2 \
+  --elite-count 1 \
+  --mutation-chance 0.25 \
+  --mutation-magnitude 0.10 \
+  --selection-pool-ratio 0.50 \
+  --show-progress false \
+  --ab-validate false \
+  --output "$parallel_log"
+
+grep -q '^mode=evolution$' "$parallel_log"
+grep -q '^maxParallelEvaluations=2$' "$parallel_log"
+grep -q '^generationCount=1$' "$parallel_log"
+
 cat > "$summary_path" <<EOF
 status=passed
 artifacts_dir=$run_dir
 baseline_log=$baseline_log
 evolution_log=$evolution_log
-checks=compile-only,baselineOnly,baseline-no-generation-loop,baseline-fitness-quartet,baseline-runtime-policy-artifacts,evolution-1-generation,evolution-fitness-quartet,evolution-runtime-policy-artifacts
+parallel_log=$parallel_log
+checks=compile-only,baselineOnly,baseline-no-generation-loop,baseline-fitness-quartet,baseline-runtime-policy-artifacts,evolution-1-generation,evolution-fitness-quartet,evolution-runtime-policy-artifacts,evolution-parallel-2
 EOF
 
 echo "=== Training pipeline smoke passed ==="
