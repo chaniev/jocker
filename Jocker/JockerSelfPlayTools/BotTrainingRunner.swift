@@ -25,6 +25,7 @@ struct BotTrainingRunner {
         var seedList: [UInt64] = []
         var ensembleMethod: EnsembleMethod = .median
         var runMode: BotTuning.SelfPlayEvolutionConfig.RunMode = .evolution
+        var maxParallelEvaluations: BotTuning.SelfPlayEvolutionConfig.MaxParallelEvaluations = .one
         var populationSize = 12
         var generations = 10
         var gamesPerCandidate = 20
@@ -164,6 +165,7 @@ struct BotTrainingRunner {
           --seed-list <a,b,c>
           --ensemble-method <median|mean>
           --run-mode <evolution|baselineOnly>
+          --max-parallel-evaluations <1|2|4|auto>
           --population-size <int>
           --generations <int>
           --games-per-candidate <int>
@@ -234,6 +236,7 @@ struct BotTrainingRunner {
         let baseTuning = BotTuning(difficulty: invocation.difficulty)
         let config = BotTuning.SelfPlayEvolutionConfig(
             runMode: invocation.runMode,
+            maxParallelEvaluations: invocation.maxParallelEvaluations,
             populationSize: invocation.populationSize,
             generations: invocation.generations,
             gamesPerCandidate: invocation.gamesPerCandidate,
@@ -289,6 +292,7 @@ struct BotTrainingRunner {
 
         let abValidationConfig = BotTuning.SelfPlayEvolutionConfig(
             runMode: .baselineOnly,
+            maxParallelEvaluations: .one,
             populationSize: config.populationSize,
             generations: 1,
             gamesPerCandidate: invocation.resolvedABValidationGamesPerCandidate,
@@ -420,6 +424,7 @@ struct BotTrainingRunner {
             print("ensembleRuns=\(seedRuns.count)")
         }
         print("mode=\(selectedRun.result.runMode.rawValue)")
+        print("maxParallelEvaluations=\(config.maxParallelEvaluations.resolved())")
         print("useFullMatchRules=\(config.useFullMatchRules)")
         print("rotateCandidateAcrossSeats=\(config.rotateCandidateAcrossSeats)")
         print("tuningScope=\(invocation.tuningScope.rawValue)")
@@ -679,6 +684,11 @@ struct BotTrainingRunner {
                 invocation.runMode = try parseEnum(
                     BotTuning.SelfPlayEvolutionConfig.RunMode.self,
                     value: try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
+            case "--max-parallel-evaluations":
+                invocation.maxParallelEvaluations = try parseMaxParallelEvaluations(
+                    try value(after: argument, in: arguments, at: &index),
                     flag: argument
                 )
             case "--population-size":
@@ -1666,6 +1676,20 @@ struct BotTrainingRunner {
             throw RunnerError.message("Invalid value for \(flag): \(rawValue)")
         }
         return parsed
+    }
+
+    private static func parseMaxParallelEvaluations(
+        _ rawValue: String,
+        flag: String
+    ) throws -> BotTuning.SelfPlayEvolutionConfig.MaxParallelEvaluations {
+        switch rawValue.lowercased() {
+        case "1": return .one
+        case "2": return .two
+        case "4": return .four
+        case "auto": return .auto
+        default:
+            throw RunnerError.message("Invalid value for \(flag): \(rawValue). Use 1, 2, 4, or auto.")
+        }
     }
 
     private static func clamp(

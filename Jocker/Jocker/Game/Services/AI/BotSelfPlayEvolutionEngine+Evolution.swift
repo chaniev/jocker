@@ -38,15 +38,14 @@ extension BotSelfPlayEvolutionEngine {
         let fitnessScoring = FitnessScoringConfig(config: config)
 
         var rng = SelfPlayRandomGenerator(seed: seed)
-        let evaluationSeeds = makeEvaluationSeeds(
+        let baseSeeds = makeEvaluationSeeds(
             count: config.gamesPerCandidate,
             using: &rng
         )
-        let baselineEvaluationContext = FitnessEvaluationContext(
+        let executionConfig = EvolutionExecutionConfig(
             playerCount: playerCount,
             roundsPerGame: config.roundsPerGame,
             cardsPerRoundRange: cardsRange,
-            evaluationSeeds: evaluationSeeds,
             useFullMatchRules: config.useFullMatchRules,
             rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
             fitnessScoring: fitnessScoring
@@ -108,10 +107,14 @@ extension BotSelfPlayEvolutionEngine {
 
         notifyProgress(stage: .started)
 
-        let baselineBreakdown = evaluateGenome(
-            .identity,
-            baseTuning: baseTuning,
-            context: baselineEvaluationContext
+        let identityTuning = tuning(byApplying: .identity, to: baseTuning)
+        let baselineBreakdown = evaluateCandidate(
+            candidateTuning: identityTuning,
+            opponentTuning: baseTuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
         )
         completedWorkUnits += 1
         notifyProgress(
@@ -129,44 +132,67 @@ extension BotSelfPlayEvolutionEngine {
         var stoppedEarly = false
         var lastMeaningfulImprovementGeneration = 0
 
+        let maxParallel = config.maxParallelEvaluations.resolved()
+
         for generation in 0..<config.generations {
             notifyProgress(
                 stage: .generationStarted,
                 generationIndex: generation,
                 overallBestFitness: bestBreakdown.finalFitness
             )
-            let generationSeedMask = UInt64(generation + 1) &* 0x9E37_79B9_7F4A_7C15
-            let generationSeeds = evaluationSeeds.map { $0 ^ generationSeedMask }
-            let generationEvaluationContext = baselineEvaluationContext.withEvaluationSeeds(generationSeeds)
 
-            var scoredPopulation: [ScoredGenome] = []
-            scoredPopulation.reserveCapacity(populationSize)
+            var scoredPopulation: [ScoredGenome]
             var generationBestFitnessSoFar: Double?
 
-            for (candidateOffset, genome) in population.enumerated() {
-                let breakdown = evaluateGenome(
-                    genome,
-                    baseTuning: baseTuning,
-                    context: generationEvaluationContext
-                )
-                scoredPopulation.append(
-                    ScoredGenome(
-                        genome: genome,
-                        breakdown: breakdown
+            if maxParallel <= 1 {
+                scoredPopulation = []
+                scoredPopulation.reserveCapacity(populationSize)
+                for (candidateOffset, genome) in population.enumerated() {
+                    let candidateTuning = tuning(byApplying: genome, to: baseTuning)
+                    let breakdown = evaluateCandidate(
+                        candidateTuning: candidateTuning,
+                        opponentTuning: baseTuning,
+                        config: executionConfig,
+                        baseSeeds: baseSeeds,
+                        generationIndex: generation,
+                        candidateIndex: candidateOffset
                     )
-                )
-
-                completedWorkUnits += 1
-                generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.finalFitness, breakdown.finalFitness)
-                let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? breakdown.finalFitness)
-                notifyProgress(
-                    stage: .candidateEvaluated,
+                    scoredPopulation.append(ScoredGenome(genome: genome, breakdown: breakdown))
+                    completedWorkUnits += 1
+                    generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.finalFitness, breakdown.finalFitness)
+                    let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? breakdown.finalFitness)
+                    notifyProgress(
+                        stage: .candidateEvaluated,
+                        generationIndex: generation,
+                        evaluatedCandidatesInGeneration: candidateOffset + 1,
+                        currentFitness: breakdown.finalFitness,
+                        generationBestFitness: generationBestFitnessSoFar,
+                        overallBestFitness: overallBestSoFar
+                    )
+                }
+            } else {
+                let results = evaluateCandidatesParallel(
+                    population: population,
+                    baseTuning: baseTuning,
+                    executionConfig: executionConfig,
+                    baseSeeds: baseSeeds,
                     generationIndex: generation,
-                    evaluatedCandidatesInGeneration: candidateOffset + 1,
-                    currentFitness: breakdown.finalFitness,
-                    generationBestFitness: generationBestFitnessSoFar,
-                    overallBestFitness: overallBestSoFar
+                    maxParallel: maxParallel
                 )
+                scoredPopulation = results.map(\.1)
+                completedWorkUnits += scoredPopulation.count
+                for (idx, scored) in scoredPopulation.enumerated() {
+                    generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? scored.breakdown.finalFitness, scored.breakdown.finalFitness)
+                    let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? scored.breakdown.finalFitness)
+                    notifyProgress(
+                        stage: .candidateEvaluated,
+                        generationIndex: generation,
+                        evaluatedCandidatesInGeneration: idx + 1,
+                        currentFitness: scored.breakdown.finalFitness,
+                        generationBestFitness: generationBestFitnessSoFar,
+                        overallBestFitness: overallBestSoFar
+                    )
+                }
             }
 
             scoredPopulation.sort(by: { (lhs: ScoredGenome, rhs: ScoredGenome) -> Bool in
@@ -318,15 +344,14 @@ extension BotSelfPlayEvolutionEngine {
         let fitnessScoring = FitnessScoringConfig(config: config)
 
         var rng = SelfPlayRandomGenerator(seed: seed)
-        let evaluationSeeds = makeEvaluationSeeds(
+        let baseSeeds = makeEvaluationSeeds(
             count: config.gamesPerCandidate,
             using: &rng
         )
-        let evaluationContext = FitnessEvaluationContext(
+        let executionConfig = EvolutionExecutionConfig(
             playerCount: playerCount,
             roundsPerGame: config.roundsPerGame,
             cardsPerRoundRange: cardsRange,
-            evaluationSeeds: evaluationSeeds,
             useFullMatchRules: config.useFullMatchRules,
             rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats,
             fitnessScoring: fitnessScoring
@@ -371,10 +396,14 @@ extension BotSelfPlayEvolutionEngine {
         }
 
         notifyProgress(stage: .started)
-        let baselineBreakdown = evaluateGenome(
-            .identity,
-            baseTuning: baseTuning,
-            context: evaluationContext
+        let identityTuning = tuning(byApplying: .identity, to: baseTuning)
+        let baselineBreakdown = evaluateCandidate(
+            candidateTuning: identityTuning,
+            opponentTuning: baseTuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
         )
         completedWorkUnits = 1
         notifyProgress(
@@ -473,6 +502,27 @@ extension BotSelfPlayEvolutionEngine {
         return seeds
     }
 
+    /// Детерминированная производная сида для одной симуляции (game, seat) внутри оценки кандидата.
+    /// Одинаковая формула для sequential и parallel — один и тот же (gen, candidate, game, seat) даёт один и тот же сид.
+    /// Не использует общий RNG; безопасно вызывать из параллельных воркеров.
+    static func deriveEvaluationSeed(
+        baseSeed: UInt64,
+        generationIndex: Int,
+        candidateIndex: Int,
+        gameIndex: Int,
+        seatRotationIndex: Int
+    ) -> UInt64 {
+        let g = UInt64(bitPattern: Int64(generationIndex))
+        let c = UInt64(bitPattern: Int64(candidateIndex))
+        let i = UInt64(bitPattern: Int64(gameIndex))
+        let s = UInt64(bitPattern: Int64(seatRotationIndex))
+        let mix = g &* 0x9E37_79B9_7F4A_7C15
+            &+ c &* 0x9E37_79B9_7F4A_7C16
+            &+ i &* 0x9E37_79B9_7F4A_7C17
+            &+ s &* 0x9E37_79B9_7F4A_7C18
+        return baseSeed ^ mix
+    }
+
     private static func headToHeadValidationResult(
         from breakdown: FitnessBreakdown
     ) -> SelfPlayHeadToHeadValidationResult {
@@ -516,6 +566,49 @@ extension BotSelfPlayEvolutionEngine {
             opponentTuning: baseTuning,
             context: context
         )
+    }
+
+    /// Оценка кандидатов поколения параллельно с лимитом maxParallel; результаты в порядке candidateIndex.
+    private static func evaluateCandidatesParallel(
+        population: [EvolutionGenome],
+        baseTuning: BotTuning,
+        executionConfig: EvolutionExecutionConfig,
+        baseSeeds: [UInt64],
+        generationIndex: Int,
+        maxParallel: Int
+    ) -> [(Int, ScoredGenome)] {
+        let semaphore = DispatchSemaphore(value: maxParallel)
+        let lock = NSLock()
+        var results: [(Int, ScoredGenome)] = []
+        results.reserveCapacity(population.count)
+        let queue = DispatchQueue(label: "evolution.candidates", qos: .userInitiated, attributes: .concurrent)
+        let group = DispatchGroup()
+
+        for (candidateOffset, genome) in population.enumerated() {
+            group.enter()
+            queue.async {
+                semaphore.wait()
+                defer {
+                    semaphore.signal()
+                    group.leave()
+                }
+                let candidateTuning = tuning(byApplying: genome, to: baseTuning)
+                let breakdown = evaluateCandidate(
+                    candidateTuning: candidateTuning,
+                    opponentTuning: baseTuning,
+                    config: executionConfig,
+                    baseSeeds: baseSeeds,
+                    generationIndex: generationIndex,
+                    candidateIndex: candidateOffset
+                )
+                let scored = ScoredGenome(genome: genome, breakdown: breakdown)
+                lock.lock()
+                results.append((candidateOffset, scored))
+                lock.unlock()
+            }
+        }
+        group.wait()
+        return results.sorted(by: { $0.0 < $1.0 })
     }
 
     /// Head-to-head оценка фиксированного кандидата против фиксированных оппонентов.

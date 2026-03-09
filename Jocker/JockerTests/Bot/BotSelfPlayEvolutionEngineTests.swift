@@ -12,6 +12,69 @@ import XCTest
 
 final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
+    func testDeriveEvaluationSeed_sameInputs_producesSameSeed() {
+        let baseSeed: UInt64 = 0x5EED
+        let s1 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 2,
+            candidateIndex: 1,
+            gameIndex: 0,
+            seatRotationIndex: 3
+        )
+        let s2 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 2,
+            candidateIndex: 1,
+            gameIndex: 0,
+            seatRotationIndex: 3
+        )
+        XCTAssertEqual(s1, s2, "Same inputs must yield same derived seed")
+    }
+
+    func testDeriveEvaluationSeed_differentInputs_produceDifferentSeeds() {
+        let baseSeed: UInt64 = 0x5EED
+        let s0 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 0,
+            candidateIndex: 0,
+            gameIndex: 0,
+            seatRotationIndex: 0
+        )
+        let s1 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 1,
+            candidateIndex: 0,
+            gameIndex: 0,
+            seatRotationIndex: 0
+        )
+        let s2 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 0,
+            candidateIndex: 1,
+            gameIndex: 0,
+            seatRotationIndex: 0
+        )
+        let s3 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 0,
+            candidateIndex: 0,
+            gameIndex: 1,
+            seatRotationIndex: 0
+        )
+        let s4 = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+            baseSeed: baseSeed,
+            generationIndex: 0,
+            candidateIndex: 0,
+            gameIndex: 0,
+            seatRotationIndex: 1
+        )
+        XCTAssertNotEqual(s0, s1)
+        XCTAssertNotEqual(s0, s2)
+        XCTAssertNotEqual(s0, s3)
+        XCTAssertNotEqual(s0, s4)
+        XCTAssertNotEqual(s1, s2)
+    }
+
     func testSimulateGame_fullMatchWithSameSeed_isDeterministic() {
         let tunings = makeTunings(count: 4)
 

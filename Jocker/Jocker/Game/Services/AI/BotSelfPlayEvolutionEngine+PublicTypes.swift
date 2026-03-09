@@ -15,7 +15,25 @@ extension BotSelfPlayEvolutionEngine {
             case baselineOnly
         }
 
+        /// Количество параллельных оценок кандидатов внутри поколения. `auto` — по числу процессоров (с ограничением).
+               enum MaxParallelEvaluations: Equatable {
+            case one
+            case two
+            case four
+            case auto
+
+            func resolved(availableProcessors: Int = ProcessInfo.processInfo.processorCount) -> Int {
+                switch self {
+                case .one: return 1
+                case .two: return 2
+                case .four: return 4
+                case .auto: return min(max(1, availableProcessors), 8)
+                }
+            }
+        }
+
         let runMode: RunMode
+        let maxParallelEvaluations: MaxParallelEvaluations
         let populationSize: Int
         /// Количество seed-сценариев для оценки одного кандидата.
         let gamesPerCandidate: Int
@@ -117,6 +135,7 @@ extension BotSelfPlayEvolutionEngine {
 
         init(
             runMode: RunMode = .evolution,
+            maxParallelEvaluations: MaxParallelEvaluations = .one,
             populationSize: Int = 16,
             generations: Int = 10,
             gamesPerCandidate: Int = 32,
@@ -179,6 +198,7 @@ extension BotSelfPlayEvolutionEngine {
             )
 
             self.runMode = runMode
+            self.maxParallelEvaluations = maxParallelEvaluations
             self.populationSize = max(2, populationSize)
             self.generations = max(1, generations)
             self.gamesPerCandidate = max(1, gamesPerCandidate)

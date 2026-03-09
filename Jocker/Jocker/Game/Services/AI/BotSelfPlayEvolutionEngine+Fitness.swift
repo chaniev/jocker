@@ -275,6 +275,16 @@ extension BotSelfPlayEvolutionEngine {
         }
     }
 
+    /// Неизменяемый конфиг для оценки кандидата (без сидов). Используется в evaluateCandidate для sequential и parallel.
+    struct EvolutionExecutionConfig {
+        let playerCount: Int
+        let roundsPerGame: Int
+        let cardsPerRoundRange: ClosedRange<Int>
+        let useFullMatchRules: Bool
+        let rotateCandidateAcrossSeats: Bool
+        let fitnessScoring: FitnessScoringConfig
+    }
+
     struct FitnessEvaluationContext {
         let playerCount: Int
         let roundsPerGame: Int
@@ -637,6 +647,59 @@ extension BotSelfPlayEvolutionEngine {
         }
 
         return accumulator.makeBreakdown(fitnessScoring: context.fitnessScoring)
+    }
+
+    /// Чистая единица работы: оценка одного кандидата по заданным сидам без общего mutable state.
+    /// Вход: tuning кандидата, индекс поколения, индекс кандидата, base seeds, неизменяемый config.
+    /// Выход: FitnessBreakdown. Сиды выводятся детерминированно из (generationIndex, candidateIndex, gameIndex, seatRotationIndex).
+    static func evaluateCandidate(
+        candidateTuning: BotTuning,
+        opponentTuning: BotTuning,
+        config: EvolutionExecutionConfig,
+        baseSeeds: [UInt64],
+        generationIndex: Int,
+        candidateIndex: Int
+    ) -> FitnessBreakdown {
+        guard !baseSeeds.isEmpty else { return .zero }
+
+        let candidateSeats = candidateSeatIndices(
+            playerCount: config.playerCount,
+            rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats
+        )
+        var accumulator = FitnessAccumulator()
+
+        for (gameIndex, baseSeed) in baseSeeds.enumerated() {
+            for (seatOffset, candidateSeat) in candidateSeats.enumerated() {
+                let derivedSeed = BotSelfPlayEvolutionEngine.deriveEvaluationSeed(
+                    baseSeed: baseSeed,
+                    generationIndex: generationIndex,
+                    candidateIndex: candidateIndex,
+                    gameIndex: gameIndex,
+                    seatRotationIndex: seatOffset
+                )
+                var tuningsBySeat = Array(repeating: opponentTuning, count: config.playerCount)
+                tuningsBySeat[candidateSeat] = candidateTuning
+
+                let gameOutcome = simulateGame(
+                    tuningsBySeat: tuningsBySeat,
+                    rounds: config.roundsPerGame,
+                    cardsPerRoundRange: config.cardsPerRoundRange,
+                    seed: derivedSeed,
+                    useFullMatchRules: config.useFullMatchRules
+                )
+
+                guard let metrics = candidateSeatMetrics(
+                    from: gameOutcome,
+                    candidateSeat: candidateSeat,
+                    playerCount: config.playerCount
+                ) else {
+                    continue
+                }
+                accumulator.append(metrics)
+            }
+        }
+
+        return accumulator.makeBreakdown(fitnessScoring: config.fitnessScoring)
     }
 
 }
