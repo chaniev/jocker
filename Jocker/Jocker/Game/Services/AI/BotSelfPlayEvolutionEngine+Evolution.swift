@@ -96,6 +96,7 @@ extension BotSelfPlayEvolutionEngine {
         func notifyProgress(
             stage: SelfPlayEvolutionProgress.Stage,
             generationIndex: Int? = nil,
+            candidateIndex: Int? = nil,
             evaluatedCandidatesInGeneration: Int? = nil,
             currentFitness: Double? = nil,
             generationBestFitness: Double? = nil,
@@ -116,6 +117,7 @@ extension BotSelfPlayEvolutionEngine {
                 SelfPlayEvolutionProgress(
                     stage: stage,
                     generationIndex: generationIndex,
+                    candidateIndex: candidateIndex,
                     totalGenerations: config.generationCount,
                     evaluatedCandidatesInGeneration: evaluatedCandidatesInGeneration,
                     populationSize: populationSize,
@@ -191,6 +193,7 @@ extension BotSelfPlayEvolutionEngine {
                     notifyProgress(
                         stage: .candidateEvaluated,
                         generationIndex: generation,
+                        candidateIndex: candidateOffset,
                         evaluatedCandidatesInGeneration: candidateOffset + 1,
                         currentFitness: breakdown.finalFitness,
                         generationBestFitness: generationBestFitnessSoFar,
@@ -208,6 +211,7 @@ extension BotSelfPlayEvolutionEngine {
                 )
                 scoredPopulation = parallelResults
                 completedWorkUnits += scoredPopulation.count
+                // Deterministic flush: publish progress only from coordinator, strictly by candidateIndex.
                 for (idx, scored) in scoredPopulation.enumerated() {
                     let breakdown = scored.result.fitnessBreakdown
                     generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.finalFitness, breakdown.finalFitness)
@@ -215,6 +219,7 @@ extension BotSelfPlayEvolutionEngine {
                     notifyProgress(
                         stage: .candidateEvaluated,
                         generationIndex: generation,
+                        candidateIndex: idx,
                         evaluatedCandidatesInGeneration: idx + 1,
                         currentFitness: breakdown.finalFitness,
                         generationBestFitness: generationBestFitnessSoFar,
@@ -410,6 +415,7 @@ extension BotSelfPlayEvolutionEngine {
                 SelfPlayEvolutionProgress(
                     stage: stage,
                     generationIndex: nil,
+                    candidateIndex: nil,
                     totalGenerations: 0,
                     evaluatedCandidatesInGeneration: nil,
                     populationSize: 0,
@@ -599,6 +605,7 @@ extension BotSelfPlayEvolutionEngine {
     }
 
     /// Оценка кандидатов поколения через structured concurrency; не более maxParallel задач одновременно; merge в фиксированном порядке candidateIndex.
+    /// Воркеры не публикуют progress — только возвращают (candidateIndex, ScoredGenome). Coordinator затем делает deterministic flush по candidateIndex.
     private static func evaluateCandidatesConcurrent(
         population: [EvolutionGenome],
         baseTuning: BotTuning,

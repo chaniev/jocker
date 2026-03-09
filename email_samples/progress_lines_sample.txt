@@ -1,0 +1,11 @@
+[progress] seed=20260220 started work=41 units
+[progress] seed=20260220 baseline fitness=0.123456 elapsed=00:00:02 eta=00:01:20
+[progress] seed=20260220 generation 1/2 started
+[progress] seed=20260220 g=1/2 candidate=1/4 fitness=0.200000 genBest=0.200000 overallBest=0.200000 elapsed=00:00:05 eta=00:01:10
+[progress] seed=20260220 g=1/2 candidate=4/4 fitness=0.180000 genBest=0.200000 overallBest=0.200000 elapsed=00:00:12 eta=00:00:58
+[progress] seed=20260220 generation 1/2 done genBest=0.200000 overallBest=0.200000 elapsed=00:00:12 eta=00:00:58
+[progress] seed=20260220 generation 2/2 started
+[progress] seed=20260220 g=2/2 candidate=1/4 fitness=0.210000 genBest=0.210000 overallBest=0.210000 elapsed=00:00:15 eta=00:00:45
+[progress] seed=20260220 g=2/2 candidate=4/4 fitness=0.205000 genBest=0.210000 overallBest=0.210000 elapsed=00:00:22 eta=00:00:38
+[progress] seed=20260220 generation 2/2 done genBest=0.210000 overallBest=0.210000 elapsed=00:00:22 eta=00:00:38
+[progress] seed=20260220 finished overallBest=0.210000 elapsed=00:00:23

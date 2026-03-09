@@ -148,6 +148,7 @@
 		D4C100032F8000010037CA75 /* PremiumRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C100042F8000010037CA75 /* PremiumRules.swift */; };
 		D4C200012F8001010037CA75 /* BiddingRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C200022F8001010037CA75 /* BiddingRulesTests.swift */; };
 			D4C200032F8001010037CA75 /* PremiumRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C200042F8001010037CA75 /* PremiumRulesTests.swift */; };
+			F0A1B2C42F800A010037CA75 /* TrainingRunResultFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A1B2C32F800A010037CA75 /* TrainingRunResultFormatter.swift */; };
 			D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */; };
 			D4C400012F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C400022F8003010037CA75 /* BotSelfPlayEvolutionEngine.swift */; };
 			5373987F6D954589961BBD78 /* BotSelfPlayEvolutionEngine+PublicTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35497B8001334DC0854B97A2 /* BotSelfPlayEvolutionEngine+PublicTypes.swift */; };
@@ -520,6 +521,7 @@
 		F4B100042F5600010037CA75 /* BotBlockPhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotBlockPhaseTests.swift; sourceTree = "<group>"; };
 		F400000C2F5600010037CA75 /* BotOpponentModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotOpponentModel.swift; sourceTree = "<group>"; };
 		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
+		F0A1B2C32F800A010037CA75 /* TrainingRunResultFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingRunResultFormatter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -826,6 +828,7 @@
 						C86020032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift */,
 						C86020042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift */,
 						D4C300022F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift */,
+						F0A1B2C32F800A010037CA75 /* TrainingRunResultFormatter.swift */,
 						D4D900022F8018010037CA75 /* BotTurnRoundProjectionService.swift */,
 						C0DE90012F5500010037CA75 /* BotTrumpSelectionService.swift */,
 					C0DE80012F5400010037CA75 /* BotTurnStrategyService.swift */,
@@ -1401,8 +1404,9 @@
 					C82010042FE200010037CA75 /* BotTurnSimulationService.swift in Sources */,
 					D4D900012F8018010037CA75 /* BotTurnRoundProjectionService.swift in Sources */,
 					C0DE91012F5500010037CA75 /* BotTrumpSelectionService.swift in Sources */,
-					C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
-					B10000142F7500010037CA75 /* GameStatisticsStore.swift in Sources */,
+				C0DE70012F5400010037CA75 /* BotTurnStrategyService.swift in Sources */,
+				F0A1B2C42F800A010037CA75 /* TrainingRunResultFormatter.swift in Sources */,
+				B10000142F7500010037CA75 /* GameStatisticsStore.swift in Sources */,
 				C0DE10022F5000010037CA75 /* GameRoundService.swift in Sources */,
 				C0DE10032F5000010037CA75 /* GameTurnService.swift in Sources */,
 				B20000022F7900030037CA75 /* GamePlayersSettingsStore.swift in Sources */,

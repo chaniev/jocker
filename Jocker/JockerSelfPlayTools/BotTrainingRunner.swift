@@ -1290,58 +1290,12 @@ struct BotTrainingRunner {
         event: BotTuning.SelfPlayEvolutionProgress,
         candidateStep: Int
     ) {
-        switch event.stage {
-        case .started:
-            print(
-                "[progress] seed=\(seed) started " +
-                "work=\(event.totalWorkUnits) units"
-            )
-        case .baselineCompleted:
-            print(
-                "[progress] seed=\(seed) baseline " +
-                "fitness=\(fmt(event.currentFitness ?? 0.0)) " +
-                "elapsed=\(fmtDuration(event.elapsedSeconds)) " +
-                "eta=\(fmtDuration(event.estimatedRemainingSeconds))"
-            )
-        case .generationStarted:
-            let generation = (event.generationIndex ?? 0) + 1
-            print(
-                "[progress] seed=\(seed) generation " +
-                "\(generation)/\(event.totalGenerations) started"
-            )
-        case .candidateEvaluated:
-            let generation = (event.generationIndex ?? 0) + 1
-            let candidate = event.evaluatedCandidatesInGeneration ?? 0
-            let shouldPrint = candidate == 1 ||
-                candidate == event.populationSize ||
-                (candidate % candidateStep == 0)
-            guard shouldPrint else { return }
-            print(
-                "[progress] seed=\(seed) g=\(generation)/\(event.totalGenerations) " +
-                "candidate=\(candidate)/\(event.populationSize) " +
-                "fitness=\(fmt(event.currentFitness ?? 0.0)) " +
-                "genBest=\(fmt(event.generationBestFitness ?? 0.0)) " +
-                "overallBest=\(fmt(event.overallBestFitness ?? 0.0)) " +
-                "elapsed=\(fmtDuration(event.elapsedSeconds)) " +
-                "eta=\(fmtDuration(event.estimatedRemainingSeconds))"
-            )
-        case .generationCompleted:
-            let generation = (event.generationIndex ?? 0) + 1
-            print(
-                "[progress] seed=\(seed) generation " +
-                "\(generation)/\(event.totalGenerations) done " +
-                "genBest=\(fmt(event.generationBestFitness ?? 0.0)) " +
-                "overallBest=\(fmt(event.overallBestFitness ?? 0.0)) " +
-                "elapsed=\(fmtDuration(event.elapsedSeconds)) " +
-                "eta=\(fmtDuration(event.estimatedRemainingSeconds))"
-            )
-        case .finished:
-            print(
-                "[progress] seed=\(seed) finished " +
-                "overallBest=\(fmt(event.overallBestFitness ?? 0.0)) " +
-                "elapsed=\(fmtDuration(event.elapsedSeconds))"
-            )
-        }
+        guard let line = TrainingRunResultFormatter.formatProgressLine(
+            seed: seed,
+            event: event,
+            candidateStep: candidateStep
+        ) else { return }
+        print(line)
         fflush(stdout)
     }
 

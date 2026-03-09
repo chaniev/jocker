@@ -1,0 +1,16 @@
+selectedSeed=20260220
+baselineFitness=0.123456
+bestFitness=0.210000
+baselineLegacyFitness=0.120000
+bestLegacyFitness=0.205000
+baselinePrimaryFitness=0.125000
+bestPrimaryFitness=0.208000
+baselineGuardrailPenalty=0.001544
+bestGuardrailPenalty=0.002000
+baselineFinalFitness=0.123456
+bestFinalFitness=0.210000
+improvement=0.086544
+generationCount=2
+completedGenerations=2
+stoppedEarly=false
+generationBestFitness=[0.200000, 0.210000]

@@ -389,6 +389,7 @@ extension BotSelfPlayEvolutionEngine {
     }
 
     /// Событие прогресса эволюции self-play.
+    /// Progress публикуется только из coordinator-потока после deterministic flush по candidateIndex.
     struct SelfPlayEvolutionProgress {
         enum Stage {
             case started
@@ -401,6 +402,8 @@ extension BotSelfPlayEvolutionEngine {
 
         let stage: Stage
         let generationIndex: Int?
+        /// Для .candidateEvaluated — индекс кандидата в поколении; порядок flush строго по этому полю.
+        let candidateIndex: Int?
         let totalGenerations: Int
         let evaluatedCandidatesInGeneration: Int?
         let populationSize: Int

@@ -9,6 +9,7 @@ import XCTest
 
 #if canImport(JockerSelfPlayTools)
 @testable import JockerSelfPlayTools
+@testable import Jocker
 
 final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
@@ -896,6 +897,123 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(r1.candidateSummary.gamesCount, 2)
         XCTAssertEqual(r1.candidateSummary.seatRotationsCount, 1)
         XCTAssertEqual(r1.candidateSummary.evaluationsCount, 2)
+    }
+
+    // MARK: - Progress and summary determinism (PR3)
+
+    /// Progress events in parallel mode must match the same logical order as sequential (by stage, generationIndex, candidateIndex).
+    func testProgressEvents_parallelMode_sameLogicalOrderAsSequential() async {
+        let baseTuning = BotTuning(difficulty: .hard)
+        let seed: UInt64 = 0xPR3
+        let configSequential = BotTuning.SelfPlayEvolutionConfig(
+            runMode: .evolution,
+            maxParallelEvaluations: .one,
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false
+        )
+        let configParallel = BotTuning.SelfPlayEvolutionConfig(
+            runMode: .evolution,
+            maxParallelEvaluations: .two,
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false
+        )
+
+        var sequentialTuples: [(String, Int?, Int?)] = []
+        var parallelTuples: [(String, Int?, Int?)] = []
+
+        _ = BotTuning.evolveViaSelfPlay(
+            baseTuning: baseTuning,
+            config: configSequential,
+            seed: seed,
+            progress: { event in
+                let key = (String(describing: event.stage), event.generationIndex, event.candidateIndex)
+                sequentialTuples.append(key)
+            }
+        )
+
+        let resultParallel = await BotSelfPlayEvolutionEngine.evolveViaSelfPlayAsync(
+            baseTuning: baseTuning,
+            config: configParallel,
+            seed: seed,
+            progress: { event in
+                let key = (String(describing: event.stage), event.generationIndex, event.candidateIndex)
+                parallelTuples.append(key)
+            }
+        )
+        _ = resultParallel
+
+        XCTAssertEqual(
+            sequentialTuples.count,
+            parallelTuples.count,
+            "Same config (except maxParallel) must produce same number of progress events"
+        )
+        for (idx, seq) in sequentialTuples.enumerated() {
+            let par = parallelTuples[idx]
+            XCTAssertEqual(seq.0, par.0, "Event \(idx): stage")
+            XCTAssertEqual(seq.1, par.1, "Event \(idx): generationIndex")
+            XCTAssertEqual(seq.2, par.2, "Event \(idx): candidateIndex")
+        }
+    }
+
+    /// Formatter produces identical run-result summary lines for the same run result (determinism).
+    func testFormatter_runResultSummaryLines_sameResultSameOutput() {
+        let result = BotTuning.evolveViaSelfPlay(
+            baseTuning: BotTuning(difficulty: .hard),
+            config: BotTuning.SelfPlayEvolutionConfig(
+                runMode: .baselineOnly,
+                gamesPerCandidate: 1,
+                roundsPerGame: 2,
+                playerCount: 3,
+                cardsPerRoundRange: 1...2,
+                useFullMatchRules: false
+            ),
+            seed: 0xFORMATTER
+        )
+        let lines1 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xFORMATTER, result: result)
+        let lines2 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xFORMATTER, result: result)
+        XCTAssertEqual(lines1, lines2, "Same run result must yield identical summary lines")
+        XCTAssertFalse(lines1.isEmpty)
+        let lastLine = lines1.last ?? ""
+        XCTAssertTrue(lastLine.hasPrefix("generationBestFitness="), "Summary must end with generationBestFitness line (ordered by generation index)")
+    }
+
+    /// Candidate-evaluated progress events in one generation are emitted strictly by candidateIndex order (no interleaved noise).
+    func testProgress_candidateEvaluatedEvents_orderedByCandidateIndex() async {
+        let baseTuning = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            runMode: .evolution,
+            maxParallelEvaluations: .four,
+            populationSize: 6,
+            generations: 1,
+            gamesPerCandidate: 1,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false
+        )
+        var candidateIndicesInOrder: [Int] = []
+        _ = await BotSelfPlayEvolutionEngine.evolveViaSelfPlayAsync(
+            baseTuning: baseTuning,
+            config: config,
+            seed: 0xCANDID,
+            progress: { event in
+                if case .candidateEvaluated = event.stage, let c = event.candidateIndex {
+                    candidateIndicesInOrder.append(c)
+                }
+            }
+        )
+        let expected = [0, 1, 2, 3, 4, 5]
+        XCTAssertEqual(candidateIndicesInOrder, expected, "candidateEvaluated events must be flushed in candidateIndex order")
     }
 }
 #endif
