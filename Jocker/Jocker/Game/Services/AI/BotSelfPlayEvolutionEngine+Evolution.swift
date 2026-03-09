@@ -108,7 +108,7 @@ extension BotSelfPlayEvolutionEngine {
         notifyProgress(stage: .started)
 
         let identityTuning = tuning(byApplying: .identity, to: baseTuning)
-        let baselineBreakdown = evaluateCandidate(
+        let baselineResult = evaluateCandidate(
             candidateTuning: identityTuning,
             opponentTuning: baseTuning,
             config: executionConfig,
@@ -116,6 +116,7 @@ extension BotSelfPlayEvolutionEngine {
             generationIndex: 0,
             candidateIndex: 0
         )
+        let baselineBreakdown = baselineResult.fitnessBreakdown
         completedWorkUnits += 1
         notifyProgress(
             stage: .baselineCompleted,
@@ -149,7 +150,7 @@ extension BotSelfPlayEvolutionEngine {
                 scoredPopulation.reserveCapacity(populationSize)
                 for (candidateOffset, genome) in population.enumerated() {
                     let candidateTuning = tuning(byApplying: genome, to: baseTuning)
-                    let breakdown = evaluateCandidate(
+                    let result = evaluateCandidate(
                         candidateTuning: candidateTuning,
                         opponentTuning: baseTuning,
                         config: executionConfig,
@@ -157,8 +158,9 @@ extension BotSelfPlayEvolutionEngine {
                         generationIndex: generation,
                         candidateIndex: candidateOffset
                     )
-                    scoredPopulation.append(ScoredGenome(genome: genome, breakdown: breakdown))
+                    scoredPopulation.append(ScoredGenome(genome: genome, result: result))
                     completedWorkUnits += 1
+                    let breakdown = result.fitnessBreakdown
                     generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.finalFitness, breakdown.finalFitness)
                     let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? breakdown.finalFitness)
                     notifyProgress(
@@ -171,7 +173,7 @@ extension BotSelfPlayEvolutionEngine {
                     )
                 }
             } else {
-                let results = evaluateCandidatesParallel(
+                let parallelResults = evaluateCandidatesParallel(
                     population: population,
                     baseTuning: baseTuning,
                     executionConfig: executionConfig,
@@ -179,16 +181,17 @@ extension BotSelfPlayEvolutionEngine {
                     generationIndex: generation,
                     maxParallel: maxParallel
                 )
-                scoredPopulation = results.map(\.1)
+                scoredPopulation = parallelResults.map(\.1)
                 completedWorkUnits += scoredPopulation.count
                 for (idx, scored) in scoredPopulation.enumerated() {
-                    generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? scored.breakdown.finalFitness, scored.breakdown.finalFitness)
-                    let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? scored.breakdown.finalFitness)
+                    let breakdown = scored.result.fitnessBreakdown
+                    generationBestFitnessSoFar = max(generationBestFitnessSoFar ?? breakdown.finalFitness, breakdown.finalFitness)
+                    let overallBestSoFar = max(bestBreakdown.finalFitness, generationBestFitnessSoFar ?? breakdown.finalFitness)
                     notifyProgress(
                         stage: .candidateEvaluated,
                         generationIndex: generation,
                         evaluatedCandidatesInGeneration: idx + 1,
-                        currentFitness: scored.breakdown.finalFitness,
+                        currentFitness: breakdown.finalFitness,
                         generationBestFitness: generationBestFitnessSoFar,
                         overallBestFitness: overallBestSoFar
                     )
@@ -196,8 +199,8 @@ extension BotSelfPlayEvolutionEngine {
             }
 
             scoredPopulation.sort(by: { (lhs: ScoredGenome, rhs: ScoredGenome) -> Bool in
-                    let lFinal = lhs.breakdown.finalFitness
-                    let rFinal = rhs.breakdown.finalFitness
+                    let lFinal = lhs.result.fitnessBreakdown.finalFitness
+                    let rFinal = rhs.result.fitnessBreakdown.finalFitness
                     if lFinal == rFinal {
                         return isLexicographicallySmaller(
                             lhs.genome.lexicographicKey,
@@ -208,12 +211,13 @@ extension BotSelfPlayEvolutionEngine {
                 })
 
             guard let generationBest = scoredPopulation.first else { continue }
-            generationBestFitness.append(generationBest.breakdown.finalFitness)
+            let generationBestBreakdown = generationBest.result.fitnessBreakdown
+            generationBestFitness.append(generationBestBreakdown.finalFitness)
             completedGenerations = generation + 1
 
-            let fitnessImprovement = generationBest.breakdown.finalFitness - bestBreakdown.finalFitness
-            if generationBest.breakdown.finalFitness > bestBreakdown.finalFitness {
-                bestBreakdown = generationBest.breakdown
+            let fitnessImprovement = generationBestBreakdown.finalFitness - bestBreakdown.finalFitness
+            if generationBestBreakdown.finalFitness > bestBreakdown.finalFitness {
+                bestBreakdown = generationBestBreakdown
                 bestGenome = generationBest.genome
                 if fitnessImprovement > config.earlyStoppingMinImprovement {
                     lastMeaningfulImprovementGeneration = completedGenerations
@@ -222,7 +226,7 @@ extension BotSelfPlayEvolutionEngine {
             notifyProgress(
                 stage: .generationCompleted,
                 generationIndex: generation,
-                generationBestFitness: generationBest.breakdown.finalFitness,
+                generationBestFitness: generationBestBreakdown.finalFitness,
                 overallBestFitness: bestBreakdown.finalFitness
             )
 
@@ -397,7 +401,7 @@ extension BotSelfPlayEvolutionEngine {
 
         notifyProgress(stage: .started)
         let identityTuning = tuning(byApplying: .identity, to: baseTuning)
-        let baselineBreakdown = evaluateCandidate(
+        let baselineResult = evaluateCandidate(
             candidateTuning: identityTuning,
             opponentTuning: baseTuning,
             config: executionConfig,
@@ -405,6 +409,7 @@ extension BotSelfPlayEvolutionEngine {
             generationIndex: 0,
             candidateIndex: 0
         )
+        let baselineBreakdown = baselineResult.fitnessBreakdown
         completedWorkUnits = 1
         notifyProgress(
             stage: .baselineCompleted,
@@ -477,7 +482,7 @@ extension BotSelfPlayEvolutionEngine {
 
     private struct ScoredGenome {
         let genome: EvolutionGenome
-        let breakdown: FitnessBreakdown
+        let result: CandidateEvaluationResult
     }
 
     private static func normalizedCardsPerRoundRange(
@@ -593,7 +598,7 @@ extension BotSelfPlayEvolutionEngine {
                     group.leave()
                 }
                 let candidateTuning = tuning(byApplying: genome, to: baseTuning)
-                let breakdown = evaluateCandidate(
+                let result = evaluateCandidate(
                     candidateTuning: candidateTuning,
                     opponentTuning: baseTuning,
                     config: executionConfig,
@@ -601,7 +606,7 @@ extension BotSelfPlayEvolutionEngine {
                     generationIndex: generationIndex,
                     candidateIndex: candidateOffset
                 )
-                let scored = ScoredGenome(genome: genome, breakdown: breakdown)
+                let scored = ScoredGenome(genome: genome, result: result)
                 lock.lock()
                 results.append((candidateOffset, scored))
                 lock.unlock()

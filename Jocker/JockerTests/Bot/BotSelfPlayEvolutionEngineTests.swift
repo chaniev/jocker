@@ -93,21 +93,24 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             useFullMatchRules: true
         )
 
-        XCTAssertEqual(first.totalScores, second.totalScores)
-        XCTAssertEqual(first.underbidLosses, second.underbidLosses)
-        XCTAssertEqual(first.blindBidRatesBlock4, second.blindBidRatesBlock4)
-        XCTAssertEqual(first.leftNeighborPremiumAssistRates, second.leftNeighborPremiumAssistRates)
+        let o1 = first.outcome
+        let o2 = second.outcome
+        XCTAssertEqual(o1.totalScores, o2.totalScores)
+        XCTAssertEqual(o1.underbidLosses, o2.underbidLosses)
+        XCTAssertEqual(o1.blindBidRatesBlock4, o2.blindBidRatesBlock4)
+        XCTAssertEqual(o1.leftNeighborPremiumAssistRates, o2.leftNeighborPremiumAssistRates)
     }
 
     func testSimulateGame_legacyModeProducesSeatAlignedMetrics() {
         let playerCount = 3
-        let outcome = BotSelfPlayEvolutionEngine.simulateGame(
+        let run = BotSelfPlayEvolutionEngine.simulateGame(
             tuningsBySeat: makeTunings(count: playerCount),
             rounds: 4,
             cardsPerRoundRange: 2...4,
             seed: 20260307,
             useFullMatchRules: false
         )
+        let outcome = run.outcome
 
         XCTAssertEqual(outcome.totalScores.count, playerCount)
         XCTAssertEqual(outcome.underbidLosses.count, playerCount)
@@ -743,6 +746,156 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
         XCTAssertEqual(result.guardrailPenalty, 0.0, accuracy: 1e-6)
         XCTAssertEqual(result.finalFitness, result.primaryFitness, accuracy: 1e-6)
+    }
+
+    // MARK: - Candidate result contract (PR1)
+
+    func testEvaluateCandidate_sameInputs_returnsIdenticalCompositeResult() {
+        let tuning = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false
+        )
+        let fitnessScoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let executionConfig = BotSelfPlayEvolutionEngine.EvolutionExecutionConfig(
+            playerCount: 3,
+            roundsPerGame: 2,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false,
+            rotateCandidateAcrossSeats: false,
+            fitnessScoring: fitnessScoring
+        )
+        let baseSeeds: [UInt64] = [0x5EED, 0x6EED]
+
+        let result1 = BotSelfPlayEvolutionEngine.evaluateCandidate(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
+        )
+        let result2 = BotSelfPlayEvolutionEngine.evaluateCandidate(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
+        )
+
+        XCTAssertEqual(result1.fitnessBreakdown.finalFitness, result2.fitnessBreakdown.finalFitness, accuracy: 1e-9)
+        XCTAssertEqual(result1.fitnessBreakdown.winRate, result2.fitnessBreakdown.winRate, accuracy: 1e-9)
+        XCTAssertEqual(result1.candidateSummary.gamesCount, result2.candidateSummary.gamesCount)
+        XCTAssertEqual(result1.candidateSummary.seatRotationsCount, result2.candidateSummary.seatRotationsCount)
+        XCTAssertEqual(result1.aggregatedMetrics.totalScores, result2.aggregatedMetrics.totalScores)
+        XCTAssertEqual(result1.aggregatedMetrics.underbidLosses, result2.aggregatedMetrics.underbidLosses)
+    }
+
+    func testEvaluateCandidate_noSharedMutableState_sameInputsSameResult() {
+        let tuning = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            gamesPerCandidate: 1,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false
+        )
+        let fitnessScoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let executionConfig = BotSelfPlayEvolutionEngine.EvolutionExecutionConfig(
+            playerCount: 3,
+            roundsPerGame: 2,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false,
+            rotateCandidateAcrossSeats: false,
+            fitnessScoring: fitnessScoring
+        )
+        let baseSeeds: [UInt64] = [0x7EED]
+
+        let a = BotSelfPlayEvolutionEngine.evaluateCandidate(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 1,
+            candidateIndex: 2
+        )
+        let b = BotSelfPlayEvolutionEngine.evaluateCandidate(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 1,
+            candidateIndex: 2
+        )
+
+        XCTAssertEqual(a.fitnessBreakdown.fitness, b.fitnessBreakdown.fitness, accuracy: 1e-9)
+        XCTAssertEqual(a.aggregatedMetrics.totalScores, b.aggregatedMetrics.totalScores)
+    }
+
+    func testMaxParallelEvaluations_auto_resolvesAndCaps() {
+        let auto = BotSelfPlayEvolutionEngine.SelfPlayEvolutionConfig.MaxParallelEvaluations.auto
+        let resolved = auto.resolved(availableProcessors: 16)
+        XCTAssertGreaterThanOrEqual(resolved, 1)
+        XCTAssertLessThanOrEqual(resolved, 8)
+        XCTAssertEqual(resolved, 8, "With 16 processors auto should cap at 8")
+
+        let resolvedOne = auto.resolved(availableProcessors: 1)
+        XCTAssertEqual(resolvedOne, 1)
+
+        let resolvedFour = auto.resolved(availableProcessors: 4)
+        XCTAssertEqual(resolvedFour, 4)
+    }
+
+    func testEvaluateCandidate_seedRepeatability_fullResultContract() {
+        let tuning = BotTuning(difficulty: .hard)
+        let config = BotTuning.SelfPlayEvolutionConfig(
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false
+        )
+        let fitnessScoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
+        let executionConfig = BotSelfPlayEvolutionEngine.EvolutionExecutionConfig(
+            playerCount: 3,
+            roundsPerGame: 2,
+            cardsPerRoundRange: 1...2,
+            useFullMatchRules: false,
+            rotateCandidateAcrossSeats: false,
+            fitnessScoring: fitnessScoring
+        )
+        let baseSeeds: [UInt64] = [0x8EED, 0x9EED]
+
+        let r1 = BotSelfPlayEvolutionEngine.evaluateCandidate(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
+        )
+        let r2 = BotSelfPlayEvolutionEngine.evaluateCandidate(
+            candidateTuning: tuning,
+            opponentTuning: tuning,
+            config: executionConfig,
+            baseSeeds: baseSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
+        )
+
+        XCTAssertEqual(r1.fitnessBreakdown.finalFitness, r2.fitnessBreakdown.finalFitness, accuracy: 1e-9)
+        XCTAssertEqual(r1.fitnessBreakdown.legacyFitness, r2.fitnessBreakdown.legacyFitness, accuracy: 1e-9)
+        XCTAssertEqual(r1.fitnessBreakdown.winRate, r2.fitnessBreakdown.winRate, accuracy: 1e-9)
+        XCTAssertEqual(r1.aggregatedMetrics.totalScores, r2.aggregatedMetrics.totalScores)
+        XCTAssertEqual(r1.aggregatedMetrics.underbidLosses, r2.aggregatedMetrics.underbidLosses)
+        XCTAssertEqual(r1.aggregatedMetrics.premiumCaptureRates, r2.aggregatedMetrics.premiumCaptureRates)
+        XCTAssertEqual(r1.candidateSummary.gamesCount, 2)
+        XCTAssertEqual(r1.candidateSummary.seatRotationsCount, 1)
+        XCTAssertEqual(r1.candidateSummary.evaluationsCount, 2)
     }
 }
 #endif

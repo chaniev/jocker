@@ -275,6 +275,20 @@ extension BotSelfPlayEvolutionEngine {
         }
     }
 
+    /// Summary payload for one candidate evaluation (games × seat rotations).
+    struct CandidateSummary {
+        let gamesCount: Int
+        let seatRotationsCount: Int
+        var evaluationsCount: Int { gamesCount * seatRotationsCount }
+    }
+
+    /// Unified worker payload: fitness breakdown + aggregated simulation metrics + candidate summary.
+    struct CandidateEvaluationResult {
+        let fitnessBreakdown: FitnessBreakdown
+        let aggregatedMetrics: SimulatedGameOutcome
+        let candidateSummary: CandidateSummary
+    }
+
     /// Неизменяемый конфиг для оценки кандидата (без сидов). Используется в evaluateCandidate для sequential и parallel.
     struct EvolutionExecutionConfig {
         let playerCount: Int
@@ -609,49 +623,34 @@ extension BotSelfPlayEvolutionEngine {
         )
     }
 
+    /// Оценка кандидата по явному списку сидов (контекст). Единый путь через evaluateCandidate.
     static func evaluateCandidateTuning(
         candidateTuning: BotTuning,
         opponentTuning: BotTuning,
         context: FitnessEvaluationContext
     ) -> FitnessBreakdown {
-        guard !context.evaluationSeeds.isEmpty else { return .zero }
-
-        let candidateSeats = candidateSeatIndices(
+        let config = EvolutionExecutionConfig(
             playerCount: context.playerCount,
-            rotateCandidateAcrossSeats: context.rotateCandidateAcrossSeats
+            roundsPerGame: context.roundsPerGame,
+            cardsPerRoundRange: context.cardsPerRoundRange,
+            useFullMatchRules: context.useFullMatchRules,
+            rotateCandidateAcrossSeats: context.rotateCandidateAcrossSeats,
+            fitnessScoring: context.fitnessScoring
         )
-        var accumulator = FitnessAccumulator()
-
-        for evaluationSeed in context.evaluationSeeds {
-            for candidateSeat in candidateSeats {
-                var tuningsBySeat = Array(repeating: opponentTuning, count: context.playerCount)
-                tuningsBySeat[candidateSeat] = candidateTuning
-
-                let gameOutcome = simulateGame(
-                    tuningsBySeat: tuningsBySeat,
-                    rounds: context.roundsPerGame,
-                    cardsPerRoundRange: context.cardsPerRoundRange,
-                    seed: evaluationSeed,
-                    useFullMatchRules: context.useFullMatchRules
-                )
-
-                guard let metrics = candidateSeatMetrics(
-                    from: gameOutcome,
-                    candidateSeat: candidateSeat,
-                    playerCount: context.playerCount
-                ) else {
-                    continue
-                }
-                accumulator.append(metrics)
-            }
-        }
-
-        return accumulator.makeBreakdown(fitnessScoring: context.fitnessScoring)
+        let result = evaluateCandidate(
+            candidateTuning: candidateTuning,
+            opponentTuning: opponentTuning,
+            config: config,
+            baseSeeds: context.evaluationSeeds,
+            generationIndex: 0,
+            candidateIndex: 0
+        )
+        return result.fitnessBreakdown
     }
 
     /// Чистая единица работы: оценка одного кандидата по заданным сидам без общего mutable state.
     /// Вход: tuning кандидата, индекс поколения, индекс кандидата, base seeds, неизменяемый config.
-    /// Выход: FitnessBreakdown. Сиды выводятся детерминированно из (generationIndex, candidateIndex, gameIndex, seatRotationIndex).
+    /// Выход: CandidateEvaluationResult (fitness + aggregated metrics + summary). Сиды выводятся детерминированно из (generationIndex, candidateIndex, gameIndex, seatRotationIndex).
     static func evaluateCandidate(
         candidateTuning: BotTuning,
         opponentTuning: BotTuning,
@@ -659,14 +658,22 @@ extension BotSelfPlayEvolutionEngine {
         baseSeeds: [UInt64],
         generationIndex: Int,
         candidateIndex: Int
-    ) -> FitnessBreakdown {
-        guard !baseSeeds.isEmpty else { return .zero }
+    ) -> CandidateEvaluationResult {
+        guard !baseSeeds.isEmpty else {
+            let emptySnapshot = SimulationMetricsSnapshot.empty(playerCount: config.playerCount)
+            return CandidateEvaluationResult(
+                fitnessBreakdown: .zero,
+                aggregatedMetrics: emptySnapshot.toOutcome(),
+                candidateSummary: CandidateSummary(gamesCount: 0, seatRotationsCount: 0)
+            )
+        }
 
         let candidateSeats = candidateSeatIndices(
             playerCount: config.playerCount,
             rotateCandidateAcrossSeats: config.rotateCandidateAcrossSeats
         )
         var accumulator = FitnessAccumulator()
+        var mergedSnapshot: SimulationMetricsSnapshot?
 
         for (gameIndex, baseSeed) in baseSeeds.enumerated() {
             for (seatOffset, candidateSeat) in candidateSeats.enumerated() {
@@ -680,7 +687,7 @@ extension BotSelfPlayEvolutionEngine {
                 var tuningsBySeat = Array(repeating: opponentTuning, count: config.playerCount)
                 tuningsBySeat[candidateSeat] = candidateTuning
 
-                let gameOutcome = simulateGame(
+                let run = simulateGame(
                     tuningsBySeat: tuningsBySeat,
                     rounds: config.roundsPerGame,
                     cardsPerRoundRange: config.cardsPerRoundRange,
@@ -688,8 +695,14 @@ extension BotSelfPlayEvolutionEngine {
                     useFullMatchRules: config.useFullMatchRules
                 )
 
+                if let existing = mergedSnapshot {
+                    mergedSnapshot = existing.merged(with: run.metricsSnapshot)
+                } else {
+                    mergedSnapshot = run.metricsSnapshot
+                }
+
                 guard let metrics = candidateSeatMetrics(
-                    from: gameOutcome,
+                    from: run.outcome,
                     candidateSeat: candidateSeat,
                     playerCount: config.playerCount
                 ) else {
@@ -699,7 +712,15 @@ extension BotSelfPlayEvolutionEngine {
             }
         }
 
-        return accumulator.makeBreakdown(fitnessScoring: config.fitnessScoring)
+        let fitnessBreakdown = accumulator.makeBreakdown(fitnessScoring: config.fitnessScoring)
+        let aggregatedMetrics = mergedSnapshot.map { $0.toOutcome() } ?? SimulationMetricsSnapshot.empty(playerCount: config.playerCount).toOutcome()
+        let summary = CandidateSummary(gamesCount: baseSeeds.count, seatRotationsCount: candidateSeats.count)
+
+        return CandidateEvaluationResult(
+            fitnessBreakdown: fitnessBreakdown,
+            aggregatedMetrics: aggregatedMetrics,
+            candidateSummary: summary
+        )
     }
 
 }

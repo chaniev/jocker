@@ -28,7 +28,7 @@ extension BotSelfPlayEvolutionEngine {
         rounds: Int,
         cardsPerRoundRange: ClosedRange<Int>,
         seed: UInt64
-    ) -> SimulatedGameOutcome {
+    ) -> SimulatedGameRun {
         let playerCount = tuningsBySeat.count
         var rng = SelfPlayRandomGenerator(seed: seed)
 
@@ -65,13 +65,16 @@ extension BotSelfPlayEvolutionEngine {
             dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
         }
 
-        return metrics.makeOutcome()
+        return SimulatedGameRun(
+            outcome: metrics.makeOutcome(),
+            metricsSnapshot: metrics.snapshot()
+        )
     }
 
     static func simulateFullMatch(
         tuningsBySeat: [BotTuning],
         seed: UInt64
-    ) -> SimulatedGameOutcome {
+    ) -> SimulatedGameRun {
         let playerCount = tuningsBySeat.count
         var rng = SelfPlayRandomGenerator(seed: seed)
 
@@ -172,7 +175,10 @@ extension BotSelfPlayEvolutionEngine {
             metrics.addFinalScores(finalizedBlockOutcome.finalScores)
         }
 
-        return metrics.makeOutcome()
+        return SimulatedGameRun(
+            outcome: metrics.makeOutcome(),
+            metricsSnapshot: metrics.snapshot()
+        )
     }
 
     static func appendRoundResultsToBlock(

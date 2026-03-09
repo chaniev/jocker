@@ -8,6 +8,214 @@
 import Foundation
 
 extension BotSelfPlayEvolutionEngine {
+    /// Immutable snapshot of metrics suitable for merge and summary (e.g. across games in one candidate evaluation).
+    struct SimulationMetricsSnapshot {
+        let totalScores: [Int]
+        let underbidLosses: [Double]
+        let trumpDensityUnderbidLosses: [Double]
+        let noTrumpControlUnderbidLosses: [Double]
+        let premiumAssistLosses: [Double]
+        let premiumPenaltyTargetLosses: [Double]
+        let totalRoundsCount: [Int]
+        let exactBidRoundsCount: [Int]
+        let overbidRoundsCount: [Int]
+        let totalBlindRoundsCount: [Int]
+        let successfulBlindRoundsCount: [Int]
+        let totalBlocksCount: [Int]
+        let premiumCapturedBlocksCount: [Int]
+        let penaltyTargetBlocksCount: [Int]
+        let totalWishLeadDeclarationCounts: [Int]
+        let winningWishLeadDeclarationCounts: [Int]
+        let totalJokerPlayCounts: [Int]
+        let earlyJokerPlayCounts: [Int]
+        let totalEarlyLeadWishCounts: [Int]
+        let totalDealsBlock4Count: [Int]
+        let blindDealsBlock4Count: [Int]
+        let totalBlindBidAmount: [Int]
+        let blindOpportunitiesWhenBehindCount: [Int]
+        let blindChosenWhenBehindCount: [Int]
+        let blindOpportunitiesWhenLeadingCount: [Int]
+        let blindChosenWhenLeadingCount: [Int]
+        let leftNeighborPremiumEventsCount: [Int]
+        let assistedLeftNeighborPremiumCount: [Int]
+
+        /// Empty snapshot for a given player count (e.g. for zero-game result).
+        static func empty(playerCount: Int) -> SimulationMetricsSnapshot {
+            let zerosI = Array(repeating: 0, count: playerCount)
+            let zerosD = Array(repeating: 0.0, count: playerCount)
+            return SimulationMetricsSnapshot(
+                totalScores: zerosI,
+                underbidLosses: zerosD,
+                trumpDensityUnderbidLosses: zerosD,
+                noTrumpControlUnderbidLosses: zerosD,
+                premiumAssistLosses: zerosD,
+                premiumPenaltyTargetLosses: zerosD,
+                totalRoundsCount: zerosI,
+                exactBidRoundsCount: zerosI,
+                overbidRoundsCount: zerosI,
+                totalBlindRoundsCount: zerosI,
+                successfulBlindRoundsCount: zerosI,
+                totalBlocksCount: zerosI,
+                premiumCapturedBlocksCount: zerosI,
+                penaltyTargetBlocksCount: zerosI,
+                totalWishLeadDeclarationCounts: zerosI,
+                winningWishLeadDeclarationCounts: zerosI,
+                totalJokerPlayCounts: zerosI,
+                earlyJokerPlayCounts: zerosI,
+                totalEarlyLeadWishCounts: zerosI,
+                totalDealsBlock4Count: zerosI,
+                blindDealsBlock4Count: zerosI,
+                totalBlindBidAmount: zerosI,
+                blindOpportunitiesWhenBehindCount: zerosI,
+                blindChosenWhenBehindCount: zerosI,
+                blindOpportunitiesWhenLeadingCount: zerosI,
+                blindChosenWhenLeadingCount: zerosI,
+                leftNeighborPremiumEventsCount: zerosI,
+                assistedLeftNeighborPremiumCount: zerosI
+            )
+        }
+
+        /// Merge another snapshot (element-wise add). Both must have same player count.
+        func merged(with other: SimulationMetricsSnapshot) -> SimulationMetricsSnapshot {
+            let n = totalScores.count
+            guard n == other.totalScores.count else { return self }
+            return SimulationMetricsSnapshot(
+                totalScores: zip(totalScores, other.totalScores).map(+),
+                underbidLosses: zip(underbidLosses, other.underbidLosses).map(+),
+                trumpDensityUnderbidLosses: zip(trumpDensityUnderbidLosses, other.trumpDensityUnderbidLosses).map(+),
+                noTrumpControlUnderbidLosses: zip(noTrumpControlUnderbidLosses, other.noTrumpControlUnderbidLosses).map(+),
+                premiumAssistLosses: zip(premiumAssistLosses, other.premiumAssistLosses).map(+),
+                premiumPenaltyTargetLosses: zip(premiumPenaltyTargetLosses, other.premiumPenaltyTargetLosses).map(+),
+                totalRoundsCount: zip(totalRoundsCount, other.totalRoundsCount).map(+),
+                exactBidRoundsCount: zip(exactBidRoundsCount, other.exactBidRoundsCount).map(+),
+                overbidRoundsCount: zip(overbidRoundsCount, other.overbidRoundsCount).map(+),
+                totalBlindRoundsCount: zip(totalBlindRoundsCount, other.totalBlindRoundsCount).map(+),
+                successfulBlindRoundsCount: zip(successfulBlindRoundsCount, other.successfulBlindRoundsCount).map(+),
+                totalBlocksCount: zip(totalBlocksCount, other.totalBlocksCount).map(+),
+                premiumCapturedBlocksCount: zip(premiumCapturedBlocksCount, other.premiumCapturedBlocksCount).map(+),
+                penaltyTargetBlocksCount: zip(penaltyTargetBlocksCount, other.penaltyTargetBlocksCount).map(+),
+                totalWishLeadDeclarationCounts: zip(totalWishLeadDeclarationCounts, other.totalWishLeadDeclarationCounts).map(+),
+                winningWishLeadDeclarationCounts: zip(winningWishLeadDeclarationCounts, other.winningWishLeadDeclarationCounts).map(+),
+                totalJokerPlayCounts: zip(totalJokerPlayCounts, other.totalJokerPlayCounts).map(+),
+                earlyJokerPlayCounts: zip(earlyJokerPlayCounts, other.earlyJokerPlayCounts).map(+),
+                totalEarlyLeadWishCounts: zip(totalEarlyLeadWishCounts, other.totalEarlyLeadWishCounts).map(+),
+                totalDealsBlock4Count: zip(totalDealsBlock4Count, other.totalDealsBlock4Count).map(+),
+                blindDealsBlock4Count: zip(blindDealsBlock4Count, other.blindDealsBlock4Count).map(+),
+                totalBlindBidAmount: zip(totalBlindBidAmount, other.totalBlindBidAmount).map(+),
+                blindOpportunitiesWhenBehindCount: zip(blindOpportunitiesWhenBehindCount, other.blindOpportunitiesWhenBehindCount).map(+),
+                blindChosenWhenBehindCount: zip(blindChosenWhenBehindCount, other.blindChosenWhenBehindCount).map(+),
+                blindOpportunitiesWhenLeadingCount: zip(blindOpportunitiesWhenLeadingCount, other.blindOpportunitiesWhenLeadingCount).map(+),
+                blindChosenWhenLeadingCount: zip(blindChosenWhenLeadingCount, other.blindChosenWhenLeadingCount).map(+),
+                leftNeighborPremiumEventsCount: zip(leftNeighborPremiumEventsCount, other.leftNeighborPremiumEventsCount).map(+),
+                assistedLeftNeighborPremiumCount: zip(assistedLeftNeighborPremiumCount, other.assistedLeftNeighborPremiumCount).map(+)
+            )
+        }
+
+        /// Build SimulatedGameOutcome from merged counts (same logic as accumulator.makeOutcome()).
+        func toOutcome() -> SimulatedGameOutcome {
+            let playerCount = totalScores.count
+            let premiumCaptureRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(premiumCapturedBlocksCount[i]),
+                    Double(totalBlocksCount[i])
+                )
+            }
+            let blindSuccessRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(successfulBlindRoundsCount[i]),
+                    Double(totalBlindRoundsCount[i])
+                )
+            }
+            let jokerWishWinRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(winningWishLeadDeclarationCounts[i]),
+                    Double(totalWishLeadDeclarationCounts[i])
+                )
+            }
+            let earlyJokerSpendRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(earlyJokerPlayCounts[i]),
+                    Double(totalJokerPlayCounts[i])
+                )
+            }
+            let penaltyTargetRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(penaltyTargetBlocksCount[i]),
+                    Double(totalBlocksCount[i])
+                )
+            }
+            let bidAccuracyRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(exactBidRoundsCount[i]),
+                    Double(totalRoundsCount[i])
+                )
+            }
+            let overbidRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(overbidRoundsCount[i]),
+                    Double(totalRoundsCount[i])
+                )
+            }
+            let blindBidRatesBlock4 = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(blindDealsBlock4Count[i]),
+                    Double(totalDealsBlock4Count[i])
+                )
+            }
+            let averageBlindBidSizes = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(totalBlindBidAmount[i]),
+                    Double(totalBlindRoundsCount[i])
+                )
+            }
+            let blindBidWhenBehindRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(blindChosenWhenBehindCount[i]),
+                    Double(blindOpportunitiesWhenBehindCount[i])
+                )
+            }
+            let blindBidWhenLeadingRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(blindChosenWhenLeadingCount[i]),
+                    Double(blindOpportunitiesWhenLeadingCount[i])
+                )
+            }
+            let earlyLeadWishJokerRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.ratio(
+                    Double(totalEarlyLeadWishCounts[i]),
+                    Double(totalRoundsCount[i])
+                )
+            }
+            let leftNeighborPremiumAssistRates = (0..<playerCount).map { i in
+                BotSelfPlayEvolutionEngine.optionalRatio(
+                    Double(assistedLeftNeighborPremiumCount[i]),
+                    Double(leftNeighborPremiumEventsCount[i])
+                )
+            }
+            return SimulatedGameOutcome(
+                totalScores: totalScores,
+                underbidLosses: underbidLosses,
+                trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
+                noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
+                premiumAssistLosses: premiumAssistLosses,
+                premiumPenaltyTargetLosses: premiumPenaltyTargetLosses,
+                premiumCaptureRates: premiumCaptureRates,
+                blindSuccessRates: blindSuccessRates,
+                jokerWishWinRates: jokerWishWinRates,
+                earlyJokerSpendRates: earlyJokerSpendRates,
+                penaltyTargetRates: penaltyTargetRates,
+                bidAccuracyRates: bidAccuracyRates,
+                overbidRates: overbidRates,
+                blindBidRatesBlock4: blindBidRatesBlock4,
+                averageBlindBidSizes: averageBlindBidSizes,
+                blindBidWhenBehindRates: blindBidWhenBehindRates,
+                blindBidWhenLeadingRates: blindBidWhenLeadingRates,
+                earlyLeadWishJokerRates: earlyLeadWishJokerRates,
+                leftNeighborPremiumAssistRates: leftNeighborPremiumAssistRates
+            )
+        }
+    }
+
     struct SimulationMetricsAccumulator {
         private(set) var totalScores: [Int]
         private(set) var underbidLosses: [Double]
@@ -255,6 +463,40 @@ extension BotSelfPlayEvolutionEngine {
                 premiumPenaltyTargetLosses: &premiumPenaltyTargetLosses,
                 blockOutcome: blockOutcome,
                 playerCount: playerCount
+            )
+        }
+
+        /// Immutable snapshot for merge/summary (e.g. across games in candidate evaluation).
+        func snapshot() -> SimulationMetricsSnapshot {
+            return SimulationMetricsSnapshot(
+                totalScores: totalScores,
+                underbidLosses: underbidLosses,
+                trumpDensityUnderbidLosses: trumpDensityUnderbidLosses,
+                noTrumpControlUnderbidLosses: noTrumpControlUnderbidLosses,
+                premiumAssistLosses: premiumAssistLosses,
+                premiumPenaltyTargetLosses: premiumPenaltyTargetLosses,
+                totalRoundsCount: totalRoundsCount,
+                exactBidRoundsCount: exactBidRoundsCount,
+                overbidRoundsCount: overbidRoundsCount,
+                totalBlindRoundsCount: totalBlindRoundsCount,
+                successfulBlindRoundsCount: successfulBlindRoundsCount,
+                totalBlocksCount: totalBlocksCount,
+                premiumCapturedBlocksCount: premiumCapturedBlocksCount,
+                penaltyTargetBlocksCount: penaltyTargetBlocksCount,
+                totalWishLeadDeclarationCounts: totalWishLeadDeclarationCounts,
+                winningWishLeadDeclarationCounts: winningWishLeadDeclarationCounts,
+                totalJokerPlayCounts: totalJokerPlayCounts,
+                earlyJokerPlayCounts: earlyJokerPlayCounts,
+                totalEarlyLeadWishCounts: totalEarlyLeadWishCounts,
+                totalDealsBlock4Count: totalDealsBlock4Count,
+                blindDealsBlock4Count: blindDealsBlock4Count,
+                totalBlindBidAmount: totalBlindBidAmount,
+                blindOpportunitiesWhenBehindCount: blindOpportunitiesWhenBehindCount,
+                blindChosenWhenBehindCount: blindChosenWhenBehindCount,
+                blindOpportunitiesWhenLeadingCount: blindOpportunitiesWhenLeadingCount,
+                blindChosenWhenLeadingCount: blindChosenWhenLeadingCount,
+                leftNeighborPremiumEventsCount: leftNeighborPremiumEventsCount,
+                assistedLeftNeighborPremiumCount: assistedLeftNeighborPremiumCount
             )
         }
 

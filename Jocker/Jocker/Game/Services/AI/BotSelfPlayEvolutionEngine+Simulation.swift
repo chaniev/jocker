@@ -49,6 +49,12 @@ extension BotSelfPlayEvolutionEngine {
         let leftNeighborPremiumAssistRates: [Double?]
     }
 
+    /// Result of one simulated game: outcome (rates/scores) plus metrics snapshot for merge/summary.
+    struct SimulatedGameRun {
+        let outcome: SimulatedGameOutcome
+        let metricsSnapshot: SimulationMetricsSnapshot
+    }
+
     struct SeatServiceBundle {
         let turnServices: [BotTurnStrategyService]
         let biddingServices: [BotBiddingService]
@@ -131,7 +137,7 @@ extension BotSelfPlayEvolutionEngine {
         cardsPerRoundRange: ClosedRange<Int>,
         seed: UInt64,
         useFullMatchRules: Bool
-    ) -> SimulatedGameOutcome {
+    ) -> SimulatedGameRun {
         if useFullMatchRules {
             return simulateFullMatch(
                 tuningsBySeat: tuningsBySeat,
