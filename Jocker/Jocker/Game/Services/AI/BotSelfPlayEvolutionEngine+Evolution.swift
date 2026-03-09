@@ -8,6 +8,23 @@
 import Foundation
 
 extension BotSelfPlayEvolutionEngine {
+    private final class BlockingResultBox<T>: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value: T?
+
+        func store(_ newValue: T) {
+            lock.lock()
+            value = newValue
+            lock.unlock()
+        }
+
+        func load() -> T {
+            lock.lock()
+            defer { lock.unlock() }
+            return value!
+        }
+    }
+
     /// Запускает эволюционный поиск параметров бота на серии self-play матчей (синхронная обёртка).
     static func evolveViaSelfPlay(
         baseTuning: BotTuning,
@@ -648,14 +665,15 @@ extension BotSelfPlayEvolutionEngine {
 
     /// Блокирующий запуск async-кода для синхронного API.
     private static func runBlocking<T>(_ body: @escaping () async -> T) -> T {
-        var result: T?
+        let box = BlockingResultBox<T>()
         let semaphore = DispatchSemaphore(value: 0)
         Task.detached(priority: .userInitiated) {
-            result = await body()
+            let value = await body()
+            box.store(value)
             semaphore.signal()
         }
         semaphore.wait()
-        return result!
+        return box.load()
     }
 
     /// Head-to-head оценка фиксированного кандидата против фиксированных оппонентов.

@@ -1290,13 +1290,45 @@ struct BotTrainingRunner {
         event: BotTuning.SelfPlayEvolutionProgress,
         candidateStep: Int
     ) {
+        let snapshot = TrainingProgressSnapshot(
+            stage: trainingProgressStage(from: event.stage),
+            generationIndex: event.generationIndex,
+            totalGenerations: event.totalGenerations,
+            evaluatedCandidatesInGeneration: event.evaluatedCandidatesInGeneration,
+            populationSize: event.populationSize,
+            currentFitness: event.currentFitness,
+            generationBestFitness: event.generationBestFitness,
+            overallBestFitness: event.overallBestFitness,
+            totalWorkUnits: event.totalWorkUnits,
+            elapsedSeconds: event.elapsedSeconds,
+            estimatedRemainingSeconds: event.estimatedRemainingSeconds
+        )
         guard let line = TrainingRunResultFormatter.formatProgressLine(
             seed: seed,
-            event: event,
+            event: snapshot,
             candidateStep: candidateStep
         ) else { return }
         print(line)
         fflush(stdout)
+    }
+
+    private static func trainingProgressStage(
+        from stage: BotTuning.SelfPlayEvolutionProgress.Stage
+    ) -> TrainingProgressStage {
+        switch stage {
+        case .started:
+            return .started
+        case .baselineCompleted:
+            return .baselineCompleted
+        case .generationStarted:
+            return .generationStarted
+        case .candidateEvaluated:
+            return .candidateEvaluated
+        case .generationCompleted:
+            return .generationCompleted
+        case .finished:
+            return .finished
+        }
     }
 
     private static func aggregateTunings(

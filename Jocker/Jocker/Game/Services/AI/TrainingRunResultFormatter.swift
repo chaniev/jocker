@@ -8,6 +8,46 @@
 
 import Foundation
 
+enum TrainingProgressStage {
+    case started
+    case baselineCompleted
+    case generationStarted
+    case candidateEvaluated
+    case generationCompleted
+    case finished
+}
+
+struct TrainingProgressSnapshot {
+    let stage: TrainingProgressStage
+    let generationIndex: Int?
+    let totalGenerations: Int
+    let evaluatedCandidatesInGeneration: Int?
+    let populationSize: Int
+    let currentFitness: Double?
+    let generationBestFitness: Double?
+    let overallBestFitness: Double?
+    let totalWorkUnits: Int
+    let elapsedSeconds: Double
+    let estimatedRemainingSeconds: Double?
+}
+
+struct TrainingRunResultSummarySnapshot {
+    let baselineFitness: Double
+    let bestFitness: Double
+    let baselineLegacyFitness: Double
+    let bestLegacyFitness: Double
+    let baselinePrimaryFitness: Double
+    let bestPrimaryFitness: Double
+    let baselineGuardrailPenalty: Double
+    let bestGuardrailPenalty: Double
+    let baselineFinalFitness: Double
+    let bestFinalFitness: Double
+    let improvement: Double
+    let completedGenerations: Int
+    let stoppedEarly: Bool
+    let generationBestFitness: [Double]
+}
+
 enum TrainingRunResultFormatter {
     // MARK: - Progress
 
@@ -15,7 +55,7 @@ enum TrainingRunResultFormatter {
     /// Same logic as CLI progress output; deterministic for same (seed, event, candidateStep).
     static func formatProgressLine(
         seed: UInt64,
-        event: BotTuning.SelfPlayEvolutionProgress,
+        event: TrainingProgressSnapshot,
         candidateStep: Int
     ) -> String? {
         switch event.stage {
@@ -49,7 +89,7 @@ enum TrainingRunResultFormatter {
     /// Same run result produces identical output regardless of sequential vs parallel mode (only maxParallelEvaluations differs elsewhere).
     static func formatRunResultSummaryLines(
         selectedSeed: UInt64,
-        result: BotTuning.SelfPlayEvolutionResult,
+        result: TrainingRunResultSummarySnapshot,
         _ fmtNumber: @escaping (Double) -> String = { String(format: "%.6f", $0) }
     ) -> [String] {
         let f = fmtNumber

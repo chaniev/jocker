@@ -11,6 +11,12 @@ import XCTest
 @testable import JockerSelfPlayTools
 @testable import Jocker
 
+private typealias ToolBotBiddingService = JockerSelfPlayTools.BotBiddingService
+private typealias ToolBotDifficulty = JockerSelfPlayTools.BotDifficulty
+private typealias ToolBotRuntimePolicy = JockerSelfPlayTools.BotRuntimePolicy
+private typealias ToolBotTuning = JockerSelfPlayTools.BotTuning
+private typealias ToolCard = JockerSelfPlayTools.Card
+
 final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testDeriveEvaluationSeed_sameInputs_producesSameSeed() {
@@ -200,7 +206,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testDebugMakeBids_preservesPreLockedBlindBidsAndForcesDealerIntoAllowedRange() {
         let services = makeBiddingServices(count: 4)
-        let hands: [[Card]] = [
+        let hands: [[ToolCard]] = [
             [.regular(suit: .diamonds, rank: .six)],
             [.regular(suit: .hearts, rank: .ace)],
             [.regular(suit: .clubs, rank: .king)],
@@ -225,20 +231,20 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(outcome.maxAllowedBids[0], 1)
     }
 
-    private func makeBiddingServices(count: Int) -> [BotBiddingService] {
-        return makeTunings(count: count).map { BotBiddingService(tuning: $0) }
+    private func makeBiddingServices(count: Int) -> [ToolBotBiddingService] {
+        return makeTunings(count: count).map { ToolBotBiddingService(tuning: $0) }
     }
 
-    private func makeTunings(count: Int) -> [BotTuning] {
+    private func makeTunings(count: Int) -> [ToolBotTuning] {
         return (0..<count).map { _ in
-            BotTuning(difficulty: .hard)
+            ToolBotTuning(difficulty: .hard)
         }
     }
 
     // MARK: - Identity and scope semantics (plan 03)
 
     func testIdentityGenome_doesNotChangeBotRuntimePolicy() {
-        let baseTuning = BotTuning(difficulty: .hard)
+        let baseTuning = ToolBotTuning(difficulty: .hard)
         let baselinePolicy = baseTuning.runtimePolicy
 
         let tuned = BotSelfPlayEvolutionEngine.tuning(
@@ -320,7 +326,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testSingleRankingGeneMutation_onlyChangesRankingPolicyGroup() {
-        let baseTuning = BotTuning(difficulty: .hard)
+        let baseTuning = ToolBotTuning(difficulty: .hard)
         let baselinePolicy = baseTuning.runtimePolicy
 
         var genome = BotSelfPlayEvolutionEngine.EvolutionGenome.identity
@@ -372,7 +378,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         genome.phaseJokerScale = 1.1
         genome.phaseBlindScale = 0.8
 
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             tuneRankingPolicy: false,
             tuneRolloutPolicy: false,
             tuneEndgamePolicy: false,
@@ -408,7 +414,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         genome.opponentPressureScale = 0.9
         genome.phaseRankingScale = 1.25
 
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             tuneRankingPolicy: true,
             tuneRolloutPolicy: true,
             tuneEndgamePolicy: false,
@@ -474,7 +480,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testRuntimePolicyEvolutionPatch_identityPreservesPolicy() {
-        let baseline = BotRuntimePolicy.preset(for: .hard)
+        let baseline = ToolBotRuntimePolicy.preset(for: ToolBotDifficulty.hard)
         let patched = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch.identity.apply(to: baseline)
 
         XCTAssertEqual(
@@ -507,7 +513,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testRuntimePolicyEvolutionPatch_extractRecoversAppliedScales() {
-        let baseline = BotRuntimePolicy.preset(for: .hard)
+        let baseline = ToolBotRuntimePolicy.preset(for: ToolBotDifficulty.hard)
         let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
             rankingMatchCatchUpScale: 1.22,
             rankingPremiumScale: 0.91,
@@ -546,7 +552,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testRuntimePolicyEvolutionPatch_phaseScalesCreateDirectionalPhaseRamps() {
-        let baseline = BotRuntimePolicy.preset(for: .hard)
+        let baseline = ToolBotRuntimePolicy.preset(for: ToolBotDifficulty.hard)
         let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
             rankingMatchCatchUpScale: 1.0,
             rankingPremiumScale: 1.0,
@@ -585,7 +591,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     // MARK: - Fitness / guardrail scoring semantics (plan 02)
 
     func testFitnessScoring_samePrimaryFitness_worseGuardrailLosesToBetterGuardrail() {
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             guardrailBidAccuracyWeight: 0.5,
             guardrailOverbidWeight: 0.3
         )
@@ -615,7 +621,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testFitnessScoring_strongWinRateDrop_notCompensatedBySecondaryMetrics() {
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             fitnessWinRateWeight: 1.0,
             fitnessScoreDiffWeight: 0.5
         )
@@ -638,7 +644,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testFitnessScoring_missingGuardrailData_givesZeroPenaltyForThatMetric() {
-        let config = BotTuning.SelfPlayEvolutionConfig(guardrailBidAccuracyWeight: 1.0)
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(guardrailBidAccuracyWeight: 1.0)
         let scoring = BotSelfPlayEvolutionEngine.FitnessScoringConfig(config: config)
         let penaltyWithData = scoring.guardrailPenalty(
             bidAccuracyRate: 0.5,
@@ -663,7 +669,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testFitnessScoring_baselineConfig_zeroGuardrailReproducesFinalEqualsPrimary() {
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             guardrailBidAccuracyWeight: 0,
             guardrailOverbidWeight: 0,
             guardrailBlindSuccessWeight: 0,
@@ -694,7 +700,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testFitnessScoring_guardrailThresholds_onlyPenalizeOutsideAcceptedBand() {
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             guardrailBidAccuracyWeight: 1.0,
             guardrailOverbidWeight: 1.0,
             guardrailBidAccuracyMinimum: 0.60,
@@ -726,8 +732,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testEvaluateHeadToHead_missingGuardrailCoverageDoesNotApplyPenalty() {
-        let tuning = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             runMode: .baselineOnly,
             gamesPerCandidate: 1,
             roundsPerGame: 2,
@@ -738,7 +744,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             guardrailJokerWishWinWeight: 1.0
         )
 
-        let result = BotTuning.evaluateHeadToHead(
+        let result = ToolBotTuning.evaluateHeadToHead(
             candidateTuning: tuning,
             opponentTuning: tuning,
             config: config,
@@ -752,8 +758,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     // MARK: - Candidate result contract (PR1)
 
     func testEvaluateCandidate_sameInputs_returnsIdenticalCompositeResult() {
-        let tuning = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             gamesPerCandidate: 2,
             roundsPerGame: 2,
             playerCount: 3,
@@ -797,8 +803,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testEvaluateCandidate_noSharedMutableState_sameInputsSameResult() {
-        let tuning = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             gamesPerCandidate: 1,
             roundsPerGame: 2,
             playerCount: 3,
@@ -852,8 +858,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
     }
 
     func testEvaluateCandidate_seedRepeatability_fullResultContract() {
-        let tuning = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             gamesPerCandidate: 2,
             roundsPerGame: 2,
             playerCount: 3,
@@ -903,9 +909,9 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     /// Progress events in parallel mode must match the same logical order as sequential (by stage, generationIndex, candidateIndex).
     func testProgressEvents_parallelMode_sameLogicalOrderAsSequential() async {
-        let baseTuning = BotTuning(difficulty: .hard)
-        let seed: UInt64 = 0xPR3
-        let configSequential = BotTuning.SelfPlayEvolutionConfig(
+        let baseTuning = ToolBotTuning(difficulty: .hard)
+        let seed: UInt64 = 0x0A03
+        let configSequential = ToolBotTuning.SelfPlayEvolutionConfig(
             runMode: .evolution,
             maxParallelEvaluations: .one,
             populationSize: 4,
@@ -916,7 +922,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             cardsPerRoundRange: 1...2,
             useFullMatchRules: false
         )
-        let configParallel = BotTuning.SelfPlayEvolutionConfig(
+        let configParallel = ToolBotTuning.SelfPlayEvolutionConfig(
             runMode: .evolution,
             maxParallelEvaluations: .two,
             populationSize: 4,
@@ -931,7 +937,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         var sequentialTuples: [(String, Int?, Int?)] = []
         var parallelTuples: [(String, Int?, Int?)] = []
 
-        _ = BotTuning.evolveViaSelfPlay(
+        _ = ToolBotTuning.evolveViaSelfPlay(
             baseTuning: baseTuning,
             config: configSequential,
             seed: seed,
@@ -967,9 +973,9 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     /// Formatter produces identical run-result summary lines for the same run result (determinism).
     func testFormatter_runResultSummaryLines_sameResultSameOutput() {
-        let result = BotTuning.evolveViaSelfPlay(
-            baseTuning: BotTuning(difficulty: .hard),
-            config: BotTuning.SelfPlayEvolutionConfig(
+        let result = ToolBotTuning.evolveViaSelfPlay(
+            baseTuning: ToolBotTuning(difficulty: .hard),
+            config: ToolBotTuning.SelfPlayEvolutionConfig(
                 runMode: .baselineOnly,
                 gamesPerCandidate: 1,
                 roundsPerGame: 2,
@@ -977,10 +983,11 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
                 cardsPerRoundRange: 1...2,
                 useFullMatchRules: false
             ),
-            seed: 0xFORMATTER
+            seed: 0xF07A77E
         )
-        let lines1 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xFORMATTER, result: result)
-        let lines2 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xFORMATTER, result: result)
+        let snapshot = makeSummarySnapshot(from: result)
+        let lines1 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xF07A77E, result: snapshot)
+        let lines2 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xF07A77E, result: snapshot)
         XCTAssertEqual(lines1, lines2, "Same run result must yield identical summary lines")
         XCTAssertFalse(lines1.isEmpty)
         let lastLine = lines1.last ?? ""
@@ -989,8 +996,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     /// Candidate-evaluated progress events in one generation are emitted strictly by candidateIndex order (no interleaved noise).
     func testProgress_candidateEvaluatedEvents_orderedByCandidateIndex() async {
-        let baseTuning = BotTuning(difficulty: .hard)
-        let config = BotTuning.SelfPlayEvolutionConfig(
+        let baseTuning = ToolBotTuning(difficulty: .hard)
+        let config = ToolBotTuning.SelfPlayEvolutionConfig(
             runMode: .evolution,
             maxParallelEvaluations: .four,
             populationSize: 6,
@@ -1005,7 +1012,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         _ = await BotSelfPlayEvolutionEngine.evolveViaSelfPlayAsync(
             baseTuning: baseTuning,
             config: config,
-            seed: 0xCANDID,
+            seed: 0xCAAD1D,
             progress: { event in
                 if case .candidateEvaluated = event.stage, let c = event.candidateIndex {
                     candidateIndicesInOrder.append(c)
@@ -1014,6 +1021,27 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         )
         let expected = [0, 1, 2, 3, 4, 5]
         XCTAssertEqual(candidateIndicesInOrder, expected, "candidateEvaluated events must be flushed in candidateIndex order")
+    }
+
+    private func makeSummarySnapshot(
+        from result: ToolBotTuning.SelfPlayEvolutionResult
+    ) -> TrainingRunResultSummarySnapshot {
+        return TrainingRunResultSummarySnapshot(
+            baselineFitness: result.baselineFitness,
+            bestFitness: result.bestFitness,
+            baselineLegacyFitness: result.baselineLegacyFitness,
+            bestLegacyFitness: result.bestLegacyFitness,
+            baselinePrimaryFitness: result.baselinePrimaryFitness,
+            bestPrimaryFitness: result.bestPrimaryFitness,
+            baselineGuardrailPenalty: result.baselineGuardrailPenalty,
+            bestGuardrailPenalty: result.bestGuardrailPenalty,
+            baselineFinalFitness: result.baselineFinalFitness,
+            bestFinalFitness: result.bestFinalFitness,
+            improvement: result.improvement,
+            completedGenerations: result.completedGenerations,
+            stoppedEarly: result.stoppedEarly,
+            generationBestFitness: result.generationBestFitness
+        )
     }
 }
 #endif

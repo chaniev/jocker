@@ -88,15 +88,19 @@ echo "Artifacts dir: $run_dir"
 # Warm up: compile only so wall-clock does not include swiftc
 bash "$train_script" --compile-only
 
+now_sec() {
+  perl -MTime::HiRes=time -e 'printf "%.6f\n", time'
+}
+
 run_one() {
   local parallel="$1"
   local log_path="$run_dir/parallel-$parallel.log"
   local wall_path="$run_dir/parallel-$parallel.wall_sec"
   local start end
-  start=$(date +%s)
+  start=$(now_sec)
   bash "$train_script" "${STAGE5_CANONICAL_ARGS[@]}" --max-parallel-evaluations "$parallel" --output "$log_path"
-  end=$(date +%s)
-  echo $((end - start)) > "$wall_path"
+  end=$(now_sec)
+  awk "BEGIN { printf \"%.6f\n\", $end - $start }" > "$wall_path"
   echo "parallel=$parallel wall_sec=$(cat "$wall_path")"
 }
 
@@ -104,16 +108,20 @@ run_one 1
 run_one 2
 run_one 4
 
-# Extract metrics block (key aggregated and best-candidate-identifying lines) for parity comparison.
-# We compare: bestFinalFitness, generationBestFitness=[...], and runtimeGene.* section (best candidate).
+# Extract the key fitness + aggregated metrics block for parity comparison.
+# Stage 05 requires sequential and parallel runs to match fitness values, aggregated metrics, and best candidate.
 extract_metrics_block() {
   local log="$1"
-  grep -E '^(bestFinalFitness=|generationBestFitness=)' "$log" | sort
+  {
+    grep -E '^((baseline|best)(Fitness|LegacyFitness|PrimaryFitness|GuardrailPenalty|FinalFitness|WinRate|AverageScoreDiff|AverageUnderbidLoss|AverageTrumpDensityUnderbidLoss|AverageNoTrumpControlUnderbidLoss|AveragePremiumAssistLoss|AveragePremiumPenaltyTargetLoss|PremiumCaptureRate|BlindSuccessRate|JokerWishWinRate|EarlyJokerSpendRate|PenaltyTargetRate|BidAccuracyRate|OverbidRate|BlindBidRateBlock4|AverageBlindBidSize|BlindBidWhenBehindRate|BlindBidWhenLeadingRate|EarlyLeadWishJokerRate|LeftNeighborPremiumAssistRate)=|generationBestFitness=|improvement=|generationCount=|completedGenerations=|stoppedEarly=)' "$log" || true
+  } | LC_ALL=C sort
 }
 
 extract_runtime_gene_block() {
   local log="$1"
-  grep -E '^runtimeGene\.' "$log" | sort
+  {
+    grep -E '^runtimeGene\.' "$log" || true
+  } | LC_ALL=C sort
 }
 
 seq_metrics="$(extract_metrics_block "$run_dir/parallel-1.log")"
@@ -139,13 +147,18 @@ gene_4="$(extract_runtime_gene_block "$run_dir/parallel-4.log")"
 
 speedup_2=""
 speedup_4=""
-if [[ -n "$wall_1" && "$wall_1" -gt 0 ]]; then
+if awk "BEGIN { exit !($wall_1 > 0 && $wall_2 > 0 && $wall_4 > 0) }"; then
   speedup_2=$(awk "BEGIN { printf \"%.2f\", $wall_1 / $wall_2 }")
   speedup_4=$(awk "BEGIN { printf \"%.2f\", $wall_1 / $wall_4 }")
 fi
 
+speedup_check="fail"
+if awk "BEGIN { exit !(($wall_2 < $wall_1) || ($wall_4 < $wall_1)) }"; then
+  speedup_check="ok"
+fi
+
 status="passed"
-if [[ "$parity_metrics_1_2" != "ok" || "$parity_metrics_1_4" != "ok" || "$parity_best_candidate_1_2" != "ok" || "$parity_best_candidate_1_4" != "ok" ]]; then
+if [[ "$parity_metrics_1_2" != "ok" || "$parity_metrics_1_4" != "ok" || "$parity_best_candidate_1_2" != "ok" || "$parity_best_candidate_1_4" != "ok" || "$speedup_check" != "ok" ]]; then
   status="failed"
 fi
 
@@ -162,7 +175,8 @@ fi
   echo "wall_sec_parallel_4=$wall_4"
   echo "speedup_parallel_2=$speedup_2"
   echo "speedup_parallel_4=$speedup_4"
-  echo "checks=compile-only,sequential-vs-2-parity,sequential-vs-4-parity,speedup"
+  echo "speedup_check=$speedup_check"
+  echo "checks=compile-only,sequential-vs-2-parity,sequential-vs-4-parity,aggregated-metrics-parity,best-candidate-parity,speedup"
 } > "$run_dir/summary.txt"
 
 echo ""
