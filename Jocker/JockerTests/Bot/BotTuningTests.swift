@@ -344,6 +344,129 @@ final class BotTuningTests: XCTestCase {
         )
     }
 
+    /// Parity: sequential .one и parallel .two дают одинаковые baselineFitness, bestFitness, generationBestFitness и тот же best genome / best tuning при одном seed.
+    func testSelfPlayEvolution_sequentialOneAndParallelTwo_sameFitnessAndBestTuning() {
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let seed: UInt64 = 77_777
+        let configOne = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
+            maxParallelEvaluations: .one,
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 4,
+            roundsPerGame: 2,
+            playerCount: 4,
+            cardsPerRoundRange: 3...6,
+            eliteCount: 2,
+            mutationChance: 0.32,
+            mutationMagnitude: 0.15,
+            selectionPoolRatio: 0.5
+        )
+        let configTwo = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
+            maxParallelEvaluations: .two,
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 4,
+            roundsPerGame: 2,
+            playerCount: 4,
+            cardsPerRoundRange: 3...6,
+            eliteCount: 2,
+            mutationChance: 0.32,
+            mutationMagnitude: 0.15,
+            selectionPoolRatio: 0.5
+        )
+
+        let resultOne = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: configOne,
+            seed: seed
+        )
+        let resultTwo = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: configTwo,
+            seed: seed
+        )
+
+        XCTAssertEqual(resultOne.baselineFitness, resultTwo.baselineFitness, accuracy: 0.000_001)
+        XCTAssertEqual(resultOne.bestFitness, resultTwo.bestFitness, accuracy: 0.000_001)
+        XCTAssertEqual(resultOne.generationBestFitness.count, resultTwo.generationBestFitness.count)
+        for index in 0..<resultOne.generationBestFitness.count {
+            XCTAssertEqual(
+                resultOne.generationBestFitness[index],
+                resultTwo.generationBestFitness[index],
+                accuracy: 0.000_001
+            )
+        }
+        XCTAssertEqual(
+            resultOne.bestTuning.turnStrategy.chaseWinProbabilityWeight,
+            resultTwo.bestTuning.turnStrategy.chaseWinProbabilityWeight,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            resultOne.bestTuning.bidding.expectedJokerPower,
+            resultTwo.bestTuning.bidding.expectedJokerPower,
+            accuracy: 0.000_001
+        )
+    }
+
+    /// .four не ломает parity на маленьком профиле: тот же seed даёт те же fitness и best tuning.
+    func testSelfPlayEvolution_parallelFour_parityOnSmallProfile() {
+        let base = JockerSelfPlayTools.BotTuning(difficulty: .hard)
+        let seed: UInt64 = 88_888
+        let configOne = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
+            maxParallelEvaluations: .one,
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...3,
+            eliteCount: 1,
+            mutationChance: 0.25,
+            mutationMagnitude: 0.12,
+            selectionPoolRatio: 0.5
+        )
+        let configFour = JockerSelfPlayTools.BotTuning.SelfPlayEvolutionConfig(
+            maxParallelEvaluations: .four,
+            populationSize: 4,
+            generations: 2,
+            gamesPerCandidate: 2,
+            roundsPerGame: 2,
+            playerCount: 3,
+            cardsPerRoundRange: 1...3,
+            eliteCount: 1,
+            mutationChance: 0.25,
+            mutationMagnitude: 0.12,
+            selectionPoolRatio: 0.5
+        )
+
+        let resultOne = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: configOne,
+            seed: seed
+        )
+        let resultFour = JockerSelfPlayTools.BotTuning.evolveViaSelfPlay(
+            baseTuning: base,
+            config: configFour,
+            seed: seed
+        )
+
+        XCTAssertEqual(resultOne.baselineFitness, resultFour.baselineFitness, accuracy: 0.000_001)
+        XCTAssertEqual(resultOne.bestFitness, resultFour.bestFitness, accuracy: 0.000_001)
+        XCTAssertEqual(resultOne.generationBestFitness.count, resultFour.generationBestFitness.count)
+        for index in 0..<resultOne.generationBestFitness.count {
+            XCTAssertEqual(
+                resultOne.generationBestFitness[index],
+                resultFour.generationBestFitness[index],
+                accuracy: 0.000_001
+            )
+        }
+        XCTAssertEqual(
+            resultOne.bestTuning.turnStrategy.chaseWinProbabilityWeight,
+            resultFour.bestTuning.turnStrategy.chaseWinProbabilityWeight,
+            accuracy: 0.000_001
+        )
+    }
+
     /// Тестирует, что self-play evolution держит best не хуже baseline.
     /// Проверяет:
     /// - generationBestFitness.count = config.generations

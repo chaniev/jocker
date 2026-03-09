@@ -8,13 +8,38 @@
 import Foundation
 
 extension BotSelfPlayEvolutionEngine {
-    /// Запускает эволюционный поиск параметров бота на серии self-play матчей.
+    /// Запускает эволюционный поиск параметров бота на серии self-play матчей (синхронная обёртка).
     static func evolveViaSelfPlay(
         baseTuning: BotTuning,
         config: SelfPlayEvolutionConfig = SelfPlayEvolutionConfig(),
         seed: UInt64 = 0x5EED,
         progress: ((SelfPlayEvolutionProgress) -> Void)? = nil
     ) -> SelfPlayEvolutionResult {
+        if config.runMode == .baselineOnly {
+            return evaluateBaseline(
+                baseTuning: baseTuning,
+                config: config,
+                seed: seed,
+                progress: progress
+            )
+        }
+        return runBlocking {
+            await evolveViaSelfPlayAsync(
+                baseTuning: baseTuning,
+                config: config,
+                seed: seed,
+                progress: progress
+            )
+        }
+    }
+
+    /// Асинхронная граница: эволюция с structured concurrency (withTaskGroup), merge по candidateIndex.
+    static func evolveViaSelfPlayAsync(
+        baseTuning: BotTuning,
+        config: SelfPlayEvolutionConfig = SelfPlayEvolutionConfig(),
+        seed: UInt64 = 0x5EED,
+        progress: ((SelfPlayEvolutionProgress) -> Void)? = nil
+    ) async -> SelfPlayEvolutionResult {
         if config.runMode == .baselineOnly {
             return evaluateBaseline(
                 baseTuning: baseTuning,
@@ -173,7 +198,7 @@ extension BotSelfPlayEvolutionEngine {
                     )
                 }
             } else {
-                let parallelResults = evaluateCandidatesParallel(
+                let parallelResults = await evaluateCandidatesConcurrent(
                     population: population,
                     baseTuning: baseTuning,
                     executionConfig: executionConfig,
@@ -181,7 +206,7 @@ extension BotSelfPlayEvolutionEngine {
                     generationIndex: generation,
                     maxParallel: maxParallel
                 )
-                scoredPopulation = parallelResults.map(\.1)
+                scoredPopulation = parallelResults
                 completedWorkUnits += scoredPopulation.count
                 for (idx, scored) in scoredPopulation.enumerated() {
                     let breakdown = scored.result.fitnessBreakdown
@@ -573,47 +598,57 @@ extension BotSelfPlayEvolutionEngine {
         )
     }
 
-    /// Оценка кандидатов поколения параллельно с лимитом maxParallel; результаты в порядке candidateIndex.
-    private static func evaluateCandidatesParallel(
+    /// Оценка кандидатов поколения через structured concurrency; не более maxParallel задач одновременно; merge в фиксированном порядке candidateIndex.
+    private static func evaluateCandidatesConcurrent(
         population: [EvolutionGenome],
         baseTuning: BotTuning,
         executionConfig: EvolutionExecutionConfig,
         baseSeeds: [UInt64],
         generationIndex: Int,
         maxParallel: Int
-    ) -> [(Int, ScoredGenome)] {
-        let semaphore = DispatchSemaphore(value: maxParallel)
-        let lock = NSLock()
-        var results: [(Int, ScoredGenome)] = []
-        results.reserveCapacity(population.count)
-        let queue = DispatchQueue(label: "evolution.candidates", qos: .userInitiated, attributes: .concurrent)
-        let group = DispatchGroup()
-
-        for (candidateOffset, genome) in population.enumerated() {
-            group.enter()
-            queue.async {
-                semaphore.wait()
-                defer {
-                    semaphore.signal()
-                    group.leave()
+    ) async -> [ScoredGenome] {
+        var ordered: [ScoredGenome] = []
+        ordered.reserveCapacity(population.count)
+        for chunkStart in stride(from: 0, to: population.count, by: maxParallel) {
+            let chunkEnd = min(chunkStart + maxParallel, population.count)
+            let chunkIndices = chunkStart..<chunkEnd
+            let chunkResults: [ScoredGenome] = await withTaskGroup(of: (Int, ScoredGenome).self) { group in
+                for candidateOffset in chunkIndices {
+                    let genome = population[candidateOffset]
+                    group.addTask {
+                        let candidateTuning = tuning(byApplying: genome, to: baseTuning)
+                        let result = evaluateCandidate(
+                            candidateTuning: candidateTuning,
+                            opponentTuning: baseTuning,
+                            config: executionConfig,
+                            baseSeeds: baseSeeds,
+                            generationIndex: generationIndex,
+                            candidateIndex: candidateOffset
+                        )
+                        return (candidateOffset, ScoredGenome(genome: genome, result: result))
+                    }
                 }
-                let candidateTuning = tuning(byApplying: genome, to: baseTuning)
-                let result = evaluateCandidate(
-                    candidateTuning: candidateTuning,
-                    opponentTuning: baseTuning,
-                    config: executionConfig,
-                    baseSeeds: baseSeeds,
-                    generationIndex: generationIndex,
-                    candidateIndex: candidateOffset
-                )
-                let scored = ScoredGenome(genome: genome, result: result)
-                lock.lock()
-                results.append((candidateOffset, scored))
-                lock.unlock()
+                var pairs: [(Int, ScoredGenome)] = []
+                for await pair in group {
+                    pairs.append(pair)
+                }
+                return pairs.sorted(by: { $0.0 < $1.0 }).map(\.1)
             }
+            ordered.append(contentsOf: chunkResults)
         }
-        group.wait()
-        return results.sorted(by: { $0.0 < $1.0 })
+        return ordered
+    }
+
+    /// Блокирующий запуск async-кода для синхронного API.
+    private static func runBlocking<T>(_ body: @escaping () async -> T) -> T {
+        var result: T?
+        let semaphore = DispatchSemaphore(value: 0)
+        Task.detached(priority: .userInitiated) {
+            result = await body()
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return result!
     }
 
     /// Head-to-head оценка фиксированного кандидата против фиксированных оппонентов.
