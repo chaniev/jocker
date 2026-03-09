@@ -32,6 +32,7 @@ struct JokerDeclarationAdjuster {
         } ?? .mid
         let declarationPressureMult = policy.phaseDeclarationPressure.multiplier(for: phase)
         let earlySpendMult = policy.phaseEarlySpend.multiplier(for: phase)
+        let lateSpendMult = policy.phaseLateSpend.multiplier(for: phase)
 
         let declarationPart = declarationUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
@@ -40,20 +41,21 @@ struct JokerDeclarationAdjuster {
             leadPreferredControlSuitStrengthAfterMove: leadPreferredControlSuitStrengthAfterMove,
             move: move,
             context: context
-        ) + goalOrientedUtilityAdjustment(
+        ) * lateSpendMult
+        let goalPart = goalOrientedUtilityAdjustment(
             immediateWinProbability: immediateWinProbability,
             leadControlReserveAfterMove: leadControlReserveAfterMove,
             leadPreferredControlSuitAfterMove: leadPreferredControlSuitAfterMove,
             leadPreferredControlSuitStrengthAfterMove: leadPreferredControlSuitStrengthAfterMove,
             move: move,
             context: context
-        )
+        ) * declarationPressureMult
         let earlyPart = earlyWishPenalty(
             leadControlReserveAfterMove: leadControlReserveAfterMove,
             move: move,
             context: context
         )
-        return declarationPart * declarationPressureMult + earlyPart * earlySpendMult
+        return declarationPart + goalPart + earlyPart * earlySpendMult
     }
 
     private func declarationUtilityAdjustment(

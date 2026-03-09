@@ -12,7 +12,10 @@ struct BotTurnCandidateEvaluatorServiceTestFixture {
     let evaluator: BotTurnCandidateEvaluatorService
 
     init(difficulty: BotDifficulty = .hard) {
-        let tuning = BotTuning(difficulty: difficulty)
+        self.init(tuning: BotTuning(difficulty: difficulty))
+    }
+
+    init(tuning: BotTuning) {
         let cardHeuristics = BotTurnCardHeuristicsService(tuning: tuning)
         let roundProjection = BotTurnRoundProjectionService(tuning: tuning)
         let candidateRanking = BotTurnCandidateRankingService(tuning: tuning)

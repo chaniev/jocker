@@ -221,6 +221,52 @@ extension BotSelfPlayEvolutionEngine {
             phaseBlindScale: 1.0
         )
 
+        private static func clampedPhaseScale(_ value: Double) -> Double {
+            BotSelfPlayEvolutionEngine.clamp(
+                value,
+                to: RuntimePolicyGeneSpec.phaseScaleRange
+            )
+        }
+
+        private static func inversePhaseScale(_ value: Double) -> Double {
+            let safeValue = max(0.000_001, value)
+            return 1.0 / safeValue
+        }
+
+        private static func lateRampMultipliers(scale: Double) -> PhaseMultipliers {
+            let clampedScale = clampedPhaseScale(scale)
+            return PhaseMultipliers(
+                early: inversePhaseScale(clampedScale),
+                mid: 1.0,
+                late: clampedScale
+            )
+        }
+
+        private static func earlyRampMultipliers(scale: Double) -> PhaseMultipliers {
+            let clampedScale = clampedPhaseScale(scale)
+            return PhaseMultipliers(
+                early: clampedScale,
+                mid: 1.0,
+                late: inversePhaseScale(clampedScale)
+            )
+        }
+
+        private static func extractLateRampScale(_ multipliers: [PhaseMultipliers]) -> Double {
+            let lateValues = multipliers.map(\.late)
+            guard !lateValues.isEmpty else { return 1.0 }
+            return clampedPhaseScale(
+                lateValues.reduce(0.0, +) / Double(lateValues.count)
+            )
+        }
+
+        private static func extractEarlyRampScale(_ multipliers: [PhaseMultipliers]) -> Double {
+            let earlyValues = multipliers.map(\.early)
+            guard !earlyValues.isEmpty else { return 1.0 }
+            return clampedPhaseScale(
+                earlyValues.reduce(0.0, +) / Double(earlyValues.count)
+            )
+        }
+
         static func extract(
             from policy: BotRuntimePolicy,
             relativeTo baseline: BotRuntimePolicy
@@ -308,14 +354,35 @@ extension BotSelfPlayEvolutionEngine {
                         (policy.opponentModeling.opponentIntentionChaseBase, baseline.opponentModeling.opponentIntentionChaseBase),
                         (policy.opponentModeling.opponentIntentionChaseProgress, baseline.opponentModeling.opponentIntentionChaseProgress),
                         (policy.opponentModeling.opponentIntentionDumpBase, baseline.opponentModeling.opponentIntentionDumpBase),
-                        (policy.                opponentModeling.opponentIntentionDumpProgress, baseline.opponentModeling.opponentIntentionDumpProgress)
+                        (policy.opponentModeling.opponentIntentionDumpProgress, baseline.opponentModeling.opponentIntentionDumpProgress)
                     ],
                     range: RuntimePolicyGeneSpec.opponentPressureRange
                 ),
-                phaseRankingScale: 1.0,
-                phaseRolloutScale: 1.0,
-                phaseJokerScale: 1.0,
-                phaseBlindScale: 1.0
+                phaseRankingScale: extractLateRampScale(
+                    [
+                        policy.ranking.phaseMatchCatchUp,
+                        policy.ranking.phasePremiumPressure,
+                        policy.ranking.phasePenaltyAvoid
+                    ]
+                ),
+                phaseRolloutScale: extractLateRampScale(
+                    [
+                        policy.rollout.phaseActivation,
+                        policy.rollout.phaseUtilityAdjustment
+                    ]
+                ),
+                phaseJokerScale: clampedPhaseScale(
+                    (
+                        extractEarlyRampScale([policy.ranking.jokerDeclaration.phaseEarlySpend]) +
+                        extractLateRampScale(
+                            [
+                                policy.ranking.jokerDeclaration.phaseLateSpend,
+                                policy.ranking.jokerDeclaration.phaseDeclarationPressure
+                            ]
+                        )
+                    ) / 2.0
+                ),
+                phaseBlindScale: extractLateRampScale([policy.bidding.blindPolicy.phaseBlock4])
             )
         }
 
@@ -347,21 +414,10 @@ extension BotSelfPlayEvolutionEngine {
             ranking.penaltyAvoidProjectedScoreWeight *= rankingPenaltyAvoidScale
             ranking.penaltyAvoidLateBlockBoost *= rankingPenaltyAvoidScale
 
-            ranking.phaseMatchCatchUp = PhaseMultipliers(
-                early: ranking.phaseMatchCatchUp.early * phaseRankingScale,
-                mid: ranking.phaseMatchCatchUp.mid * phaseRankingScale,
-                late: ranking.phaseMatchCatchUp.late * phaseRankingScale
-            )
-            ranking.phasePremiumPressure = PhaseMultipliers(
-                early: ranking.phasePremiumPressure.early * phaseRankingScale,
-                mid: ranking.phasePremiumPressure.mid * phaseRankingScale,
-                late: ranking.phasePremiumPressure.late * phaseRankingScale
-            )
-            ranking.phasePenaltyAvoid = PhaseMultipliers(
-                early: ranking.phasePenaltyAvoid.early * phaseRankingScale,
-                mid: ranking.phasePenaltyAvoid.mid * phaseRankingScale,
-                late: ranking.phasePenaltyAvoid.late * phaseRankingScale
-            )
+            let rankingPhaseRamp = Self.lateRampMultipliers(scale: phaseRankingScale)
+            ranking.phaseMatchCatchUp = rankingPhaseRamp
+            ranking.phasePremiumPressure = rankingPhaseRamp
+            ranking.phasePenaltyAvoid = rankingPhaseRamp
 
             ranking.jokerDeclaration.wishFinalChaseBonusBase *= jokerDeclarationScale
             ranking.jokerDeclaration.aboveChaseBonusBase *= jokerDeclarationScale
@@ -369,37 +425,19 @@ extension BotSelfPlayEvolutionEngine {
             ranking.jokerDeclaration.goalChaseScaleBase *= jokerDeclarationScale
             ranking.jokerDeclaration.goalDumpScaleBase *= jokerDeclarationScale
             ranking.jokerDeclaration.earlyWishPenaltyBase *= jokerDeclarationScale
-            ranking.jokerDeclaration.phaseEarlySpend = PhaseMultipliers(
-                early: ranking.jokerDeclaration.phaseEarlySpend.early * phaseJokerScale,
-                mid: ranking.jokerDeclaration.phaseEarlySpend.mid * phaseJokerScale,
-                late: ranking.jokerDeclaration.phaseEarlySpend.late * phaseJokerScale
-            )
-            ranking.jokerDeclaration.phaseLateSpend = PhaseMultipliers(
-                early: ranking.jokerDeclaration.phaseLateSpend.early * phaseJokerScale,
-                mid: ranking.jokerDeclaration.phaseLateSpend.mid * phaseJokerScale,
-                late: ranking.jokerDeclaration.phaseLateSpend.late * phaseJokerScale
-            )
-            ranking.jokerDeclaration.phaseDeclarationPressure = PhaseMultipliers(
-                early: ranking.jokerDeclaration.phaseDeclarationPressure.early * phaseJokerScale,
-                mid: ranking.jokerDeclaration.phaseDeclarationPressure.mid * phaseJokerScale,
-                late: ranking.jokerDeclaration.phaseDeclarationPressure.late * phaseJokerScale
-            )
+            ranking.jokerDeclaration.phaseEarlySpend = Self.earlyRampMultipliers(scale: phaseJokerScale)
+            let jokerLateRamp = Self.lateRampMultipliers(scale: phaseJokerScale)
+            ranking.jokerDeclaration.phaseLateSpend = jokerLateRamp
+            ranking.jokerDeclaration.phaseDeclarationPressure = jokerLateRamp
 
             var rollout = baseline.rollout
             rollout.chaseUrgencyBase *= rolloutActivationScale
             rollout.dumpUrgencyBase *= rolloutActivationScale
             rollout.adjustmentBase *= rolloutAdjustmentScale
             rollout.adjustmentUrgencyWeight *= rolloutAdjustmentScale
-            rollout.phaseActivation = PhaseMultipliers(
-                early: rollout.phaseActivation.early * phaseRolloutScale,
-                mid: rollout.phaseActivation.mid * phaseRolloutScale,
-                late: rollout.phaseActivation.late * phaseRolloutScale
-            )
-            rollout.phaseUtilityAdjustment = PhaseMultipliers(
-                early: rollout.phaseUtilityAdjustment.early * phaseRolloutScale,
-                mid: rollout.phaseUtilityAdjustment.mid * phaseRolloutScale,
-                late: rollout.phaseUtilityAdjustment.late * phaseRolloutScale
-            )
+            let rolloutPhaseRamp = Self.lateRampMultipliers(scale: phaseRolloutScale)
+            rollout.phaseActivation = rolloutPhaseRamp
+            rollout.phaseUtilityAdjustment = rolloutPhaseRamp
 
             var endgame = baseline.endgame
             endgame.weightBase *= endgameActivationScale
@@ -418,11 +456,7 @@ extension BotSelfPlayEvolutionEngine {
 
             var bidding = baseline.bidding
             var blindPolicy = bidding.blindPolicy
-            blindPolicy.phaseBlock4 = PhaseMultipliers(
-                early: blindPolicy.phaseBlock4.early * phaseBlindScale,
-                mid: blindPolicy.phaseBlock4.mid * phaseBlindScale,
-                late: blindPolicy.phaseBlock4.late * phaseBlindScale
-            )
+            blindPolicy.phaseBlock4 = Self.lateRampMultipliers(scale: phaseBlindScale)
             bidding.blindPolicy = blindPolicy
 
             return BotRuntimePolicy(

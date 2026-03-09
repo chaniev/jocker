@@ -226,6 +226,186 @@ extension BotTurnCandidateRankingServiceTests {
         XCTAssertGreaterThan(wishUtility, aboveUtility)
     }
 
+    func testMoveUtility_withPhaseJokerTuning_penalizesEarlyWishAndStrengthensLateAllInWish() {
+        let baselineService = service
+        let tunedService = makeService(phaseJokerScale: 1.20)
+        let trickNode = makeTrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+
+        let earlyContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 0,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4
+        )
+        let lateContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4
+        )
+
+        func utility(
+            using service: BotTurnCandidateRankingService,
+            tricksNeededToMatchBid: Int,
+            tricksRemainingIncludingCurrent: Int,
+            immediateWinProbability: Double,
+            chasePressure: Double,
+            matchContext: BotMatchContext
+        ) -> Double {
+            service.moveUtility(
+                projectedScore: 30,
+                immediateWinProbability: immediateWinProbability,
+                threat: 100,
+                move: wish,
+                trickNode: trickNode,
+                trump: .spades,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: tricksNeededToMatchBid,
+                tricksRemainingIncludingCurrent: tricksRemainingIncludingCurrent,
+                chasePressure: chasePressure,
+                matchContext: matchContext
+            )
+        }
+
+        let baselineEarly = utility(
+            using: baselineService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            immediateWinProbability: 0.95,
+            chasePressure: 0.25,
+            matchContext: earlyContext
+        )
+        let tunedEarly = utility(
+            using: tunedService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            immediateWinProbability: 0.95,
+            chasePressure: 0.25,
+            matchContext: earlyContext
+        )
+        let baselineLate = utility(
+            using: baselineService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 1,
+            immediateWinProbability: 1.0,
+            chasePressure: 1.0,
+            matchContext: lateContext
+        )
+        let tunedLate = utility(
+            using: tunedService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 1,
+            immediateWinProbability: 1.0,
+            chasePressure: 1.0,
+            matchContext: lateContext
+        )
+
+        XCTAssertLessThan(tunedEarly, baselineEarly)
+        XCTAssertGreaterThan(tunedLate, baselineLate)
+    }
+
+    func testMoveUtility_withNeutralPhaseJokerPolicy_preservesWishUtility() {
+        let baselineService = service
+        let neutralService = makeService(phaseJokerScale: 1.0)
+        let trickNode = makeTrickNode()
+        let wish = BotTurnCandidateRankingService.Move(
+            card: .joker,
+            decision: JokerPlayDecision(style: .faceUp, leadDeclaration: .wish)
+        )
+
+        let earlyContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 0,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4
+        )
+        let lateContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4
+        )
+
+        func utility(
+            using service: BotTurnCandidateRankingService,
+            tricksNeededToMatchBid: Int,
+            tricksRemainingIncludingCurrent: Int,
+            immediateWinProbability: Double,
+            chasePressure: Double,
+            matchContext: BotMatchContext
+        ) -> Double {
+            service.moveUtility(
+                projectedScore: 30,
+                immediateWinProbability: immediateWinProbability,
+                threat: 100,
+                move: wish,
+                trickNode: trickNode,
+                trump: .spades,
+                shouldChaseTrick: true,
+                hasWinningNonJoker: false,
+                hasLosingNonJoker: false,
+                tricksNeededToMatchBid: tricksNeededToMatchBid,
+                tricksRemainingIncludingCurrent: tricksRemainingIncludingCurrent,
+                chasePressure: chasePressure,
+                matchContext: matchContext
+            )
+        }
+
+        let baselineEarly = utility(
+            using: baselineService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            immediateWinProbability: 0.95,
+            chasePressure: 0.25,
+            matchContext: earlyContext
+        )
+        let neutralEarly = utility(
+            using: neutralService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 4,
+            immediateWinProbability: 0.95,
+            chasePressure: 0.25,
+            matchContext: earlyContext
+        )
+        let baselineLate = utility(
+            using: baselineService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 1,
+            immediateWinProbability: 1.0,
+            chasePressure: 1.0,
+            matchContext: lateContext
+        )
+        let neutralLate = utility(
+            using: neutralService,
+            tricksNeededToMatchBid: 1,
+            tricksRemainingIncludingCurrent: 1,
+            immediateWinProbability: 1.0,
+            chasePressure: 1.0,
+            matchContext: lateContext
+        )
+
+        XCTAssertEqual(neutralEarly, baselineEarly, accuracy: 0.000_1)
+        XCTAssertEqual(neutralLate, baselineLate, accuracy: 0.000_1)
+    }
+
     func testMoveUtility_whenLeadJokerDumpingEarly_prefersTakesNonTrumpOverTakesTrump() {
         let trickNode = makeTrickNode()
         let takesNonTrump = BotTurnCandidateRankingService.Move(

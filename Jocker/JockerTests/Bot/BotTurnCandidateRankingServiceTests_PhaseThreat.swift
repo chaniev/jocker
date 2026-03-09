@@ -10,6 +10,8 @@ import XCTest
 
 extension BotTurnCandidateRankingServiceTests {
     func testMoveUtility_withNeutralMatchContext_preservesBehavior() {
+        let baselineService = service
+        let neutralPhaseService = makeService()
         let trickNode = makeTrickNode()
         _ = trickNode.playCard(card(.clubs, .queen), fromPlayer: 1, animated: false)
         let params = commonUtilityParams(
@@ -24,7 +26,7 @@ extension BotTurnCandidateRankingServiceTests {
             decision: .defaultNonLead
         )
 
-        let baseline = service.moveUtility(
+        let baseline = baselineService.moveUtility(
             projectedScore: params.projectedScore,
             immediateWinProbability: params.immediateWinProbability,
             threat: params.threat,
@@ -37,9 +39,10 @@ extension BotTurnCandidateRankingServiceTests {
             tricksNeededToMatchBid: params.tricksNeededToMatchBid,
             tricksRemainingIncludingCurrent: params.tricksRemainingIncludingCurrent,
             chasePressure: params.chasePressure,
-            isBlindRound: true
+            isBlindRound: true,
+            matchContext: sampleMatchContext()
         )
-        let withMatchContext = service.moveUtility(
+        let withNeutralPhaseTuning = neutralPhaseService.moveUtility(
             projectedScore: params.projectedScore,
             immediateWinProbability: params.immediateWinProbability,
             threat: params.threat,
@@ -56,7 +59,7 @@ extension BotTurnCandidateRankingServiceTests {
             matchContext: sampleMatchContext()
         )
 
-        XCTAssertEqual(withMatchContext, baseline, accuracy: 0.0001)
+        XCTAssertEqual(withNeutralPhaseTuning, baseline, accuracy: 0.0001)
     }
 
     func testMoveUtility_withLateBlockScoreDeficit_increasesChaseRiskUtility() {
@@ -137,6 +140,71 @@ extension BotTurnCandidateRankingServiceTests {
 
         XCTAssertGreaterThan(trailingLateBlock, noContext)
         XCTAssertLessThan(leadingLateBlock, noContext)
+    }
+
+    func testMoveUtility_withPhaseRankingTuning_amplifiesLateCatchUpAndSoftensEarlyCatchUp() {
+        let baselineService = service
+        let tunedService = makeService(phaseRankingScale: 1.25)
+        let trickNode = makeTrickNode()
+        _ = trickNode.playCard(card(.hearts, .queen), fromPlayer: 1, animated: false)
+        let params = commonUtilityParams(
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: true,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: false
+        )
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.hearts, .ace),
+            decision: .defaultNonLead
+        )
+        let earlyContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 1,
+            totalRoundsInBlock: 8,
+            totalScores: [80, 160, 150, 140],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4
+        )
+        let lateContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [80, 160, 150, 140],
+            playerIndex: 0,
+            dealerIndex: 2,
+            playerCount: 4
+        )
+
+        func utility(
+            using service: BotTurnCandidateRankingService,
+            matchContext: BotMatchContext
+        ) -> Double {
+            service.moveUtility(
+                projectedScore: params.projectedScore,
+                immediateWinProbability: 0.86,
+                threat: 40,
+                move: move,
+                trickNode: params.trickNode,
+                trump: params.trump,
+                shouldChaseTrick: params.shouldChaseTrick,
+                hasWinningNonJoker: params.hasWinningNonJoker,
+                hasLosingNonJoker: params.hasLosingNonJoker,
+                tricksNeededToMatchBid: params.tricksNeededToMatchBid,
+                tricksRemainingIncludingCurrent: params.tricksRemainingIncludingCurrent,
+                chasePressure: params.chasePressure,
+                matchContext: matchContext
+            )
+        }
+
+        let baselineEarly = utility(using: baselineService, matchContext: earlyContext)
+        let tunedEarly = utility(using: tunedService, matchContext: earlyContext)
+        let baselineLate = utility(using: baselineService, matchContext: lateContext)
+        let tunedLate = utility(using: tunedService, matchContext: lateContext)
+
+        XCTAssertLessThan(tunedEarly, baselineEarly)
+        XCTAssertGreaterThan(tunedLate, baselineLate)
     }
 
     func testMoveUtility_withLateBlockScoreDeficit_andDisciplinedObservedLeftNeighbor_increasesCatchUpUtility() {

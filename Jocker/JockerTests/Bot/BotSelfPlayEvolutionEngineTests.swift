@@ -300,13 +300,18 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         genome.endgameActivationScale = 0.7
         genome.opponentPressureScale = 1.3
         genome.jokerDeclarationScale = 0.9
+        genome.phaseRankingScale = 1.2
+        genome.phaseRolloutScale = 0.9
+        genome.phaseJokerScale = 1.1
+        genome.phaseBlindScale = 0.8
 
         let config = BotTuning.SelfPlayEvolutionConfig(
             tuneRankingPolicy: false,
             tuneRolloutPolicy: false,
             tuneEndgamePolicy: false,
             tuneOpponentModelingPolicy: false,
-            tuneJokerDeclarationPolicy: false
+            tuneJokerDeclarationPolicy: false,
+            tunePhasePolicy: false
         )
 
         let masked = BotSelfPlayEvolutionEngine.applyingEvolutionScopeMask(
@@ -323,6 +328,10 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(masked.endgameAdjustmentScale, 1.0, accuracy: 1e-9)
         XCTAssertEqual(masked.opponentPressureScale, 1.0, accuracy: 1e-9)
         XCTAssertEqual(masked.jokerDeclarationScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.phaseRankingScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.phaseRolloutScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.phaseJokerScale, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(masked.phaseBlindScale, 1.0, accuracy: 1e-9)
     }
 
     func testScopeMask_enabledGroups_preserveValues() {
@@ -330,13 +339,15 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         genome.rankingMatchCatchUpScale = 1.3
         genome.rolloutActivationScale = 1.2
         genome.opponentPressureScale = 0.9
+        genome.phaseRankingScale = 1.25
 
         let config = BotTuning.SelfPlayEvolutionConfig(
             tuneRankingPolicy: true,
             tuneRolloutPolicy: true,
             tuneEndgamePolicy: false,
             tuneOpponentModelingPolicy: true,
-            tuneJokerDeclarationPolicy: false
+            tuneJokerDeclarationPolicy: false,
+            tunePhasePolicy: true
         )
 
         let masked = BotSelfPlayEvolutionEngine.applyingEvolutionScopeMask(
@@ -347,6 +358,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(masked.rankingMatchCatchUpScale, 1.3, accuracy: 1e-9)
         XCTAssertEqual(masked.rolloutActivationScale, 1.2, accuracy: 1e-9)
         XCTAssertEqual(masked.opponentPressureScale, 0.9, accuracy: 1e-9)
+        XCTAssertEqual(masked.phaseRankingScale, 1.25, accuracy: 1e-9)
         XCTAssertEqual(masked.endgameActivationScale, 1.0, accuracy: 1e-9)
         XCTAssertEqual(masked.jokerDeclarationScale, 1.0, accuracy: 1e-9)
     }
@@ -362,7 +374,11 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             (0.60...1.60, \.rolloutAdjustmentScale),
             (0.65...1.50, \.endgameActivationScale),
             (0.60...1.60, \.endgameAdjustmentScale),
-            (0.60...1.60, \.opponentPressureScale)
+            (0.60...1.60, \.opponentPressureScale),
+            (0.60...1.60, \.phaseRankingScale),
+            (0.60...1.60, \.phaseRolloutScale),
+            (0.60...1.60, \.phaseJokerScale),
+            (0.60...1.60, \.phaseBlindScale)
         ]
 
         for _ in 0..<20 {
@@ -414,6 +430,13 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             baseline.opponentModeling.opponentBidPressureChaseBase,
             accuracy: 1e-9
         )
+        XCTAssertEqual(patched.ranking.phaseMatchCatchUp, baseline.ranking.phaseMatchCatchUp)
+        XCTAssertEqual(patched.rollout.phaseActivation, baseline.rollout.phaseActivation)
+        XCTAssertEqual(
+            patched.ranking.jokerDeclaration.phaseLateSpend,
+            baseline.ranking.jokerDeclaration.phaseLateSpend
+        )
+        XCTAssertEqual(patched.bidding.blindPolicy.phaseBlock4, baseline.bidding.blindPolicy.phaseBlock4)
     }
 
     func testRuntimePolicyEvolutionPatch_extractRecoversAppliedScales() {
@@ -427,7 +450,11 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             rolloutAdjustmentScale: 0.88,
             endgameActivationScale: 1.10,
             endgameAdjustmentScale: 0.93,
-            opponentPressureScale: 1.16
+            opponentPressureScale: 1.16,
+            phaseRankingScale: 1.24,
+            phaseRolloutScale: 0.82,
+            phaseJokerScale: 1.18,
+            phaseBlindScale: 0.86
         )
         let patched = patch.apply(to: baseline)
 
@@ -445,6 +472,47 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(extracted.endgameActivationScale, patch.endgameActivationScale, accuracy: 1e-9)
         XCTAssertEqual(extracted.endgameAdjustmentScale, patch.endgameAdjustmentScale, accuracy: 1e-9)
         XCTAssertEqual(extracted.opponentPressureScale, patch.opponentPressureScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.phaseRankingScale, patch.phaseRankingScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.phaseRolloutScale, patch.phaseRolloutScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.phaseJokerScale, patch.phaseJokerScale, accuracy: 1e-9)
+        XCTAssertEqual(extracted.phaseBlindScale, patch.phaseBlindScale, accuracy: 1e-9)
+    }
+
+    func testRuntimePolicyEvolutionPatch_phaseScalesCreateDirectionalPhaseRamps() {
+        let baseline = BotRuntimePolicy.preset(for: .hard)
+        let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: 1.0,
+            rankingPremiumScale: 1.0,
+            rankingPenaltyAvoidScale: 1.0,
+            jokerDeclarationScale: 1.0,
+            rolloutActivationScale: 1.0,
+            rolloutAdjustmentScale: 1.0,
+            endgameActivationScale: 1.0,
+            endgameAdjustmentScale: 1.0,
+            opponentPressureScale: 1.0,
+            phaseRankingScale: 1.25,
+            phaseRolloutScale: 1.20,
+            phaseJokerScale: 1.10,
+            phaseBlindScale: 1.15
+        )
+        let patched = patch.apply(to: baseline)
+
+        XCTAssertLessThan(patched.ranking.phaseMatchCatchUp.early, 1.0)
+        XCTAssertEqual(patched.ranking.phaseMatchCatchUp.mid, 1.0, accuracy: 1e-9)
+        XCTAssertGreaterThan(patched.ranking.phaseMatchCatchUp.late, 1.0)
+
+        XCTAssertLessThan(patched.rollout.phaseActivation.early, 1.0)
+        XCTAssertGreaterThan(patched.rollout.phaseActivation.late, 1.0)
+
+        XCTAssertGreaterThan(patched.ranking.jokerDeclaration.phaseEarlySpend.early, 1.0)
+        XCTAssertLessThan(patched.ranking.jokerDeclaration.phaseEarlySpend.late, 1.0)
+        XCTAssertLessThan(patched.ranking.jokerDeclaration.phaseLateSpend.early, 1.0)
+        XCTAssertGreaterThan(patched.ranking.jokerDeclaration.phaseLateSpend.late, 1.0)
+        XCTAssertLessThan(patched.ranking.jokerDeclaration.phaseDeclarationPressure.early, 1.0)
+        XCTAssertGreaterThan(patched.ranking.jokerDeclaration.phaseDeclarationPressure.late, 1.0)
+
+        XCTAssertLessThan(patched.bidding.blindPolicy.phaseBlock4.early, 1.0)
+        XCTAssertGreaterThan(patched.bidding.blindPolicy.phaseBlock4.late, 1.0)
     }
 
     // MARK: - Fitness / guardrail scoring semantics (plan 02)

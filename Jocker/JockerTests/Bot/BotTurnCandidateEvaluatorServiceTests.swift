@@ -211,6 +211,68 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
         XCTAssertEqual(withMatchContext?.jokerDecision, baseline?.jokerDecision)
     }
 
+    func testRolloutShouldApply_withNeutralPhaseActivation_preservesThresholdsAcrossPhases() {
+        let rolloutService = makeRolloutService(
+            phaseActivation: .neutral,
+            phaseUtilityAdjustment: .neutral
+        )
+        let handCards = rolloutHand(count: 3)
+        let scoredCandidates = [makeRolloutCandidateScore(handCards: handCards)]
+        let earlyContext = makeRolloutDecisionContext(
+            handCards: handCards,
+            matchContext: rolloutMatchContext(roundIndexInBlock: 0)
+        )
+        let lateContext = makeRolloutDecisionContext(
+            handCards: handCards,
+            matchContext: rolloutMatchContext(roundIndexInBlock: 7)
+        )
+
+        let early = rolloutService.shouldApplyRollout(
+            context: earlyContext,
+            scoredCandidates: scoredCandidates,
+            tricksNeededToMatchBid: 1
+        )
+        let late = rolloutService.shouldApplyRollout(
+            context: lateContext,
+            scoredCandidates: scoredCandidates,
+            tricksNeededToMatchBid: 1
+        )
+
+        XCTAssertFalse(early)
+        XCTAssertEqual(late, early)
+    }
+
+    func testRolloutShouldApply_withPhaseActivationTuning_softensEarlyAndExpandsLateThresholds() {
+        let rolloutService = makeRolloutService(
+            phaseActivation: PhaseMultipliers(early: 0.75, mid: 1.0, late: 1.50),
+            phaseUtilityAdjustment: .neutral
+        )
+        let handCards = rolloutHand(count: 3)
+        let scoredCandidates = [makeRolloutCandidateScore(handCards: handCards)]
+        let earlyContext = makeRolloutDecisionContext(
+            handCards: handCards,
+            matchContext: rolloutMatchContext(roundIndexInBlock: 0)
+        )
+        let lateContext = makeRolloutDecisionContext(
+            handCards: handCards,
+            matchContext: rolloutMatchContext(roundIndexInBlock: 7)
+        )
+
+        let early = rolloutService.shouldApplyRollout(
+            context: earlyContext,
+            scoredCandidates: scoredCandidates,
+            tricksNeededToMatchBid: 1
+        )
+        let late = rolloutService.shouldApplyRollout(
+            context: lateContext,
+            scoredCandidates: scoredCandidates,
+            tricksNeededToMatchBid: 1
+        )
+
+        XCTAssertFalse(early)
+        XCTAssertTrue(late)
+    }
+
     func testBestMove_whenLeadJokerAntiPremiumContext_andOpponentModelHasNoEvidence_keepsDecisionUnchanged() {
         let premium = BotMatchContextTestBuilder.premiumSnapshot(
             completedRoundsInBlock: 5,
@@ -535,6 +597,124 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
 
     private func card(_ suit: Suit, _ rank: Rank) -> Card {
         return BotTestCards.card(suit, rank)
+    }
+
+    private func makeRolloutService(
+        phaseActivation: PhaseMultipliers,
+        phaseUtilityAdjustment: PhaseMultipliers
+    ) -> BotTurnRolloutService {
+        let baseline = BotTuning(difficulty: .hard)
+        let baselinePolicy = baseline.runtimePolicy
+        var rollout = baselinePolicy.rollout
+        rollout.handSizeGateThreshold = 2
+        rollout.jokerGateHandSizeThreshold = 1
+        rollout.lateBlockUrgencyHandSizeThreshold = 2
+        rollout.lateBlockProgressThreshold = 0.75
+        rollout.criticalDeficitHandSizeThreshold = 1
+        rollout.criticalDeficitMinimumFloor = 3
+        rollout.phaseActivation = phaseActivation
+        rollout.phaseUtilityAdjustment = phaseUtilityAdjustment
+
+        let runtimePolicy = BotRuntimePolicy.assembled(
+            difficulty: baseline.difficulty,
+            ranking: baselinePolicy.ranking,
+            bidding: baselinePolicy.bidding,
+            evaluator: baselinePolicy.evaluator,
+            rollout: rollout,
+            endgame: baselinePolicy.endgame,
+            simulation: baselinePolicy.simulation,
+            handStrength: baselinePolicy.handStrength,
+            heuristics: baselinePolicy.heuristics,
+            opponentModeling: baselinePolicy.opponentModeling
+        )
+        let tuned = BotTuning(
+            difficulty: baseline.difficulty,
+            turnStrategy: baseline.turnStrategy,
+            bidding: baseline.bidding,
+            trumpSelection: baseline.trumpSelection,
+            runtimePolicy: runtimePolicy,
+            timing: baseline.timing
+        )
+        let candidateRanking = BotTurnCandidateRankingService(tuning: tuned)
+        let samplingService = BotTurnSamplingService()
+        let opponentOrderResolver = BotTurnOpponentOrderResolver()
+        let simulationService = BotTurnSimulationService(
+            policy: tuned.runtimePolicy.simulation,
+            opponentOrderResolver: opponentOrderResolver
+        )
+        return BotTurnRolloutService(
+            policy: tuned.runtimePolicy.rollout,
+            candidateRanking: candidateRanking,
+            samplingService: samplingService,
+            simulationService: simulationService,
+            opponentOrderResolver: opponentOrderResolver
+        )
+    }
+
+    private func rolloutHand(count: Int) -> [Card] {
+        let cards = [
+            card(.clubs, .ace),
+            card(.diamonds, .king),
+            card(.hearts, .queen),
+            card(.spades, .jack)
+        ]
+        return Array(cards.prefix(count))
+    }
+
+    private func makeRolloutCandidateScore(
+        handCards: [Card]
+    ) -> BotTurnCandidateEvaluatorService.CandidateScore {
+        let move = BotTurnCandidateRankingService.Move(
+            card: handCards[0],
+            decision: .defaultNonLead
+        )
+        let evaluation = BotTurnCandidateRankingService.Evaluation(
+            move: move,
+            utility: 1.0,
+            immediateWinProbability: 0.75,
+            threat: 12.0
+        )
+        return BotTurnCandidateEvaluatorService.CandidateScore(
+            evaluation: evaluation,
+            remainingHand: Array(handCards.dropFirst()),
+            projectedScore: 24.0,
+            baselineUtility: 1.0
+        )
+    }
+
+    private func makeRolloutDecisionContext(
+        handCards: [Card],
+        matchContext: BotMatchContext?
+    ) -> BotTurnCandidateEvaluatorService.DecisionContext {
+        BotTurnCandidateEvaluatorService.DecisionContext(
+            legalCards: handCards,
+            handCards: handCards,
+            trick: .init(playedCards: []),
+            trump: .spades,
+            targetBid: 1,
+            currentTricks: 0,
+            cardsInRound: 8,
+            playerCount: 4,
+            isBlind: false,
+            matchContext: matchContext,
+            roundState: nil,
+            actingPlayerIndex: 0,
+            completedTricksInRound: []
+        )
+    }
+
+    private func rolloutMatchContext(
+        roundIndexInBlock: Int
+    ) -> BotMatchContext {
+        BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: roundIndexInBlock,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4
+        )
     }
 
     private func sampleMatchContext() -> BotMatchContext {

@@ -13,7 +13,10 @@ struct BotBlindBidPolicyTestFixture {
     let policy: BotBlindBidPolicy
 
     init(difficulty: BotDifficulty = .hard) {
-        let tuning = BotTuning(difficulty: difficulty)
+        self.init(tuning: BotTuning(difficulty: difficulty))
+    }
+
+    init(tuning: BotTuning) {
         let handStrengthModel = BotHandStrengthModel(tuning: tuning)
         let blindMonteCarloEstimator = BotBlindBidMonteCarloEstimator(
             policy: tuning.runtimePolicy.bidding.blindMonteCarlo,

@@ -28,18 +28,57 @@ struct BotTurnRolloutService {
         self.opponentOrderResolver = opponentOrderResolver
     }
 
+    private func phase(from matchContext: BotMatchContext?) -> BotBlockPhase {
+        matchContext.map { BotBlockPhase.from(blockProgressFraction: $0.blockProgressFraction) } ?? .mid
+    }
+
+    private func activationThreshold(
+        from baseThreshold: Int,
+        phase: BotBlockPhase
+    ) -> Int {
+        let normalizedBase = max(0, baseThreshold)
+        guard normalizedBase > 0 else { return 0 }
+
+        let scaled = Double(normalizedBase) * max(0.0, policy.phaseActivation.multiplier(for: phase))
+        if scaled >= Double(normalizedBase) {
+            return max(1, Int(ceil(scaled)))
+        }
+        return max(1, Int(floor(scaled)))
+    }
+
     func shouldApplyRollout(
         context: BotTurnCandidateEvaluatorService.DecisionContext,
         scoredCandidates: [BotTurnCandidateEvaluatorService.CandidateScore],
         tricksNeededToMatchBid: Int
     ) -> Bool {
         let handSize = context.handContext.handCards.count
-        let handSizeGate = handSize <= policy.handSizeGateThreshold
-        let jokerGate = handSize <= policy.jokerGateHandSizeThreshold &&
+        let phase = phase(from: context.tableContext.matchContext)
+        let handSizeGateThreshold = activationThreshold(
+            from: policy.handSizeGateThreshold,
+            phase: phase
+        )
+        let jokerGateThreshold = activationThreshold(
+            from: policy.jokerGateHandSizeThreshold,
+            phase: phase
+        )
+        let lateBlockUrgencyGateThreshold = activationThreshold(
+            from: policy.lateBlockUrgencyHandSizeThreshold,
+            phase: phase
+        )
+        let criticalDeficitGateThreshold = activationThreshold(
+            from: policy.criticalDeficitHandSizeThreshold,
+            phase: phase
+        )
+
+        let handSizeGate = handSizeGateThreshold > 0 && handSize <= handSizeGateThreshold
+        let jokerGate = jokerGateThreshold > 0 &&
+            handSize <= jokerGateThreshold &&
             scoredCandidates.contains { $0.evaluation.move.card.isJoker }
-        let lateBlockUrgencyGate = handSize <= policy.lateBlockUrgencyHandSizeThreshold &&
+        let lateBlockUrgencyGate = lateBlockUrgencyGateThreshold > 0 &&
+            handSize <= lateBlockUrgencyGateThreshold &&
             (context.tableContext.matchContext?.blockProgressFraction ?? 0.0) >= policy.lateBlockProgressThreshold
-        let criticalDeficitGate = handSize <= policy.criticalDeficitHandSizeThreshold &&
+        let criticalDeficitGate = criticalDeficitGateThreshold > 0 &&
+            handSize <= criticalDeficitGateThreshold &&
             tricksNeededToMatchBid >= max(policy.criticalDeficitMinimumFloor, context.handContext.handCards.count - 1)
         return handSizeGate || jokerGate || lateBlockUrgencyGate || criticalDeficitGate
     }
@@ -109,14 +148,11 @@ struct BotTurnRolloutService {
             policy.maxTrickHorizon,
             max(1, context.handContext.handCards.count)
         )
-        var urgencyWeight = urgencyWeight(
+        let urgencyWeight = urgencyWeight(
             context: context,
             shouldChaseTrick: shouldChaseTrick
         )
-        let phase = context.tableContext.matchContext.map {
-            BotBlockPhase.from(blockProgressFraction: $0.blockProgressFraction)
-        } ?? .mid
-        urgencyWeight *= policy.phaseActivation.multiplier(for: phase)
+        let phase = phase(from: context.tableContext.matchContext)
         let phaseUtilityMult = policy.phaseUtilityAdjustment.multiplier(for: phase)
 
         return scoredCandidates.enumerated().map { entry in

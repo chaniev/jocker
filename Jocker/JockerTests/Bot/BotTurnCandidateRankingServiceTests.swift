@@ -13,6 +13,62 @@ final class BotTurnCandidateRankingServiceTests: XCTestCase {
 
     let service = BotTurnCandidateRankingService(tuning: BotTuning(difficulty: .hard))
 
+    func makeService(
+        phaseRankingScale: Double = 1.0,
+        phaseJokerScale: Double = 1.0
+    ) -> BotTurnCandidateRankingService {
+        let baseline = BotTuning(difficulty: .hard)
+        let baselinePolicy = baseline.runtimePolicy
+        var ranking = baselinePolicy.ranking
+
+        if phaseRankingScale != 1.0 {
+            let early = 1.0 / phaseRankingScale
+            let ramp = PhaseMultipliers(early: early, mid: 1.0, late: phaseRankingScale)
+            ranking.phaseMatchCatchUp = ramp
+            ranking.phasePremiumPressure = ramp
+            ranking.phasePenaltyAvoid = ramp
+        }
+
+        if phaseJokerScale != 1.0 {
+            let earlyRamp = PhaseMultipliers(
+                early: phaseJokerScale,
+                mid: 1.0,
+                late: 1.0 / phaseJokerScale
+            )
+            let lateRamp = PhaseMultipliers(
+                early: 1.0 / phaseJokerScale,
+                mid: 1.0,
+                late: phaseJokerScale
+            )
+            ranking.jokerDeclaration.phaseEarlySpend = earlyRamp
+            ranking.jokerDeclaration.phaseLateSpend = lateRamp
+            ranking.jokerDeclaration.phaseDeclarationPressure = lateRamp
+        }
+
+        let runtimePolicy = BotRuntimePolicy.assembled(
+            difficulty: baseline.difficulty,
+            ranking: ranking,
+            bidding: baselinePolicy.bidding,
+            evaluator: baselinePolicy.evaluator,
+            rollout: baselinePolicy.rollout,
+            endgame: baselinePolicy.endgame,
+            simulation: baselinePolicy.simulation,
+            handStrength: baselinePolicy.handStrength,
+            heuristics: baselinePolicy.heuristics,
+            opponentModeling: baselinePolicy.opponentModeling
+        )
+
+        let tuned = BotTuning(
+            difficulty: baseline.difficulty,
+            turnStrategy: baseline.turnStrategy,
+            bidding: baseline.bidding,
+            trumpSelection: baseline.trumpSelection,
+            runtimePolicy: runtimePolicy,
+            timing: baseline.timing
+        )
+        return BotTurnCandidateRankingService(tuning: tuned)
+    }
+
     func makeTrickNode() -> TrickNode {
         return Fixture.makeTrickNode()
     }

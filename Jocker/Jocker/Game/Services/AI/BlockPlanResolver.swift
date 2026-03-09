@@ -65,7 +65,7 @@ struct BlockPlanResolver {
                     rankingPolicy.matchCatchUpPreservePremiumPenalty *
                     plan.preserveOwnPremiumBias
             }
-            return adjustment
+            return adjustment * phaseMultiplier
         }
 
         let conservativeDumpSignal =

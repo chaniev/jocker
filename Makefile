@@ -7,12 +7,14 @@ SHELL := /bin/bash
 	bt-hard-fullgame-smoke bt-hard-fullgame-balanced bt-hard-fullgame-battle bt-hard-final \
 	bt-hard-fullgame-balanced-esab bt-hard-fullgame-battle-esab bt-hard-final-esab \
 	joker-pack joker-pack-all joker-pack-list joker-pack-dry \
+	stage4-phase-pack stage4-phase-pack-list stage4-phase-pack-dry \
 	stage6b-pack stage6b-pack-all stage6b-pack-list stage6b-pack-dry \
 	bot-baseline bot-baseline-smoke bot-baseline-list bot-baseline-dry \
 	bot-compare bot-compare-smoke bot-compare-list bot-compare-dry
 
 TRAIN_SCRIPT := ./scripts/train_bot_tuning.sh
 JOKER_REGRESSION_SCRIPT := ./scripts/run_joker_regression_pack.sh
+STAGE4_PHASE_GUARDRAILS_SCRIPT := ./scripts/run_stage4_phase_guardrails.sh
 STAGE6B_RANKING_GUARDRAILS_SCRIPT := ./scripts/run_stage6b_ranking_guardrails.sh
 BOT_BASELINE_SCRIPT := ./scripts/run_bot_baseline_snapshot.sh
 BOT_AB_COMPARE_SCRIPT := ./scripts/run_bot_ab_comparison_snapshot.sh
@@ -46,6 +48,15 @@ joker-pack-list:
 
 joker-pack-dry:
 	@$(JOKER_REGRESSION_SCRIPT) --include-probes --dry-run
+
+stage4-phase-pack:
+	@$(STAGE4_PHASE_GUARDRAILS_SCRIPT)
+
+stage4-phase-pack-list:
+	@$(STAGE4_PHASE_GUARDRAILS_SCRIPT) --list
+
+stage4-phase-pack-dry:
+	@$(STAGE4_PHASE_GUARDRAILS_SCRIPT) --dry-run
 
 stage6b-pack:
 	@$(STAGE6B_RANKING_GUARDRAILS_SCRIPT)

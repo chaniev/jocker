@@ -88,6 +88,7 @@ struct BotTrainingRunner {
         var tuneEndgamePolicy: Bool = false
         var tuneOpponentModelingPolicy: Bool = true
         var tuneJokerDeclarationPolicy: Bool = false
+        var tunePhasePolicy: Bool = false
 
         var runSeeds: [UInt64] {
             seedList.isEmpty ? [seed] : seedList
@@ -218,6 +219,7 @@ struct BotTrainingRunner {
           --tune-endgame-policy <true|false>
           --tune-opponent-modeling-policy <true|false>
           --tune-joker-declaration-policy <true|false>
+          --tune-phase-policy <true|false>
           -h, --help
 
         Examples:
@@ -281,7 +283,8 @@ struct BotTrainingRunner {
             tuneRolloutPolicy: invocation.tuneRolloutPolicy,
             tuneEndgamePolicy: invocation.tuneEndgamePolicy,
             tuneOpponentModelingPolicy: invocation.tuneOpponentModelingPolicy,
-            tuneJokerDeclarationPolicy: invocation.tuneJokerDeclarationPolicy
+            tuneJokerDeclarationPolicy: invocation.tuneJokerDeclarationPolicy,
+            tunePhasePolicy: invocation.tunePhasePolicy
         )
 
         let abValidationConfig = BotTuning.SelfPlayEvolutionConfig(
@@ -335,7 +338,8 @@ struct BotTrainingRunner {
             tuneRolloutPolicy: config.tuneRolloutPolicy,
             tuneEndgamePolicy: config.tuneEndgamePolicy,
             tuneOpponentModelingPolicy: config.tuneOpponentModelingPolicy,
-            tuneJokerDeclarationPolicy: config.tuneJokerDeclarationPolicy
+            tuneJokerDeclarationPolicy: config.tuneJokerDeclarationPolicy,
+            tunePhasePolicy: config.tunePhasePolicy
         )
 
         let seedRuns = invocation.runSeeds.map { runSeed in
@@ -428,7 +432,8 @@ struct BotTrainingRunner {
             "rolloutPolicy=\(config.tuneRolloutPolicy) " +
             "endgamePolicy=\(config.tuneEndgamePolicy) " +
             "opponentModelingPolicy=\(config.tuneOpponentModelingPolicy) " +
-            "jokerDeclarationPolicy=\(config.tuneJokerDeclarationPolicy)"
+            "jokerDeclarationPolicy=\(config.tuneJokerDeclarationPolicy) " +
+            "phasePolicy=\(config.tunePhasePolicy)"
         )
         print("fitnessWinRateWeight=\(fmt(config.fitnessWinRateWeight))")
         print("fitnessScoreDiffWeight=\(fmt(config.fitnessScoreDiffWeight))")
@@ -999,6 +1004,11 @@ struct BotTrainingRunner {
                 )
             case "--tune-joker-declaration-policy":
                 invocation.tuneJokerDeclarationPolicy = try parseBool(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument
+                )
+            case "--tune-phase-policy":
+                invocation.tunePhasePolicy = try parseBool(
                     try value(after: argument, in: arguments, at: &index),
                     flag: argument
                 )

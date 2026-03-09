@@ -261,6 +261,85 @@ extension BotTurnCandidateRankingServiceTests {
         XCTAssertGreaterThan(lateDelta, earlyDelta)
     }
 
+    func testMoveUtility_withPhaseRankingTuning_amplifiesLatePremiumPressureAndSoftensEarlyPressure() {
+        let baselineService = service
+        let tunedService = makeService(phaseRankingScale: 1.25)
+        let trickNode = makeTrickNode()
+        _ = trickNode.playCard(card(.spades, .ace), fromPlayer: 1, animated: false)
+        let params = commonUtilityParams(
+            trickNode: trickNode,
+            trump: .clubs,
+            shouldChaseTrick: false,
+            hasWinningNonJoker: false,
+            hasLosingNonJoker: true
+        )
+        let move = BotTurnCandidateRankingService.Move(
+            card: card(.spades, .seven),
+            decision: .defaultNonLead
+        )
+        let earlyPremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 1,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 1,
+                remainingRoundsInBlock: 7,
+                isPremiumCandidateSoFar: true,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false
+            )
+        )
+        let latePremiumContext = BotMatchContext(
+            block: .fourth,
+            roundIndexInBlock: 7,
+            totalRoundsInBlock: 8,
+            totalScores: [100, 100, 100, 100],
+            playerIndex: 0,
+            dealerIndex: 1,
+            playerCount: 4,
+            premium: .init(
+                completedRoundsInBlock: 7,
+                remainingRoundsInBlock: 1,
+                isPremiumCandidateSoFar: true,
+                isZeroPremiumRelevantInBlock: false,
+                isZeroPremiumCandidateSoFar: false
+            )
+        )
+
+        func utility(
+            using service: BotTurnCandidateRankingService,
+            matchContext: BotMatchContext
+        ) -> Double {
+            service.moveUtility(
+                projectedScore: params.projectedScore,
+                immediateWinProbability: 0.20,
+                threat: params.threat,
+                move: move,
+                trickNode: params.trickNode,
+                trump: params.trump,
+                shouldChaseTrick: params.shouldChaseTrick,
+                hasWinningNonJoker: params.hasWinningNonJoker,
+                hasLosingNonJoker: params.hasLosingNonJoker,
+                tricksNeededToMatchBid: 0,
+                tricksRemainingIncludingCurrent: 2,
+                chasePressure: params.chasePressure,
+                matchContext: matchContext
+            )
+        }
+
+        let baselineEarly = utility(using: baselineService, matchContext: earlyPremiumContext)
+        let tunedEarly = utility(using: tunedService, matchContext: earlyPremiumContext)
+        let baselineLate = utility(using: baselineService, matchContext: latePremiumContext)
+        let tunedLate = utility(using: tunedService, matchContext: latePremiumContext)
+
+        XCTAssertLessThan(tunedEarly, baselineEarly)
+        XCTAssertGreaterThan(tunedLate, baselineLate)
+    }
+
     func testMoveUtility_premiumPreserveExactBidProtection_isStrongerThanAfterOverbidBreak() {
         let trickNode = makeTrickNode()
         _ = trickNode.playCard(card(.spades, .ace), fromPlayer: 1, animated: false)

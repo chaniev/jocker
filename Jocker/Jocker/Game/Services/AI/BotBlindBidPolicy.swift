@@ -112,12 +112,12 @@ struct BotBlindBidPolicy {
             blindRiskScore += policy.wideRangeBonus
         }
 
-        guard blindRiskScore > policy.riskScoreThreshold else { return nil }
-
         if let mc = matchContext, mc.block == .fourth {
             let phase = BotBlockPhase.from(blockProgressFraction: mc.blockProgressFraction)
             blindRiskScore *= policy.phaseBlock4.multiplier(for: phase)
         }
+
+        guard blindRiskScore > policy.riskScoreThreshold else { return nil }
 
         let conservativeShare = min(
             tuning.blindCatchUpTargetShare,
