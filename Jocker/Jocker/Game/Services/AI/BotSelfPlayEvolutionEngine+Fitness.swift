@@ -684,16 +684,20 @@ extension BotSelfPlayEvolutionEngine {
                     gameIndex: gameIndex,
                     seatRotationIndex: seatOffset
                 )
-                var tuningsBySeat = Array(repeating: opponentTuning, count: config.playerCount)
-                tuningsBySeat[candidateSeat] = candidateTuning
-
-                let run = simulateGame(
-                    tuningsBySeat: tuningsBySeat,
-                    rounds: config.roundsPerGame,
-                    cardsPerRoundRange: config.cardsPerRoundRange,
-                    seed: derivedSeed,
-                    useFullMatchRules: config.useFullMatchRules
-                )
+                // Full-match self-play is a long-running CLI workload. Drain autoreleased
+                // temporaries after each simulation so canonical benchmark runs do not
+                // accumulate per-game objects until the whole candidate finishes.
+                let run: SimulatedGameRun = autoreleasepool {
+                    var tuningsBySeat = Array(repeating: opponentTuning, count: config.playerCount)
+                    tuningsBySeat[candidateSeat] = candidateTuning
+                    return simulateGame(
+                        tuningsBySeat: tuningsBySeat,
+                        rounds: config.roundsPerGame,
+                        cardsPerRoundRange: config.cardsPerRoundRange,
+                        seed: derivedSeed,
+                        useFullMatchRules: config.useFullMatchRules
+                    )
+                }
 
                 if let existing = mergedSnapshot {
                     mergedSnapshot = existing.merged(with: run.metricsSnapshot)

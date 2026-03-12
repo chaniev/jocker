@@ -151,18 +151,9 @@ struct BotTurnSimulationService {
         trump: Suit?
     ) -> [Card] {
         guard !hand.isEmpty else { return [] }
-        let trickNode = TrickNode(rendersCards: false)
-        for played in trick {
-            _ = trickNode.playCard(
-                played.card,
-                fromPlayer: played.playerIndex + 1,
-                jokerPlayStyle: played.jokerPlayStyle,
-                jokerLeadDeclaration: played.jokerLeadDeclaration,
-                animated: false
-            )
-        }
+        let trickSnapshot = BotTurnCardHeuristicsService.TrickSnapshot(playedCards: trick)
         let legalCards = hand.filter { card in
-            trickNode.canPlayCard(card, fromHand: hand, trump: trump)
+            trickSnapshot.canPlayCard(card, fromHand: hand, trump: trump)
         }
         return legalCards.isEmpty ? hand : legalCards
     }

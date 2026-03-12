@@ -37,32 +37,34 @@ extension BotSelfPlayEvolutionEngine {
         var dealer = Int.random(in: 0..<playerCount, using: &rng)
 
         for _ in 0..<rounds {
-            let cardsInRound = Int.random(in: cardsPerRoundRange, using: &rng)
-            let hands = dealHands(
-                cardsPerPlayer: cardsInRound,
-                playerCount: playerCount,
-                dealer: dealer,
-                using: &rng
-            )
-
-            let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
-            let trump = services.trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
-            let roundSimulation = simulateScoredRound(
-                RoundSimulationInput(
-                    hands: hands,
+            autoreleasepool {
+                let cardsInRound = Int.random(in: cardsPerRoundRange, using: &rng)
+                let hands = dealHands(
+                    cardsPerPlayer: cardsInRound,
+                    playerCount: playerCount,
                     dealer: dealer,
-                    cardsInRound: cardsInRound,
-                    trump: trump,
-                    preLockedBids: nil,
-                    blindSelections: nil,
-                    noTrumpControlEmphasisMultiplier: 0.75
-                ),
-                services: services,
-                metrics: &metrics
-            )
-            metrics.addRoundScores(roundSimulation.roundResults)
+                    using: &rng
+                )
 
-            dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+                let trumpChooser = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+                let trump = services.trumpServices[trumpChooser].selectTrump(from: hands[trumpChooser])
+                let roundSimulation = simulateScoredRound(
+                    RoundSimulationInput(
+                        hands: hands,
+                        dealer: dealer,
+                        cardsInRound: cardsInRound,
+                        trump: trump,
+                        preLockedBids: nil,
+                        blindSelections: nil,
+                        noTrumpControlEmphasisMultiplier: 0.75
+                    ),
+                    services: services,
+                    metrics: &metrics
+                )
+                metrics.addRoundScores(roundSimulation.roundResults)
+
+                dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+            }
         }
 
         return SimulatedGameRun(
@@ -90,77 +92,79 @@ extension BotSelfPlayEvolutionEngine {
             var blockBaseScores = Array(repeating: 0, count: playerCount)
 
             for cardsInRound in dealsInBlock {
-                let roundDeal = dealRoundForFullMatch(
-                    cardsPerPlayer: cardsInRound,
-                    playerCount: playerCount,
-                    dealer: dealer,
-                    blockNumber: blockNumber,
-                    trumpServices: services.trumpServices,
-                    using: &rng
-                )
-                let hands = roundDeal.hands
-                let trump = roundDeal.trump
-
-                let totalsIncludingCurrentBlock = (0..<playerCount).map { index in
-                    metrics.totalScores[index] + blockBaseScores[index]
-                }
-
-                let blindContext: PreDealBlindContext
-                if blockNumber == GameBlock.fourth.rawValue {
-                    blindContext = resolvePreDealBlindContext(
-                        dealer: dealer,
-                        cardsInRound: cardsInRound,
+                autoreleasepool {
+                    let roundDeal = dealRoundForFullMatch(
+                        cardsPerPlayer: cardsInRound,
                         playerCount: playerCount,
-                        biddingServices: services.biddingServices,
-                        totalScoresIncludingCurrentBlock: totalsIncludingCurrentBlock
-                    )
-                } else {
-                    blindContext = PreDealBlindContext(
-                        lockedBids: Array(repeating: 0, count: playerCount),
-                        blindSelections: Array(repeating: false, count: playerCount),
-                        eligibleWhenBehind: Array(repeating: false, count: playerCount),
-                        chosenWhenBehind: Array(repeating: false, count: playerCount),
-                        eligibleWhenLeading: Array(repeating: false, count: playerCount),
-                        chosenWhenLeading: Array(repeating: false, count: playerCount)
-                    )
-                }
-
-                let noTrumpControlEmphasisMultiplier =
-                    (blockNumber == GameBlock.first.rawValue ||
-                     blockNumber == GameBlock.third.rawValue) ? 1.0 : 0.55
-                if blockNumber == GameBlock.fourth.rawValue {
-                    metrics.recordBlindChoiceContext(
-                        eligibleWhenBehind: blindContext.eligibleWhenBehind,
-                        chosenWhenBehind: blindContext.chosenWhenBehind,
-                        eligibleWhenLeading: blindContext.eligibleWhenLeading,
-                        chosenWhenLeading: blindContext.chosenWhenLeading
-                    )
-                    metrics.recordBlock4BlindExposure(
-                        blindSelections: blindContext.blindSelections
-                    )
-                }
-                let roundSimulation = simulateScoredRound(
-                    RoundSimulationInput(
-                        hands: hands,
                         dealer: dealer,
-                        cardsInRound: cardsInRound,
-                        trump: trump,
-                        preLockedBids: blindContext.lockedBids,
-                        blindSelections: blindContext.blindSelections,
-                        noTrumpControlEmphasisMultiplier: noTrumpControlEmphasisMultiplier
-                    ),
-                    services: services,
-                    metrics: &metrics
-                )
-                let roundResults = roundSimulation.roundResults
+                        blockNumber: blockNumber,
+                        trumpServices: services.trumpServices,
+                        using: &rng
+                    )
+                    let hands = roundDeal.hands
+                    let trump = roundDeal.trump
 
-                appendRoundResultsToBlock(
-                    roundResults,
-                    blockRoundResults: &blockRoundResults,
-                    blockBaseScores: &blockBaseScores
-                )
+                    let totalsIncludingCurrentBlock = (0..<playerCount).map { index in
+                        metrics.totalScores[index] + blockBaseScores[index]
+                    }
 
-                dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+                    let blindContext: PreDealBlindContext
+                    if blockNumber == GameBlock.fourth.rawValue {
+                        blindContext = resolvePreDealBlindContext(
+                            dealer: dealer,
+                            cardsInRound: cardsInRound,
+                            playerCount: playerCount,
+                            biddingServices: services.biddingServices,
+                            totalScoresIncludingCurrentBlock: totalsIncludingCurrentBlock
+                        )
+                    } else {
+                        blindContext = PreDealBlindContext(
+                            lockedBids: Array(repeating: 0, count: playerCount),
+                            blindSelections: Array(repeating: false, count: playerCount),
+                            eligibleWhenBehind: Array(repeating: false, count: playerCount),
+                            chosenWhenBehind: Array(repeating: false, count: playerCount),
+                            eligibleWhenLeading: Array(repeating: false, count: playerCount),
+                            chosenWhenLeading: Array(repeating: false, count: playerCount)
+                        )
+                    }
+
+                    let noTrumpControlEmphasisMultiplier =
+                        (blockNumber == GameBlock.first.rawValue ||
+                         blockNumber == GameBlock.third.rawValue) ? 1.0 : 0.55
+                    if blockNumber == GameBlock.fourth.rawValue {
+                        metrics.recordBlindChoiceContext(
+                            eligibleWhenBehind: blindContext.eligibleWhenBehind,
+                            chosenWhenBehind: blindContext.chosenWhenBehind,
+                            eligibleWhenLeading: blindContext.eligibleWhenLeading,
+                            chosenWhenLeading: blindContext.chosenWhenLeading
+                        )
+                        metrics.recordBlock4BlindExposure(
+                            blindSelections: blindContext.blindSelections
+                        )
+                    }
+                    let roundSimulation = simulateScoredRound(
+                        RoundSimulationInput(
+                            hands: hands,
+                            dealer: dealer,
+                            cardsInRound: cardsInRound,
+                            trump: trump,
+                            preLockedBids: blindContext.lockedBids,
+                            blindSelections: blindContext.blindSelections,
+                            noTrumpControlEmphasisMultiplier: noTrumpControlEmphasisMultiplier
+                        ),
+                        services: services,
+                        metrics: &metrics
+                    )
+                    let roundResults = roundSimulation.roundResults
+
+                    appendRoundResultsToBlock(
+                        roundResults,
+                        blockRoundResults: &blockRoundResults,
+                        blockBaseScores: &blockBaseScores
+                    )
+
+                    dealer = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
+                }
             }
 
             let finalizedBlockOutcome = finalizeBlockScores(

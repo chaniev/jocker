@@ -11,7 +11,7 @@ import Foundation
 final class BotTurnStrategyService {
     struct BotTurnDecisionContext {
         let handCards: [Card]
-        let trickNode: TrickNode
+        let trick: BotTurnCardHeuristicsService.TrickSnapshot
         let trump: Suit?
         let bid: Int?
         let tricksTaken: Int?
@@ -25,7 +25,7 @@ final class BotTurnStrategyService {
 
         init(
             handCards: [Card],
-            trickNode: TrickNode,
+            trick: BotTurnCardHeuristicsService.TrickSnapshot,
             trump: Suit?,
             bid: Int?,
             tricksTaken: Int?,
@@ -38,7 +38,7 @@ final class BotTurnStrategyService {
             completedTricksInRound: [[PlayedTrickCard]] = []
         ) {
             self.handCards = handCards
-            self.trickNode = trickNode
+            self.trick = trick
             self.trump = trump
             self.bid = bid
             self.tricksTaken = tricksTaken
@@ -104,7 +104,7 @@ final class BotTurnStrategyService {
         return makeTurnDecision(
             context: .init(
                 handCards: handCards,
-                trickNode: trickNode,
+                trick: .init(trickNode: trickNode),
                 trump: trump,
                 bid: bid,
                 tricksTaken: tricksTaken,
@@ -162,7 +162,7 @@ final class BotTurnStrategyService {
         guard !context.handCards.isEmpty else { return nil }
 
         let legalCards = context.handCards.filter { candidate in
-            context.trickNode.canPlayCard(
+            context.trick.canPlayCard(
                 candidate,
                 fromHand: context.handCards,
                 trump: context.trump
@@ -184,7 +184,7 @@ final class BotTurnStrategyService {
 
         return ResolvedDecisionContext(
             request: context,
-            trick: .init(trickNode: context.trickNode),
+            trick: context.trick,
             legalCards: legalCards,
             resolvedCardsInRound: resolvedCardsInRound,
             currentTricks: currentTricks,

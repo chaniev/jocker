@@ -122,6 +122,126 @@ struct BotTurnCardHeuristicsService {
         init(trickNode: TrickNode) {
             self.playedCards = trickNode.playedCards
         }
+
+        func appendingPlayedCard(
+            _ card: Card,
+            fromPlayer playerNumber: Int,
+            jokerPlayStyle: JokerPlayStyle = .faceUp,
+            jokerLeadDeclaration: JokerLeadDeclaration? = nil
+        ) -> TrickSnapshot {
+            let playerIndex = max(0, playerNumber - 1)
+            let resolvedJokerStyle: JokerPlayStyle = card.isJoker ? jokerPlayStyle : .faceUp
+            let declaration = (card.isJoker && playedCards.isEmpty) ? jokerLeadDeclaration : nil
+            let playedCard = PlayedTrickCard(
+                playerIndex: playerIndex,
+                card: card,
+                jokerPlayStyle: resolvedJokerStyle,
+                jokerLeadDeclaration: declaration
+            )
+            return TrickSnapshot(playedCards: playedCards + [playedCard])
+        }
+
+        func canPlayCard(
+            _ card: Card,
+            fromHand hand: [Card],
+            trump: Suit?
+        ) -> Bool {
+            guard !playedCards.isEmpty else { return true }
+
+            if card.isJoker {
+                return true
+            }
+
+            guard let cardSuit = card.suit else {
+                return true
+            }
+
+            if isWishLeadMode {
+                return true
+            }
+
+            let shouldForceHighestForRequiredSuit = isLeadJokerAboveMode
+
+            guard let leadSuit = effectiveLeadSuit else {
+                return true
+            }
+
+            if cardSuit == leadSuit {
+                if shouldForceHighestForRequiredSuit {
+                    return isHighestCard(card, of: leadSuit, in: hand)
+                }
+                return true
+            }
+
+            let hasLeadSuit = hasSuit(leadSuit, in: hand)
+            if hasLeadSuit {
+                return false
+            }
+
+            if let trump, hasSuit(trump, in: hand) {
+                return cardSuit == trump
+            }
+
+            return true
+        }
+
+        private var effectiveLeadSuit: Suit? {
+            guard let leadCard = playedCards.first else { return nil }
+
+            if !leadCard.card.isJoker {
+                return leadCard.card.suit
+            }
+
+            switch leadCard.jokerLeadDeclaration {
+            case .above(let suit), .takes(let suit):
+                return suit
+            case .wish, .none:
+                return nil
+            }
+        }
+
+        private var isWishLeadMode: Bool {
+            guard let leadCard = playedCards.first else { return false }
+            guard leadCard.card.isJoker else { return false }
+
+            switch leadCard.jokerLeadDeclaration {
+            case .wish, .none:
+                return true
+            case .above, .takes:
+                return false
+            }
+        }
+
+        private var isLeadJokerAboveMode: Bool {
+            guard let leadCard = playedCards.first else { return false }
+            guard leadCard.card.isJoker else { return false }
+
+            switch leadCard.jokerLeadDeclaration {
+            case .above:
+                return true
+            case .wish, .takes, .none:
+                return false
+            }
+        }
+
+        private func hasSuit(_ suit: Suit, in hand: [Card]) -> Bool {
+            return hand.contains { $0.suit == suit }
+        }
+
+        private func isHighestCard(_ card: Card, of suit: Suit, in hand: [Card]) -> Bool {
+            guard case .regular(_, let cardRank) = card else { return false }
+
+            let highestRank = hand
+                .compactMap { handCard -> Rank? in
+                    guard case .regular(let handSuit, let handRank) = handCard, handSuit == suit else {
+                        return nil
+                    }
+                    return handRank
+                }
+                .max()
+
+            return highestRank == cardRank
+        }
     }
 
     private let tuning: BotTuning

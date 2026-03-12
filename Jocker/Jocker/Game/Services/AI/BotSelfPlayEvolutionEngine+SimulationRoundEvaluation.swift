@@ -199,119 +199,119 @@ extension BotSelfPlayEvolutionEngine {
         var trickLeader = normalizedPlayerIndex(dealer + 1, playerCount: playerCount)
 
         for trickIndex in 0..<cardsInRound {
-            let trickNode = TrickNode(rendersCards: false)
+            autoreleasepool {
+                var trick = BotTurnCardHeuristicsService.TrickSnapshot(playedCards: [])
 
-            for offset in 0..<playerCount {
-                let player = normalizedPlayerIndex(trickLeader + offset, playerCount: playerCount)
-                let playerHand = mutableHands[player]
+                for offset in 0..<playerCount {
+                    let player = normalizedPlayerIndex(trickLeader + offset, playerCount: playerCount)
+                    let playerHand = mutableHands[player]
 
-                guard !playerHand.isEmpty else { continue }
+                    guard !playerHand.isEmpty else { continue }
 
-                let strategyMove = turnServices[player].makeTurnDecision(
-                    context: .init(
-                        handCards: playerHand,
-                        trickNode: trickNode,
-                        trump: trump,
-                        bid: bids[player],
-                        tricksTaken: tricksTaken[player],
-                        cardsInRound: cardsInRound,
-                        playerCount: playerCount,
-                        roundState: .init(
-                            bids: bids,
-                            tricksTaken: tricksTaken,
-                            isBlindBid: Array(repeating: false, count: playerCount)
-                        ),
-                        actingPlayerIndex: player,
-                        completedTricksInRound: completedTricksInRound
+                    let strategyMove = turnServices[player].makeTurnDecision(
+                        context: .init(
+                            handCards: playerHand,
+                            trick: trick,
+                            trump: trump,
+                            bid: bids[player],
+                            tricksTaken: tricksTaken[player],
+                            cardsInRound: cardsInRound,
+                            playerCount: playerCount,
+                            roundState: .init(
+                                bids: bids,
+                                tricksTaken: tricksTaken,
+                                isBlindBid: Array(repeating: false, count: playerCount)
+                            ),
+                            actingPlayerIndex: player,
+                            completedTricksInRound: completedTricksInRound
+                        )
                     )
-                )
 
-                let move: (card: Card, decision: JokerPlayDecision)
-                if let strategyMove {
-                    move = (strategyMove.card, strategyMove.jokerDecision)
-                } else if let fallbackMove = fallbackMove(
-                    hand: playerHand,
-                    trickNode: trickNode,
-                    trump: trump
-                ) {
-                    move = fallbackMove
-                } else {
-                    continue
-                }
-
-                if isNonFinalLeadWishJokerMove(
-                    move: move,
-                    trickNode: trickNode,
-                    trickIndex: trickIndex,
-                    cardsInRound: cardsInRound
-                ) {
-                    nonFinalLeadWishCounts[player] += 1
-                }
-
-                let isLeadMove = trickNode.playedCards.isEmpty
-                if move.card.isJoker {
-                    totalJokerPlayCounts[player] += 1
-                    if trickIndex + 1 < cardsInRound {
-                        earlyJokerPlayCounts[player] += 1
+                    let move: (card: Card, decision: JokerPlayDecision)
+                    if let strategyMove {
+                        move = (strategyMove.card, strategyMove.jokerDecision)
+                    } else if let fallbackMove = fallbackMove(
+                        hand: playerHand,
+                        trick: trick,
+                        trump: trump
+                    ) {
+                        move = fallbackMove
+                    } else {
+                        continue
                     }
-                    if isLeadMove, move.decision.leadDeclaration == .wish {
-                        totalWishLeadDeclarationCounts[player] += 1
-                    }
-                }
 
-                if let removeIndex = mutableHands[player].firstIndex(of: move.card) {
-                    mutableHands[player].remove(at: removeIndex)
-                } else if let fallbackCard = mutableHands[player].first {
-                    let isLeadFallback = trickNode.playedCards.isEmpty
-                    if fallbackCard.isJoker {
+                    if isNonFinalLeadWishJokerMove(
+                        move: move,
+                        trick: trick,
+                        trickIndex: trickIndex,
+                        cardsInRound: cardsInRound
+                    ) {
+                        nonFinalLeadWishCounts[player] += 1
+                    }
+
+                    let isLeadMove = trick.playedCards.isEmpty
+                    if move.card.isJoker {
                         totalJokerPlayCounts[player] += 1
                         if trickIndex + 1 < cardsInRound {
                             earlyJokerPlayCounts[player] += 1
                         }
-                        if isLeadFallback {
+                        if isLeadMove, move.decision.leadDeclaration == .wish {
                             totalWishLeadDeclarationCounts[player] += 1
                         }
                     }
-                    mutableHands[player].removeFirst()
-                    _ = trickNode.playCard(
-                        fallbackCard,
+
+                    if let removeIndex = mutableHands[player].firstIndex(of: move.card) {
+                        mutableHands[player].remove(at: removeIndex)
+                    } else if let fallbackCard = mutableHands[player].first {
+                        let isLeadFallback = trick.playedCards.isEmpty
+                        if fallbackCard.isJoker {
+                            totalJokerPlayCounts[player] += 1
+                            if trickIndex + 1 < cardsInRound {
+                                earlyJokerPlayCounts[player] += 1
+                            }
+                            if isLeadFallback {
+                                totalWishLeadDeclarationCounts[player] += 1
+                            }
+                        }
+                        mutableHands[player].removeFirst()
+                        trick = trick.appendingPlayedCard(
+                            fallbackCard,
+                            fromPlayer: player + 1,
+                            jokerPlayStyle: .faceUp,
+                            jokerLeadDeclaration: fallbackCard.isJoker && trick.playedCards.isEmpty
+                                ? .wish
+                                : nil
+                        )
+                        continue
+                    } else {
+                        continue
+                    }
+
+                    trick = trick.appendingPlayedCard(
+                        move.card,
                         fromPlayer: player + 1,
-                        jokerPlayStyle: .faceUp,
-                        jokerLeadDeclaration: fallbackCard.isJoker && trickNode.playedCards.isEmpty
-                            ? .wish
-                            : nil,
-                        animated: false
+                        jokerPlayStyle: move.decision.style,
+                        jokerLeadDeclaration: move.decision.leadDeclaration
                     )
-                    continue
-                } else {
-                    continue
                 }
 
-                _ = trickNode.playCard(
-                    move.card,
-                    fromPlayer: player + 1,
-                    jokerPlayStyle: move.decision.style,
-                    jokerLeadDeclaration: move.decision.leadDeclaration,
-                    animated: false
-                )
-            }
+                let winner = TrickTakingResolver.winnerPlayerIndex(
+                    playedCards: trick.playedCards,
+                    trump: trump
+                ) ?? trickLeader
 
-            let winner = TrickTakingResolver.winnerPlayerIndex(
-                playedCards: trickNode.playedCards,
-                trump: trump
-            ) ?? trickLeader
-
-            tricksTaken[winner] += 1
-            completedTricksInRound.append(trickNode.playedCards)
-            if
-                let winnerMove = trickNode.playedCards.first(where: { $0.playerIndex == winner + 1 }),
-                winnerMove.card.isJoker,
-                winnerMove.jokerLeadDeclaration == .wish,
-                trickNode.playedCards.first?.playerIndex == winner + 1
-            {
-                winningWishLeadDeclarationCounts[winner] += 1
+                tricksTaken[winner] += 1
+                completedTricksInRound.append(trick.playedCards)
+                if
+                    let winnerMove = trick.playedCards.first(where: { $0.playerIndex == winner + 1 }),
+                    winnerMove.card.isJoker,
+                    winnerMove.jokerLeadDeclaration == .wish,
+                    trick.playedCards.first?.playerIndex == winner + 1
+                {
+                    winningWishLeadDeclarationCounts[winner] += 1
+                }
+                trickLeader = winner
             }
-            trickLeader = winner
         }
 
         return RoundPlayOutcome(
@@ -364,13 +364,13 @@ extension BotSelfPlayEvolutionEngine {
 
     private static func isNonFinalLeadWishJokerMove(
         move: (card: Card, decision: JokerPlayDecision),
-        trickNode: TrickNode,
+        trick: BotTurnCardHeuristicsService.TrickSnapshot,
         trickIndex: Int,
         cardsInRound: Int
     ) -> Bool {
         guard move.card.isJoker else { return false }
         guard move.decision.style == .faceUp else { return false }
-        guard trickNode.playedCards.isEmpty else { return false }
+        guard trick.playedCards.isEmpty else { return false }
         guard trickIndex < cardsInRound - 1 else { return false }
         guard case .some(.wish) = move.decision.leadDeclaration else { return false }
         return true
@@ -378,18 +378,18 @@ extension BotSelfPlayEvolutionEngine {
 
     private static func fallbackMove(
         hand: [Card],
-        trickNode: TrickNode,
+        trick: BotTurnCardHeuristicsService.TrickSnapshot,
         trump: Suit?
     ) -> (card: Card, decision: JokerPlayDecision)? {
         guard !hand.isEmpty else { return nil }
 
         let legalCard = hand.first { card in
-            trickNode.canPlayCard(card, fromHand: hand, trump: trump)
+            trick.canPlayCard(card, fromHand: hand, trump: trump)
         } ?? hand[0]
 
         let decision: JokerPlayDecision
         if legalCard.isJoker {
-            decision = trickNode.playedCards.isEmpty ? .defaultLead : .defaultNonLead
+            decision = trick.playedCards.isEmpty ? .defaultLead : .defaultNonLead
         } else {
             decision = .defaultNonLead
         }
