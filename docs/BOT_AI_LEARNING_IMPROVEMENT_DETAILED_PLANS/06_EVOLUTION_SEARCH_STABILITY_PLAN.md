@@ -2,11 +2,19 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.5 / приоритет P2  
 **Порядок выполнения:** 6  
-**Предусловия:** завершены этапы 01, 03 и 05
+**Предусловия:** завершены этапы 01, 03 и 05  
+**Статус:** не начат  
+**Статус gate:** diversity telemetry, stagnation detection, adaptive mutation, immigrants и restart отсутствуют
 
 ## Цель
 
 Повысить устойчивость self-play evolution через измерение diversity, adaptive mutation, random immigrants и controlled restart, не вводя speciation на этой стадии.
+
+## Статус на 2026-03-13
+
+- В текущем engine есть только базовые `mutationChance` / `mutationMagnitude` и early stopping; stage-06 telemetry и механизмы устойчивости не добавлены.
+- По коду и скриптам отсутствуют поля `stagnationWindow`, `minimumMeaningfulImprovement`, `baseMutationRate`, `immigrantRatio`, `eliteArchive` и связанный progress/reporting.
+- Machine-readable артефактов для diversity/stagnation telemetry тоже нет.
 
 ## Шаги выполнения
 

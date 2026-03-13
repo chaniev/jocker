@@ -16,6 +16,12 @@
 - `Makefile`, baseline harness и compare harness используют один и тот же канонический путь запуска;
 - минимальные проверки pipeline выполняются автоматически.
 
+## Статус на 2026-03-13
+
+- Статус закрытия этапа подтверждён повторно: `scripts/run_training_pipeline_smoke.sh` проходит полностью.
+- Smoke-путь по-прежнему покрывает `baselineOnly`, 1-generation evolution и tiny parallel run с `--max-parallel-evaluations 2`.
+- Checked-in runner остаётся в `JockerSelfPlayTools`; heredoc-генерации `main.swift` в shell-скриптах нет.
+
 ## Шаги выполнения
 
 ### 1. Зафиксировать текущее поведение конфигурации тестами

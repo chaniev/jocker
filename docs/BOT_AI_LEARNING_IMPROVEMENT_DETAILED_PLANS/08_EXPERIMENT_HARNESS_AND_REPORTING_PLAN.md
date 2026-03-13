@@ -2,11 +2,20 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.8 / приоритет P3  
 **Порядок выполнения:** 8  
-**Предусловия:** завершён этап 01; этапы 02-07 стабилизированы
+**Предусловия:** завершён этап 01; этапы 02-07 стабилизированы  
+**Статус:** не начат в целевом виде  
+**Статус gate:** shell-summary и markdown-артефакты есть, но versioned JSON/CSV contract, guardrail chain и единый experiment workflow отсутствуют
 
 ## Цель
 
 Сделать experiment workflow воспроизводимым, машинно-читаемым и единообразным для baseline, training, compare и post-training regression checks.
+
+## Статус на 2026-03-13
+
+- `scripts/run_bot_baseline_snapshot.sh` и `scripts/run_bot_ab_comparison_snapshot.sh` уже дают воспроизводимые `summary.txt`, `*-metrics.txt` и `comparison-table.md`; compare-profile по умолчанию включает training и holdout seeds.
+- Текущие scripts всё ещё парсят human-readable log как источник правды; `summary.json`, `per-seed-metrics.json`, `comparison.json`, `metrics.csv` и `schemaVersion` для self-play артефактов отсутствуют.
+- Нет Swift `Codable`-контракта для experiment artifacts, tests на него и единого workflow `baseline -> training -> compare -> guardrails`.
+- Post-training chaining `compare -> joker pack -> stage6b pack` в общий статус run пока не встроен.
 
 ## Шаги выполнения
 

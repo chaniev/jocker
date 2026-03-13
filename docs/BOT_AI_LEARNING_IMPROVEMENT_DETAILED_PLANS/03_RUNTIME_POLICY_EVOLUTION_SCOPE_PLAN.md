@@ -2,11 +2,22 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.3 / приоритет P1  
 **Порядок выполнения:** 3  
-**Предусловия:** завершены этапы 01 и 02
+**Предусловия:** завершены этапы 01 и 02  
+**Статус:** реализован по коду; validation gate открыт  
+**Статус gate:** шаги 1-8 закрыты; шаг 9 остаётся открытым до отдельного compare `old scope -> critical runtimePolicy scope -> full scope` и holdout-подтверждения
 
 ## Цель
 
 Расширить genome self-play так, чтобы он тюнинговал основные runtime policy-кластеры бота через ограниченный набор групповых multipliers, а не только текущий узкий subset `turnStrategy`/`bidding`/`trumpSelection`.
+
+## Статус на 2026-03-13
+
+- `BotRuntimePolicy` и `BotTuning` канонизированы: preset-код разнесён по секциям, `BotRuntimePolicy.Bidding` хранит nested policy-структуры, `BotTuning` собирается от `hard` baseline через patch-функции.
+- `RuntimePolicyEvolutionPatch`, runtime genes, scope flags, bounds, identity semantics, агрегация и runtime diff/patch reporting реализованы и покрыты тестами/summary-выводом runner.
+- `scripts/run_training_pipeline_smoke.sh` проходит и подтверждает публикацию runtime gene / patch / diff артефактов в текущем состоянии репозитория.
+- Для шага 9 добавлен отдельный validation harness `scripts/run_stage3_runtime_scope_validation.sh`, который прогоняет `old-scope`, `critical-runtime` и gated `full-scope` через общий compare workflow и собирает consolidated summary.
+- Smoke-валидация harness уже показывает нужную развилку: `critical-runtime` проходит holdout gate относительно `old-scope`, а `full-scope` в smoke-профиле уступает `critical-runtime` по holdout `finalFitness`.
+- Не закрыта финальная валидация шага 9: в canonical workflow по умолчанию активны только `ranking`, `rollout` и `opponentModeling`, а `endgame` и `jokerDeclaration` остаются default-off до отдельного holdout-решения.
 
 ## Шаги выполнения
 

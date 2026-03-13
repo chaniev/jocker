@@ -2,7 +2,9 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.2 / приоритет P1  
 **Порядок выполнения:** 2  
-**Предусловия:** завершён этап 01
+**Предусловия:** завершён этап 01  
+**Статус:** реализован по коду; validation gate открыт  
+**Статус gate:** шаги 1-5 закрыты, шаг 6 остаётся открытым до фиксации положительного holdout по `finalFitness`
 
 ## Цель
 
@@ -12,10 +14,12 @@
 - guardrail-штрафы;
 - диагностический breakdown причин победы кандидата.
 
-## Статус на 2026-03-07
+## Статус на 2026-03-13
 
-- Кодовая реализация шагов 1-5 и infrastructure-части шага 6 завершена.
-- Финальный validation gate по шагу 6 всё ещё зависит от результатов holdout A/B: smoke-run уже публикует нужные артефакты, но положительный holdout по `finalFitness` пока не подтверждён.
+- В `BotSelfPlayEvolutionEngine+Fitness.swift` реализованы раздельные `PrimaryFitnessWeights`, `GuardrailPenaltyWeights`, `GuardrailThresholds` и quartet `legacyFitness/primaryFitness/guardrailPenalty/finalFitness`.
+- `SimulationMetricsAccumulator`, training runner, baseline harness и compare harness публикуют новые fitness-компоненты и связанные guardrail-метрики.
+- Compare workflow уже разделяет training и holdout A/B и извлекает effect-size для `legacyFitness`, `primaryFitness`, `guardrailPenalty` и `finalFitness`.
+- Финальный validation gate всё ещё открыт: в документации нет зафиксированного закрывающего holdout-результата, подтверждающего положительный эффект новой схемы по `finalFitness`.
 
 ## Шаги выполнения
 

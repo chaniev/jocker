@@ -2,11 +2,20 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.6 / приоритет P2  
 **Порядок выполнения:** 5  
-**Предусловия:** завершены этапы 01 и 03
+**Предусловия:** завершены этапы 01 и 03  
+**Статус:** реализован  
+**Статус gate:** код и automation закрыты; для повторной формальной фиксации достаточно свежего benchmark summary из `scripts/run_stage5_parallel_benchmark.sh`
 
 ## Цель
 
 Сократить wall-clock время обучения за счёт параллельной оценки кандидатов, сохранив детерминизм, повторяемость результатов и читаемый summary.
+
+## Статус на 2026-03-13
+
+- Structured concurrency, `maxParallelEvaluations`, детерминированная seed derivation, локальные worker accumulators и фиксированный merge-порядок реализованы в engine.
+- Unit tests на parity sequential/parallel и bounds присутствуют; benchmark harness и `make stage5-benchmark` заведены.
+- `scripts/run_training_pipeline_smoke.sh` повторно подтверждает живой parallel path (`--max-parallel-evaluations 2`) в текущем состоянии репозитория.
+- Свежий Stage-05 benchmark в рамках этой ревизии не прогонялся; при необходимости достаточно запустить штатный benchmark script и сослаться на `summary.txt`.
 
 ## Шаги выполнения
 

@@ -2,11 +2,20 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.4 / приоритет P1  
 **Порядок выполнения:** 4  
-**Предусловия:** завершены этапы 01 и 03
+**Предусловия:** завершены этапы 01 и 03  
+**Статус:** реализован по коду; validation gate открыт частично  
+**Статус gate:** шаги 1-5 закрыты; шаг 6 частично закрыт через deterministic guardrails pack, но self-play holdout и включение `tunePhasePolicy` в canonical profile пока не подтверждены
 
 ## Цель
 
 Добавить фазовые multipliers в уже существующие policy-кластеры и сервисы runtime AI так, чтобы бот менял давление, rollout, blind-aggression и joker-spend в зависимости от прогресса блока.
+
+## Статус на 2026-03-13
+
+- В коде есть единый `BotBlockPhase` и `PhaseMultipliers`; фазовые коэффициенты встроены в ranking, rollout, joker declaration и blind policy.
+- Профильные runtime-сервисы (`BlockPlanResolver`, `BotTurnRolloutService`, `JokerDeclarationAdjuster`, `BotBlindBidPolicy`) читают фазовые multipliers напрямую из канонических policy-секций.
+- Phase-related genes и флаг `tunePhasePolicy` уже раскрыты в genome / patch-layer / runner summary.
+- `scripts/run_stage4_phase_guardrails.sh` оформляет 5 scenario families и детерминированно проверяет baseline/candidate expectations, но отдельного self-play holdout summary для phase-enabled training пока нет.
 
 ## Шаги выполнения
 

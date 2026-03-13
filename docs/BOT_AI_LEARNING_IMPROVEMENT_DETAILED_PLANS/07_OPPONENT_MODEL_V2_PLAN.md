@@ -2,11 +2,20 @@
 
 **Источник:** `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, пункт 4.7 / приоритет P2  
 **Порядок выполнения:** 7  
-**Предусловия:** завершены этапы 01, 03 и 04
+**Предусловия:** завершены этапы 01, 03 и 04  
+**Статус:** не начат в целевом виде  
+**Статус gate:** существует только MVP foundation уровня 6a/6b; v2 model, match-level memory, confidence/decay и обучение новых сигналов не реализованы
 
 ## Цель
 
 Расширить opponent model до версии 2, добавив match-level память, confidence-gating и отдельные сигналы для joker/premium-стиля соперников, и встроить эти сигналы в каноническую opponent-modeling policy.
+
+## Статус на 2026-03-13
+
+- `BotOpponentModel` по-прежнему хранит только block-level `snapshots` с простыми rate-метриками (`blindBidRate`, `exactBidRate`, `overbidRate`, `underbidRate`, `averageBidAggression`).
+- `BotMatchContextBuilder` собирает наблюдения только из текущего блока; match-level память, decay и отдельные joker/premium-style сигналы отсутствуют.
+- `OpponentPressureAdjuster` работает на MVP-style signal без confidence-gating, volatility damping и memory weights.
+- `scripts/run_stage6b_ranking_guardrails.sh` уже страхует текущий MVP/no-evidence path, но это ещё не реализация opponent model v2 из данного плана.
 
 ## Шаги выполнения
 

@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 
-.PHONY: bt train-bot train-bot-final training-pipeline-smoke stage5-benchmark \
+.PHONY: bt train-bot train-bot-final training-pipeline-smoke stage3-scope-validate \
+	stage3-scope-validate-smoke stage3-scope-validate-dry stage3-scope-validate-list stage5-benchmark \
 	legacy-bt-hard-smoke legacy-bt-hard-balanced legacy-bt-hard-battle \
 	legacy-bt-normal-smoke legacy-bt-normal-balanced legacy-bt-normal-battle \
 	legacy-bt-easy-smoke legacy-bt-easy-balanced legacy-bt-easy-battle \
@@ -19,6 +20,7 @@ STAGE6B_RANKING_GUARDRAILS_SCRIPT := ./scripts/run_stage6b_ranking_guardrails.sh
 BOT_BASELINE_SCRIPT := ./scripts/run_bot_baseline_snapshot.sh
 BOT_AB_COMPARE_SCRIPT := ./scripts/run_bot_ab_comparison_snapshot.sh
 TRAINING_PIPELINE_SMOKE_SCRIPT := ./scripts/run_training_pipeline_smoke.sh
+STAGE3_SCOPE_VALIDATION_SCRIPT := ./scripts/run_stage3_runtime_scope_validation.sh
 STAGE5_BENCHMARK_SCRIPT := ./scripts/run_stage5_parallel_benchmark.sh
 SMOKE_ARGS := --population-size 4 --generations 2 --games-per-candidate 4 --rounds-per-game 3 --player-count 4 --cards-min 2 --cards-max 6 --elite-count 1 --mutation-chance 0.30 --mutation-magnitude 0.12 --selection-pool-ratio 0.50 --use-full-match-rules false --rotate-candidate-across-seats false --fitness-underbid-loss-weight 0.0
 BALANCED_ARGS := --population-size 12 --generations 12 --games-per-candidate 24 --rounds-per-game 8 --player-count 4 --cards-min 1 --cards-max 9 --elite-count 3 --mutation-chance 0.34 --mutation-magnitude 0.16 --selection-pool-ratio 0.55 --use-full-match-rules false --rotate-candidate-across-seats false --fitness-underbid-loss-weight 0.0
@@ -37,6 +39,18 @@ AB_VALIDATE_BATTLE_ARGS := --ab-validate true --ab-validation-holdout-seed-list 
 
 training-pipeline-smoke:
 	@$(TRAINING_PIPELINE_SMOKE_SCRIPT)
+
+stage3-scope-validate:
+	@$(STAGE3_SCOPE_VALIDATION_SCRIPT)
+
+stage3-scope-validate-smoke:
+	@$(STAGE3_SCOPE_VALIDATION_SCRIPT) --profile smoke
+
+stage3-scope-validate-dry:
+	@$(STAGE3_SCOPE_VALIDATION_SCRIPT) --dry-run
+
+stage3-scope-validate-list:
+	@$(STAGE3_SCOPE_VALIDATION_SCRIPT) --list-config
 
 stage5-benchmark:
 	@$(STAGE5_BENCHMARK_SCRIPT)
