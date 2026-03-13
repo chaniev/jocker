@@ -34,6 +34,7 @@ This document is the source of truth for repository structure and file placement
 │   ├── BOT_AI_TEST_SCENARIOS.md
 │   ├── BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md
 │   ├── CARDS_DOCUMENTATION.md
+│   ├── CODEX_MCP_SKILLS_SETUP.md
 │   ├── CODE_REFACTORING_BACKLOG.md
 │   ├── README_CARDS.md
 │   └── XCODE_INTEGRATION.md
@@ -219,6 +220,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/BOT_AI_FULL_TEST_COVERAGE_PLAN.md`: plan for extending bot-related test coverage (gaps, priorities, and slicing).
 - `docs/BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
+- `docs/CODEX_MCP_SKILLS_SETUP.md`: project-specific Codex setup guide covering recommended MCP servers, curated skills, and ready-to-paste `~/.codex/config.toml` snippets for this Swift/UIKit/SpriteKit repo.
 - `docs/README_CARDS.md`: quick entrypoint/index to card-related documentation.
 - `docs/XCODE_INTEGRATION.md`: how to open/build/test the project in Xcode (schemes, DerivedData, and CI alignment).
 - `docs/CODE_REFACTORING_BACKLOG.md`: codebase refactoring notes and no-behavior-change improvement backlog (maintainability/testability).
