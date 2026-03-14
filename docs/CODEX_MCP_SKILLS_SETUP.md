@@ -50,16 +50,8 @@ Put this into `~/.codex/config.toml` and adjust secrets as needed.
 
 ```toml
 [mcp_servers.github]
-command = "docker"
-args = [
-  "run",
-  "-i",
-  "--rm",
-  "-e",
-  "GITHUB_PERSONAL_ACCESS_TOKEN",
-  "ghcr.io/github/github-mcp-server"
-]
-env = { GITHUB_PERSONAL_ACCESS_TOKEN = "github_pat_replace_me" }
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"
 
 [mcp_servers.xcodebuild]
 command = "npx"
@@ -79,7 +71,7 @@ args = [
 
 Prerequisites:
 
-- Docker for `github`
+- Export `GITHUB_PERSONAL_ACCESS_TOKEN` before starting Codex so `github` can authenticate
 - Node.js/npm for `xcodebuild`
 - `uv`/`uvx` for `serena`
 - Restart Codex after config changes
@@ -91,7 +83,7 @@ From the current OpenAI curated skills catalog, these are the best fit for this 
 - `gh-fix-ci`: useful when GitHub Actions or branch checks fail
 - `gh-address-comments`: useful when iterating on PR review feedback
 - `screenshot`: useful for UI regression checks, modal layout review, and visual validation
-- `security-review`: useful before merging larger refactors or gameplay/serialization changes
+- `security-threat-model`: useful before larger gameplay, persistence, networking, or security-sensitive changes
 - `openai-docs`: useful when Codex or OpenAI API documentation needs to be consulted inside the workflow
 
 ## Skill install command
@@ -104,7 +96,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
   --path skills/.curated/gh-fix-ci \
   --path skills/.curated/gh-address-comments \
   --path skills/.curated/screenshot \
-  --path skills/.curated/security-review \
+  --path skills/.curated/security-threat-model \
   --path skills/.curated/openai-docs
 ```
 
