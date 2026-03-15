@@ -218,6 +218,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/BOT_AI_IMPROVEMENT_PROPOSALS_UNIFIED.md`: unified proposals backlog (best of mapped+consolidated) with runtime gaps taxonomy, metric definitions, and roadmap.
 - `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`: learning-centric proposals for bot improvements (training signal, evaluation, and self-play iteration ideas).
 - `docs/BOT_AI_LEARNING_IMPROVEMENT_DETAILED_PLANS/`: ordered, per-track execution plans derived from `docs/BOT_AI_LEARNING_IMPROVEMENT_PROPOSALS.md`, with dependencies and sequencing aligned to `docs/BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md`.
+- `docs/BOT_AI_LEARNING_IMPROVEMENT_DETAILED_PLANS/03A_STAGE03_UNBLOCK_EXECUTION_PLAN_2026-03-15.md`: short-horizon execution plan for unblocking Stage 03 via selector hardening, a new `medium` validation profile, and a minimal Stage-06 telemetry/stagnation slice before the next canonical rerun.
 - `docs/BOT_AI_FULL_TEST_COVERAGE_PLAN.md`: plan for extending bot-related test coverage (gaps, priorities, and slicing).
 - `docs/BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
