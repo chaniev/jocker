@@ -1112,6 +1112,80 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(decision.rankedScores.first?.option.label, preferred.option.label)
     }
 
+    func testOutputCandidateSelectionDecision_prefersLowerStrengthVariantWhenMetricsTie() {
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "selected_seed_20260222",
+                runtimeGeneSource: "selectedSeed",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.000,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 0.000,
+            primaryUnderbidEffectSize: 0.000
+        )
+        let fullStrength = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260220",
+                runtimeGeneSource: "primaryValidatedSeed_20260220",
+                tuning: tuning,
+                runtimePolicyStrength: 1.0
+            ),
+            primaryFinalFitnessEffectSize: 0.060,
+            primaryWinRateEffectSize: 0.010,
+            primaryScoreDiffEffectSize: 5.000,
+            primaryUnderbidEffectSize: -10.0
+        )
+        let reducedStrength = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260220_patch75",
+                runtimeGeneSource: "primaryValidatedSeed_20260220_patch75",
+                tuning: tuning,
+                runtimePolicyStrength: 0.75
+            ),
+            primaryFinalFitnessEffectSize: 0.060,
+            primaryWinRateEffectSize: 0.010,
+            primaryScoreDiffEffectSize: 5.000,
+            primaryUnderbidEffectSize: -10.0
+        )
+
+        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+            scores: [selected, fullStrength, reducedStrength],
+            selectedSeedLabel: selected.option.label,
+            minimumPrimaryEffectMargin: 0.03
+        )
+
+        XCTAssertEqual(decision.chosen.option.label, reducedStrength.option.label)
+        XCTAssertEqual(decision.rankedScores.first?.option.label, reducedStrength.option.label)
+    }
+
+    func testRuntimePolicyEvolutionPatch_scaledTowardIdentityReducesPatchMagnitude() {
+        let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: 1.20,
+            rankingPremiumScale: 0.80,
+            rankingPenaltyAvoidScale: 1.10,
+            jokerDeclarationScale: 1.00,
+            rolloutActivationScale: 0.90,
+            rolloutAdjustmentScale: 1.25,
+            endgameActivationScale: 1.00,
+            endgameAdjustmentScale: 1.00,
+            opponentPressureScale: 1.30,
+            phaseRankingScale: 0.85,
+            phaseRolloutScale: 1.15,
+            phaseJokerScale: 1.00,
+            phaseBlindScale: 1.00
+        )
+
+        let scaled = patch.scaledTowardIdentity(strength: 0.5)
+
+        XCTAssertEqual(scaled.rankingMatchCatchUpScale, 1.10, accuracy: 0.000_001)
+        XCTAssertEqual(scaled.rankingPremiumScale, 0.90, accuracy: 0.000_001)
+        XCTAssertEqual(scaled.rolloutAdjustmentScale, 1.125, accuracy: 0.000_001)
+        XCTAssertEqual(scaled.opponentPressureScale, 1.15, accuracy: 0.000_001)
+        XCTAssertEqual(scaled.phaseRankingScale, 0.925, accuracy: 0.000_001)
+    }
+
     func testSelfPlayEvolution_reportsDiversityTelemetryPerGeneration() {
         let result = ToolBotTuning.evolveViaSelfPlay(
             baseTuning: ToolBotTuning(difficulty: .hard),

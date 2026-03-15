@@ -19,6 +19,9 @@ struct BotTrainingRunner {
         case runtimePolicyOnly = "runtimePolicy-only"
     }
 
+    private static let runtimePolicyStrengthRefinementWindow = 0.03
+    private static let runtimePolicyStrengthRefinementStrengths = [0.50, 0.75]
+
     struct Invocation {
         var difficulty: BotDifficulty = .hard
         var seed: UInt64 = 20_260_220
@@ -124,6 +127,19 @@ struct BotTrainingRunner {
         let label: String
         let runtimeGeneSource: String
         let tuning: BotTuning
+        let runtimePolicyStrength: Double
+
+        init(
+            label: String,
+            runtimeGeneSource: String,
+            tuning: BotTuning,
+            runtimePolicyStrength: Double = 1.0
+        ) {
+            self.label = label
+            self.runtimeGeneSource = runtimeGeneSource
+            self.tuning = tuning
+            self.runtimePolicyStrength = runtimePolicyStrength
+        }
     }
 
     struct OutputCandidateSelectionScore {
@@ -634,8 +650,20 @@ struct BotTrainingRunner {
         )
         print("outputCandidateSelectionStrategy=\(outputCandidateSelection.strategy)")
         print("outputCandidateSource=\(outputCandidateSelection.chosen.label)")
+        print(
+            "outputCandidateRuntimePolicyStrength=" +
+            "\(fmt(outputCandidateSelection.chosen.runtimePolicyStrength))"
+        )
         print("outputCandidatePreferredSource=\(outputCandidateSelection.preferred.label)")
+        print(
+            "outputCandidatePreferredRuntimePolicyStrength=" +
+            "\(fmt(outputCandidateSelection.preferred.runtimePolicyStrength))"
+        )
         print("outputCandidatePreferredBaseline=\(outputCandidateSelection.baseline.label)")
+        print(
+            "outputCandidateBaselineRuntimePolicyStrength=" +
+            "\(fmt(outputCandidateSelection.baseline.runtimePolicyStrength))"
+        )
         print(
             "outputCandidateMinimumPrimaryEffectMargin=" +
             "\(fmt(invocation.outputCandidateMinimumPrimaryEffectMargin))"
@@ -646,6 +674,10 @@ struct BotTrainingRunner {
             print("outputCandidateRank.\(rankedScore.option.label)=\(index + 1)")
         }
         for score in outputCandidateSelection.scores {
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "runtimePolicyStrength=\(fmt(score.option.runtimePolicyStrength))"
+            )
             print(
                 "outputCandidateOption.\(score.option.label)." +
                 "abPrimaryFinalFitnessEffectSize=\(fmt(score.primaryFinalFitnessEffectSize))"
@@ -1329,7 +1361,7 @@ struct BotTrainingRunner {
             aggregateOption: aggregateOption,
             seedRuns: seedRuns
         )
-        let scores = candidateOptions.map { option in
+        let rawScores = candidateOptions.map { option in
             makeOutputCandidateSelectionScore(
                 option: option,
                 primarySeeds: invocation.abValidationPrimarySeeds,
@@ -1337,7 +1369,7 @@ struct BotTrainingRunner {
                 config: abValidationConfig
             )
         }
-        guard !scores.isEmpty else {
+        guard !rawScores.isEmpty else {
             return OutputCandidateSelection(
                 strategy: "ensembleAggregate",
                 chosen: aggregateOption,
@@ -1349,13 +1381,26 @@ struct BotTrainingRunner {
                 fallbackReason: "noScores"
             )
         }
+        let refinedScores = refinedRuntimePolicyOutputCandidateScores(
+            invocation: invocation,
+            scores: rawScores,
+            selectedSeedLabel: selectedSeedOption.label,
+            baseTuning: baseTuning,
+            config: abValidationConfig
+        )
+        let scores = mergeOutputCandidateScores(
+            primary: rawScores,
+            refined: refinedScores
+        )
         let decision = resolveOutputCandidateSelectionDecision(
             scores: scores,
             selectedSeedLabel: selectedSeedOption.label,
             minimumPrimaryEffectMargin: invocation.outputCandidateMinimumPrimaryEffectMargin
         )
         return OutputCandidateSelection(
-            strategy: "runtimePolicyPrimaryAB",
+            strategy: refinedScores.isEmpty
+                ? "runtimePolicyPrimaryAB"
+                : "runtimePolicyPrimaryAB+strengthRefinement",
             chosen: decision.chosen.option,
             preferred: decision.preferred.option,
             baseline: decision.baseline.option,
@@ -1398,6 +1443,32 @@ struct BotTrainingRunner {
             )
         }
         return options
+    }
+
+    private static func makeRuntimePolicyStrengthAdjustedOption(
+        from option: OutputCandidateOption,
+        difficulty: BotDifficulty,
+        strength: Double
+    ) -> OutputCandidateOption {
+        let clampedStrength = clamp(strength, to: 0.0...1.0)
+        guard clampedStrength < (1.0 - 1e-9) else { return option }
+
+        let baselinePolicy = BotRuntimePolicy.preset(for: difficulty)
+        let scaledPatch = BotSelfPlayEvolutionEngine.runtimePolicyPatch(
+            from: option.tuning.runtimePolicy,
+            relativeTo: baselinePolicy
+        ).scaledTowardIdentity(strength: clampedStrength)
+        let adjustedTuning = replacingRuntimePolicy(
+            scaledPatch.apply(to: baselinePolicy),
+            in: option.tuning
+        )
+        let strengthSuffix = runtimePolicyStrengthSuffix(clampedStrength)
+        return OutputCandidateOption(
+            label: "\(option.label)_patch\(strengthSuffix)",
+            runtimeGeneSource: "\(option.runtimeGeneSource)_patch\(strengthSuffix)",
+            tuning: adjustedTuning,
+            runtimePolicyStrength: clampedStrength
+        )
     }
 
     static func resolveOutputCandidateSelectionDecision(
@@ -1492,12 +1563,34 @@ struct BotTrainingRunner {
             return lhs.primaryUnderbidEffectSize < rhs.primaryUnderbidEffectSize
         }
 
+        if abs(lhs.option.runtimePolicyStrength - rhs.option.runtimePolicyStrength) > epsilon {
+            return lhs.option.runtimePolicyStrength < rhs.option.runtimePolicyStrength
+        }
         let lhsIsAggregate = lhs.option.label == "ensemble_aggregate"
         let rhsIsAggregate = rhs.option.label == "ensemble_aggregate"
         if lhsIsAggregate != rhsIsAggregate {
             return lhsIsAggregate
         }
         return lhs.option.label < rhs.option.label
+    }
+
+    private static func replacingRuntimePolicy(
+        _ runtimePolicy: BotRuntimePolicy,
+        in tuning: BotTuning
+    ) -> BotTuning {
+        BotTuning(
+            difficulty: tuning.difficulty,
+            turnStrategy: tuning.turnStrategy,
+            bidding: tuning.bidding,
+            trumpSelection: tuning.trumpSelection,
+            runtimePolicy: runtimePolicy,
+            timing: tuning.timing
+        )
+    }
+
+    private static func runtimePolicyStrengthSuffix(_ strength: Double) -> String {
+        let percentage = Int((strength * 100.0).rounded())
+        return String(format: "%02d", percentage)
     }
 
     private static func selectedSeedSeed(
@@ -1694,6 +1787,65 @@ struct BotTrainingRunner {
             return .generationCompleted
         case .finished:
             return .finished
+        }
+    }
+
+    private static func refinedRuntimePolicyOutputCandidateScores(
+        invocation: Invocation,
+        scores: [OutputCandidateSelectionScore],
+        selectedSeedLabel: String,
+        baseTuning: BotTuning,
+        config: BotTuning.SelfPlayEvolutionConfig
+    ) -> [OutputCandidateSelectionScore] {
+        let rankedScores = scores.sorted { lhs, rhs in
+            isBetterOutputCandidateScore(lhs, than: rhs)
+        }
+        guard let preferred = rankedScores.first else { return [] }
+        guard preferred.option.label != selectedSeedLabel else { return [] }
+
+        let refinementWindow = max(
+            invocation.outputCandidateMinimumPrimaryEffectMargin,
+            runtimePolicyStrengthRefinementWindow
+        )
+        let threshold = preferred.primaryFinalFitnessEffectSize - refinementWindow
+        let candidatesToRefine = rankedScores.filter { score in
+            score.option.label != selectedSeedLabel &&
+                score.option.runtimePolicyStrength >= (1.0 - 1e-9) &&
+                score.primaryFinalFitnessEffectSize >= threshold
+        }
+        guard !candidatesToRefine.isEmpty else { return [] }
+
+        return candidatesToRefine.flatMap { score in
+            runtimePolicyStrengthRefinementStrengths.map { strength in
+                makeOutputCandidateSelectionScore(
+                    option: makeRuntimePolicyStrengthAdjustedOption(
+                        from: score.option,
+                        difficulty: invocation.difficulty,
+                        strength: strength
+                    ),
+                    primarySeeds: invocation.abValidationPrimarySeeds,
+                    baseTuning: baseTuning,
+                    config: config
+                )
+            }
+        }
+    }
+
+    private static func mergeOutputCandidateScores(
+        primary: [OutputCandidateSelectionScore],
+        refined: [OutputCandidateSelectionScore]
+    ) -> [OutputCandidateSelectionScore] {
+        guard !refined.isEmpty else { return primary }
+
+        var mergedByLabel = [String: OutputCandidateSelectionScore]()
+        for score in primary {
+            mergedByLabel[score.option.label] = score
+        }
+        for score in refined {
+            mergedByLabel[score.option.label] = score
+        }
+        return mergedByLabel.values.sorted { lhs, rhs in
+            isBetterOutputCandidateScore(lhs, than: rhs)
         }
     }
 

@@ -405,6 +405,32 @@ extension BotSelfPlayEvolutionEngine {
             )
         }
 
+        func scaledTowardIdentity(strength rawStrength: Double) -> RuntimePolicyEvolutionPatch {
+            let strength = BotSelfPlayEvolutionEngine.clamp(rawStrength, to: 0.0...1.0)
+            guard strength > 0.0 else { return .identity }
+            guard abs(strength - 1.0) > 1e-9 else { return self }
+
+            func scaled(_ value: Double) -> Double {
+                1.0 + ((value - 1.0) * strength)
+            }
+
+            return RuntimePolicyEvolutionPatch(
+                rankingMatchCatchUpScale: scaled(rankingMatchCatchUpScale),
+                rankingPremiumScale: scaled(rankingPremiumScale),
+                rankingPenaltyAvoidScale: scaled(rankingPenaltyAvoidScale),
+                jokerDeclarationScale: scaled(jokerDeclarationScale),
+                rolloutActivationScale: scaled(rolloutActivationScale),
+                rolloutAdjustmentScale: scaled(rolloutAdjustmentScale),
+                endgameActivationScale: scaled(endgameActivationScale),
+                endgameAdjustmentScale: scaled(endgameAdjustmentScale),
+                opponentPressureScale: scaled(opponentPressureScale),
+                phaseRankingScale: scaled(phaseRankingScale),
+                phaseRolloutScale: scaled(phaseRolloutScale),
+                phaseJokerScale: scaled(phaseJokerScale),
+                phaseBlindScale: scaled(phaseBlindScale)
+            )
+        }
+
         func apply(to baseline: BotRuntimePolicy) -> BotRuntimePolicy {
             var ranking = baseline.ranking
 

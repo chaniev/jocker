@@ -19,6 +19,8 @@
 - Smoke-валидация harness уже показывает нужную развилку: `critical-runtime` проходит holdout gate относительно `old-scope`, а `full-scope` в smoke-профиле уступает `critical-runtime` по holdout `finalFitness`.
 - Не закрыта финальная валидация шага 9: в canonical workflow по умолчанию активны только `ranking`, `rollout` и `opponentModeling`, а `endgame` и `jokerDeclaration` остаются default-off до отдельного holdout-решения.
 - Для повторных long-run validation вводится промежуточный `medium` profile: canonical `compare-v1` должен запускаться только если `critical-runtime` уже даёт положительный holdout и положительный `deltaVsOld` на `medium`, а selector не переключает output candidate по margin `< 0.03`.
+- Повторный `medium` run после selector hardening и runtime-policy strength refinement (`2026-03-15`, run root `.derivedData/stage3-runtime-scope-runs/20260315-140905/`) всё ещё не закрыл gate: `critical-runtime holdout finalFitness = -0.036827`, `deltaVsOld = +0.356521`, `full-scope` снова skipped.
+- Фактический вывод после этого rerun: проблема уже не в отсутствии margin/fallback telemetry и не в отсутствии conservative patch variants; следующий цикл Stage 03 должен менять candidate-scoring objective или сам `critical-runtime` patch scope, а не только selector shell.
 
 ## Шаги выполнения
 

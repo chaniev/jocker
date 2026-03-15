@@ -8,14 +8,19 @@
 
 - По коду реализованы:
   - selector hardening для `runtimePolicy-only` output candidate;
+  - runtime-policy strength refinement для top candidate variants (`patch50` / `patch75`) при primary A/B selection;
   - промежуточный `medium` profile и `make stage3-scope-validate-medium`;
   - go/no-go правило перед новым `compare-v1`;
   - diversity telemetry;
   - stagnation detection в log-only режиме.
 - Ещё не закрыто:
-  - повторный `medium` validation run;
+  - положительный `medium` validation run;
   - новый canonical `compare-v1`;
   - полный Xcode test build, который сейчас блокируется внешней compile-ошибкой в app target.
+- Актуальный результат rerun на `2026-03-15`:
+  - `medium` run `.derivedData/stage3-runtime-scope-runs/20260315-140905/` завершился с `critical-runtime holdout finalFitness = -0.036827`;
+  - selector действительно расширил option set (`runtimePolicyPrimaryAB+strengthRefinement`), но всё равно выбрал full-strength `seed_20260222`;
+  - conservative variants (`seed_20260222_patch50`, `seed_20260222_patch75`) проиграли уже на primary, поэтому текущий blocker остаётся в качестве самого runtime patch / scoring objective, а не только в selector fallback logic.
 
 ## Исходная точка
 
