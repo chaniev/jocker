@@ -21,6 +21,7 @@ struct BotTrainingRunner {
 
     private static let runtimePolicyStrengthRefinementWindow = 0.03
     private static let runtimePolicyStrengthRefinementStrengths = [0.50, 0.75]
+    private static let runtimePolicyScopeRefinementWindow = 0.03
 
     struct Invocation {
         var difficulty: BotDifficulty = .hard
@@ -128,17 +129,23 @@ struct BotTrainingRunner {
         let runtimeGeneSource: String
         let tuning: BotTuning
         let runtimePolicyStrength: Double
+        let runtimePolicyScopeVariant: String
+        let runtimePolicyActiveGroupCount: Int
 
         init(
             label: String,
             runtimeGeneSource: String,
             tuning: BotTuning,
-            runtimePolicyStrength: Double = 1.0
+            runtimePolicyStrength: Double = 1.0,
+            runtimePolicyScopeVariant: String = "full",
+            runtimePolicyActiveGroupCount: Int = 3
         ) {
             self.label = label
             self.runtimeGeneSource = runtimeGeneSource
             self.tuning = tuning
             self.runtimePolicyStrength = runtimePolicyStrength
+            self.runtimePolicyScopeVariant = runtimePolicyScopeVariant
+            self.runtimePolicyActiveGroupCount = runtimePolicyActiveGroupCount
         }
     }
 
@@ -654,15 +661,39 @@ struct BotTrainingRunner {
             "outputCandidateRuntimePolicyStrength=" +
             "\(fmt(outputCandidateSelection.chosen.runtimePolicyStrength))"
         )
+        print(
+            "outputCandidateRuntimePolicyScopeVariant=" +
+            "\(outputCandidateSelection.chosen.runtimePolicyScopeVariant)"
+        )
+        print(
+            "outputCandidateRuntimePolicyActiveGroupCount=" +
+            "\(outputCandidateSelection.chosen.runtimePolicyActiveGroupCount)"
+        )
         print("outputCandidatePreferredSource=\(outputCandidateSelection.preferred.label)")
         print(
             "outputCandidatePreferredRuntimePolicyStrength=" +
             "\(fmt(outputCandidateSelection.preferred.runtimePolicyStrength))"
         )
+        print(
+            "outputCandidatePreferredRuntimePolicyScopeVariant=" +
+            "\(outputCandidateSelection.preferred.runtimePolicyScopeVariant)"
+        )
+        print(
+            "outputCandidatePreferredRuntimePolicyActiveGroupCount=" +
+            "\(outputCandidateSelection.preferred.runtimePolicyActiveGroupCount)"
+        )
         print("outputCandidatePreferredBaseline=\(outputCandidateSelection.baseline.label)")
         print(
             "outputCandidateBaselineRuntimePolicyStrength=" +
             "\(fmt(outputCandidateSelection.baseline.runtimePolicyStrength))"
+        )
+        print(
+            "outputCandidateBaselineRuntimePolicyScopeVariant=" +
+            "\(outputCandidateSelection.baseline.runtimePolicyScopeVariant)"
+        )
+        print(
+            "outputCandidateBaselineRuntimePolicyActiveGroupCount=" +
+            "\(outputCandidateSelection.baseline.runtimePolicyActiveGroupCount)"
         )
         print(
             "outputCandidateMinimumPrimaryEffectMargin=" +
@@ -677,6 +708,14 @@ struct BotTrainingRunner {
             print(
                 "outputCandidateOption.\(score.option.label)." +
                 "runtimePolicyStrength=\(fmt(score.option.runtimePolicyStrength))"
+            )
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "runtimePolicyScopeVariant=\(score.option.runtimePolicyScopeVariant)"
+            )
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "runtimePolicyActiveGroupCount=\(score.option.runtimePolicyActiveGroupCount)"
             )
             print(
                 "outputCandidateOption.\(score.option.label)." +
@@ -1388,9 +1427,15 @@ struct BotTrainingRunner {
             baseTuning: baseTuning,
             config: abValidationConfig
         )
+        let scopeRefinedScores = scopeRefinedRuntimePolicyOutputCandidateScores(
+            invocation: invocation,
+            scores: rawScores,
+            selectedSeedLabel: selectedSeedOption.label,
+            baseTuning: baseTuning,
+            config: abValidationConfig
+        )
         let scores = mergeOutputCandidateScores(
-            primary: rawScores,
-            refined: refinedScores
+            sets: [rawScores, refinedScores, scopeRefinedScores]
         )
         let decision = resolveOutputCandidateSelectionDecision(
             scores: scores,
@@ -1398,9 +1443,10 @@ struct BotTrainingRunner {
             minimumPrimaryEffectMargin: invocation.outputCandidateMinimumPrimaryEffectMargin
         )
         return OutputCandidateSelection(
-            strategy: refinedScores.isEmpty
-                ? "runtimePolicyPrimaryAB"
-                : "runtimePolicyPrimaryAB+strengthRefinement",
+            strategy: runtimePolicySelectionStrategy(
+                hasStrengthRefinement: !refinedScores.isEmpty,
+                hasScopeRefinement: !scopeRefinedScores.isEmpty
+            ),
             chosen: decision.chosen.option,
             preferred: decision.preferred.option,
             baseline: decision.baseline.option,
@@ -1467,7 +1513,44 @@ struct BotTrainingRunner {
             label: "\(option.label)_patch\(strengthSuffix)",
             runtimeGeneSource: "\(option.runtimeGeneSource)_patch\(strengthSuffix)",
             tuning: adjustedTuning,
-            runtimePolicyStrength: clampedStrength
+            runtimePolicyStrength: clampedStrength,
+            runtimePolicyScopeVariant: option.runtimePolicyScopeVariant,
+            runtimePolicyActiveGroupCount: option.runtimePolicyActiveGroupCount
+        )
+    }
+
+    private static func makeRuntimePolicyScopeAdjustedOption(
+        from option: OutputCandidateOption,
+        difficulty: BotDifficulty,
+        labelSuffix: String,
+        runtimeGeneSuffix: String,
+        keepRanking: Bool,
+        keepRollout: Bool,
+        keepOpponentModeling: Bool
+    ) -> OutputCandidateOption {
+        let baselinePolicy = BotRuntimePolicy.preset(for: difficulty)
+        let maskedPatch = BotSelfPlayEvolutionEngine.runtimePolicyPatch(
+            from: option.tuning.runtimePolicy,
+            relativeTo: baselinePolicy
+        ).maskingRuntimePolicyGroups(
+            keepRanking: keepRanking,
+            keepRollout: keepRollout,
+            keepOpponentModeling: keepOpponentModeling
+        )
+        let adjustedTuning = replacingRuntimePolicy(
+            maskedPatch.apply(to: baselinePolicy),
+            in: option.tuning
+        )
+        let activeGroupCount = [keepRanking, keepRollout, keepOpponentModeling]
+            .filter { $0 }
+            .count
+        return OutputCandidateOption(
+            label: "\(option.label)_\(labelSuffix)",
+            runtimeGeneSource: "\(option.runtimeGeneSource)_\(runtimeGeneSuffix)",
+            tuning: adjustedTuning,
+            runtimePolicyStrength: option.runtimePolicyStrength,
+            runtimePolicyScopeVariant: labelSuffix,
+            runtimePolicyActiveGroupCount: activeGroupCount
         )
     }
 
@@ -1563,6 +1646,9 @@ struct BotTrainingRunner {
             return lhs.primaryUnderbidEffectSize < rhs.primaryUnderbidEffectSize
         }
 
+        if lhs.option.runtimePolicyActiveGroupCount != rhs.option.runtimePolicyActiveGroupCount {
+            return lhs.option.runtimePolicyActiveGroupCount < rhs.option.runtimePolicyActiveGroupCount
+        }
         if abs(lhs.option.runtimePolicyStrength - rhs.option.runtimePolicyStrength) > epsilon {
             return lhs.option.runtimePolicyStrength < rhs.option.runtimePolicyStrength
         }
@@ -1790,6 +1876,22 @@ struct BotTrainingRunner {
         }
     }
 
+    private static func runtimePolicySelectionStrategy(
+        hasStrengthRefinement: Bool,
+        hasScopeRefinement: Bool
+    ) -> String {
+        switch (hasStrengthRefinement, hasScopeRefinement) {
+        case (false, false):
+            return "runtimePolicyPrimaryAB"
+        case (true, false):
+            return "runtimePolicyPrimaryAB+strengthRefinement"
+        case (false, true):
+            return "runtimePolicyPrimaryAB+scopeRefinement"
+        case (true, true):
+            return "runtimePolicyPrimaryAB+strengthRefinement+scopeRefinement"
+        }
+    }
+
     private static func refinedRuntimePolicyOutputCandidateScores(
         invocation: Invocation,
         scores: [OutputCandidateSelectionScore],
@@ -1832,20 +1934,83 @@ struct BotTrainingRunner {
     }
 
     private static func mergeOutputCandidateScores(
-        primary: [OutputCandidateSelectionScore],
-        refined: [OutputCandidateSelectionScore]
+        sets: [[OutputCandidateSelectionScore]]
     ) -> [OutputCandidateSelectionScore] {
-        guard !refined.isEmpty else { return primary }
-
         var mergedByLabel = [String: OutputCandidateSelectionScore]()
-        for score in primary {
-            mergedByLabel[score.option.label] = score
-        }
-        for score in refined {
-            mergedByLabel[score.option.label] = score
+        for scores in sets {
+            for score in scores {
+                mergedByLabel[score.option.label] = score
+            }
         }
         return mergedByLabel.values.sorted { lhs, rhs in
             isBetterOutputCandidateScore(lhs, than: rhs)
+        }
+    }
+
+    private static func scopeRefinedRuntimePolicyOutputCandidateScores(
+        invocation: Invocation,
+        scores: [OutputCandidateSelectionScore],
+        selectedSeedLabel: String,
+        baseTuning: BotTuning,
+        config: BotTuning.SelfPlayEvolutionConfig
+    ) -> [OutputCandidateSelectionScore] {
+        let rankedScores = scores.sorted { lhs, rhs in
+            isBetterOutputCandidateScore(lhs, than: rhs)
+        }
+        guard
+            let preferred = rankedScores.first(where: {
+                $0.option.label != selectedSeedLabel &&
+                    $0.option.runtimePolicyStrength >= (1.0 - 1e-9)
+            })
+        else {
+            return []
+        }
+
+        let threshold = preferred.primaryFinalFitnessEffectSize - runtimePolicyScopeRefinementWindow
+        let candidatesToRefine = rankedScores.filter { score in
+            score.option.label != selectedSeedLabel &&
+                score.option.runtimePolicyStrength >= (1.0 - 1e-9) &&
+                score.primaryFinalFitnessEffectSize >= threshold
+        }
+        guard !candidatesToRefine.isEmpty else { return [] }
+
+        return candidatesToRefine.flatMap { score in
+            [
+                makeRuntimePolicyScopeAdjustedOption(
+                    from: score.option,
+                    difficulty: invocation.difficulty,
+                    labelSuffix: "ranking_rollout",
+                    runtimeGeneSuffix: "rankingRollout",
+                    keepRanking: true,
+                    keepRollout: true,
+                    keepOpponentModeling: false
+                ),
+                makeRuntimePolicyScopeAdjustedOption(
+                    from: score.option,
+                    difficulty: invocation.difficulty,
+                    labelSuffix: "ranking_opponent",
+                    runtimeGeneSuffix: "rankingOpponent",
+                    keepRanking: true,
+                    keepRollout: false,
+                    keepOpponentModeling: true
+                ),
+                makeRuntimePolicyScopeAdjustedOption(
+                    from: score.option,
+                    difficulty: invocation.difficulty,
+                    labelSuffix: "ranking_only",
+                    runtimeGeneSuffix: "rankingOnly",
+                    keepRanking: true,
+                    keepRollout: false,
+                    keepOpponentModeling: false
+                )
+            ].map { option in
+                makeOutputCandidateSelectionScore(
+                    option: option,
+                    primarySeeds: invocation.abValidationPrimarySeeds,
+                    baseTuning: baseTuning,
+                    config: config
+                )
+            }
         }
     }
 

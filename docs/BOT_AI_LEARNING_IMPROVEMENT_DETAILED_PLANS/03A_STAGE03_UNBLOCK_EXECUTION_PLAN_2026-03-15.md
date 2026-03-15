@@ -9,6 +9,7 @@
 - По коду реализованы:
   - selector hardening для `runtimePolicy-only` output candidate;
   - runtime-policy strength refinement для top candidate variants (`patch50` / `patch75`) при primary A/B selection;
+  - runtime-policy scope refinement для top candidate variants (`ranking_only`, `ranking_rollout`, `ranking_opponent`);
   - промежуточный `medium` profile и `make stage3-scope-validate-medium`;
   - go/no-go правило перед новым `compare-v1`;
   - diversity telemetry;
@@ -21,6 +22,10 @@
   - `medium` run `.derivedData/stage3-runtime-scope-runs/20260315-140905/` завершился с `critical-runtime holdout finalFitness = -0.036827`;
   - selector действительно расширил option set (`runtimePolicyPrimaryAB+strengthRefinement`), но всё равно выбрал full-strength `seed_20260222`;
   - conservative variants (`seed_20260222_patch50`, `seed_20260222_patch75`) проиграли уже на primary, поэтому текущий blocker остаётся в качестве самого runtime patch / scoring objective, а не только в selector fallback logic.
+- Актуальный результат scope-rerun на `2026-03-15`:
+  - `medium` run `.derivedData/stage3-runtime-scope-runs/20260315-144554/` тоже завершился с `critical-runtime holdout finalFitness = -0.036827`;
+  - selector расширил option set до `runtimePolicyPrimaryAB+strengthRefinement+scopeRefinement`, но лучший candidate снова остался `seed_20260222`;
+  - partial scope variants не смогли обогнать full candidate даже на primary, поэтому следующий рабочий цикл должен менять fitness/scoring objective или сам search dynamics, а не только candidate shell вокруг top seed.
 
 ## Исходная точка
 

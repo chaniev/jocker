@@ -21,6 +21,8 @@
 - Для повторных long-run validation вводится промежуточный `medium` profile: canonical `compare-v1` должен запускаться только если `critical-runtime` уже даёт положительный holdout и положительный `deltaVsOld` на `medium`, а selector не переключает output candidate по margin `< 0.03`.
 - Повторный `medium` run после selector hardening и runtime-policy strength refinement (`2026-03-15`, run root `.derivedData/stage3-runtime-scope-runs/20260315-140905/`) всё ещё не закрыл gate: `critical-runtime holdout finalFitness = -0.036827`, `deltaVsOld = +0.356521`, `full-scope` снова skipped.
 - Фактический вывод после этого rerun: проблема уже не в отсутствии margin/fallback telemetry и не в отсутствии conservative patch variants; следующий цикл Stage 03 должен менять candidate-scoring objective или сам `critical-runtime` patch scope, а не только selector shell.
+- Следующий `medium` rerun после `scope refinement` (`2026-03-15`, run root `.derivedData/stage3-runtime-scope-runs/20260315-144554/`) подтвердил тот же вывод: `critical-runtime holdout finalFitness` остался `-0.036827`, а selector снова выбрал full-scope `seed_20260222`.
+- `scope refinement` дал полезную диагностику: partial variants не превзошли full candidate даже на `primary` (`seed_20260223_ranking_opponent = +0.007650`, `seed_20260222_ranking_rollout = +0.004337`, `seed_20260222_ranking_only = 0.000000`), значит blocker уже не в coarse scope-composition вокруг top seed.
 
 ## Шаги выполнения
 

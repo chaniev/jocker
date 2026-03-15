@@ -1160,6 +1160,56 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(decision.rankedScores.first?.option.label, reducedStrength.option.label)
     }
 
+    func testOutputCandidateSelectionDecision_prefersNarrowerScopeVariantWhenMetricsTie() {
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "selected_seed_20260222",
+                runtimeGeneSource: "selectedSeed",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.000,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 0.000,
+            primaryUnderbidEffectSize: 0.000
+        )
+        let fullScope = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260220",
+                runtimeGeneSource: "primaryValidatedSeed_20260220",
+                tuning: tuning,
+                runtimePolicyScopeVariant: "full",
+                runtimePolicyActiveGroupCount: 3
+            ),
+            primaryFinalFitnessEffectSize: 0.060,
+            primaryWinRateEffectSize: 0.010,
+            primaryScoreDiffEffectSize: 5.000,
+            primaryUnderbidEffectSize: -10.0
+        )
+        let narrowerScope = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260220_ranking_rollout",
+                runtimeGeneSource: "primaryValidatedSeed_20260220_rankingRollout",
+                tuning: tuning,
+                runtimePolicyScopeVariant: "ranking_rollout",
+                runtimePolicyActiveGroupCount: 2
+            ),
+            primaryFinalFitnessEffectSize: 0.060,
+            primaryWinRateEffectSize: 0.010,
+            primaryScoreDiffEffectSize: 5.000,
+            primaryUnderbidEffectSize: -10.0
+        )
+
+        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+            scores: [selected, fullScope, narrowerScope],
+            selectedSeedLabel: selected.option.label,
+            minimumPrimaryEffectMargin: 0.03
+        )
+
+        XCTAssertEqual(decision.chosen.option.label, narrowerScope.option.label)
+        XCTAssertEqual(decision.rankedScores.first?.option.label, narrowerScope.option.label)
+    }
+
     func testRuntimePolicyEvolutionPatch_scaledTowardIdentityReducesPatchMagnitude() {
         let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
             rankingMatchCatchUpScale: 1.20,
@@ -1184,6 +1234,38 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(scaled.rolloutAdjustmentScale, 1.125, accuracy: 0.000_001)
         XCTAssertEqual(scaled.opponentPressureScale, 1.15, accuracy: 0.000_001)
         XCTAssertEqual(scaled.phaseRankingScale, 0.925, accuracy: 0.000_001)
+    }
+
+    func testRuntimePolicyEvolutionPatch_maskingGroupsRevertsExcludedScalesToIdentity() {
+        let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
+            rankingMatchCatchUpScale: 1.20,
+            rankingPremiumScale: 0.80,
+            rankingPenaltyAvoidScale: 1.10,
+            jokerDeclarationScale: 1.00,
+            rolloutActivationScale: 0.90,
+            rolloutAdjustmentScale: 1.25,
+            endgameActivationScale: 1.00,
+            endgameAdjustmentScale: 1.00,
+            opponentPressureScale: 1.30,
+            phaseRankingScale: 0.85,
+            phaseRolloutScale: 1.15,
+            phaseJokerScale: 1.00,
+            phaseBlindScale: 1.00
+        )
+
+        let masked = patch.maskingRuntimePolicyGroups(
+            keepRanking: true,
+            keepRollout: false,
+            keepOpponentModeling: false
+        )
+
+        XCTAssertEqual(masked.rankingMatchCatchUpScale, 1.20, accuracy: 0.000_001)
+        XCTAssertEqual(masked.rankingPremiumScale, 0.80, accuracy: 0.000_001)
+        XCTAssertEqual(masked.rolloutActivationScale, 1.00, accuracy: 0.000_001)
+        XCTAssertEqual(masked.rolloutAdjustmentScale, 1.00, accuracy: 0.000_001)
+        XCTAssertEqual(masked.phaseRolloutScale, 1.00, accuracy: 0.000_001)
+        XCTAssertEqual(masked.opponentPressureScale, 1.00, accuracy: 0.000_001)
+        XCTAssertEqual(masked.phaseRankingScale, 0.85, accuracy: 0.000_001)
     }
 
     func testSelfPlayEvolution_reportsDiversityTelemetryPerGeneration() {

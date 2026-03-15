@@ -431,6 +431,33 @@ extension BotSelfPlayEvolutionEngine {
             )
         }
 
+        func maskingRuntimePolicyGroups(
+            keepRanking: Bool,
+            keepRollout: Bool,
+            keepOpponentModeling: Bool
+        ) -> RuntimePolicyEvolutionPatch {
+            var masked = self
+
+            if !keepRanking {
+                masked.rankingMatchCatchUpScale = 1.0
+                masked.rankingPremiumScale = 1.0
+                masked.rankingPenaltyAvoidScale = 1.0
+                masked.phaseRankingScale = 1.0
+            }
+
+            if !keepRollout {
+                masked.rolloutActivationScale = 1.0
+                masked.rolloutAdjustmentScale = 1.0
+                masked.phaseRolloutScale = 1.0
+            }
+
+            if !keepOpponentModeling {
+                masked.opponentPressureScale = 1.0
+            }
+
+            return masked
+        }
+
         func apply(to baseline: BotRuntimePolicy) -> BotRuntimePolicy {
             var ranking = baseline.ranking
 
