@@ -1210,6 +1210,58 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(decision.rankedScores.first?.option.label, narrowerScope.option.label)
     }
 
+    func testOutputCandidateSelectionDecision_prefersSaferAlternativeWhenPreferredWorsensUnderbid() {
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "selected_seed_20260221",
+                runtimeGeneSource: "selectedSeed",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: -0.035,
+            primaryWinRateEffectSize: 0.010,
+            primaryScoreDiffEffectSize: -24.0,
+            primaryUnderbidEffectSize: 3.0
+        )
+        let preferred = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260222",
+                runtimeGeneSource: "primaryValidatedSeed_20260222",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.033,
+            primaryWinRateEffectSize: 0.015,
+            primaryScoreDiffEffectSize: 5.8,
+            primaryUnderbidEffectSize: 0.625
+        )
+        let saferAlternative = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260223_ranking_opponent",
+                runtimeGeneSource: "primaryValidatedSeed_20260223_rankingOpponent",
+                tuning: tuning,
+                runtimePolicyScopeVariant: "ranking_opponent",
+                runtimePolicyActiveGroupCount: 2
+            ),
+            primaryFinalFitnessEffectSize: 0.008,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 1.2,
+            primaryUnderbidEffectSize: -13.0
+        )
+
+        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+            scores: [selected, preferred, saferAlternative],
+            selectedSeedLabel: selected.option.label,
+            minimumPrimaryEffectMargin: 0.03
+        )
+
+        XCTAssertEqual(decision.preferred.option.label, preferred.option.label)
+        XCTAssertEqual(decision.chosen.option.label, saferAlternative.option.label)
+        XCTAssertEqual(
+            decision.fallbackReason,
+            "preferredPrimaryEffectFailedScoreDiffUnderbidSafetyCheck"
+        )
+    }
+
     func testRuntimePolicyEvolutionPatch_scaledTowardIdentityReducesPatchMagnitude() {
         let patch = BotSelfPlayEvolutionEngine.RuntimePolicyEvolutionPatch(
             rankingMatchCatchUpScale: 1.20,

@@ -22,6 +22,8 @@ struct BotTrainingRunner {
     private static let runtimePolicyStrengthRefinementWindow = 0.03
     private static let runtimePolicyStrengthRefinementStrengths = [0.50, 0.75]
     private static let runtimePolicyScopeRefinementWindow = 0.03
+    private static let runtimePolicyPrimarySafetyAlternativeWindow = 0.03
+    private static let runtimePolicyPrimarySafetyUnderbidRegressionThreshold = 0.5
 
     struct Invocation {
         var difficulty: BotDifficulty = .hard
@@ -1577,6 +1579,13 @@ struct BotTrainingRunner {
         if preferred.option.label == baseline.option.label {
             chosen = preferred
             fallbackReason = "none"
+        } else if let saferAlternative = saferRuntimePolicyAlternative(
+            rankedScores: rankedScores,
+            preferred: preferred,
+            minimumPrimaryEffectMargin: minimumMargin
+        ) {
+            chosen = saferAlternative
+            fallbackReason = "preferredPrimaryEffectFailedScoreDiffUnderbidSafetyCheck"
         } else if preferred.primaryFinalFitnessEffectSize < minimumMargin {
             chosen = baseline
             fallbackReason = "preferredPrimaryEffectBelowMinimumMargin"
@@ -1596,6 +1605,37 @@ struct BotTrainingRunner {
             selectionMargin: selectionMargin,
             fallbackReason: fallbackReason
         )
+    }
+
+    private static func saferRuntimePolicyAlternative(
+        rankedScores: [OutputCandidateSelectionScore],
+        preferred: OutputCandidateSelectionScore,
+        minimumPrimaryEffectMargin: Double
+    ) -> OutputCandidateSelectionScore? {
+        guard
+            preferred.primaryUnderbidEffectSize >
+                runtimePolicyPrimarySafetyUnderbidRegressionThreshold
+        else {
+            return nil
+        }
+
+        let safetyWindow = max(
+            minimumPrimaryEffectMargin,
+            runtimePolicyPrimarySafetyAlternativeWindow
+        )
+        let minimumAcceptableFinalFitness =
+            preferred.primaryFinalFitnessEffectSize - safetyWindow
+        let minimumRequiredUnderbidImprovement =
+            preferred.primaryUnderbidEffectSize -
+            runtimePolicyPrimarySafetyUnderbidRegressionThreshold
+
+        return rankedScores.first { score in
+            score.option.label != preferred.option.label &&
+                score.primaryFinalFitnessEffectSize >= minimumAcceptableFinalFitness &&
+                score.primaryFinalFitnessEffectSize >= 0.0 &&
+                score.primaryScoreDiffEffectSize >= 0.0 &&
+                score.primaryUnderbidEffectSize <= minimumRequiredUnderbidImprovement
+        }
     }
 
     private static func makeOutputCandidateSelectionScore(

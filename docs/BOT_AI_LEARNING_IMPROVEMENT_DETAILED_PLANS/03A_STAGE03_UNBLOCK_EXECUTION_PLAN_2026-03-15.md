@@ -10,12 +10,12 @@
   - selector hardening для `runtimePolicy-only` output candidate;
   - runtime-policy strength refinement для top candidate variants (`patch50` / `patch75`) при primary A/B selection;
   - runtime-policy scope refinement для top candidate variants (`ranking_only`, `ranking_rollout`, `ranking_opponent`);
+  - objective-level safety reranking против `scoreDiff/underbid` регресса на primary;
   - промежуточный `medium` profile и `make stage3-scope-validate-medium`;
   - go/no-go правило перед новым `compare-v1`;
   - diversity telemetry;
   - stagnation detection в log-only режиме.
 - Ещё не закрыто:
-  - положительный `medium` validation run;
   - новый canonical `compare-v1`;
   - полный Xcode test build, который сейчас блокируется внешней compile-ошибкой в app target.
 - Актуальный результат rerun на `2026-03-15`:
@@ -26,6 +26,11 @@
   - `medium` run `.derivedData/stage3-runtime-scope-runs/20260315-144554/` тоже завершился с `critical-runtime holdout finalFitness = -0.036827`;
   - selector расширил option set до `runtimePolicyPrimaryAB+strengthRefinement+scopeRefinement`, но лучший candidate снова остался `seed_20260222`;
   - partial scope variants не смогли обогнать full candidate даже на primary, поэтому следующий рабочий цикл должен менять fitness/scoring objective или сам search dynamics, а не только candidate shell вокруг top seed.
+- Актуальный результат safety-reranking rerun на `2026-03-15`:
+  - `medium` run `.derivedData/stage3-runtime-scope-runs/20260315-152739/` завершился успешно по gate;
+  - `critical-runtime holdout finalFitness = +0.036673`, `deltaVsOld = +0.430021`;
+  - selector применил fallback `preferredPrimaryEffectFailedScoreDiffUnderbidSafetyCheck` и выбрал `seed_20260223_ranking_opponent` вместо `preferred = seed_20260222`;
+  - `full-scope` был запущен и снова оказался хуже `critical-runtime` по holdout (`-0.000118`), поэтому текущий recommended scope для canonical rerun — `critical-runtime`.
 
 ## Исходная точка
 

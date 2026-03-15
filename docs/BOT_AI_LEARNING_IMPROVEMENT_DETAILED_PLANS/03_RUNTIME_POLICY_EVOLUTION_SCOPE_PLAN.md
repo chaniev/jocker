@@ -23,6 +23,11 @@
 - Фактический вывод после этого rerun: проблема уже не в отсутствии margin/fallback telemetry и не в отсутствии conservative patch variants; следующий цикл Stage 03 должен менять candidate-scoring objective или сам `critical-runtime` patch scope, а не только selector shell.
 - Следующий `medium` rerun после `scope refinement` (`2026-03-15`, run root `.derivedData/stage3-runtime-scope-runs/20260315-144554/`) подтвердил тот же вывод: `critical-runtime holdout finalFitness` остался `-0.036827`, а selector снова выбрал full-scope `seed_20260222`.
 - `scope refinement` дал полезную диагностику: partial variants не превзошли full candidate даже на `primary` (`seed_20260223_ranking_opponent = +0.007650`, `seed_20260222_ranking_rollout = +0.004337`, `seed_20260222_ranking_only = 0.000000`), значит blocker уже не в coarse scope-composition вокруг top seed.
+- Следующий rerun после objective-level safety reranking (`2026-03-15`, run root `.derivedData/stage3-runtime-scope-runs/20260315-152739/`) впервые закрыл `medium` gate:
+  - `critical-runtime holdout finalFitness = +0.036673`
+  - selector сохранил `preferred = seed_20260222`, но осознанно выбрал safer alternative `seed_20260223_ranking_opponent`
+  - `full-scope` исполнился и снова уступил `critical-runtime` по holdout (`-0.000118`)
+- Практический вывод на текущем этапе: `medium` теперь даёт go-сигнал для нового canonical `compare-v1`, а рекомендованный scope остаётся `critical-runtime`.
 
 ## Шаги выполнения
 
