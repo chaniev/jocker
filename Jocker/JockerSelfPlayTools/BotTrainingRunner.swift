@@ -117,6 +117,26 @@ struct BotTrainingRunner {
         let aVsB: BotTuning.SelfPlayHeadToHeadValidationResult
     }
 
+    private struct OutputCandidateOption {
+        let label: String
+        let runtimeGeneSource: String
+        let tuning: BotTuning
+    }
+
+    private struct OutputCandidateSelectionScore {
+        let option: OutputCandidateOption
+        let primaryFinalFitnessEffectSize: Double
+        let primaryWinRateEffectSize: Double
+        let primaryScoreDiffEffectSize: Double
+        let primaryUnderbidEffectSize: Double
+    }
+
+    private struct OutputCandidateSelection {
+        let strategy: String
+        let chosen: OutputCandidateOption
+        let scores: [OutputCandidateSelectionScore]
+    }
+
     enum RunnerError: Error {
         case usageRequested
         case message(String)
@@ -380,15 +400,14 @@ struct BotTrainingRunner {
             throw RunnerError.message("Failed to run self-play evolution.")
         }
 
-        let tunedForOutput: BotTuning
-        if seedRuns.count > 1 {
-            tunedForOutput = aggregateTunings(
-                seedRuns.map(\.result.bestTuning),
-                method: invocation.ensembleMethod
-            )
-        } else {
-            tunedForOutput = selectedRun.result.bestTuning
-        }
+        let outputCandidateSelection = selectOutputCandidate(
+            invocation: invocation,
+            seedRuns: seedRuns,
+            selectedRun: selectedRun,
+            baseTuning: baseTuning,
+            abValidationConfig: abValidationConfig
+        )
+        let tunedForOutput = outputCandidateSelection.chosen.tuning
 
         printSummary(
             invocation: invocation,
@@ -397,6 +416,7 @@ struct BotTrainingRunner {
             selectedRun: selectedRun,
             baseTuning: baseTuning,
             tunedForOutput: tunedForOutput,
+            outputCandidateSelection: outputCandidateSelection,
             abValidationConfig: abValidationConfig
         )
     }
@@ -408,6 +428,7 @@ struct BotTrainingRunner {
         selectedRun: SeedRun,
         baseTuning: BotTuning,
         tunedForOutput: BotTuning,
+        outputCandidateSelection: OutputCandidateSelection,
         abValidationConfig: BotTuning.SelfPlayEvolutionConfig
     ) {
         let turn = tunedForOutput.turnStrategy
@@ -567,6 +588,26 @@ struct BotTrainingRunner {
         print("baselineLeftNeighborPremiumAssistRate=\(fmt(selectedRun.result.baselineLeftNeighborPremiumAssistRate))")
         print("bestLeftNeighborPremiumAssistRate=\(fmt(selectedRun.result.bestLeftNeighborPremiumAssistRate))")
         print("generationBestFitness=[\(selectedRun.result.generationBestFitness.map(fmt).joined(separator: ", "))]")
+        print("outputCandidateSelectionStrategy=\(outputCandidateSelection.strategy)")
+        print("outputCandidateSource=\(outputCandidateSelection.chosen.label)")
+        for score in outputCandidateSelection.scores {
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "abPrimaryFinalFitnessEffectSize=\(fmt(score.primaryFinalFitnessEffectSize))"
+            )
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "abPrimaryWinRateEffectSize=\(fmt(score.primaryWinRateEffectSize))"
+            )
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "abPrimaryScoreDiffEffectSize=\(fmt(score.primaryScoreDiffEffectSize))"
+            )
+            print(
+                "outputCandidateOption.\(score.option.label)." +
+                "abPrimaryUnderbidLossEffectSize=\(fmt(score.primaryUnderbidEffectSize))"
+            )
+        }
         print("")
         print("=== Suggested Tuned Values ===")
         print("turnStrategy.chaseWinProbabilityWeight=\(fmt(turn.chaseWinProbabilityWeight))")
@@ -613,7 +654,7 @@ struct BotTrainingRunner {
             relativeTo: baselinePolicy
         )
         print("=== Runtime Policy Genes ===")
-        print("runtimeGeneSource=\(invocation.runSeeds.count > 1 ? "ensembleAggregate" : "selectedSeed")")
+        print("runtimeGeneSource=\(outputCandidateSelection.chosen.runtimeGeneSource)")
         logRuntimePolicyPatchMetrics(effectiveRuntimePolicyPatch)
         print("")
         print("=== Runtime Policy Patch (diff vs baseline) ===")
@@ -1048,37 +1089,21 @@ struct BotTrainingRunner {
         )
         print("A=basePreset B=tunedOutput")
 
-        var runs: [ABValidationSeedRun] = []
-        runs.reserveCapacity(seeds.count)
-
-        for seed in seeds {
-            let bVsA = BotTuning.evaluateHeadToHead(
-                candidateTuning: tunedTuning,
-                opponentTuning: baseTuning,
-                config: config,
-                seed: seed
-            )
-            let aVsB = BotTuning.evaluateHeadToHead(
-                candidateTuning: baseTuning,
-                opponentTuning: tunedTuning,
-                config: config,
-                seed: seed
-            )
-            runs.append(
-                ABValidationSeedRun(
-                    seed: seed,
-                    bVsA: bVsA,
-                    aVsB: aVsB
-                )
-            )
+        let runs = makeABValidationRuns(
+            seeds: seeds,
+            baseTuning: baseTuning,
+            tunedTuning: tunedTuning,
+            config: config
+        )
+        for run in runs {
             print(
-                "seed=\(seed) " +
-                "finalFitness BvA=\(fmt(bVsA.finalFitness)) AvB=\(fmt(aVsB.finalFitness)) Badv=\(fmt(bVsA.finalFitness - aVsB.finalFitness)) | " +
-                "legacyFitness BvA=\(fmt(bVsA.legacyFitness)) AvB=\(fmt(aVsB.legacyFitness)) | " +
-                "primaryFitness BvA=\(fmt(bVsA.primaryFitness)) AvB=\(fmt(aVsB.primaryFitness)) | " +
-                "guardrailPenalty BvA=\(fmt(bVsA.guardrailPenalty)) AvB=\(fmt(aVsB.guardrailPenalty)) | " +
-                "wr BvA=\(fmt(bVsA.winRate)) AvB=\(fmt(aVsB.winRate)) Badv=\(fmt(bVsA.winRate - aVsB.winRate)) | " +
-                "scoreDiff BvA=\(fmt(bVsA.averageScoreDiff)) AvB=\(fmt(aVsB.averageScoreDiff)) Badv=\(fmt(bVsA.averageScoreDiff - aVsB.averageScoreDiff))"
+                "seed=\(run.seed) " +
+                "finalFitness BvA=\(fmt(run.bVsA.finalFitness)) AvB=\(fmt(run.aVsB.finalFitness)) Badv=\(fmt(run.bVsA.finalFitness - run.aVsB.finalFitness)) | " +
+                "legacyFitness BvA=\(fmt(run.bVsA.legacyFitness)) AvB=\(fmt(run.aVsB.legacyFitness)) | " +
+                "primaryFitness BvA=\(fmt(run.bVsA.primaryFitness)) AvB=\(fmt(run.aVsB.primaryFitness)) | " +
+                "guardrailPenalty BvA=\(fmt(run.bVsA.guardrailPenalty)) AvB=\(fmt(run.aVsB.guardrailPenalty)) | " +
+                "wr BvA=\(fmt(run.bVsA.winRate)) AvB=\(fmt(run.aVsB.winRate)) Badv=\(fmt(run.bVsA.winRate - run.aVsB.winRate)) | " +
+                "scoreDiff BvA=\(fmt(run.bVsA.averageScoreDiff)) AvB=\(fmt(run.aVsB.averageScoreDiff)) Badv=\(fmt(run.bVsA.averageScoreDiff - run.aVsB.averageScoreDiff))"
             )
         }
 
@@ -1178,6 +1203,190 @@ struct BotTrainingRunner {
         print("summary.mean earlyLeadWishJokerRate BvA=\(fmt(average(bVaEarlyLeadWishJokerRateValues))) AvB=\(fmt(average(aVbEarlyLeadWishJokerRateValues))) Badv=\(fmt(average(earlyLeadWishJokerRateDeltaValues)))")
         print("summary.mean leftNeighborPremiumAssistRate BvA=\(fmt(average(bVaLeftNeighborPremiumAssistRateValues))) AvB=\(fmt(average(aVbLeftNeighborPremiumAssistRateValues))) Badv=\(fmt(average(leftNeighborPremiumAssistRateDeltaValues)))")
         print("")
+    }
+
+    private static func selectOutputCandidate(
+        invocation: Invocation,
+        seedRuns: [SeedRun],
+        selectedRun: SeedRun,
+        baseTuning: BotTuning,
+        abValidationConfig: BotTuning.SelfPlayEvolutionConfig
+    ) -> OutputCandidateSelection {
+        let selectedSeedOption = OutputCandidateOption(
+            label: "selected_seed_\(selectedRun.seed)",
+            runtimeGeneSource: "selectedSeed",
+            tuning: selectedRun.result.bestTuning
+        )
+        guard seedRuns.count > 1 else {
+            return OutputCandidateSelection(
+                strategy: "singleSeed",
+                chosen: selectedSeedOption,
+                scores: []
+            )
+        }
+
+        let aggregateOption = OutputCandidateOption(
+            label: "ensemble_aggregate",
+            runtimeGeneSource: "ensembleAggregate",
+            tuning: aggregateTunings(
+                seedRuns.map(\.result.bestTuning),
+                method: invocation.ensembleMethod
+            )
+        )
+        guard shouldPrimaryValidateRuntimeOutputCandidates(invocation: invocation) else {
+            return OutputCandidateSelection(
+                strategy: "ensembleAggregate",
+                chosen: aggregateOption,
+                scores: []
+            )
+        }
+
+        let candidateOptions = runtimePolicyOutputCandidateOptions(
+            aggregateOption: aggregateOption,
+            seedRuns: seedRuns
+        )
+        let scores = candidateOptions.map { option in
+            makeOutputCandidateSelectionScore(
+                option: option,
+                primarySeeds: invocation.abValidationPrimarySeeds,
+                baseTuning: baseTuning,
+                config: abValidationConfig
+            )
+        }
+        guard let chosenScore = scores.max(by: { isBetterOutputCandidateScore($1, than: $0) }) else {
+            return OutputCandidateSelection(
+                strategy: "ensembleAggregate",
+                chosen: aggregateOption,
+                scores: []
+            )
+        }
+        return OutputCandidateSelection(
+            strategy: "runtimePolicyPrimaryAB",
+            chosen: chosenScore.option,
+            scores: scores
+        )
+    }
+
+    private static func shouldPrimaryValidateRuntimeOutputCandidates(
+        invocation: Invocation
+    ) -> Bool {
+        invocation.tuningScope == .runtimePolicyOnly &&
+            invocation.abValidate &&
+            !invocation.abValidationPrimarySeeds.isEmpty
+    }
+
+    private static func runtimePolicyOutputCandidateOptions(
+        aggregateOption: OutputCandidateOption,
+        seedRuns: [SeedRun]
+    ) -> [OutputCandidateOption] {
+        let sortedSeedRuns = seedRuns.sorted { lhs, rhs in
+            if abs(lhs.result.bestFitness - rhs.result.bestFitness) > 1e-9 {
+                return lhs.result.bestFitness > rhs.result.bestFitness
+            }
+            return lhs.seed < rhs.seed
+        }
+
+        var options = [aggregateOption]
+        for run in sortedSeedRuns.prefix(3) {
+            options.append(
+                OutputCandidateOption(
+                    label: "seed_\(run.seed)",
+                    runtimeGeneSource: "primaryValidatedSeed_\(run.seed)",
+                    tuning: run.result.bestTuning
+                )
+            )
+        }
+        return options
+    }
+
+    private static func makeOutputCandidateSelectionScore(
+        option: OutputCandidateOption,
+        primarySeeds: [UInt64],
+        baseTuning: BotTuning,
+        config: BotTuning.SelfPlayEvolutionConfig
+    ) -> OutputCandidateSelectionScore {
+        let runs = makeABValidationRuns(
+            seeds: primarySeeds,
+            baseTuning: baseTuning,
+            tunedTuning: option.tuning,
+            config: config
+        )
+        return OutputCandidateSelectionScore(
+            option: option,
+            primaryFinalFitnessEffectSize: average(
+                runs.map { $0.bVsA.finalFitness - $0.aVsB.finalFitness }
+            ),
+            primaryWinRateEffectSize: average(
+                runs.map { $0.bVsA.winRate - $0.aVsB.winRate }
+            ),
+            primaryScoreDiffEffectSize: average(
+                runs.map { $0.bVsA.averageScoreDiff - $0.aVsB.averageScoreDiff }
+            ),
+            primaryUnderbidEffectSize: average(
+                runs.map { $0.bVsA.averageUnderbidLoss - $0.aVsB.averageUnderbidLoss }
+            )
+        )
+    }
+
+    private static func isBetterOutputCandidateScore(
+        _ lhs: OutputCandidateSelectionScore,
+        than rhs: OutputCandidateSelectionScore
+    ) -> Bool {
+        let epsilon = 1e-9
+
+        if abs(lhs.primaryFinalFitnessEffectSize - rhs.primaryFinalFitnessEffectSize) > epsilon {
+            return lhs.primaryFinalFitnessEffectSize > rhs.primaryFinalFitnessEffectSize
+        }
+        if abs(lhs.primaryWinRateEffectSize - rhs.primaryWinRateEffectSize) > epsilon {
+            return lhs.primaryWinRateEffectSize > rhs.primaryWinRateEffectSize
+        }
+        if abs(lhs.primaryScoreDiffEffectSize - rhs.primaryScoreDiffEffectSize) > epsilon {
+            return lhs.primaryScoreDiffEffectSize > rhs.primaryScoreDiffEffectSize
+        }
+        if abs(lhs.primaryUnderbidEffectSize - rhs.primaryUnderbidEffectSize) > epsilon {
+            return lhs.primaryUnderbidEffectSize < rhs.primaryUnderbidEffectSize
+        }
+
+        let lhsIsAggregate = lhs.option.label == "ensemble_aggregate"
+        let rhsIsAggregate = rhs.option.label == "ensemble_aggregate"
+        if lhsIsAggregate != rhsIsAggregate {
+            return lhsIsAggregate
+        }
+        return lhs.option.label < rhs.option.label
+    }
+
+    private static func makeABValidationRuns(
+        seeds: [UInt64],
+        baseTuning: BotTuning,
+        tunedTuning: BotTuning,
+        config: BotTuning.SelfPlayEvolutionConfig
+    ) -> [ABValidationSeedRun] {
+        var runs: [ABValidationSeedRun] = []
+        runs.reserveCapacity(seeds.count)
+
+        for seed in seeds {
+            let bVsA = BotTuning.evaluateHeadToHead(
+                candidateTuning: tunedTuning,
+                opponentTuning: baseTuning,
+                config: config,
+                seed: seed
+            )
+            let aVsB = BotTuning.evaluateHeadToHead(
+                candidateTuning: baseTuning,
+                opponentTuning: tunedTuning,
+                config: config,
+                seed: seed
+            )
+            runs.append(
+                ABValidationSeedRun(
+                    seed: seed,
+                    bVsA: bVsA,
+                    aVsB: aVsB
+                )
+            )
+        }
+
+        return runs
     }
 
     private static func logRuntimePolicyPatchMetrics(
