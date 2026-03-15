@@ -104,7 +104,7 @@ extension GameScene {
         guard let turnDecision = botTurnService(for: playerIndex).automaticTurnDecision(
             context: .init(
                 handCards: players[playerIndex].hand.cards,
-                trickNode: trickNode,
+                trick: .init(trickNode: trickNode),
                 trump: currentTrump,
                 bid: bid,
                 tricksTaken: tricksTaken,

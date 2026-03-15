@@ -44,7 +44,7 @@ final class GameTurnService {
         return automaticTurnDecision(
             context: .init(
                 handCards: handCards,
-                trickNode: trickNode,
+                trick: .init(trickNode: trickNode),
                 trump: trump,
                 bid: bid,
                 tricksTaken: tricksTaken,
