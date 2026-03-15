@@ -4,6 +4,19 @@
 **Горизонт:** ближайшие 1-2 рабочих дня  
 **Цель:** не запускать ещё один "слепой" длинный canonical run, пока `runtimePolicy-only` selector и сам self-play search остаются шумными
 
+## Статус реализации на 2026-03-15
+
+- По коду реализованы:
+  - selector hardening для `runtimePolicy-only` output candidate;
+  - промежуточный `medium` profile и `make stage3-scope-validate-medium`;
+  - go/no-go правило перед новым `compare-v1`;
+  - diversity telemetry;
+  - stagnation detection в log-only режиме.
+- Ещё не закрыто:
+  - повторный `medium` validation run;
+  - новый canonical `compare-v1`;
+  - полный Xcode test build, который сейчас блокируется внешней compile-ошибкой в app target.
+
 ## Исходная точка
 
 - Stage 03 по коду реализован, но canonical gate шага 9 остаётся открытым.

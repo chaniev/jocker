@@ -26,6 +26,11 @@ struct TrainingProgressSnapshot {
     let currentFitness: Double?
     let generationBestFitness: Double?
     let overallBestFitness: Double?
+    let averageDistanceToElite: Double?
+    let averagePairwiseDistance: Double?
+    let uniqueGenomeRatio: Double?
+    let generationsWithoutImprovement: Int?
+    let isStagnating: Bool?
     let totalWorkUnits: Int
     let elapsedSeconds: Double
     let estimatedRemainingSeconds: Double?
@@ -76,7 +81,8 @@ enum TrainingRunResultFormatter {
             return "[progress] seed=\(seed) g=\(generation)/\(event.totalGenerations) candidate=\(candidate)/\(event.populationSize) fitness=\(fmt(event.currentFitness ?? 0.0)) genBest=\(fmt(event.generationBestFitness ?? 0.0)) overallBest=\(fmt(event.overallBestFitness ?? 0.0)) elapsed=\(fmtDuration(event.elapsedSeconds)) eta=\(fmtDuration(event.estimatedRemainingSeconds))"
         case .generationCompleted:
             let generation = (event.generationIndex ?? 0) + 1
-            return "[progress] seed=\(seed) generation \(generation)/\(event.totalGenerations) done genBest=\(fmt(event.generationBestFitness ?? 0.0)) overallBest=\(fmt(event.overallBestFitness ?? 0.0)) elapsed=\(fmtDuration(event.elapsedSeconds)) eta=\(fmtDuration(event.estimatedRemainingSeconds))"
+            let diagnostics = formatGenerationDiagnostics(event)
+            return "[progress] seed=\(seed) generation \(generation)/\(event.totalGenerations) done genBest=\(fmt(event.generationBestFitness ?? 0.0)) overallBest=\(fmt(event.overallBestFitness ?? 0.0))\(diagnostics) elapsed=\(fmtDuration(event.elapsedSeconds)) eta=\(fmtDuration(event.estimatedRemainingSeconds))"
         case .finished:
             return "[progress] seed=\(seed) finished overallBest=\(fmt(event.overallBestFitness ?? 0.0)) elapsed=\(fmtDuration(event.elapsedSeconds))"
         }
@@ -117,6 +123,30 @@ enum TrainingRunResultFormatter {
 
     private static func fmt(_ value: Double) -> String {
         String(format: "%.6f", value)
+    }
+
+    private static func formatGenerationDiagnostics(
+        _ event: TrainingProgressSnapshot
+    ) -> String {
+        var diagnostics: [String] = []
+        if let averageDistanceToElite = event.averageDistanceToElite {
+            diagnostics.append("diversityElite=\(fmt(averageDistanceToElite))")
+        }
+        if let averagePairwiseDistance = event.averagePairwiseDistance {
+            diagnostics.append("diversityPairwise=\(fmt(averagePairwiseDistance))")
+        }
+        if let uniqueGenomeRatio = event.uniqueGenomeRatio {
+            diagnostics.append("uniqueRatio=\(fmt(uniqueGenomeRatio))")
+        }
+        if let generationsWithoutImprovement = event.generationsWithoutImprovement {
+            diagnostics.append("generationsWithoutImprovement=\(generationsWithoutImprovement)")
+        }
+        if let isStagnating = event.isStagnating {
+            diagnostics.append("stagnating=\(isStagnating)")
+        }
+
+        guard !diagnostics.isEmpty else { return "" }
+        return " " + diagnostics.joined(separator: " ")
     }
 
     private static func fmtDuration(_ seconds: Double?) -> String {

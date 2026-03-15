@@ -166,6 +166,25 @@ extension BotSelfPlayEvolutionEngine {
         }
     }
 
+    static func genomeDistance(
+        _ first: EvolutionGenome,
+        _ second: EvolutionGenome
+    ) -> Double {
+        let deltas = zip(first.lexicographicKey, second.lexicographicKey).map { lhs, rhs in
+            abs(lhs - rhs)
+        }
+        guard !deltas.isEmpty else { return 0.0 }
+        return deltas.reduce(0.0, +) / Double(deltas.count)
+    }
+
+    static func genomeSignature(
+        _ genome: EvolutionGenome
+    ) -> String {
+        genome.lexicographicKey
+            .map { String(format: "%.6f", $0) }
+            .joined(separator: ",")
+    }
+
     private enum RuntimePolicyGeneSpec {
         static let rankingMatchCatchUpRange = 0.60...1.60
         static let rankingPremiumRange = 0.60...1.60

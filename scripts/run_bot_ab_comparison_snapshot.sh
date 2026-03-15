@@ -21,7 +21,8 @@ usage() {
       * Delta = `Badv` (candidate advantage)
 
 Параметры:
-  --profile <compare-v1|smoke>      Профиль запуска (по умолчанию: compare-v1)
+  --profile <compare-v1|medium|smoke>
+                                    Профиль запуска (по умолчанию: compare-v1)
   --difficulty <easy|normal|hard>   Базовый пресет (по умолчанию: hard)
   --seed-list <a,b,c>               Seed-list обучения (переопределяет профиль)
   --holdout-seed-list <a,b,c>       Holdout seed-list для A/B (переопределяет профиль)
@@ -43,6 +44,7 @@ usage() {
 Примеры:
   scripts/run_bot_ab_comparison_snapshot.sh --list-config
   scripts/run_bot_ab_comparison_snapshot.sh --profile smoke
+  scripts/run_bot_ab_comparison_snapshot.sh --profile medium
   scripts/run_bot_ab_comparison_snapshot.sh --profile compare-v1 --show-progress true
   scripts/run_bot_ab_comparison_snapshot.sh --generations 6 --games-per-candidate 6 --ab-validation-games-per-candidate 4
 EOF
@@ -167,9 +169,9 @@ metrics_kv_or_na() {
   extract_metric "$key" "$file" 2>/dev/null || printf 'N/A\n'
 }
 
-append_runtime_metrics() {
+append_runner_diagnostic_metrics() {
   local source_file="$1"
-  grep -E '^(runtimeGene\.|runtimePolicyPatch\.|runtimePolicyDiff\.|runtimeGeneSource=)' "$source_file" || true
+  grep -E '^(runtimeGene\.|runtimePolicyPatch\.|runtimePolicyDiff\.|runtimeGeneSource=|outputCandidate|stagnationWindow=|minimumMeaningfulImprovement=|finalAverageDistanceToElite=|finalAveragePairwiseDistance=|finalUniqueGenomeRatio=|finalGenerationsWithoutImprovement=|lastMeaningfulImprovementGeneration=|isStagnating=|generationAverageDistanceToElite=|generationAveragePairwiseDistance=|generationUniqueGenomeRatio=|generationGenerationsWithoutImprovement=)' "$source_file" || true
 }
 
 write_comparison_table() {
@@ -351,6 +353,15 @@ case "$profile" in
     profile_rounds_per_game="24"
     profile_ab_validation_games_per_candidate="8"
     ;;
+  medium)
+    profile_seed_list="20260220,20260221,20260222,20260223"
+    profile_holdout_seed_list="20260226,20260227,20260228,20260301"
+    profile_population_size="6"
+    profile_generations="4"
+    profile_games_per_candidate="4"
+    profile_rounds_per_game="16"
+    profile_ab_validation_games_per_candidate="4"
+    ;;
   smoke)
     profile_seed_list="20260220,20260221"
     profile_holdout_seed_list="20260226,20260227"
@@ -361,7 +372,7 @@ case "$profile" in
     profile_ab_validation_games_per_candidate="2"
     ;;
   *)
-    echo "Unknown profile: $profile (use compare-v1|smoke)" >&2
+    echo "Unknown profile: $profile (use compare-v1|medium|smoke)" >&2
     exit 1
     ;;
 esac
@@ -577,7 +588,7 @@ holdout_guardrail_penalty_badv="$(extract_metric 'guardrailPenalty_Badv' "$holdo
   echo "abHoldoutLegacyFitnessEffectSize=${holdout_legacy_fitness_badv:-}"
   echo "abHoldoutPrimaryFitnessEffectSize=${holdout_primary_fitness_badv:-}"
   echo "abHoldoutGuardrailPenaltyEffectSize=${holdout_guardrail_penalty_badv:-}"
-  append_runtime_metrics "$log_path"
+  append_runner_diagnostic_metrics "$log_path"
 } > "$training_metrics_path"
 
 write_comparison_table \
@@ -638,7 +649,7 @@ write_comparison_table \
   echo "abValidationHoldoutSeeds=${ab_holdout_seeds_line:-}"
   echo "sandbox_home=$sandbox_home"
   echo "clang_module_cache_path=$module_cache_dir"
-  append_runtime_metrics "$log_path"
+  append_runner_diagnostic_metrics "$log_path"
 } > "$summary_path"
 
 echo "=== A/B comparison snapshot finished ($status) ==="

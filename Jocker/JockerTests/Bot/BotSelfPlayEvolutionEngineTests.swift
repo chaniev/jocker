@@ -1023,6 +1023,176 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
         XCTAssertEqual(candidateIndicesInOrder, expected, "candidateEvaluated events must be flushed in candidateIndex order")
     }
 
+    func testOutputCandidateSelectionDecision_fallsBackToSelectedSeedWhenMarginBelowThreshold() {
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "selected_seed_20260222",
+                runtimeGeneSource: "selectedSeed",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.020,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 0.000,
+            primaryUnderbidEffectSize: 0.000
+        )
+        let preferred = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260220",
+                runtimeGeneSource: "primaryValidatedSeed_20260220",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.035,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 0.000,
+            primaryUnderbidEffectSize: -10.0
+        )
+        let aggregate = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "ensemble_aggregate",
+                runtimeGeneSource: "ensembleAggregate",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: -0.010,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 0.000,
+            primaryUnderbidEffectSize: 5.0
+        )
+
+        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+            scores: [selected, preferred, aggregate],
+            selectedSeedLabel: selected.option.label,
+            minimumPrimaryEffectMargin: 0.03
+        )
+
+        XCTAssertEqual(decision.preferred.option.label, preferred.option.label)
+        XCTAssertEqual(decision.chosen.option.label, selected.option.label)
+        XCTAssertEqual(
+            decision.fallbackReason,
+            "preferredPrimaryEffectDidNotBeatSelectedSeedByMinimumMargin"
+        )
+        XCTAssertEqual(decision.selectionMargin, 0.015, accuracy: 0.000_001)
+    }
+
+    func testOutputCandidateSelectionDecision_keepsPreferredCandidateWhenMarginClearsThreshold() {
+        let tuning = ToolBotTuning(difficulty: .hard)
+        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "selected_seed_20260222",
+                runtimeGeneSource: "selectedSeed",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.010,
+            primaryWinRateEffectSize: 0.000,
+            primaryScoreDiffEffectSize: 0.000,
+            primaryUnderbidEffectSize: 0.000
+        )
+        let preferred = BotTrainingRunner.OutputCandidateSelectionScore(
+            option: BotTrainingRunner.OutputCandidateOption(
+                label: "seed_20260220",
+                runtimeGeneSource: "primaryValidatedSeed_20260220",
+                tuning: tuning
+            ),
+            primaryFinalFitnessEffectSize: 0.055,
+            primaryWinRateEffectSize: 0.010,
+            primaryScoreDiffEffectSize: 1.000,
+            primaryUnderbidEffectSize: -10.0
+        )
+
+        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+            scores: [selected, preferred],
+            selectedSeedLabel: selected.option.label,
+            minimumPrimaryEffectMargin: 0.03
+        )
+
+        XCTAssertEqual(decision.preferred.option.label, preferred.option.label)
+        XCTAssertEqual(decision.chosen.option.label, preferred.option.label)
+        XCTAssertEqual(decision.fallbackReason, "none")
+        XCTAssertEqual(decision.selectionMargin, 0.045, accuracy: 0.000_001)
+        XCTAssertEqual(decision.rankedScores.first?.option.label, preferred.option.label)
+    }
+
+    func testSelfPlayEvolution_reportsDiversityTelemetryPerGeneration() {
+        let result = ToolBotTuning.evolveViaSelfPlay(
+            baseTuning: ToolBotTuning(difficulty: .hard),
+            config: ToolBotTuning.SelfPlayEvolutionConfig(
+                populationSize: 4,
+                generations: 2,
+                gamesPerCandidate: 1,
+                roundsPerGame: 2,
+                playerCount: 3,
+                cardsPerRoundRange: 1...2,
+                eliteCount: 1,
+                mutationChance: 0.25,
+                mutationMagnitude: 0.12,
+                selectionPoolRatio: 0.5,
+                useFullMatchRules: false,
+                stagnationWindow: 3,
+                minimumMeaningfulImprovement: 0.02
+            ),
+            seed: 2026_0315
+        )
+
+        XCTAssertEqual(result.generationAverageDistanceToElite.count, result.completedGenerations)
+        XCTAssertEqual(result.generationAveragePairwiseDistance.count, result.completedGenerations)
+        XCTAssertEqual(result.generationUniqueGenomeRatio.count, result.completedGenerations)
+        XCTAssertEqual(result.generationGenerationsWithoutImprovement.count, result.completedGenerations)
+        XCTAssertEqual(
+            result.finalAverageDistanceToElite,
+            result.generationAverageDistanceToElite.last ?? 0.0,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            result.finalAveragePairwiseDistance,
+            result.generationAveragePairwiseDistance.last ?? 0.0,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            result.finalUniqueGenomeRatio,
+            result.generationUniqueGenomeRatio.last ?? 1.0,
+            accuracy: 0.000_001
+        )
+        XCTAssertEqual(
+            result.finalGenerationsWithoutImprovement,
+            result.generationGenerationsWithoutImprovement.last ?? 0
+        )
+        XCTAssertTrue(result.generationAverageDistanceToElite.allSatisfy { $0.isFinite && $0 >= 0.0 })
+        XCTAssertTrue(result.generationAveragePairwiseDistance.allSatisfy { $0.isFinite && $0 >= 0.0 })
+        XCTAssertTrue(result.generationUniqueGenomeRatio.allSatisfy { $0.isFinite && $0 > 0.0 && $0 <= 1.0 })
+        XCTAssertGreaterThanOrEqual(result.lastMeaningfulImprovementGeneration, 0)
+        XCTAssertLessThanOrEqual(result.lastMeaningfulImprovementGeneration, result.completedGenerations)
+    }
+
+    func testSelfPlayEvolution_stagnationDetectionFlagsWhenMeaningfulImprovementNeverClearsThreshold() {
+        let result = ToolBotTuning.evolveViaSelfPlay(
+            baseTuning: ToolBotTuning(difficulty: .hard),
+            config: ToolBotTuning.SelfPlayEvolutionConfig(
+                populationSize: 4,
+                generations: 2,
+                gamesPerCandidate: 1,
+                roundsPerGame: 2,
+                playerCount: 3,
+                cardsPerRoundRange: 1...2,
+                eliteCount: 1,
+                mutationChance: 0.25,
+                mutationMagnitude: 0.12,
+                selectionPoolRatio: 0.5,
+                useFullMatchRules: false,
+                stagnationWindow: 1,
+                minimumMeaningfulImprovement: 10.0
+            ),
+            seed: 2026_0316
+        )
+
+        XCTAssertTrue(result.isStagnating)
+        XCTAssertEqual(result.lastMeaningfulImprovementGeneration, 0)
+        XCTAssertEqual(result.finalGenerationsWithoutImprovement, result.completedGenerations)
+        XCTAssertEqual(
+            result.generationGenerationsWithoutImprovement,
+            Array(1...result.completedGenerations)
+        )
+    }
+
     private func makeSummarySnapshot(
         from result: ToolBotTuning.SelfPlayEvolutionResult
     ) -> TrainingRunResultSummarySnapshot {

@@ -18,7 +18,8 @@ Purpose:
   --force-full-scope is provided.
 
 Options:
-  --profile <compare-v1|smoke>   Compare profile to use (default: compare-v1)
+  --profile <compare-v1|medium|smoke>
+                                 Compare profile to use (default: compare-v1)
   --show-progress <true|false>   Forwarded to compare harness (default: false)
   --force-full-scope             Run full-scope even if critical-runtime holdout gate fails
   --output-root <path>           Root artifacts directory
@@ -32,6 +33,7 @@ Options:
 Examples:
   scripts/run_stage3_runtime_scope_validation.sh --list-config
   scripts/run_stage3_runtime_scope_validation.sh --profile smoke
+  scripts/run_stage3_runtime_scope_validation.sh --profile medium
   scripts/run_stage3_runtime_scope_validation.sh --profile compare-v1
   scripts/run_stage3_runtime_scope_validation.sh --profile compare-v1 --force-full-scope
 EOF
@@ -172,9 +174,9 @@ while (($# > 0)); do
 done
 
 case "$profile" in
-  compare-v1|smoke) ;;
+  compare-v1|medium|smoke) ;;
   *)
-    echo "Unknown profile: $profile (use compare-v1|smoke)" >&2
+    echo "Unknown profile: $profile (use compare-v1|medium|smoke)" >&2
     exit 1
     ;;
 esac

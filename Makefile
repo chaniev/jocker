@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 .PHONY: bt train-bot train-bot-final training-pipeline-smoke stage3-scope-validate \
-	stage3-scope-validate-smoke stage3-scope-validate-dry stage3-scope-validate-list stage5-benchmark \
+	stage3-scope-validate-medium stage3-scope-validate-smoke stage3-scope-validate-dry stage3-scope-validate-list stage5-benchmark \
 	legacy-bt-hard-smoke legacy-bt-hard-balanced legacy-bt-hard-battle \
 	legacy-bt-normal-smoke legacy-bt-normal-balanced legacy-bt-normal-battle \
 	legacy-bt-easy-smoke legacy-bt-easy-balanced legacy-bt-easy-battle \
@@ -11,7 +11,7 @@ SHELL := /bin/bash
 	stage4-phase-pack stage4-phase-pack-list stage4-phase-pack-dry \
 	stage6b-pack stage6b-pack-all stage6b-pack-list stage6b-pack-dry \
 	bot-baseline bot-baseline-smoke bot-baseline-list bot-baseline-dry \
-	bot-compare bot-compare-smoke bot-compare-list bot-compare-dry
+	bot-compare bot-compare-medium bot-compare-smoke bot-compare-list bot-compare-dry
 
 TRAIN_SCRIPT := ./scripts/train_bot_tuning.sh
 JOKER_REGRESSION_SCRIPT := ./scripts/run_joker_regression_pack.sh
@@ -42,6 +42,9 @@ training-pipeline-smoke:
 
 stage3-scope-validate:
 	@$(STAGE3_SCOPE_VALIDATION_SCRIPT)
+
+stage3-scope-validate-medium:
+	@$(STAGE3_SCOPE_VALIDATION_SCRIPT) --profile medium
 
 stage3-scope-validate-smoke:
 	@$(STAGE3_SCOPE_VALIDATION_SCRIPT) --profile smoke
@@ -102,6 +105,9 @@ bot-baseline-dry:
 
 bot-compare:
 	@$(BOT_AB_COMPARE_SCRIPT)
+
+bot-compare-medium:
+	@$(BOT_AB_COMPARE_SCRIPT) --profile medium
 
 bot-compare-smoke:
 	@$(BOT_AB_COMPARE_SCRIPT) --profile smoke

@@ -18,6 +18,7 @@
 - Для шага 9 добавлен отдельный validation harness `scripts/run_stage3_runtime_scope_validation.sh`, который прогоняет `old-scope`, `critical-runtime` и gated `full-scope` через общий compare workflow и собирает consolidated summary.
 - Smoke-валидация harness уже показывает нужную развилку: `critical-runtime` проходит holdout gate относительно `old-scope`, а `full-scope` в smoke-профиле уступает `critical-runtime` по holdout `finalFitness`.
 - Не закрыта финальная валидация шага 9: в canonical workflow по умолчанию активны только `ranking`, `rollout` и `opponentModeling`, а `endgame` и `jokerDeclaration` остаются default-off до отдельного holdout-решения.
+- Для повторных long-run validation вводится промежуточный `medium` profile: canonical `compare-v1` должен запускаться только если `critical-runtime` уже даёт положительный holdout и положительный `deltaVsOld` на `medium`, а selector не переключает output candidate по margin `< 0.03`.
 
 ## Шаги выполнения
 
@@ -122,6 +123,10 @@
 5. После успешной holdout-проверки включить `endgame` и `jokerDeclaration` группы.
 6. Повторить training и holdout сравнение для полного scope.
 7. Зафиксировать итоговый effect size в summary.
+8. Перед каждым новым canonical rerun проверять промежуточный `medium` profile:
+   - `critical-runtime holdout finalFitness > 0`;
+   - `critical-runtime deltaVsOld.holdout.finalFitnessEffectSize > 0`;
+   - selector не переключил output candidate только за счёт margin `< 0.03`.
 
 ## Проверки
 

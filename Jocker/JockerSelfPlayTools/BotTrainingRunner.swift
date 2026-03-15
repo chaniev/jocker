@@ -72,10 +72,13 @@ struct BotTrainingRunner {
         var earlyStoppingPatience = 0
         var earlyStoppingMinImprovement = 0.0
         var earlyStoppingWarmupGenerations = 0
+        var stagnationWindow = 0
+        var minimumMeaningfulImprovement = 0.0
         var abValidate = true
         var abValidationSeedList: [UInt64] = []
         var abValidationHoldoutSeedList: [UInt64] = []
         var abValidationGamesPerCandidate = 0
+        var outputCandidateMinimumPrimaryEffectMargin = 0.03
 
         var cardsPerRoundRange: ClosedRange<Int> {
             cardsMin...max(cardsMin, cardsMax)
@@ -117,13 +120,13 @@ struct BotTrainingRunner {
         let aVsB: BotTuning.SelfPlayHeadToHeadValidationResult
     }
 
-    private struct OutputCandidateOption {
+    struct OutputCandidateOption {
         let label: String
         let runtimeGeneSource: String
         let tuning: BotTuning
     }
 
-    private struct OutputCandidateSelectionScore {
+    struct OutputCandidateSelectionScore {
         let option: OutputCandidateOption
         let primaryFinalFitnessEffectSize: Double
         let primaryWinRateEffectSize: Double
@@ -131,10 +134,24 @@ struct BotTrainingRunner {
         let primaryUnderbidEffectSize: Double
     }
 
-    private struct OutputCandidateSelection {
+    struct OutputCandidateSelectionDecision {
+        let chosen: OutputCandidateSelectionScore
+        let preferred: OutputCandidateSelectionScore
+        let baseline: OutputCandidateSelectionScore
+        let rankedScores: [OutputCandidateSelectionScore]
+        let selectionMargin: Double
+        let fallbackReason: String
+    }
+
+    struct OutputCandidateSelection {
         let strategy: String
         let chosen: OutputCandidateOption
+        let preferred: OutputCandidateOption
+        let baseline: OutputCandidateOption
         let scores: [OutputCandidateSelectionScore]
+        let rankedScores: [OutputCandidateSelectionScore]
+        let selectionMargin: Double
+        let fallbackReason: String
     }
 
     enum RunnerError: Error {
@@ -232,10 +249,13 @@ struct BotTrainingRunner {
           --early-stop-patience <int>
           --early-stop-min-improvement <double>
           --early-stop-warmup-generations <int>
+          --stagnation-window <int>
+          --minimum-meaningful-improvement <double>
           --ab-validate <true|false>
           --ab-validation-seed-list <a,b,c>
           --ab-validation-holdout-seed-list <a,b,c>
           --ab-validation-games-per-candidate <int>
+          --output-candidate-minimum-primary-effect-margin <double>
           --tune-ranking-policy <true|false>
           --tune-rollout-policy <true|false>
           --tune-endgame-policy <true|false>
@@ -299,6 +319,8 @@ struct BotTrainingRunner {
             earlyStoppingPatience: invocation.earlyStoppingPatience,
             earlyStoppingMinImprovement: invocation.earlyStoppingMinImprovement,
             earlyStoppingWarmupGenerations: invocation.earlyStoppingWarmupGenerations,
+            stagnationWindow: invocation.stagnationWindow,
+            minimumMeaningfulImprovement: invocation.minimumMeaningfulImprovement,
             tuneTurnStrategy: invocation.tuneTurnStrategy,
             tuneBidding: invocation.tuneBidding,
             tuneTrumpSelection: invocation.tuneTrumpSelection,
@@ -355,6 +377,8 @@ struct BotTrainingRunner {
             earlyStoppingPatience: 0,
             earlyStoppingMinImprovement: 0.0,
             earlyStoppingWarmupGenerations: 0,
+            stagnationWindow: 0,
+            minimumMeaningfulImprovement: 0.0,
             tuneTurnStrategy: config.tuneTurnStrategy,
             tuneBidding: config.tuneBidding,
             tuneTrumpSelection: config.tuneTrumpSelection,
@@ -493,6 +517,8 @@ struct BotTrainingRunner {
         print("earlyStopPatience=\(config.earlyStoppingPatience)")
         print("earlyStopMinImprovement=\(fmt(config.earlyStoppingMinImprovement))")
         print("earlyStopWarmupGenerations=\(config.earlyStoppingWarmupGenerations)")
+        print("stagnationWindow=\(config.stagnationWindow)")
+        print("minimumMeaningfulImprovement=\(fmt(config.minimumMeaningfulImprovement))")
         if seedRuns.count > 1 {
             let perSeedFitness = seedRuns
                 .map { "\($0.seed):\(fmt($0.result.bestFitness))" }
@@ -588,8 +614,37 @@ struct BotTrainingRunner {
         print("baselineLeftNeighborPremiumAssistRate=\(fmt(selectedRun.result.baselineLeftNeighborPremiumAssistRate))")
         print("bestLeftNeighborPremiumAssistRate=\(fmt(selectedRun.result.bestLeftNeighborPremiumAssistRate))")
         print("generationBestFitness=[\(selectedRun.result.generationBestFitness.map(fmt).joined(separator: ", "))]")
+        print("finalAverageDistanceToElite=\(fmt(selectedRun.result.finalAverageDistanceToElite))")
+        print("finalAveragePairwiseDistance=\(fmt(selectedRun.result.finalAveragePairwiseDistance))")
+        print("finalUniqueGenomeRatio=\(fmt(selectedRun.result.finalUniqueGenomeRatio))")
+        print("finalGenerationsWithoutImprovement=\(selectedRun.result.finalGenerationsWithoutImprovement)")
+        print("lastMeaningfulImprovementGeneration=\(selectedRun.result.lastMeaningfulImprovementGeneration)")
+        print("isStagnating=\(selectedRun.result.isStagnating)")
+        print(
+            "generationAverageDistanceToElite=[\(selectedRun.result.generationAverageDistanceToElite.map(fmt).joined(separator: ", "))]"
+        )
+        print(
+            "generationAveragePairwiseDistance=[\(selectedRun.result.generationAveragePairwiseDistance.map(fmt).joined(separator: ", "))]"
+        )
+        print(
+            "generationUniqueGenomeRatio=[\(selectedRun.result.generationUniqueGenomeRatio.map(fmt).joined(separator: ", "))]"
+        )
+        print(
+            "generationGenerationsWithoutImprovement=[\(selectedRun.result.generationGenerationsWithoutImprovement.map(String.init).joined(separator: ", "))]"
+        )
         print("outputCandidateSelectionStrategy=\(outputCandidateSelection.strategy)")
         print("outputCandidateSource=\(outputCandidateSelection.chosen.label)")
+        print("outputCandidatePreferredSource=\(outputCandidateSelection.preferred.label)")
+        print("outputCandidatePreferredBaseline=\(outputCandidateSelection.baseline.label)")
+        print(
+            "outputCandidateMinimumPrimaryEffectMargin=" +
+            "\(fmt(invocation.outputCandidateMinimumPrimaryEffectMargin))"
+        )
+        print("outputCandidateSelectionMargin=\(fmt(outputCandidateSelection.selectionMargin))")
+        print("outputCandidateFallbackReason=\(outputCandidateSelection.fallbackReason)")
+        for (index, rankedScore) in outputCandidateSelection.rankedScores.enumerated() {
+            print("outputCandidateRank.\(rankedScore.option.label)=\(index + 1)")
+        }
         for score in outputCandidateSelection.scores {
             print(
                 "outputCandidateOption.\(score.option.label)." +
@@ -1012,6 +1067,18 @@ struct BotTrainingRunner {
                     flag: argument,
                     minimum: 0
                 )
+            case "--stagnation-window":
+                invocation.stagnationWindow = try parseInt(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0
+                )
+            case "--minimum-meaningful-improvement":
+                invocation.minimumMeaningfulImprovement = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
+                )
             case "--ab-validate":
                 invocation.abValidate = try parseBool(
                     try value(after: argument, in: arguments, at: &index),
@@ -1032,6 +1099,12 @@ struct BotTrainingRunner {
                     try value(after: argument, in: arguments, at: &index),
                     flag: argument,
                     minimum: 0
+                )
+            case "--output-candidate-minimum-primary-effect-margin":
+                invocation.outputCandidateMinimumPrimaryEffectMargin = try parseDouble(
+                    try value(after: argument, in: arguments, at: &index),
+                    flag: argument,
+                    minimum: 0.0
                 )
             case "--tune-ranking-policy":
                 invocation.tuneRankingPolicy = try parseBool(
@@ -1221,7 +1294,12 @@ struct BotTrainingRunner {
             return OutputCandidateSelection(
                 strategy: "singleSeed",
                 chosen: selectedSeedOption,
-                scores: []
+                preferred: selectedSeedOption,
+                baseline: selectedSeedOption,
+                scores: [],
+                rankedScores: [],
+                selectionMargin: 0.0,
+                fallbackReason: "none"
             )
         }
 
@@ -1237,11 +1315,17 @@ struct BotTrainingRunner {
             return OutputCandidateSelection(
                 strategy: "ensembleAggregate",
                 chosen: aggregateOption,
-                scores: []
+                preferred: aggregateOption,
+                baseline: selectedSeedOption,
+                scores: [],
+                rankedScores: [],
+                selectionMargin: 0.0,
+                fallbackReason: "none"
             )
         }
 
         let candidateOptions = runtimePolicyOutputCandidateOptions(
+            selectedSeedOption: selectedSeedOption,
             aggregateOption: aggregateOption,
             seedRuns: seedRuns
         )
@@ -1253,17 +1337,32 @@ struct BotTrainingRunner {
                 config: abValidationConfig
             )
         }
-        guard let chosenScore = scores.max(by: { isBetterOutputCandidateScore($1, than: $0) }) else {
+        guard !scores.isEmpty else {
             return OutputCandidateSelection(
                 strategy: "ensembleAggregate",
                 chosen: aggregateOption,
-                scores: []
+                preferred: aggregateOption,
+                baseline: selectedSeedOption,
+                scores: [],
+                rankedScores: [],
+                selectionMargin: 0.0,
+                fallbackReason: "noScores"
             )
         }
+        let decision = resolveOutputCandidateSelectionDecision(
+            scores: scores,
+            selectedSeedLabel: selectedSeedOption.label,
+            minimumPrimaryEffectMargin: invocation.outputCandidateMinimumPrimaryEffectMargin
+        )
         return OutputCandidateSelection(
             strategy: "runtimePolicyPrimaryAB",
-            chosen: chosenScore.option,
-            scores: scores
+            chosen: decision.chosen.option,
+            preferred: decision.preferred.option,
+            baseline: decision.baseline.option,
+            scores: scores,
+            rankedScores: decision.rankedScores,
+            selectionMargin: decision.selectionMargin,
+            fallbackReason: decision.fallbackReason
         )
     }
 
@@ -1276,6 +1375,7 @@ struct BotTrainingRunner {
     }
 
     private static func runtimePolicyOutputCandidateOptions(
+        selectedSeedOption: OutputCandidateOption,
         aggregateOption: OutputCandidateOption,
         seedRuns: [SeedRun]
     ) -> [OutputCandidateOption] {
@@ -1286,8 +1386,9 @@ struct BotTrainingRunner {
             return lhs.seed < rhs.seed
         }
 
-        var options = [aggregateOption]
-        for run in sortedSeedRuns.prefix(3) {
+        let selectedSeed = selectedSeedSeed(from: selectedSeedOption)
+        var options = [selectedSeedOption, aggregateOption]
+        for run in sortedSeedRuns.filter({ $0.seed != selectedSeed }).prefix(3) {
             options.append(
                 OutputCandidateOption(
                     label: "seed_\(run.seed)",
@@ -1297,6 +1398,50 @@ struct BotTrainingRunner {
             )
         }
         return options
+    }
+
+    static func resolveOutputCandidateSelectionDecision(
+        scores: [OutputCandidateSelectionScore],
+        selectedSeedLabel: String,
+        minimumPrimaryEffectMargin: Double
+    ) -> OutputCandidateSelectionDecision {
+        let rankedScores = scores.sorted { lhs, rhs in
+            isBetterOutputCandidateScore(lhs, than: rhs)
+        }
+        guard
+            let preferred = rankedScores.first,
+            let baseline = scores.first(where: { $0.option.label == selectedSeedLabel })
+        else {
+            fatalError("Output candidate selection requires a selected-seed baseline score.")
+        }
+
+        let selectionMargin = preferred.primaryFinalFitnessEffectSize - baseline.primaryFinalFitnessEffectSize
+        let minimumMargin = max(0.0, minimumPrimaryEffectMargin)
+
+        let chosen: OutputCandidateSelectionScore
+        let fallbackReason: String
+        if preferred.option.label == baseline.option.label {
+            chosen = preferred
+            fallbackReason = "none"
+        } else if preferred.primaryFinalFitnessEffectSize < minimumMargin {
+            chosen = baseline
+            fallbackReason = "preferredPrimaryEffectBelowMinimumMargin"
+        } else if selectionMargin < minimumMargin {
+            chosen = baseline
+            fallbackReason = "preferredPrimaryEffectDidNotBeatSelectedSeedByMinimumMargin"
+        } else {
+            chosen = preferred
+            fallbackReason = "none"
+        }
+
+        return OutputCandidateSelectionDecision(
+            chosen: chosen,
+            preferred: preferred,
+            baseline: baseline,
+            rankedScores: rankedScores,
+            selectionMargin: selectionMargin,
+            fallbackReason: fallbackReason
+        )
     }
 
     private static func makeOutputCandidateSelectionScore(
@@ -1353,6 +1498,13 @@ struct BotTrainingRunner {
             return lhsIsAggregate
         }
         return lhs.option.label < rhs.option.label
+    }
+
+    private static func selectedSeedSeed(
+        from option: OutputCandidateOption
+    ) -> UInt64? {
+        guard option.label.hasPrefix("selected_seed_") else { return nil }
+        return UInt64(option.label.replacingOccurrences(of: "selected_seed_", with: ""))
     }
 
     private static func makeABValidationRuns(
@@ -1508,6 +1660,11 @@ struct BotTrainingRunner {
             currentFitness: event.currentFitness,
             generationBestFitness: event.generationBestFitness,
             overallBestFitness: event.overallBestFitness,
+            averageDistanceToElite: event.averageDistanceToElite,
+            averagePairwiseDistance: event.averagePairwiseDistance,
+            uniqueGenomeRatio: event.uniqueGenomeRatio,
+            generationsWithoutImprovement: event.generationsWithoutImprovement,
+            isStagnating: event.isStagnating,
             totalWorkUnits: event.totalWorkUnits,
             elapsedSeconds: event.elapsedSeconds,
             estimatedRemainingSeconds: event.estimatedRemainingSeconds

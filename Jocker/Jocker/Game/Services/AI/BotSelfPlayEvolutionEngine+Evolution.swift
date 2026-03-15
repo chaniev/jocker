@@ -117,7 +117,12 @@ extension BotSelfPlayEvolutionEngine {
             evaluatedCandidatesInGeneration: Int? = nil,
             currentFitness: Double? = nil,
             generationBestFitness: Double? = nil,
-            overallBestFitness: Double? = nil
+            overallBestFitness: Double? = nil,
+            averageDistanceToElite: Double? = nil,
+            averagePairwiseDistance: Double? = nil,
+            uniqueGenomeRatio: Double? = nil,
+            generationsWithoutImprovement: Int? = nil,
+            isStagnating: Bool? = nil
         ) {
             guard let progress else { return }
             let elapsed = Date().timeIntervalSince(runStartedAt)
@@ -141,6 +146,11 @@ extension BotSelfPlayEvolutionEngine {
                     currentFitness: currentFitness,
                     generationBestFitness: generationBestFitness,
                     overallBestFitness: overallBestFitness,
+                    averageDistanceToElite: averageDistanceToElite,
+                    averagePairwiseDistance: averagePairwiseDistance,
+                    uniqueGenomeRatio: uniqueGenomeRatio,
+                    generationsWithoutImprovement: generationsWithoutImprovement,
+                    isStagnating: isStagnating,
                     completedWorkUnits: completedWorkUnits,
                     totalWorkUnits: totalWorkUnits,
                     elapsedSeconds: elapsed,
@@ -173,9 +183,19 @@ extension BotSelfPlayEvolutionEngine {
         var bestBreakdown = baselineBreakdown
         var generationBestFitness: [Double] = []
         generationBestFitness.reserveCapacity(config.generations)
+        var generationAverageDistanceToElite: [Double] = []
+        generationAverageDistanceToElite.reserveCapacity(config.generations)
+        var generationAveragePairwiseDistance: [Double] = []
+        generationAveragePairwiseDistance.reserveCapacity(config.generations)
+        var generationUniqueGenomeRatio: [Double] = []
+        generationUniqueGenomeRatio.reserveCapacity(config.generations)
+        var generationGenerationsWithoutImprovement: [Int] = []
+        generationGenerationsWithoutImprovement.reserveCapacity(config.generations)
         var completedGenerations = 0
         var stoppedEarly = false
         var lastMeaningfulImprovementGeneration = 0
+        var lastMeaningfulStagnationImprovementGeneration = 0
+        var isStagnating = false
 
         let maxParallel = config.maxParallelEvaluations.resolved()
 
@@ -269,12 +289,35 @@ extension BotSelfPlayEvolutionEngine {
                 if fitnessImprovement > config.earlyStoppingMinImprovement {
                     lastMeaningfulImprovementGeneration = completedGenerations
                 }
+                if fitnessImprovement > config.minimumMeaningfulImprovement {
+                    lastMeaningfulStagnationImprovementGeneration = completedGenerations
+                }
             }
+            let diversityTelemetry = makeGenerationDiversityTelemetry(
+                population: scoredPopulation,
+                eliteCount: eliteCount
+            )
+            let generationsWithoutImprovement = max(
+                0,
+                completedGenerations - lastMeaningfulStagnationImprovementGeneration
+            )
+            isStagnating = config.stagnationWindow > 0 &&
+                completedGenerations >= config.stagnationWindow &&
+                generationsWithoutImprovement >= config.stagnationWindow
+            generationAverageDistanceToElite.append(diversityTelemetry.averageDistanceToElite)
+            generationAveragePairwiseDistance.append(diversityTelemetry.averagePairwiseDistance)
+            generationUniqueGenomeRatio.append(diversityTelemetry.uniqueGenomeRatio)
+            generationGenerationsWithoutImprovement.append(generationsWithoutImprovement)
             notifyProgress(
                 stage: .generationCompleted,
                 generationIndex: generation,
                 generationBestFitness: generationBestBreakdown.finalFitness,
-                overallBestFitness: bestBreakdown.finalFitness
+                overallBestFitness: bestBreakdown.finalFitness,
+                averageDistanceToElite: diversityTelemetry.averageDistanceToElite,
+                averagePairwiseDistance: diversityTelemetry.averagePairwiseDistance,
+                uniqueGenomeRatio: diversityTelemetry.uniqueGenomeRatio,
+                generationsWithoutImprovement: generationsWithoutImprovement,
+                isStagnating: isStagnating
             )
 
             let shouldEarlyStop = config.earlyStoppingPatience > 0 &&
@@ -322,6 +365,10 @@ extension BotSelfPlayEvolutionEngine {
             stage: .finished,
             overallBestFitness: bestBreakdown.finalFitness
         )
+        let finalAverageDistanceToElite = generationAverageDistanceToElite.last ?? 0.0
+        let finalAveragePairwiseDistance = generationAveragePairwiseDistance.last ?? 0.0
+        let finalUniqueGenomeRatio = generationUniqueGenomeRatio.last ?? 1.0
+        let finalGenerationsWithoutImprovement = generationGenerationsWithoutImprovement.last ?? 0
         return SelfPlayEvolutionResult(
             runMode: config.runMode,
             bestTuning: bestTuning,
@@ -377,7 +424,17 @@ extension BotSelfPlayEvolutionEngine {
             baselineEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
             bestEarlyLeadWishJokerRate: bestBreakdown.earlyLeadWishJokerRate,
             baselineLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate,
-            bestLeftNeighborPremiumAssistRate: bestBreakdown.leftNeighborPremiumAssistRate
+            bestLeftNeighborPremiumAssistRate: bestBreakdown.leftNeighborPremiumAssistRate,
+            generationAverageDistanceToElite: generationAverageDistanceToElite,
+            generationAveragePairwiseDistance: generationAveragePairwiseDistance,
+            generationUniqueGenomeRatio: generationUniqueGenomeRatio,
+            generationGenerationsWithoutImprovement: generationGenerationsWithoutImprovement,
+            finalAverageDistanceToElite: finalAverageDistanceToElite,
+            finalAveragePairwiseDistance: finalAveragePairwiseDistance,
+            finalUniqueGenomeRatio: finalUniqueGenomeRatio,
+            finalGenerationsWithoutImprovement: finalGenerationsWithoutImprovement,
+            lastMeaningfulImprovementGeneration: lastMeaningfulStagnationImprovementGeneration,
+            isStagnating: isStagnating
         )
     }
 
@@ -439,6 +496,11 @@ extension BotSelfPlayEvolutionEngine {
                     currentFitness: currentFitness,
                     generationBestFitness: nil,
                     overallBestFitness: overallBestFitness,
+                    averageDistanceToElite: nil,
+                    averagePairwiseDistance: nil,
+                    uniqueGenomeRatio: nil,
+                    generationsWithoutImprovement: nil,
+                    isStagnating: nil,
                     completedWorkUnits: completedWorkUnits,
                     totalWorkUnits: totalWorkUnits,
                     elapsedSeconds: elapsed,
@@ -524,13 +586,73 @@ extension BotSelfPlayEvolutionEngine {
             baselineEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
             bestEarlyLeadWishJokerRate: baselineBreakdown.earlyLeadWishJokerRate,
             baselineLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate,
-            bestLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate
+            bestLeftNeighborPremiumAssistRate: baselineBreakdown.leftNeighborPremiumAssistRate,
+            generationAverageDistanceToElite: [],
+            generationAveragePairwiseDistance: [],
+            generationUniqueGenomeRatio: [],
+            generationGenerationsWithoutImprovement: [],
+            finalAverageDistanceToElite: 0.0,
+            finalAveragePairwiseDistance: 0.0,
+            finalUniqueGenomeRatio: 1.0,
+            finalGenerationsWithoutImprovement: 0,
+            lastMeaningfulImprovementGeneration: 0,
+            isStagnating: false
         )
     }
 
     private struct ScoredGenome {
         let genome: EvolutionGenome
         let result: CandidateEvaluationResult
+    }
+
+    private struct GenerationDiversityTelemetry {
+        let averageDistanceToElite: Double
+        let averagePairwiseDistance: Double
+        let uniqueGenomeRatio: Double
+    }
+
+    private static func makeGenerationDiversityTelemetry(
+        population: [ScoredGenome],
+        eliteCount: Int
+    ) -> GenerationDiversityTelemetry {
+        guard !population.isEmpty else {
+            return GenerationDiversityTelemetry(
+                averageDistanceToElite: 0.0,
+                averagePairwiseDistance: 0.0,
+                uniqueGenomeRatio: 1.0
+            )
+        }
+
+        let genomes = population.map(\.genome)
+        let elites = Array(genomes.prefix(max(1, min(eliteCount, genomes.count))))
+
+        let distanceToEliteValues = genomes.map { genome in
+            elites.map { elite in genomeDistance(genome, elite) }.min() ?? 0.0
+        }
+        let averageDistanceToElite = distanceToEliteValues.reduce(0.0, +) / Double(distanceToEliteValues.count)
+
+        var pairwiseDistances: [Double] = []
+        if genomes.count > 1 {
+            pairwiseDistances.reserveCapacity((genomes.count * (genomes.count - 1)) / 2)
+            for lhsIndex in 0..<(genomes.count - 1) {
+                for rhsIndex in (lhsIndex + 1)..<genomes.count {
+                    pairwiseDistances.append(
+                        genomeDistance(genomes[lhsIndex], genomes[rhsIndex])
+                    )
+                }
+            }
+        }
+        let averagePairwiseDistance = pairwiseDistances.isEmpty
+            ? 0.0
+            : pairwiseDistances.reduce(0.0, +) / Double(pairwiseDistances.count)
+
+        let uniqueGenomeRatio = Double(Set(genomes.map(genomeSignature)).count) / Double(genomes.count)
+
+        return GenerationDiversityTelemetry(
+            averageDistanceToElite: averageDistanceToElite,
+            averagePairwiseDistance: averagePairwiseDistance,
+            uniqueGenomeRatio: uniqueGenomeRatio
+        )
     }
 
     private static func normalizedCardsPerRoundRange(

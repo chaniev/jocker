@@ -114,6 +114,10 @@ extension BotSelfPlayEvolutionEngine {
         let earlyStoppingMinImprovement: Double
         /// Минимальное число завершённых поколений перед проверкой early stopping.
         let earlyStoppingWarmupGenerations: Int
+        /// Отдельное окно стагнации для telemetry/log-only режима. `0` отключает детектор.
+        let stagnationWindow: Int
+        /// Минимальный прирост `finalFitness`, который считается содержательным прогрессом для stagnation telemetry.
+        let minimumMeaningfulImprovement: Double
         /// Разрешить эволюции менять веса `turnStrategy`.
         let tuneTurnStrategy: Bool
         /// Разрешить эволюции менять веса `bidding` (включая blind sub-weights).
@@ -178,6 +182,8 @@ extension BotSelfPlayEvolutionEngine {
             earlyStoppingPatience: Int = 0,
             earlyStoppingMinImprovement: Double = 0.0,
             earlyStoppingWarmupGenerations: Int = 0,
+            stagnationWindow: Int = 0,
+            minimumMeaningfulImprovement: Double = 0.0,
             tuneTurnStrategy: Bool = true,
             tuneBidding: Bool = true,
             tuneTrumpSelection: Bool = true,
@@ -268,6 +274,8 @@ extension BotSelfPlayEvolutionEngine {
             self.earlyStoppingPatience = max(0, earlyStoppingPatience)
             self.earlyStoppingMinImprovement = max(0.0, earlyStoppingMinImprovement)
             self.earlyStoppingWarmupGenerations = max(0, earlyStoppingWarmupGenerations)
+            self.stagnationWindow = max(0, stagnationWindow)
+            self.minimumMeaningfulImprovement = max(0.0, minimumMeaningfulImprovement)
             self.tuneTurnStrategy = tuneTurnStrategy
             self.tuneBidding = tuneBidding
             self.tuneTrumpSelection = tuneTrumpSelection
@@ -352,6 +360,16 @@ extension BotSelfPlayEvolutionEngine {
         let bestEarlyLeadWishJokerRate: Double
         let baselineLeftNeighborPremiumAssistRate: Double
         let bestLeftNeighborPremiumAssistRate: Double
+        let generationAverageDistanceToElite: [Double]
+        let generationAveragePairwiseDistance: [Double]
+        let generationUniqueGenomeRatio: [Double]
+        let generationGenerationsWithoutImprovement: [Int]
+        let finalAverageDistanceToElite: Double
+        let finalAveragePairwiseDistance: Double
+        let finalUniqueGenomeRatio: Double
+        let finalGenerationsWithoutImprovement: Int
+        let lastMeaningfulImprovementGeneration: Int
+        let isStagnating: Bool
 
         var improvement: Double {
             return bestFitness - baselineFitness
@@ -410,6 +428,11 @@ extension BotSelfPlayEvolutionEngine {
         let currentFitness: Double?
         let generationBestFitness: Double?
         let overallBestFitness: Double?
+        let averageDistanceToElite: Double?
+        let averagePairwiseDistance: Double?
+        let uniqueGenomeRatio: Double?
+        let generationsWithoutImprovement: Int?
+        let isStagnating: Bool?
         let completedWorkUnits: Int
         let totalWorkUnits: Int
         let elapsedSeconds: Double
