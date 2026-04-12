@@ -36,6 +36,7 @@ This document is the source of truth for repository structure and file placement
 │   ├── CARDS_DOCUMENTATION.md
 │   ├── CODEX_MCP_SKILLS_SETUP.md
 │   ├── CODE_REFACTORING_BACKLOG.md
+│   ├── PAIRS_MODE_IMPLEMENTATION_PLAN.md
 │   ├── README_CARDS.md
 │   └── XCODE_INTEGRATION.md
 ├── scripts/
@@ -56,6 +57,7 @@ This document is the source of truth for repository structure and file placement
 │   ├── общие.txt
 │   ├── особенности игры с джокером.txt
 │   ├── особенности игры в поледнем блоке.txt
+│   ├── пара на пару.txt
 │   ├── подсчет очков.txt
 │   ├── правила раздачи карт на 4 игроков.txt
 │   ├── присуждение премии.txt
@@ -223,6 +225,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
 - `docs/CODEX_MCP_SKILLS_SETUP.md`: project-specific Codex setup guide covering recommended MCP servers, curated skills, and ready-to-paste `~/.codex/config.toml` snippets for this Swift/UIKit/SpriteKit repo.
+- `docs/PAIRS_MODE_IMPLEMENTATION_PLAN.md`: implementation plan for the 4-player `pairs` mode, covering gameplay-mode plumbing, scoring/premium changes, presentation, statistics separation, and bot cooperation updates.
 - `docs/README_CARDS.md`: quick entrypoint/index to card-related documentation.
 - `docs/XCODE_INTEGRATION.md`: how to open/build/test the project in Xcode (schemes, DerivedData, and CI alignment).
 - `docs/CODE_REFACTORING_BACKLOG.md`: codebase refactoring notes and no-behavior-change improvement backlog (maintainability/testability).
