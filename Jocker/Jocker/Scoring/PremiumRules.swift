@@ -26,7 +26,8 @@ enum PremiumRules {
     static func finalizeBlockScores(
         blockRoundResults: [[RoundResult]],
         blockNumber: Int,
-        playerCount: Int
+        playerCount: Int,
+        gameMode: GameMode = .freeForAll
     ) -> BlockFinalizationOutcome {
         guard playerCount > 0 else {
             return BlockFinalizationOutcome(
@@ -59,6 +60,7 @@ enum PremiumRules {
         let premiumAdjustments = computePremiumAdjustments(
             roundResultsByPlayer: blockRoundResults,
             playerCount: playerCount,
+            gameMode: gameMode,
             allPremiumPlayers: allPremiumPlayers,
             regularPremiumPlayers: regularPremiumPlayers,
             zeroPremiumPlayers: zeroPremiumPlayers
@@ -191,6 +193,7 @@ enum PremiumRules {
     private static func computePremiumAdjustments(
         roundResultsByPlayer: [[RoundResult]],
         playerCount: Int,
+        gameMode: GameMode,
         allPremiumPlayers: [Int],
         regularPremiumPlayers: [Int],
         zeroPremiumPlayers: [Int]
@@ -219,8 +222,9 @@ enum PremiumRules {
         }
 
         let premiumSet = Set(allPremiumPlayers)
+        let partnerships = GamePartnerships(playerCount: playerCount, gameMode: gameMode)
         for playerIndex in allPremiumPlayers {
-            guard let penaltyTarget = findPenaltyTarget(
+            guard let resolvedPenaltyTarget = findPenaltyTarget(
                 for: playerIndex,
                 premiumPlayers: premiumSet,
                 playerCount: playerCount
@@ -228,22 +232,26 @@ enum PremiumRules {
                 continue
             }
 
-            let targetRoundScores = roundResultsByPlayer.indices.contains(penaltyTarget)
-                ? roundResultsByPlayer[penaltyTarget].map(\.score)
+            if partnerships.areTeammates(playerIndex, resolvedPenaltyTarget) {
+                continue
+            }
+
+            let targetRoundScores = roundResultsByPlayer.indices.contains(resolvedPenaltyTarget)
+                ? roundResultsByPlayer[resolvedPenaltyTarget].map(\.score)
                 : []
             let penaltySelection = ScoreCalculator.selectPremiumPenaltyRound(
                 roundScores: targetRoundScores
             )
             let penalty = penaltySelection.penalty
-            premiumPenalties[penaltyTarget] += penalty
+            premiumPenalties[resolvedPenaltyTarget] += penalty
 
             if
                 penalty > 0,
-                premiumPenaltyRoundIndices[penaltyTarget] == nil,
+                premiumPenaltyRoundIndices[resolvedPenaltyTarget] == nil,
                 let roundIndex = penaltySelection.roundIndex
             {
-                premiumPenaltyRoundIndices[penaltyTarget] = roundIndex
-                premiumPenaltyRoundScores[penaltyTarget] = penalty
+                premiumPenaltyRoundIndices[resolvedPenaltyTarget] = roundIndex
+                premiumPenaltyRoundScores[resolvedPenaltyTarget] = penalty
             }
         }
 

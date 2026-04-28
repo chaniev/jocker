@@ -10,9 +10,13 @@
 struct BotMatchContextBuilderTestFixture {
     static func makeGameState(
         playerCount: Int,
+        gameMode: GameMode = .freeForAll,
         initialDealerIndex: Int = 0
     ) -> GameState {
-        let gameState = GameState(playerCount: playerCount)
+        let gameState = GameState(
+            playerCount: playerCount,
+            gameMode: gameMode
+        )
         gameState.startGame(initialDealerIndex: initialDealerIndex)
         return gameState
     }

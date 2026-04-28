@@ -11,6 +11,7 @@ struct DealHistoryPresentationBuilder {
     struct Presentation {
         struct ExportData: Equatable {
             let playerCount: Int
+            let gameMode: GameMode
             let playerNames: [String]
             let playerControlTypes: [PlayerControlType]
         }
@@ -45,7 +46,8 @@ struct DealHistoryPresentationBuilder {
     func build(
         dealHistory: DealHistory,
         playerNames: [String],
-        playerControlTypes: [PlayerControlType]
+        playerControlTypes: [PlayerControlType],
+        gameMode: GameMode = .freeForAll
     ) -> Presentation {
         let playerCount = resolvedPlayerCount(
             dealHistory: dealHistory,
@@ -89,6 +91,7 @@ struct DealHistoryPresentationBuilder {
             sections: sections,
             exportData: Presentation.ExportData(
                 playerCount: playerCount,
+                gameMode: gameMode,
                 playerNames: normalizedPlayerNames,
                 playerControlTypes: normalizedControlTypes
             )

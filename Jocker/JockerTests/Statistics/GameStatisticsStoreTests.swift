@@ -61,6 +61,7 @@ final class GameStatisticsStoreTests: XCTestCase {
 
         store.recordCompletedGame(
             playerCount: 3,
+            gameMode: .freeForAll,
             playerSummaries: summaries,
             completedBlocks: blocks
         )
@@ -109,6 +110,7 @@ final class GameStatisticsStoreTests: XCTestCase {
 
         store.recordCompletedGame(
             playerCount: 4,
+            gameMode: .freeForAll,
             playerSummaries: [
                 makeSummary(playerIndex: 0, place: 1, totalScore: 200),
                 makeSummary(playerIndex: 1, place: 2, totalScore: 110),
@@ -122,6 +124,7 @@ final class GameStatisticsStoreTests: XCTestCase {
 
         store.recordCompletedGame(
             playerCount: 4,
+            gameMode: .freeForAll,
             playerSummaries: [
                 makeSummary(playerIndex: 0, place: 4, totalScore: -40),
                 makeSummary(playerIndex: 1, place: 1, totalScore: 240),
@@ -159,6 +162,7 @@ final class GameStatisticsStoreTests: XCTestCase {
 
         store.recordCompletedGame(
             playerCount: 3,
+            gameMode: .freeForAll,
             playerSummaries: [
                 makeSummary(playerIndex: 0, place: 1, totalScore: 100),
                 makeSummary(playerIndex: 1, place: 2, totalScore: 90),
@@ -175,6 +179,32 @@ final class GameStatisticsStoreTests: XCTestCase {
 
         XCTAssertEqual(allRecords[2].fourthPlaceCount, 0)
         XCTAssertEqual(threePlayersRecords[2].fourthPlaceCount, 0)
+    }
+
+    func testRecordCompletedGame_pairsMode_updatesDedicatedFourPlayerPairsScope() {
+        let (store, userDefaults, suiteName) = makeStore()
+        defer { clear(userDefaults: userDefaults, suiteName: suiteName) }
+
+        store.recordCompletedGame(
+            playerCount: 4,
+            gameMode: .pairs,
+            playerSummaries: [
+                makeSummary(playerIndex: 0, place: 1, totalScore: 140),
+                makeSummary(playerIndex: 1, place: 2, totalScore: 80),
+                makeSummary(playerIndex: 2, place: 1, totalScore: 120),
+                makeSummary(playerIndex: 3, place: 2, totalScore: 60)
+            ],
+            completedBlocks: [
+                makeBlock(playerCount: 4, premiumPlayerIndices: [0])
+            ]
+        )
+
+        let snapshot = store.loadSnapshot()
+
+        XCTAssertEqual(snapshot.records(for: .fourPlayersPairs)[0].gamesPlayed, 1)
+        XCTAssertEqual(snapshot.records(for: .fourPlayersPairs)[0].firstPlaceCount, 1)
+        XCTAssertEqual(snapshot.records(for: .fourPlayersPairs)[2].firstPlaceCount, 1)
+        XCTAssertEqual(snapshot.records(for: .fourPlayers)[0].gamesPlayed, 0)
     }
 
     private func makeStore() -> (UserDefaultsGameStatisticsStore, UserDefaults, String) {

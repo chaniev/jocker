@@ -15,6 +15,9 @@ private typealias ToolBotBiddingService = JockerSelfPlayTools.BotBiddingService
 private typealias ToolBotDifficulty = JockerSelfPlayTools.BotDifficulty
 private typealias ToolBotRuntimePolicy = JockerSelfPlayTools.BotRuntimePolicy
 private typealias ToolBotTuning = JockerSelfPlayTools.BotTuning
+private typealias ToolBotTrainingRunner = JockerSelfPlayTools.BotTrainingRunner
+private typealias ToolTrainingRunResultFormatter = JockerSelfPlayTools.TrainingRunResultFormatter
+private typealias ToolTrainingRunResultSummarySnapshot = JockerSelfPlayTools.TrainingRunResultSummarySnapshot
 private typealias ToolCard = JockerSelfPlayTools.Card
 
 final class BotSelfPlayEvolutionEngineTests: XCTestCase {
@@ -986,8 +989,14 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             seed: 0xF07A77E
         )
         let snapshot = makeSummarySnapshot(from: result)
-        let lines1 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xF07A77E, result: snapshot)
-        let lines2 = TrainingRunResultFormatter.formatRunResultSummaryLines(selectedSeed: 0xF07A77E, result: snapshot)
+        let lines1 = ToolTrainingRunResultFormatter.formatRunResultSummaryLines(
+            selectedSeed: 0xF07A77E,
+            result: snapshot
+        )
+        let lines2 = ToolTrainingRunResultFormatter.formatRunResultSummaryLines(
+            selectedSeed: 0xF07A77E,
+            result: snapshot
+        )
         XCTAssertEqual(lines1, lines2, "Same run result must yield identical summary lines")
         XCTAssertFalse(lines1.isEmpty)
         let lastLine = lines1.last ?? ""
@@ -1025,8 +1034,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testOutputCandidateSelectionDecision_fallsBackToSelectedSeedWhenMarginBelowThreshold() {
         let tuning = ToolBotTuning(difficulty: .hard)
-        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let selected = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "selected_seed_20260222",
                 runtimeGeneSource: "selectedSeed",
                 tuning: tuning
@@ -1036,8 +1045,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 0.000,
             primaryUnderbidEffectSize: 0.000
         )
-        let preferred = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let preferred = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260220",
                 runtimeGeneSource: "primaryValidatedSeed_20260220",
                 tuning: tuning
@@ -1047,8 +1056,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 0.000,
             primaryUnderbidEffectSize: -10.0
         )
-        let aggregate = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let aggregate = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "ensemble_aggregate",
                 runtimeGeneSource: "ensembleAggregate",
                 tuning: tuning
@@ -1059,7 +1068,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryUnderbidEffectSize: 5.0
         )
 
-        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+        let decision = ToolBotTrainingRunner.resolveOutputCandidateSelectionDecision(
             scores: [selected, preferred, aggregate],
             selectedSeedLabel: selected.option.label,
             minimumPrimaryEffectMargin: 0.03
@@ -1076,8 +1085,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testOutputCandidateSelectionDecision_keepsPreferredCandidateWhenMarginClearsThreshold() {
         let tuning = ToolBotTuning(difficulty: .hard)
-        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let selected = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "selected_seed_20260222",
                 runtimeGeneSource: "selectedSeed",
                 tuning: tuning
@@ -1087,8 +1096,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 0.000,
             primaryUnderbidEffectSize: 0.000
         )
-        let preferred = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let preferred = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260220",
                 runtimeGeneSource: "primaryValidatedSeed_20260220",
                 tuning: tuning
@@ -1099,7 +1108,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryUnderbidEffectSize: -10.0
         )
 
-        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+        let decision = ToolBotTrainingRunner.resolveOutputCandidateSelectionDecision(
             scores: [selected, preferred],
             selectedSeedLabel: selected.option.label,
             minimumPrimaryEffectMargin: 0.03
@@ -1114,8 +1123,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testOutputCandidateSelectionDecision_prefersLowerStrengthVariantWhenMetricsTie() {
         let tuning = ToolBotTuning(difficulty: .hard)
-        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let selected = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "selected_seed_20260222",
                 runtimeGeneSource: "selectedSeed",
                 tuning: tuning
@@ -1125,8 +1134,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 0.000,
             primaryUnderbidEffectSize: 0.000
         )
-        let fullStrength = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let fullStrength = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260220",
                 runtimeGeneSource: "primaryValidatedSeed_20260220",
                 tuning: tuning,
@@ -1137,8 +1146,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 5.000,
             primaryUnderbidEffectSize: -10.0
         )
-        let reducedStrength = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let reducedStrength = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260220_patch75",
                 runtimeGeneSource: "primaryValidatedSeed_20260220_patch75",
                 tuning: tuning,
@@ -1150,7 +1159,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryUnderbidEffectSize: -10.0
         )
 
-        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+        let decision = ToolBotTrainingRunner.resolveOutputCandidateSelectionDecision(
             scores: [selected, fullStrength, reducedStrength],
             selectedSeedLabel: selected.option.label,
             minimumPrimaryEffectMargin: 0.03
@@ -1162,8 +1171,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testOutputCandidateSelectionDecision_prefersNarrowerScopeVariantWhenMetricsTie() {
         let tuning = ToolBotTuning(difficulty: .hard)
-        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let selected = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "selected_seed_20260222",
                 runtimeGeneSource: "selectedSeed",
                 tuning: tuning
@@ -1173,8 +1182,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 0.000,
             primaryUnderbidEffectSize: 0.000
         )
-        let fullScope = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let fullScope = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260220",
                 runtimeGeneSource: "primaryValidatedSeed_20260220",
                 tuning: tuning,
@@ -1186,8 +1195,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 5.000,
             primaryUnderbidEffectSize: -10.0
         )
-        let narrowerScope = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let narrowerScope = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260220_ranking_rollout",
                 runtimeGeneSource: "primaryValidatedSeed_20260220_rankingRollout",
                 tuning: tuning,
@@ -1200,7 +1209,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryUnderbidEffectSize: -10.0
         )
 
-        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+        let decision = ToolBotTrainingRunner.resolveOutputCandidateSelectionDecision(
             scores: [selected, fullScope, narrowerScope],
             selectedSeedLabel: selected.option.label,
             minimumPrimaryEffectMargin: 0.03
@@ -1212,8 +1221,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     func testOutputCandidateSelectionDecision_prefersSaferAlternativeWhenPreferredWorsensUnderbid() {
         let tuning = ToolBotTuning(difficulty: .hard)
-        let selected = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let selected = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "selected_seed_20260221",
                 runtimeGeneSource: "selectedSeed",
                 tuning: tuning
@@ -1223,8 +1232,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: -24.0,
             primaryUnderbidEffectSize: 3.0
         )
-        let preferred = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let preferred = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260222",
                 runtimeGeneSource: "primaryValidatedSeed_20260222",
                 tuning: tuning
@@ -1234,8 +1243,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryScoreDiffEffectSize: 5.8,
             primaryUnderbidEffectSize: 0.625
         )
-        let saferAlternative = BotTrainingRunner.OutputCandidateSelectionScore(
-            option: BotTrainingRunner.OutputCandidateOption(
+        let saferAlternative = ToolBotTrainingRunner.OutputCandidateSelectionScore(
+            option: ToolBotTrainingRunner.OutputCandidateOption(
                 label: "seed_20260223_ranking_opponent",
                 runtimeGeneSource: "primaryValidatedSeed_20260223_rankingOpponent",
                 tuning: tuning,
@@ -1248,7 +1257,7 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
             primaryUnderbidEffectSize: -13.0
         )
 
-        let decision = BotTrainingRunner.resolveOutputCandidateSelectionDecision(
+        let decision = ToolBotTrainingRunner.resolveOutputCandidateSelectionDecision(
             scores: [selected, preferred, saferAlternative],
             selectedSeedLabel: selected.option.label,
             minimumPrimaryEffectMargin: 0.03
@@ -1403,8 +1412,8 @@ final class BotSelfPlayEvolutionEngineTests: XCTestCase {
 
     private func makeSummarySnapshot(
         from result: ToolBotTuning.SelfPlayEvolutionResult
-    ) -> TrainingRunResultSummarySnapshot {
-        return TrainingRunResultSummarySnapshot(
+    ) -> ToolTrainingRunResultSummarySnapshot {
+        return ToolTrainingRunResultSummarySnapshot(
             baselineFitness: result.baselineFitness,
             bestFitness: result.bestFitness,
             baselineLegacyFitness: result.baselineLegacyFitness,

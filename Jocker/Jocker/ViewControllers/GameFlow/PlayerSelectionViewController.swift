@@ -9,6 +9,7 @@ import UIKit
 
 class PlayerSelectionViewController: UIViewController {
     private var selectedPlayerCount: Int = 4
+    private var selectedGameMode: GameMode = .freeForAll
     private var isStartingGame = false
 
     private let playersSettingsStore = GamePlayersSettingsStore()
@@ -142,6 +143,7 @@ class PlayerSelectionViewController: UIViewController {
         guard !isStartingGame else { return }
 
         selectedPlayerCount = sender.tag
+        selectedGameMode = selectedPlayerCount == 4 ? selectedGameMode : .freeForAll
         updateButtonStates()
         isStartingGame = true
 
@@ -152,7 +154,11 @@ class PlayerSelectionViewController: UIViewController {
                 sender.transform = .identity
             }) { _ in
                 self.updateButtonStates()
-                self.startGame()
+                if self.selectedPlayerCount == 4 {
+                    self.presentGameModeSelection()
+                } else {
+                    self.startGame()
+                }
             }
         }
     }
@@ -206,6 +212,7 @@ class PlayerSelectionViewController: UIViewController {
 
         let gameVC = GameViewController()
         gameVC.playerCount = selectedPlayerCount
+        gameVC.gameMode = selectedGameMode.normalized(for: selectedPlayerCount)
         gameVC.playerNames = activeNames
         gameVC.playerControlTypes = (0..<selectedPlayerCount).map { index in
             index == 0 ? .human : .bot
@@ -217,6 +224,34 @@ class PlayerSelectionViewController: UIViewController {
         present(gameVC, animated: true) { [weak self] in
             self?.isStartingGame = false
         }
+    }
+
+    private func presentGameModeSelection() {
+        let alert = UIAlertController(
+            title: "Режим на 4 игроков",
+            message: "Выбери вариант партии. В режиме пар игроки 1 и 3 играют против игроков 2 и 4.",
+            preferredStyle: .actionSheet
+        )
+        alert.addAction(UIAlertAction(title: GameMode.freeForAll.title, style: .default) { [weak self] _ in
+            guard let self else { return }
+            self.selectedGameMode = .freeForAll
+            self.startGame()
+        })
+        alert.addAction(UIAlertAction(title: GameMode.pairs.title, style: .default) { [weak self] _ in
+            guard let self else { return }
+            self.selectedGameMode = .pairs
+            self.startGame()
+        })
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel) { [weak self] _ in
+            self?.isStartingGame = false
+        })
+
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = fourPlayersButton
+            popover.sourceRect = fourPlayersButton.bounds
+        }
+
+        present(alert, animated: true)
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {

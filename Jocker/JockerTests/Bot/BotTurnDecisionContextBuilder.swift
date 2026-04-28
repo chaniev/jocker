@@ -61,7 +61,7 @@ struct BotTurnDecisionContextBuilder {
     func buildStrategyContext() -> BotTurnStrategyService.BotTurnDecisionContext {
         return BotTurnStrategyService.BotTurnDecisionContext(
             handCards: handCards,
-            trickNode: trickNode,
+            trick: .init(trickNode: trickNode),
             trump: trump,
             bid: bid,
             tricksTaken: tricksTaken,

@@ -94,17 +94,13 @@ struct BlockPlanResolver {
         }
         guard matchContext.totalScores.count >= matchContext.playerCount else { return nil }
 
-        let ownScore = matchContext.totalScores[matchContext.playerIndex]
-        let opponentScores = matchContext.totalScores.enumerated()
-            .filter { $0.offset != matchContext.playerIndex }
-            .map(\.element)
-        guard let leaderScore = matchContext.totalScores.max(), !opponentScores.isEmpty else {
+        let scorePerspective = scorePerspective(from: matchContext)
+        guard let scorePerspective else {
             return nil
         }
 
-        let bestOpponentScore = opponentScores.max() ?? ownScore
-        let behindLeader = max(0, leaderScore - ownScore)
-        let safeLead = max(0, ownScore - bestOpponentScore)
+        let behindLeader = max(0, scorePerspective.leaderScore - scorePerspective.ownScore)
+        let safeLead = max(0, scorePerspective.ownScore - scorePerspective.bestOpponentScore)
 
         let scoreScale = matchContext.block == .fourth
             ? rankingPolicy.fourthBlockScoreScale
@@ -190,5 +186,30 @@ struct BlockPlanResolver {
             preserveOwnPremiumBias: preserveOwnPremiumBias,
             denyOpponentPremiumBias: denyOpponentPremiumBias
         )
+    }
+
+    private func scorePerspective(
+        from matchContext: BotMatchContext
+    ) -> (ownScore: Int, leaderScore: Int, bestOpponentScore: Int)? {
+        if matchContext.isPairsMode {
+            let ownTeamIndex = matchContext.playerIndex.isMultiple(of: 2) ? 0 : 1
+            guard matchContext.teamScores.indices.contains(ownTeamIndex) else { return nil }
+            let ownScore = matchContext.teamScores[ownTeamIndex]
+            let opponentTeamIndex = ownTeamIndex == 0 ? 1 : 0
+            let bestOpponentScore = matchContext.teamScores.indices.contains(opponentTeamIndex)
+                ? matchContext.teamScores[opponentTeamIndex]
+                : ownScore
+            let leaderScore = max(ownScore, bestOpponentScore)
+            return (ownScore, leaderScore, bestOpponentScore)
+        }
+
+        let ownScore = matchContext.totalScores[matchContext.playerIndex]
+        let opponentScores = matchContext.totalScores.enumerated()
+            .filter { $0.offset != matchContext.playerIndex }
+            .map(\.element)
+        guard let leaderScore = matchContext.totalScores.max(), !opponentScores.isEmpty else {
+            return nil
+        }
+        return (ownScore, leaderScore, opponentScores.max() ?? ownScore)
     }
 }

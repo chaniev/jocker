@@ -45,14 +45,18 @@ extension GameScene {
         guard !playerSummaries.isEmpty else { return false }
         guard !isGameResultsModalPresented else { return true }
 
+        let teamSummaries = buildFinalGameTeamSummaries()
         let modal = GameResultsViewController(
+            gameMode: gameMode,
             playerSummaries: playerSummaries,
+            teamSummaries: teamSummaries,
             onClose: { [weak self] in
                 guard let self else { return }
                 self.sessionState = self.gameResultsPersistenceCoordinator.persistGameStatisticsIfNeeded(
                     sessionState: self.sessionState,
                     playerSummaries: playerSummaries,
                     playerCount: self.playerCount,
+                    gameMode: self.gameMode,
                     completedBlocks: self.scoreManager.completedBlocks,
                     statisticsStore: self.gameStatisticsStore
                 )
@@ -78,6 +82,7 @@ extension GameScene {
             scoreManager: scoreManager,
             firstColumnPlayerIndex: scoreTableFirstPlayerIndex,
             playerNames: currentPlayerNames,
+            gameMode: gameMode,
             currentBlockIndex: blockIndex,
             currentRoundIndex: lastRoundIndex,
             focusOnBlockSummary: true
@@ -89,6 +94,7 @@ extension GameScene {
                 dealHistory: self.dealHistory(forBlockIndex: selectedBlockIndex, roundIndex: selectedRoundIndex),
                 playerNames: self.currentPlayerNames,
                 playerControlTypes: self.playerControlTypes,
+                gameMode: self.gameMode,
                 blockIndex: selectedBlockIndex,
                 roundIndex: selectedRoundIndex
             )

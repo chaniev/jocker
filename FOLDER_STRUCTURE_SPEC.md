@@ -81,7 +81,7 @@ Notes:
 Selected, non-exhaustive list of key files and what they own.
 
 - `Jocker/Jocker/Game/Scenes/GameScene.swift`: base gameplay scene shell (scene lifecycle, table/player/UI setup, shared layout helpers, top-level touch routing, and orchestration over extracted scene session/presentation/persistence helpers).
-- `Jocker/Jocker/Game/Scenes/GameSceneInputConfiguration.swift`: explicit external setup configuration for `GameScene` (player count/names/control modes/bot difficulty settings) applied before scene presentation.
+- `Jocker/Jocker/Game/Scenes/GameSceneInputConfiguration.swift`: explicit external setup configuration for `GameScene` (player count, game mode, names, control modes, and bot difficulty settings) applied before scene presentation.
 - `Jocker/Jocker/Game/Scenes/GameSceneLayoutResolver.swift`: pure geometry helper for `GameScene` (player seats, table-centered controls, bid-info sizing, trump/joker overlays, and first-dealer announcement layout).
 - `Jocker/Jocker/Game/Scenes/GameSceneNodeFactory.swift`: small SpriteKit node factory for `GameScene` reusable node setup (poker table and primary action buttons) so construction details do not live inline in scene orchestration.
 - `Jocker/Jocker/Game/Scenes/GameSceneSessionState.swift`: transient scene-owned runtime/session state (pending bids/blind selections, result-presentation flags, export markers, and did-deal markers) separated from domain game state.
@@ -95,11 +95,11 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Game/Coordinator/GameSceneCoordinator.swift`: facade over round/turn/animation services; keeps scene logic thin and serializes trick resolution.
 - `Jocker/Jocker/Game/Coordinator/GameEnvironment.swift`: dependency container for `GameScene` infrastructure/services (coordinator, stores/export, and bot service factories), enabling explicit DI at scene creation.
 - `Jocker/Jocker/Game/Coordinator/GameSceneModalPresenter.swift`: UIKit modal presenter/navigation helper for `GameScene`, encapsulating root/top controller traversal and dismiss-to-start-screen behavior outside scene logic.
-- `Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift`: post-game persistence/export coordinator for `GameScene`, applying statistics saving and deal-history export rules against extracted session state.
-- `Jocker/Jocker/Game/Coordinator/DealHistoryPresentationCoordinator.swift`: presents deal-history details or a missing-history alert from score-table navigation without embedding UIKit routing into `GameScene`.
+- `Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift`: post-game persistence/export coordinator for `GameScene`, applying statistics saving and deal-history export rules against extracted session state, including mode-aware statistics/export routing.
+- `Jocker/Jocker/Game/Coordinator/DealHistoryPresentationCoordinator.swift`: presents deal-history details or a missing-history alert from score-table navigation without embedding UIKit routing into `GameScene`, forwarding the active game mode into history presentation/export.
 - `Jocker/Jocker/Game/Services/Flow/GameRoundService.swift`: transitions between rounds/blocks, one-time block finalization recording, and score-manager recording via shared round-result snapshots.
 - `Jocker/Jocker/Game/Services/Flow/GameTurnService.swift`: entrypoint for automatic bot turn decision and trick winner resolution.
-- `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`: pure builder mapping `GameState` + `ScoreManager` to `BotMatchContext` (premium snapshot + opponent model), keeping `GameScene` UI-focused.
+- `Jocker/Jocker/Game/Services/AI/BotMatchContextBuilder.swift`: pure builder mapping `GameState` + `ScoreManager` to `BotMatchContext` (premium snapshot, team/partner state, and opponent model), keeping `GameScene` UI-focused.
 - `Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift`: runtime bot move orchestrator that resolves legal cards, round context, and fallback move selection.
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateEvaluatorService.swift`: runtime bot-turn evaluator facade that enumerates candidates, builds ranking context, delegates rollout/endgame/simulation work to extracted helpers, and chooses the final best move.
 - `Jocker/Jocker/Game/Services/AI/BotTurnBeliefStateBuilder.swift`: isolated belief-state inference helper for bot turns (`BotBeliefState.infer` plumbing from round/trick snapshots).
@@ -109,13 +109,13 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Game/Services/AI/BotTurnRolloutService.swift`: rollout scoring helper for top bot-turn candidates (gating, urgency weighting, sampled future-trick simulation, and utility adjustments).
 - `Jocker/Jocker/Game/Services/AI/BotTurnEndgameSolver.swift`: small-hand endgame solver for bot turns (solver gating, sampled round completion, and endgame utility adjustments).
 - `Jocker/Jocker/Game/Services/AI/BotTurnCandidateRankingService.swift`: runtime candidate-ranking facade for bot turns that gathers utility adjustments from extracted ranking helpers and delegates deterministic tie-break comparison to a dedicated policy object.
-- `Jocker/Jocker/Game/Services/AI/BlockPlanResolver.swift`: block-level score-state/risk-budget helper for ranking (`match catch-up`, urgency, premium-preserve bias, and deny-opponent bias).
-- `Jocker/Jocker/Game/Services/AI/OpponentPressureAdjuster.swift`: opponent-style/intention pressure helper for ranking (premium-deny multipliers, blind contest pressure, and bid/intention utility adjustments).
+- `Jocker/Jocker/Game/Services/AI/BlockPlanResolver.swift`: block-level score-state/risk-budget helper for ranking (`match catch-up`, urgency, premium-preserve bias, and deny-opponent bias), with team-score perspective in `pairs` mode.
+- `Jocker/Jocker/Game/Services/AI/OpponentPressureAdjuster.swift`: opponent-style/intention pressure helper for ranking (premium-deny multipliers, blind contest pressure, and bid/intention utility adjustments), excluding teammate pressure in `pairs` mode.
 - `Jocker/Jocker/Game/Services/AI/PremiumPreserveAdjuster.swift`: premium/zero-premium preservation utility helper for ranking decisions.
 - `Jocker/Jocker/Game/Services/AI/PenaltyAvoidAdjuster.swift`: penalty-risk utility helper that deforms ranking away from score lines threatening premium penalties.
 - `Jocker/Jocker/Game/Services/AI/PremiumDenyAdjuster.swift`: anti-premium utility helper that biases ranking against preserving opponents' premium trajectories.
 - `Jocker/Jocker/Game/Services/AI/JokerDeclarationAdjuster.swift`: lead face-up joker declaration utility helper, including goal-oriented declaration shaping and early `wish` penalty.
-- `Jocker/Jocker/Game/Services/AI/MoveUtilityComposer.swift`: final ranking utility composer that merges tactical/risk/opponent/joker components into a stabilized utility score.
+- `Jocker/Jocker/Game/Services/AI/MoveUtilityComposer.swift`: final ranking utility composer that merges tactical/risk/opponent/joker components into a stabilized utility score, including baseline partner-support bias for `pairs`.
 - `Jocker/Jocker/Game/Services/AI/CandidateTieBreakPolicy.swift`: isolated deterministic tie-break policy for equal/near-equal ranked move candidates.
 - `Jocker/Jocker/Game/Services/AI/BotTurnCardHeuristicsService.swift`: low-level runtime card/trick heuristics for bot turns (joker decision variants, threat scoring, unseen-card modeling, and immediate trick-win probability).
 - `Jocker/Jocker/Game/Services/AI/BotTurnRoundProjectionService.swift`: runtime round projection helper for bot turns (bid normalization, future trick estimates, expected round score, and remaining-hand projection).
@@ -134,7 +134,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/JockerSelfPlayTools/main.swift`: executable entrypoint for the checked-in training runner compiled by `scripts/train_bot_tuning.sh`.
 - `Jocker/Jocker/Game/Services/AI/BotBiddingService.swift`: thin facade over regular bid selection and pre-deal blind bidding policy services.
 - `Jocker/Jocker/Game/Services/AI/BotBidSelectionService.swift`: regular post-deal bid selection based on projected round score and block-progress-aware utility tie-breaking.
-- `Jocker/Jocker/Game/Services/AI/BotBlindBidPolicy.swift`: pre-deal blind bidding risk engine that translates match pressure into target share, aggressive floor, and Monte Carlo inputs.
+- `Jocker/Jocker/Game/Services/AI/BotBlindBidPolicy.swift`: pre-deal blind bidding risk engine that translates match pressure into target share, aggressive floor, and Monte Carlo inputs, using team-score pressure in `pairs`.
 - `Jocker/Jocker/Game/Services/AI/BotBlindBidMonteCarloEstimator.swift`: deterministic blind bid estimator that samples pre-deal hands and ranks allowed blind bids under typed blind Monte Carlo policy.
 - `Jocker/Jocker/Game/Services/AI/HandFeatureExtractor.swift`: shared hand-analysis extractor for bot AI services (regular cards, suit counts, joker/high-card counts) reused by bidding, trump selection, and round projection heuristics.
 - `Jocker/Jocker/Game/Services/AI/BotHandStrengthModel.swift`: unified hand-strength model for bot AI services (shared bidding expected tricks, future-trick projection, and trump suit profile synthesis).
@@ -145,15 +145,16 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Game/Services/Flow/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Services/Settings/GamePlayersSettingsStore.swift`: persistence of editable player names and per-bot difficulty presets (`UserDefaults`, v1 key).
 - `Jocker/Jocker/Game/Services/Statistics/GameStatisticsStore.swift`: storage contract for game statistics persistence and retrieval.
-- `Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player statistics.
+- `Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player FFA/4-player pairs statistics, with snapshot-version fallback loading.
+- `Jocker/Jocker/Models/Gameplay/GameState.swift`: canonical runtime match state (players, block/round/dealer progression, and active game mode/partnership helpers for `pairs`).
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
 - `Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
 - `Jocker/Jocker/Models/Gameplay/BiddingRules.swift`: pure bidding/blind constraints and bidding order helpers shared by gameplay flow and self-play simulation.
 - `Jocker/Jocker/Models/Gameplay/TrumpSelectionRules.swift`: round-level rules for trump selection mode (automatic vs player-chosen), chooser seat, and staged-deal size.
-- `Jocker/Jocker/Models/Statistics/GameFinalPlayerSummary.swift`: computes final standings payload per player (place, total score, block-by-block scores, premiums per block, total premiums, and fourth-block blind count).
-- `Jocker/Jocker/Models/Statistics/GameStatisticsScope.swift`: statistics tabs (`all games`, `4 players`, `3 players`) and visible seat count per tab.
+- `Jocker/Jocker/Models/Statistics/GameFinalPlayerSummary.swift`: computes final standings payload per player and per team (`pairs` mode) including block-by-block totals, premiums, and team placements.
+- `Jocker/Jocker/Models/Statistics/GameStatisticsScope.swift`: statistics tabs (`all games`, `4 players FFA`, `4 players pairs`, `3 players`) and visible seat count per tab.
 - `Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift`: aggregated counters by player seat (games, places, premiums by block, blind bids, max/min game score).
-- `Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift`: persisted statistics snapshot grouped by scope.
+- `Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift`: persisted statistics snapshot grouped by scope, including dedicated storage for 4-player `pairs`.
 - `Jocker/Jocker/Models/History/DealHistory.swift`: immutable snapshot of one deal history (deal key, trump, and trick history list).
 - `Jocker/Jocker/Models/History/DealHistoryKey.swift`: normalized identifier of deal position inside game (block index + round index).
 - `Jocker/Jocker/Models/History/DealTrickHistory.swift`: trick-level history payload with ordered moves and winner player index.
@@ -178,16 +179,18 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Models/Bot/BotTuning+Presets.swift`: hard-baseline preset data plus `normal`/`easy` patch helpers for `BotTuning`, so preset values no longer live as three independent monolithic literals.
 - `Jocker/Jocker/Scoring/GameRoundResultsBuilder.swift`: shared mapper from `GameState` runtime round state to `[RoundResult]`, reused by flow recording and in-progress score-table snapshots.
 - `Jocker/Jocker/Scoring/ScoreCalculator.swift`: pure scoring formulas (round score, premium bonus, premium penalty, zero premium).
-- `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal).
-- `Jocker/Jocker/Scoring/ScoreManager.swift`: sole owner of accumulated game scores, block persistence, standings helpers, and premium application.
+- `Jocker/Jocker/Scoring/PremiumRules.swift`: pure block-level premium/penalty finalization (premium players, zero-premium eligibility, penalty targets, and bonus embedding into the last deal), including teammate-penalty cancellation for `pairs`.
+- `Jocker/Jocker/Scoring/ScoreManager.swift`: sole owner of accumulated game scores, block persistence, standings helpers, premium application, and team totals/winner resolution for `pairs`.
 - `Jocker/Jocker/ViewControllers/Common/PanelAppearance.swift`: shared UIKit panel palette and chrome constants for full-screen and overlay screens.
 - `Jocker/Jocker/ViewControllers/Common/PanelTypography.swift`: shared AvenirNext typography helpers for UIKit panel headers, buttons, and compact table labels.
 - `Jocker/Jocker/ViewControllers/Common/PanelContainerView.swift`: reusable rounded/bordered panel shell for UIKit screen and modal containers.
 - `Jocker/Jocker/ViewControllers/Common/PanelHeaderView.swift`: reusable title/subtitle header stack with left/center alignment for panel screens.
 - `Jocker/Jocker/ViewControllers/Common/PrimaryPanelButton.swift`: shared primary CTA button with accent panel styling.
 - `Jocker/Jocker/ViewControllers/Common/SecondaryPanelButton.swift`: shared secondary/neutral CTA button for panel screens.
+- `Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift`: start screen for choosing player count and launching game/statistics/settings, including 4-player mode selection between FFA and `pairs`.
+- `Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift`: SpriteKit host/controller that builds `GameScene`, forwards mode-aware configuration, and presents score/history overlays with current game mode.
 - `Jocker/Jocker/ViewControllers/GameFlow/PlayerSettingsRowView.swift`: reusable settings row for one player slot (name field + bot difficulty controls) used by `GameParametersViewController` without tag-based action decoding.
-- `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays.
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift`: render-only score grid that maps rounds/blocks to table rows and summary lines, with defensive summary/cumulative rendering for partial score arrays and pair totals in summary rows for `pairs`.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableInProgressRoundSnapshotProvider.swift`: provider that precomputes in-progress round cells for `ScoreTableView`, removing direct `ScoreManager` reads from row render passes.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRenderSnapshotBuilder.swift`: pure snapshot/model builder for `ScoreTableView` that extracts score data and computes premium/penalty decoration metadata outside the view render pass.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableLabelFrameResolver.swift`: pure frame calculator for `ScoreTableView` labels (header, cards, tricks, points) and pinned-header y-adjustment based on current column widths and row metrics.
@@ -195,8 +198,8 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableRowPresentationResolver.swift`: pure row presentation helper for `ScoreTableView` that defines cards-column text and row-level points label style (`regular` vs `summary`).
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableScrollOffsetResolver.swift`: pure scroll-offset calculator for `ScoreTableView` that centers target rows and clamps vertical offsets to scroll bounds.
 - `Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift`: pure tap hit-testing helper for `ScoreTableView` that maps tap coordinates to a deal row target (`blockIndex`, `roundIndex`) using static row mappings.
-- `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays and summary score formatting.
-- `Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift`: pure presentation builder for one deal history screen (header text, hand rows, trick sections, and normalized export payload).
+- `Jocker/Jocker/ViewControllers/Results/ScoreTableRowTextRenderer.swift`: pure row text renderer for `ScoreTableView` that builds per-cell tricks/points strings for deal/subtotal/cumulative rows, including in-progress round overlays, summary score formatting, and pair block totals in `pairs`.
+- `Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift`: pure presentation builder for one deal history screen (header text, hand rows, trick sections, and normalized export payload), carrying the active game mode into export metadata.
 - `Jocker/Jocker/ViewControllers/Results/DealHistoryExportCoordinator.swift`: export/share flow helper for the deal-history screen, encapsulating JSON export state, alerts, and activity presentation.
 - `Jocker/Jocker/ViewControllers/Bidding/JokerModeSelectionViewController.swift`: modal joker play-mode picker (lead and non-lead cases).
 - `Jocker/Jocker/ViewControllers/Bidding/BidSelectionModalBaseViewController.swift`: shared bid-selector modal base built on common panel chrome (container, labels, primary actions, scroll grid, and bid-button rows).
@@ -205,11 +208,11 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/ViewControllers/Bidding/TrumpSelectionViewController.swift`: modal selector of trump suit (or no-trump) for the chooser in blocks 2 and 4.
 - `Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift`: full-screen settings form for all player names and per-bot difficulty controls, now delegating row UI and difficulty selection handling to `PlayerSettingsRowView`.
 - `Jocker/Jocker/ViewControllers/GameFlow/FirstPlayerAnnouncementViewController.swift`: overlay modal that announces the first player and confirms continuation before the first deal.
-- `Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks.
+- `Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift`: end-of-game modal showing final placements and per-player summary metrics across all blocks, plus pair block totals and winning team in `pairs`.
 - `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsPresentationProvider.swift`: presentation provider for statistics tables (metric definitions, score formatting, seat normalization, and row view models).
-- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player games, and 3-player games, delegating row construction to `GameStatisticsPresentationProvider`.
+- `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsViewController.swift`: statistics screen with tabbed table for all games, 4-player FFA, 4-player pairs, and 3-player games, delegating row construction to `GameStatisticsPresentationProvider`.
 - `Jocker/Jocker/ViewControllers/Statistics/GameStatisticsTableView.swift`: render-only grid-style statistics table that consumes prebuilt presentation rows.
-- `Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift`: modal details for a selected deal that renders builder-produced sections and delegates export/share flow to `DealHistoryExportCoordinator`.
+- `Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift`: modal details for a selected deal that renders builder-produced sections and delegates export/share flow to `DealHistoryExportCoordinator`, preserving active mode in exported payloads.
 
 ### Tooling & Documentation
 

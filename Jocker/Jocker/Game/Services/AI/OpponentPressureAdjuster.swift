@@ -144,7 +144,9 @@ struct OpponentPressureAdjuster {
         let nextOpponentIndex = context.remainingOpponentPlayerIndices?.first.map {
             normalizedPlayerIndex($0, playerCount: resolvedPlayerCount)
         }
-        let opponents = (0..<resolvedPlayerCount).filter { $0 != actingPlayerIndex }
+        let opponents = context.matchContext?.opponentPlayerIndices.isEmpty == false
+            ? context.matchContext?.opponentPlayerIndices ?? []
+            : (0..<resolvedPlayerCount).filter { $0 != actingPlayerIndex }
 
         var pressure = 0.0
         for opponentIndex in opponents {

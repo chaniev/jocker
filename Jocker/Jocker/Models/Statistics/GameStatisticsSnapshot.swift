@@ -11,20 +11,24 @@ struct GameStatisticsSnapshot: Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case allGamesRecords
         case fourPlayersRecords
+        case fourPlayersPairsRecords
         case threePlayersRecords
     }
 
     var allGamesRecords: [GameStatisticsPlayerRecord]
     var fourPlayersRecords: [GameStatisticsPlayerRecord]
+    var fourPlayersPairsRecords: [GameStatisticsPlayerRecord]
     var threePlayersRecords: [GameStatisticsPlayerRecord]
 
     init(
         allGamesRecords: [GameStatisticsPlayerRecord],
         fourPlayersRecords: [GameStatisticsPlayerRecord],
+        fourPlayersPairsRecords: [GameStatisticsPlayerRecord],
         threePlayersRecords: [GameStatisticsPlayerRecord]
     ) {
         self.allGamesRecords = allGamesRecords
         self.fourPlayersRecords = fourPlayersRecords
+        self.fourPlayersPairsRecords = fourPlayersPairsRecords
         self.threePlayersRecords = threePlayersRecords
     }
 
@@ -33,6 +37,7 @@ struct GameStatisticsSnapshot: Codable, Equatable {
 
         allGamesRecords = try container.decodeIfPresent([GameStatisticsPlayerRecord].self, forKey: .allGamesRecords) ?? []
         fourPlayersRecords = try container.decodeIfPresent([GameStatisticsPlayerRecord].self, forKey: .fourPlayersRecords) ?? []
+        fourPlayersPairsRecords = try container.decodeIfPresent([GameStatisticsPlayerRecord].self, forKey: .fourPlayersPairsRecords) ?? []
         threePlayersRecords = try container.decodeIfPresent([GameStatisticsPlayerRecord].self, forKey: .threePlayersRecords) ?? []
     }
 
@@ -41,6 +46,7 @@ struct GameStatisticsSnapshot: Codable, Equatable {
         return GameStatisticsSnapshot(
             allGamesRecords: records,
             fourPlayersRecords: records,
+            fourPlayersPairsRecords: records,
             threePlayersRecords: records
         )
     }
@@ -51,6 +57,8 @@ struct GameStatisticsSnapshot: Codable, Equatable {
             return allGamesRecords
         case .fourPlayers:
             return fourPlayersRecords
+        case .fourPlayersPairs:
+            return fourPlayersPairsRecords
         case .threePlayers:
             return threePlayersRecords
         }
@@ -62,6 +70,8 @@ struct GameStatisticsSnapshot: Codable, Equatable {
             allGamesRecords = records
         case .fourPlayers:
             fourPlayersRecords = records
+        case .fourPlayersPairs:
+            fourPlayersPairsRecords = records
         case .threePlayers:
             threePlayersRecords = records
         }
@@ -73,6 +83,7 @@ struct GameStatisticsSnapshot: Codable, Equatable {
         return GameStatisticsSnapshot(
             allGamesRecords: normalize(records: allGamesRecords, playerSlots: normalizedSlots),
             fourPlayersRecords: normalize(records: fourPlayersRecords, playerSlots: normalizedSlots),
+            fourPlayersPairsRecords: normalize(records: fourPlayersPairsRecords, playerSlots: normalizedSlots),
             threePlayersRecords: normalize(records: threePlayersRecords, playerSlots: normalizedSlots)
         )
     }

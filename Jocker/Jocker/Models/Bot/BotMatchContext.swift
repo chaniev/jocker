@@ -49,6 +49,7 @@ struct BotMatchContext: Equatable {
         let completedRoundsInBlock: Int
         let remainingRoundsInBlock: Int
         let isPremiumCandidateSoFar: Bool
+        let partnerIsPremiumCandidateSoFar: Bool
         let isZeroPremiumRelevantInBlock: Bool
         let isZeroPremiumCandidateSoFar: Bool
         let leftNeighborIndex: Int?
@@ -61,6 +62,7 @@ struct BotMatchContext: Equatable {
             completedRoundsInBlock: Int,
             remainingRoundsInBlock: Int,
             isPremiumCandidateSoFar: Bool,
+            partnerIsPremiumCandidateSoFar: Bool = false,
             isZeroPremiumRelevantInBlock: Bool,
             isZeroPremiumCandidateSoFar: Bool,
             leftNeighborIndex: Int? = nil,
@@ -72,6 +74,7 @@ struct BotMatchContext: Equatable {
             self.completedRoundsInBlock = completedRoundsInBlock
             self.remainingRoundsInBlock = remainingRoundsInBlock
             self.isPremiumCandidateSoFar = isPremiumCandidateSoFar
+            self.partnerIsPremiumCandidateSoFar = partnerIsPremiumCandidateSoFar
             self.isZeroPremiumRelevantInBlock = isZeroPremiumRelevantInBlock
             self.isZeroPremiumCandidateSoFar = isZeroPremiumCandidateSoFar
             self.leftNeighborIndex = leftNeighborIndex
@@ -85,8 +88,14 @@ struct BotMatchContext: Equatable {
     let block: GameBlock
     let roundIndexInBlock: Int
     let totalRoundsInBlock: Int
+    let gameMode: GameMode
     let totalScores: [Int]
+    let teamScores: [Int]
+    let teamScoreMargin: Int?
     let playerIndex: Int
+    let partnerIndex: Int?
+    let teammatePlayerIndices: [Int]
+    let opponentPlayerIndices: [Int]
     let dealerIndex: Int
     let playerCount: Int
     let round: RoundSnapshot?
@@ -97,8 +106,14 @@ struct BotMatchContext: Equatable {
         block: GameBlock,
         roundIndexInBlock: Int,
         totalRoundsInBlock: Int,
+        gameMode: GameMode = .freeForAll,
         totalScores: [Int],
+        teamScores: [Int] = [],
+        teamScoreMargin: Int? = nil,
         playerIndex: Int,
+        partnerIndex: Int? = nil,
+        teammatePlayerIndices: [Int] = [],
+        opponentPlayerIndices: [Int] = [],
         dealerIndex: Int,
         playerCount: Int,
         round: RoundSnapshot? = nil,
@@ -108,8 +123,14 @@ struct BotMatchContext: Equatable {
         self.block = block
         self.roundIndexInBlock = roundIndexInBlock
         self.totalRoundsInBlock = totalRoundsInBlock
+        self.gameMode = gameMode
         self.totalScores = totalScores
+        self.teamScores = teamScores
+        self.teamScoreMargin = teamScoreMargin
         self.playerIndex = playerIndex
+        self.partnerIndex = partnerIndex
+        self.teammatePlayerIndices = teammatePlayerIndices
+        self.opponentPlayerIndices = opponentPlayerIndices
         self.dealerIndex = dealerIndex
         self.playerCount = playerCount
         self.round = round
@@ -119,6 +140,10 @@ struct BotMatchContext: Equatable {
 
     var blockNumber: Int {
         return block.rawValue
+    }
+
+    var isPairsMode: Bool {
+        return gameMode == .pairs
     }
 
     /// Прогресс блока в диапазоне `[0, 1]`.

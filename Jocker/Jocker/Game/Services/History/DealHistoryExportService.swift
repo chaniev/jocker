@@ -68,6 +68,7 @@ final class DealHistoryExportService {
     func export(
         histories: [DealHistory],
         playerCount: Int,
+        gameMode: GameMode = .freeForAll,
         playerNames: [String],
         playerControlTypes: [PlayerControlType],
         reason: ExportReason
@@ -115,6 +116,7 @@ final class DealHistoryExportService {
             exportReason: reason.identifier,
             exportedAt: isoFormatter.string(from: now),
             playerCount: playerCount,
+            gameMode: gameMode.rawValue,
             players: zip(normalizedPlayerNames, normalizedControlTypes).enumerated().map { item in
                 let (index, data) = item
                 return PlayerPayload(
@@ -283,6 +285,7 @@ private struct ExportPayload: Encodable {
     let exportReason: String
     let exportedAt: String
     let playerCount: Int
+    let gameMode: String
     let players: [PlayerPayload]
     let deals: [DealPayload]
     let trainingSamples: [TrainingSamplePayload]

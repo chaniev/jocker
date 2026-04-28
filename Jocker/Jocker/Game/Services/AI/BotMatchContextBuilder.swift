@@ -21,6 +21,7 @@ struct BotMatchContextBuilder {
         guard gameState.players.indices.contains(playerIndex) else { return nil }
 
         let totalScores = scoreManager.totalScoresIncludingCurrentBlock
+        let partnerships = gameState.partnerships
         let normalizedScores: [Int]
         if totalScores.count == playerCount {
             normalizedScores = totalScores
@@ -28,13 +29,23 @@ struct BotMatchContextBuilder {
             normalizedScores = Array(totalScores.prefix(playerCount)) +
                 Array(repeating: 0, count: max(0, playerCount - totalScores.count))
         }
+        let teamScores = partnerships.teamTotals(from: normalizedScores)
 
         return BotMatchContext(
             block: gameState.currentBlock,
             roundIndexInBlock: gameState.currentRoundInBlock,
             totalRoundsInBlock: gameState.totalRoundsInBlock,
+            gameMode: gameState.gameMode,
             totalScores: normalizedScores,
+            teamScores: teamScores,
+            teamScoreMargin: partnerships.teamScoreMargin(
+                forPlayerIndex: playerIndex,
+                from: normalizedScores
+            ),
             playerIndex: playerIndex,
+            partnerIndex: partnerships.partnerIndex(for: playerIndex),
+            teammatePlayerIndices: partnerships.teammatePlayerIndices(for: playerIndex),
+            opponentPlayerIndices: partnerships.opponentPlayerIndices(for: playerIndex),
             dealerIndex: gameState.currentDealer,
             playerCount: playerCount,
             round: makeRoundSnapshot(
@@ -45,13 +56,15 @@ struct BotMatchContextBuilder {
                 gameState: gameState,
                 scoreManager: scoreManager,
                 playerIndex: playerIndex,
-                playerCount: playerCount
+                playerCount: playerCount,
+                partnerships: partnerships
             ),
             opponents: makeOpponentModel(
                 gameState: gameState,
                 scoreManager: scoreManager,
                 playerIndex: playerIndex,
-                playerCount: playerCount
+                playerCount: playerCount,
+                partnerships: partnerships
             )
         )
     }
@@ -84,7 +97,8 @@ struct BotMatchContextBuilder {
         gameState: GameState,
         scoreManager: ScoreManager,
         playerIndex: Int,
-        playerCount: Int
+        playerCount: Int,
+        partnerships: GamePartnerships
     ) -> BotMatchContext.PremiumSnapshot? {
         guard playerIndex >= 0, playerIndex < playerCount else { return nil }
         guard scoreManager.currentBlockRoundResults.indices.contains(playerIndex) else { return nil }
@@ -111,7 +125,10 @@ struct BotMatchContextBuilder {
             return playerResults.allSatisfy(\.bidMatched)
         }
         let premiumCandidateSet = Set(candidateIndices)
-        let opponentPremiumCandidatesSoFarCount = candidateIndices.filter { $0 != playerIndex }.count
+        let opponentPremiumCandidatesSoFarCount = candidateIndices.filter { candidateIndex in
+            candidateIndex != playerIndex && !partnerships.areTeammates(candidateIndex, playerIndex)
+        }.count
+        let partnerIndex = partnerships.partnerIndex(for: playerIndex)
         let hasAnyCompletedRoundEvidence = allPlayerResults.contains { !$0.isEmpty }
 
         let threateningPenaltyCandidatesCount: Int
@@ -124,18 +141,27 @@ struct BotMatchContextBuilder {
                         premiumPlayers: premiumCandidateSet,
                         playerCount: playerCount
                     )
-                    return partial + (target == playerIndex ? 1 : 0)
+                    let adjustedTarget: Int?
+                    if let target, partnerships.areTeammates(premiumPlayerIndex, target) {
+                        adjustedTarget = nil
+                    } else {
+                        adjustedTarget = target
+                    }
+                    return partial + (adjustedTarget == playerIndex ? 1 : 0)
                 }
         } else {
             threateningPenaltyCandidatesCount = 0
         }
         let isPenaltyTargetRiskSoFar = threateningPenaltyCandidatesCount > 0
-        let leftNeighborIsPremiumCandidateSoFar = leftNeighborIndex.map { premiumCandidateSet.contains($0) } ?? false
+        let leftNeighborIsPremiumCandidateSoFar = leftNeighborIndex.map {
+            premiumCandidateSet.contains($0) && !partnerships.areTeammates(playerIndex, $0)
+        } ?? false
 
         return BotMatchContext.PremiumSnapshot(
             completedRoundsInBlock: completedRounds,
             remainingRoundsInBlock: remainingRounds,
             isPremiumCandidateSoFar: isPremiumCandidateSoFar,
+            partnerIsPremiumCandidateSoFar: partnerIndex.map { premiumCandidateSet.contains($0) } ?? false,
             isZeroPremiumRelevantInBlock: zeroPremiumRelevant,
             isZeroPremiumCandidateSoFar: isZeroPremiumCandidateSoFar,
             leftNeighborIndex: leftNeighborIndex,
@@ -150,7 +176,8 @@ struct BotMatchContextBuilder {
         gameState: GameState,
         scoreManager: ScoreManager,
         playerIndex: Int,
-        playerCount: Int
+        playerCount: Int,
+        partnerships: GamePartnerships
     ) -> BotOpponentModel? {
         guard playerIndex >= 0, playerIndex < playerCount else { return nil }
 
@@ -161,6 +188,7 @@ struct BotMatchContextBuilder {
 
         let snapshots = (0..<playerCount).compactMap { opponentIndex -> BotOpponentModel.OpponentSnapshot? in
             guard opponentIndex != playerIndex else { return nil }
+            guard !partnerships.areTeammates(playerIndex, opponentIndex) else { return nil }
             guard scoreManager.currentBlockRoundResults.indices.contains(opponentIndex) else { return nil }
 
             let results = Array(scoreManager.currentBlockRoundResults[opponentIndex].prefix(totalRounds))

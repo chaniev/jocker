@@ -13,6 +13,7 @@ struct GameResultsPersistenceCoordinator {
         sessionState: GameSceneSessionState,
         playerSummaries: [GameFinalPlayerSummary],
         playerCount: Int,
+        gameMode: GameMode,
         completedBlocks: [BlockResult],
         statisticsStore: GameStatisticsStore
     ) -> GameSceneSessionState {
@@ -24,6 +25,7 @@ struct GameResultsPersistenceCoordinator {
         updatedState.markGameStatisticsSaved()
         statisticsStore.recordCompletedGame(
             playerCount: playerCount,
+            gameMode: gameMode,
             playerSummaries: playerSummaries,
             completedBlocks: completedBlocks
         )
@@ -35,6 +37,7 @@ struct GameResultsPersistenceCoordinator {
         completedBlockCount: Int,
         histories: [DealHistory],
         playerCount: Int,
+        gameMode: GameMode,
         playerNames: [String],
         playerControlTypes: [PlayerControlType],
         exportService: DealHistoryExportService
@@ -48,6 +51,7 @@ struct GameResultsPersistenceCoordinator {
         exportDealHistorySnapshot(
             histories: histories,
             playerCount: playerCount,
+            gameMode: gameMode,
             playerNames: playerNames,
             playerControlTypes: playerControlTypes,
             reason: .blockCompleted(blockIndex: blockIndex),
@@ -60,6 +64,7 @@ struct GameResultsPersistenceCoordinator {
         sessionState: GameSceneSessionState,
         histories: [DealHistory],
         playerCount: Int,
+        gameMode: GameMode,
         playerNames: [String],
         playerControlTypes: [PlayerControlType],
         exportService: DealHistoryExportService
@@ -71,6 +76,7 @@ struct GameResultsPersistenceCoordinator {
         exportDealHistorySnapshot(
             histories: histories,
             playerCount: playerCount,
+            gameMode: gameMode,
             playerNames: playerNames,
             playerControlTypes: playerControlTypes,
             reason: .gameCompleted,
@@ -82,6 +88,7 @@ struct GameResultsPersistenceCoordinator {
     private func exportDealHistorySnapshot(
         histories: [DealHistory],
         playerCount: Int,
+        gameMode: GameMode,
         playerNames: [String],
         playerControlTypes: [PlayerControlType],
         reason: DealHistoryExportService.ExportReason,
@@ -92,6 +99,7 @@ struct GameResultsPersistenceCoordinator {
         _ = exportService.export(
             histories: histories,
             playerCount: playerCount,
+            gameMode: gameMode,
             playerNames: playerNames,
             playerControlTypes: playerControlTypes,
             reason: reason

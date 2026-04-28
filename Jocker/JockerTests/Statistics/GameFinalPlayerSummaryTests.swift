@@ -70,6 +70,24 @@ final class GameFinalPlayerSummaryTests: XCTestCase {
         XCTAssertEqual(summaries[3].fourthBlockBlindCount, 1)
     }
 
+    func testBuild_pairsMode_assignsPlacesByTeamTotal() {
+        let summaries = GameFinalPlayerSummary.build(
+            playerNames: ["Али", "Борис", "Вика", "Гена"],
+            playerCount: 4,
+            gameMode: .pairs,
+            completedBlocks: [
+                makeBlockResult(
+                    finalScores: [120, 90, 80, -30],
+                    premiumPlayerIndices: [],
+                    zeroPremiumPlayerIndices: []
+                )
+            ]
+        )
+
+        XCTAssertEqual(summaries.map(\.playerIndex), [0, 2, 1, 3])
+        XCTAssertEqual(summaries.map(\.place), [1, 1, 2, 2])
+    }
+
     private func makeBlockResult(
         finalScores: [Int],
         premiumPlayerIndices: [Int],

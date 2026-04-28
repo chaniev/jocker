@@ -306,4 +306,61 @@ final class BotMatchContextBuilderTests: XCTestCase {
         XCTAssertTrue(snapshots.allSatisfy { $0.underbidRate == 0 })
         XCTAssertTrue(snapshots.allSatisfy { $0.averageBidAggression == 0 })
     }
+
+    func testBuildContext_pairsMode_exposesPartnerTeamsAndTeamScoreMargin() {
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(
+            playerCount: 4,
+            gameMode: .pairs
+        )
+        let scoreManager = ScoreManager(playerCount: 4, gameMode: .pairs)
+        scoreManager.recordRoundResults([
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 1),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0),
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)
+        ])
+
+        let context = BotMatchContextBuilder.build(
+            gameState: gameState,
+            scoreManager: scoreManager,
+            playerIndex: 0,
+            playerCount: 4
+        )
+
+        XCTAssertEqual(context?.gameMode, .pairs)
+        XCTAssertEqual(context?.partnerIndex, 2)
+        XCTAssertEqual(context?.teammatePlayerIndices, [2])
+        XCTAssertEqual(context?.opponentPlayerIndices, [1, 3])
+        XCTAssertEqual(context?.teamScores, [150, -200])
+        XCTAssertEqual(context?.teamScoreMargin, 350)
+    }
+
+    func testBuildContext_pairsMode_excludesTeammateFromOpponentSignalsAndPenaltyThreat() {
+        let gameState = BotMatchContextBuilderTestFixture.makeGameState(
+            playerCount: 4,
+            gameMode: .pairs
+        )
+        let scoreManager = ScoreManager(playerCount: 4, gameMode: .pairs)
+        scoreManager.recordRoundResults([
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p0 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0), // p1 not candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 0, tricksTaken: 0), // p2 teammate candidate
+            BotMatchContextBuilderTestFixture.roundResult(cardsInRound: 1, bid: 1, tricksTaken: 0)  // p3 not candidate
+        ])
+
+        let context = BotMatchContextBuilder.build(
+            gameState: gameState,
+            scoreManager: scoreManager,
+            playerIndex: 0,
+            playerCount: 4
+        )
+
+        XCTAssertEqual(context?.premium?.partnerIsPremiumCandidateSoFar, true)
+        XCTAssertEqual(context?.premium?.opponentPremiumCandidatesSoFarCount, 0)
+        XCTAssertEqual(context?.premium?.premiumCandidatesThreateningPenaltyCount, 0)
+        XCTAssertEqual(context?.premium?.isPenaltyTargetRiskSoFar, false)
+        XCTAssertEqual(context?.premium?.leftNeighborIsPremiumCandidateSoFar, false)
+        XCTAssertEqual(context?.opponents?.snapshots.count, 2)
+        XCTAssertNil(context?.opponents?.snapshot(for: 2))
+    }
 }

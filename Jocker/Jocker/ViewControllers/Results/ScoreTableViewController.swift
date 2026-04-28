@@ -21,6 +21,7 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         scoreManager: ScoreManager,
         firstColumnPlayerIndex: Int = 0,
         playerNames: [String] = [],
+        gameMode: GameMode = .freeForAll,
         currentBlockIndex: Int = 0,
         currentRoundIndex: Int = 0,
         focusOnBlockSummary: Bool = false
@@ -32,6 +33,7 @@ final class ScoreTableViewController: UIViewController, UIGestureRecognizerDeleg
         self.tableView = ScoreTableView(
             playerCount: scoreManager.playerCount,
             displayStartPlayerIndex: firstColumnPlayerIndex,
+            gameMode: gameMode,
             playerNames: playerNames
         )
         super.init(nibName: nil, bundle: nil)

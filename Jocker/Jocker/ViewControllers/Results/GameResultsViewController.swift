@@ -29,15 +29,21 @@ final class GameResultsViewController: UIViewController {
         static let rowHeight: CGFloat = 44
     }
 
+    private let gameMode: GameMode
     private let playerSummaries: [GameFinalPlayerSummary]
+    private let teamSummaries: [GameFinalTeamSummary]
     private let onClose: (() -> Void)?
     private var isClosing = false
 
     init(
+        gameMode: GameMode = .freeForAll,
         playerSummaries: [GameFinalPlayerSummary],
+        teamSummaries: [GameFinalTeamSummary] = [],
         onClose: (() -> Void)? = nil
     ) {
+        self.gameMode = gameMode
         self.playerSummaries = playerSummaries
+        self.teamSummaries = teamSummaries
         self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
         isModalInPresentation = true
@@ -60,7 +66,7 @@ final class GameResultsViewController: UIViewController {
 
         let headerView = PanelHeaderView(
             title: "Итоги игры",
-            subtitle: "Строки: игроки, колонки: показатели",
+            subtitle: headerSubtitleText(),
             alignment: .center,
             titleFont: PanelTypography.resultsTitle,
             subtitleFont: PanelTypography.body
@@ -86,28 +92,10 @@ final class GameResultsViewController: UIViewController {
         tableContentView.addSubview(tableStack)
 
         let blockCount = max(playerSummaries.map { $0.blockScores.count }.max() ?? 0, GameConstants.totalBlocks)
-        let columns = tableColumns(blockCount: blockCount)
-        let totalTableWidth = columns.reduce(CGFloat(0)) { $0 + $1.width }
-
-        tableStack.addArrangedSubview(
-            makeTableRow(
-                values: columns.map(\.title),
-                columns: columns,
-                isHeader: true,
-                isAlternate: false
-            )
+        let totalTableWidth = makeResultsContent(
+            in: tableStack,
+            blockCount: blockCount
         )
-
-        for (index, summary) in playerSummaries.enumerated() {
-            tableStack.addArrangedSubview(
-                makeTableRow(
-                    values: rowValues(for: summary, blockCount: blockCount),
-                    columns: columns,
-                    isHeader: false,
-                    isAlternate: index.isMultiple(of: 2)
-                )
-            )
-        }
 
         let closeButton = PrimaryPanelButton(title: "Закрыть и в меню")
         closeButton.accessibilityIdentifier = "game_results_close_button"
@@ -167,6 +155,19 @@ final class GameResultsViewController: UIViewController {
         return columns
     }
 
+    private func teamTableColumns(blockCount: Int) -> [TableColumn] {
+        var columns: [TableColumn] = [
+            TableColumn(title: "Пара", width: 220, alignment: .left)
+        ]
+
+        for blockIndex in 0..<blockCount {
+            columns.append(TableColumn(title: "Б\(blockIndex + 1)", width: 96, alignment: .center))
+        }
+
+        columns.append(TableColumn(title: "Итого", width: 110, alignment: .center))
+        return columns
+    }
+
     private func rowValues(for summary: GameFinalPlayerSummary, blockCount: Int) -> [String] {
         var values: [String] = [
             summary.playerName,
@@ -188,6 +189,101 @@ final class GameResultsViewController: UIViewController {
         values.append("\(summary.totalPremiumsTaken)")
         values.append("\(summary.fourthBlockBlindCount)")
         return values
+    }
+
+    private func teamRowValues(for summary: GameFinalTeamSummary, blockCount: Int) -> [String] {
+        var values: [String] = [
+            "\(summary.teamLabel) (\(summary.memberNames.joined(separator: " + ")))"
+        ]
+
+        for blockIndex in 0..<blockCount {
+            let blockScore = summary.blockScores.indices.contains(blockIndex)
+                ? summary.blockScores[blockIndex]
+                : 0
+            values.append(formattedScore(blockScore))
+        }
+
+        values.append(formattedScore(summary.totalScore))
+        return values
+    }
+
+    private func makeResultsContent(
+        in tableStack: UIStackView,
+        blockCount: Int
+    ) -> CGFloat {
+        var totalWidth: CGFloat = 0
+
+        if gameMode == .pairs, !teamSummaries.isEmpty {
+            let titleLabel = makeSectionTitleLabel(text: "Пары")
+            tableStack.addArrangedSubview(titleLabel)
+
+            let teamColumns = teamTableColumns(blockCount: blockCount)
+            totalWidth = max(totalWidth, teamColumns.reduce(CGFloat(0)) { $0 + $1.width })
+            tableStack.addArrangedSubview(
+                makeTableRow(
+                    values: teamColumns.map(\.title),
+                    columns: teamColumns,
+                    isHeader: true,
+                    isAlternate: false
+                )
+            )
+
+            for (index, summary) in teamSummaries.enumerated() {
+                tableStack.addArrangedSubview(
+                    makeTableRow(
+                        values: teamRowValues(for: summary, blockCount: blockCount),
+                        columns: teamColumns,
+                        isHeader: false,
+                        isAlternate: index.isMultiple(of: 2)
+                    )
+                )
+            }
+        }
+
+        let playerColumns = tableColumns(blockCount: blockCount)
+        totalWidth = max(totalWidth, playerColumns.reduce(CGFloat(0)) { $0 + $1.width })
+        if gameMode == .pairs, !teamSummaries.isEmpty {
+            tableStack.addArrangedSubview(makeSectionTitleLabel(text: "Игроки"))
+        }
+        tableStack.addArrangedSubview(
+            makeTableRow(
+                values: playerColumns.map(\.title),
+                columns: playerColumns,
+                isHeader: true,
+                isAlternate: false
+            )
+        )
+
+        for (index, summary) in playerSummaries.enumerated() {
+            tableStack.addArrangedSubview(
+                makeTableRow(
+                    values: rowValues(for: summary, blockCount: blockCount),
+                    columns: playerColumns,
+                    isHeader: false,
+                    isAlternate: index.isMultiple(of: 2)
+                )
+            )
+        }
+
+        return totalWidth
+    }
+
+    private func headerSubtitleText() -> String {
+        if gameMode == .pairs, let winner = teamSummaries.first {
+            return "Победила \(winner.teamLabel) • по блокам и матчу видны суммы пары"
+        }
+        return "Строки: игроки, колонки: показатели"
+    }
+
+    private func makeSectionTitleLabel(text: String) -> UIView {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = text
+        label.font = PanelTypography.headerCell
+        label.textColor = Appearance.headerTextColor
+        label.backgroundColor = UIColor.clear
+        label.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        return label
     }
 
     private func makeTableRow(

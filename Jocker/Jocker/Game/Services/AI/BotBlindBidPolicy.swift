@@ -32,24 +32,20 @@ struct BotBlindBidPolicy {
         matchContext: BotMatchContext? = nil
     ) -> Int? {
         guard canChooseBlind else { return nil }
-        _ = matchContext
 
         let allowed = Array(Set(allowedBlindBids)).sorted()
         guard !allowed.isEmpty else { return nil }
 
         let clampedPlayerIndex = min(max(playerIndex, 0), max(0, totalScores.count - 1))
         let clampedDealerIndex = min(max(dealerIndex, 0), max(0, totalScores.count - 1))
-        let playerScore = totalScores.indices.contains(clampedPlayerIndex)
-            ? totalScores[clampedPlayerIndex]
-            : 0
-        let leaderScore = totalScores.max() ?? playerScore
-
-        let scoresWithoutPlayer = totalScores.enumerated()
-            .filter { $0.offset != clampedPlayerIndex }
-            .map(\.element)
-        let closestChaserScore = scoresWithoutPlayer
-            .filter { $0 <= playerScore }
-            .max() ?? playerScore
+        let scorePerspective = resolveScorePerspective(
+            playerIndex: clampedPlayerIndex,
+            totalScores: totalScores,
+            matchContext: matchContext
+        )
+        let playerScore = scorePerspective.playerScore
+        let leaderScore = scorePerspective.leaderScore
+        let closestChaserScore = scorePerspective.closestChaserScore
 
         let behindByLeader = max(0, leaderScore - playerScore)
         let aheadOfOpponent = max(0, playerScore - closestChaserScore)
@@ -206,6 +202,39 @@ struct BotBlindBidPolicy {
         }
 
         return bestBid
+    }
+
+    private func resolveScorePerspective(
+        playerIndex: Int,
+        totalScores: [Int],
+        matchContext: BotMatchContext?
+    ) -> (playerScore: Int, leaderScore: Int, closestChaserScore: Int) {
+        guard let matchContext, matchContext.isPairsMode else {
+            let playerScore = totalScores.indices.contains(playerIndex) ? totalScores[playerIndex] : 0
+            let leaderScore = totalScores.max() ?? playerScore
+            let scoresWithoutPlayer = totalScores.enumerated()
+                .filter { $0.offset != playerIndex }
+                .map(\.element)
+            let closestChaserScore = scoresWithoutPlayer
+                .filter { $0 <= playerScore }
+                .max() ?? playerScore
+            return (playerScore, leaderScore, closestChaserScore)
+        }
+
+        let ownTeamIndex = playerIndex.isMultiple(of: 2) ? 0 : 1
+        let ownTeamScore = matchContext.teamScores.indices.contains(ownTeamIndex)
+            ? matchContext.teamScores[ownTeamIndex]
+            : 0
+        let opponentTeamIndex = ownTeamIndex == 0 ? 1 : 0
+        let opponentTeamScore = matchContext.teamScores.indices.contains(opponentTeamIndex)
+            ? matchContext.teamScores[opponentTeamIndex]
+            : ownTeamScore
+
+        return (
+            playerScore: ownTeamScore,
+            leaderScore: max(ownTeamScore, opponentTeamScore),
+            closestChaserScore: min(ownTeamScore, opponentTeamScore)
+        )
     }
 
     private func riskBudget(for blindRiskScore: Double) -> Double {

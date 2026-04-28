@@ -23,6 +23,10 @@ class GameScene: SKScene {
         return inputConfiguration.playerCount
     }
 
+    var gameMode: GameMode {
+        return inputConfiguration.gameMode
+    }
+
     var playerNames: [String] {
         return inputConfiguration.playerNames
     }
@@ -72,7 +76,10 @@ class GameScene: SKScene {
     var currentTrump: Suit?
     lazy var gameState: GameState = { [unowned self] in
         hasInitializedGameState = true
-        return GameState(playerCount: playerCount)
+        return GameState(
+            playerCount: playerCount,
+            gameMode: gameMode
+        )
     }()
     var firstDealerIndex: Int = 0
     private(set) lazy var scoreManager: ScoreManager = ScoreManager(gameState: gameState)
@@ -161,6 +168,7 @@ class GameScene: SKScene {
         assert(view == nil, "GameScene input configuration should be set before presenting the scene.")
         assert(!hasInitializedGameState, "GameScene input configuration should be set before gameState initialization.")
         inputConfiguration = configuration
+        inputConfiguration.gameMode = configuration.gameMode.normalized(for: configuration.playerCount)
     }
 
     func configureEnvironment(_ environment: GameEnvironment) {
@@ -1158,6 +1166,16 @@ class GameScene: SKScene {
         return GameFinalPlayerSummary.build(
             playerNames: gameState.players.map(\.name),
             playerCount: playerCount,
+            gameMode: gameMode,
+            completedBlocks: scoreManager.completedBlocks
+        )
+    }
+
+    func buildFinalGameTeamSummaries() -> [GameFinalTeamSummary] {
+        return GameFinalTeamSummary.build(
+            playerNames: gameState.players.map(\.name),
+            playerCount: playerCount,
+            gameMode: gameMode,
             completedBlocks: scoreManager.completedBlocks
         )
     }
@@ -1178,6 +1196,7 @@ class GameScene: SKScene {
             completedBlockCount: completedBlockCount,
             histories: dealHistoryStore.allHistories(),
             playerCount: playerCount,
+            gameMode: gameMode,
             playerNames: currentPlayerNames,
             playerControlTypes: playerControlTypes,
             exportService: dealHistoryExportService
@@ -1211,6 +1230,7 @@ class GameScene: SKScene {
             sessionState: sessionState,
             histories: dealHistoryStore.allHistories(),
             playerCount: playerCount,
+            gameMode: gameMode,
             playerNames: currentPlayerNames,
             playerControlTypes: playerControlTypes,
             exportService: dealHistoryExportService

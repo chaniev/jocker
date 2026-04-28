@@ -87,6 +87,7 @@
 		C70010192FE000010037CA75 /* PlayerDisplayNameFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70010072FE000010037CA75 /* PlayerDisplayNameFormatter.swift */; };
 		C1F700012F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F700022F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift */; };
 		C2A1000B2F8A10010037CA75 /* libJockerSelfPlayTools.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */; };
+		C2A100302F8A10010037CA75 /* BotTrainingRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A100312F8A10010037CA75 /* BotTrainingRunner.swift */; };
 		B20000412F7900030037CA75 /* GamePlayersSettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */; };
 		B20000422F7900030037CA75 /* GameStatisticsTableViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000322F7900030037CA75 /* GameStatisticsTableViewTests.swift */; };
 		B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */; };
@@ -360,6 +361,7 @@
 		C70010082FE000010037CA75 /* PlayerDisplayNameFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDisplayNameFormatterTests.swift; sourceTree = "<group>"; };
 		C1F700022F8A00010037CA75 /* FirstPlayerAnnouncementViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstPlayerAnnouncementViewController.swift; sourceTree = "<group>"; };
 		C2A1000A2F8A10010037CA75 /* libJockerSelfPlayTools.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libJockerSelfPlayTools.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2A100312F8A10010037CA75 /* BotTrainingRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTrainingRunner.swift; sourceTree = "<group>"; };
 		B20000312F7900030037CA75 /* GamePlayersSettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayersSettingsStoreTests.swift; sourceTree = "<group>"; };
 		B20000322F7900030037CA75 /* GameStatisticsTableViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStatisticsTableViewTests.swift; sourceTree = "<group>"; };
 		B70010012F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameResultsPresentationIntegrationTests.swift; sourceTree = "<group>"; };
@@ -561,6 +563,7 @@
 			isa = PBXGroup;
 			children = (
 				7E4AC9442F268D810037CA75 /* Jocker */,
+				C2A100322F8A10010037CA75 /* JockerSelfPlayTools */,
 				7E4AC95E2F268D860037CA75 /* JockerTests */,
 				7E4AC9682F268D860037CA75 /* JockerUITests */,
 				7E4AC9432F268D810037CA75 /* Products */,
@@ -844,6 +847,14 @@
 				C0DE20032F5000010037CA75 /* GameTurnService.swift */,
 			);
 			path = Flow;
+			sourceTree = "<group>";
+		};
+		C2A100322F8A10010037CA75 /* JockerSelfPlayTools */ = {
+			isa = PBXGroup;
+			children = (
+				C2A100312F8A10010037CA75 /* BotTrainingRunner.swift */,
+			);
+			path = JockerSelfPlayTools;
 			sourceTree = "<group>";
 		};
 		A91030032F7900010037CA75 /* History */ = {
@@ -1619,6 +1630,8 @@
 				C86010032FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationRoundEvaluation.swift in Sources */,
 				C86010042FF700010037CA75 /* BotSelfPlayEvolutionEngine+SimulationOrchestration.swift in Sources */,
 				D4C300012F8002010037CA75 /* BotTuning+SelfPlayEvolution.swift in Sources */,
+				F0A1B2C42F800A010037CA75 /* TrainingRunResultFormatter.swift in Sources */,
+				C2A100302F8A10010037CA75 /* BotTrainingRunner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

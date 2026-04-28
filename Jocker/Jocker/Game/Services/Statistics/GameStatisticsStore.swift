@@ -12,6 +12,7 @@ protocol GameStatisticsStore {
 
     func recordCompletedGame(
         playerCount: Int,
+        gameMode: GameMode,
         playerSummaries: [GameFinalPlayerSummary],
         completedBlocks: [BlockResult]
     )

@@ -103,16 +103,41 @@ final class PlayerStatisticsModelsTests: XCTestCase {
     }
 
     func testGameStatisticsScope_allCases_andVisiblePlayerCount_areConsistent() {
-        XCTAssertEqual(GameStatisticsScope.allCases.count, 3)
+        XCTAssertEqual(GameStatisticsScope.allCases.count, 4)
         XCTAssertEqual(GameStatisticsScope.allGames.visiblePlayerCount, 4)
         XCTAssertEqual(GameStatisticsScope.fourPlayers.visiblePlayerCount, 4)
+        XCTAssertEqual(GameStatisticsScope.fourPlayersPairs.visiblePlayerCount, 4)
         XCTAssertEqual(GameStatisticsScope.threePlayers.visiblePlayerCount, 3)
+    }
+
+    func testGameMode_andPartnerships_normalizeToFourPlayerPairsOnly() {
+        XCTAssertEqual(GameMode.pairs.normalized(for: 4), .pairs)
+        XCTAssertEqual(GameMode.pairs.normalized(for: 3), .freeForAll)
+        XCTAssertFalse(GamePartnerships(playerCount: 3, gameMode: .pairs).isEnabled)
+        XCTAssertTrue(GamePartnerships(playerCount: 4, gameMode: .pairs).isEnabled)
+    }
+
+    func testGamePartnerships_pairsMode_usesFixedDiagonalTeamsAndAggregatesScores() {
+        let partnerships = GamePartnerships(playerCount: 4, gameMode: .pairs)
+
+        XCTAssertEqual(partnerships.partnerIndex(for: 0), 2)
+        XCTAssertEqual(partnerships.partnerIndex(for: 1), 3)
+        XCTAssertEqual(partnerships.teamIndex(for: 0), 0)
+        XCTAssertEqual(partnerships.teamIndex(for: 3), 1)
+        XCTAssertEqual(partnerships.teamMembers(for: 0), [0, 2])
+        XCTAssertEqual(partnerships.teamMembers(for: 1), [1, 3])
+        XCTAssertTrue(partnerships.areTeammates(0, 2))
+        XCTAssertFalse(partnerships.areTeammates(0, 1))
+        XCTAssertEqual(partnerships.teamTotals(from: [120, -40, 80, 20]), [200, -20])
+        XCTAssertEqual(partnerships.leadingTeamIndex(from: [120, -40, 80, 20]), 0)
+        XCTAssertEqual(partnerships.teamSummaryText(teamScores: [200, -20]), "1+3: 2,0\n2+4: -0,2")
     }
 
     func testGameStatisticsSnapshot_initialization_andNormalization_fillMissingPlayerSlots() {
         var snapshot = GameStatisticsSnapshot(
             allGamesRecords: [GameStatisticsPlayerRecord.empty(playerIndex: 1)],
             fourPlayersRecords: [],
+            fourPlayersPairsRecords: [],
             threePlayersRecords: []
         )
         snapshot.setRecords([GameStatisticsPlayerRecord.empty(playerIndex: 2)], for: .threePlayers)

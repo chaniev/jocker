@@ -36,6 +36,7 @@ final class DealHistoryExportCoordinator {
         let result = exportService.export(
             histories: [dealHistory],
             playerCount: exportData.playerCount,
+            gameMode: exportData.gameMode,
             playerNames: exportData.playerNames,
             playerControlTypes: exportData.playerControlTypes,
             reason: .deal(

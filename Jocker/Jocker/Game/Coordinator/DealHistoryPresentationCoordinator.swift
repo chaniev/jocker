@@ -14,6 +14,7 @@ struct DealHistoryPresentationCoordinator {
         dealHistory: DealHistory?,
         playerNames: [String],
         playerControlTypes: [PlayerControlType],
+        gameMode: GameMode,
         blockIndex: Int,
         roundIndex: Int
     ) {
@@ -29,7 +30,8 @@ struct DealHistoryPresentationCoordinator {
         let historyViewController = DealHistoryViewController(
             dealHistory: dealHistory,
             playerNames: playerNames,
-            playerControlTypes: playerControlTypes
+            playerControlTypes: playerControlTypes,
+            gameMode: gameMode
         )
         historyViewController.modalPresentationStyle = .fullScreen
         historyViewController.modalTransitionStyle = .crossDissolve

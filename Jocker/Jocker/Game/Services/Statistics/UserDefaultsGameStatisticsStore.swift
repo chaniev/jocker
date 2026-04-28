@@ -9,7 +9,8 @@ import Foundation
 
 final class UserDefaultsGameStatisticsStore: GameStatisticsStore {
     private struct StorageKey {
-        static let snapshot = "Jocker.GameStatisticsSnapshot.v1"
+        static let snapshot = "Jocker.GameStatisticsSnapshot.v2"
+        static let legacySnapshot = "Jocker.GameStatisticsSnapshot.v1"
         static let playerSlots = 4
     }
 
@@ -31,19 +32,22 @@ final class UserDefaultsGameStatisticsStore: GameStatisticsStore {
     }
 
     func loadSnapshot() -> GameStatisticsSnapshot {
-        guard let rawData = userDefaults.data(forKey: StorageKey.snapshot) else {
-            return GameStatisticsSnapshot.empty(playerSlots: StorageKey.playerSlots)
+        if let rawData = userDefaults.data(forKey: StorageKey.snapshot),
+           let decodedSnapshot = try? decoder.decode(GameStatisticsSnapshot.self, from: rawData) {
+            return decodedSnapshot.normalized(playerSlots: StorageKey.playerSlots)
         }
 
-        guard let decodedSnapshot = try? decoder.decode(GameStatisticsSnapshot.self, from: rawData) else {
-            return GameStatisticsSnapshot.empty(playerSlots: StorageKey.playerSlots)
+        if let rawData = userDefaults.data(forKey: StorageKey.legacySnapshot),
+           let decodedSnapshot = try? decoder.decode(GameStatisticsSnapshot.self, from: rawData) {
+            return decodedSnapshot.normalized(playerSlots: StorageKey.playerSlots)
         }
 
-        return decodedSnapshot.normalized(playerSlots: StorageKey.playerSlots)
+        return GameStatisticsSnapshot.empty(playerSlots: StorageKey.playerSlots)
     }
 
     func recordCompletedGame(
         playerCount: Int,
+        gameMode: GameMode,
         playerSummaries: [GameFinalPlayerSummary],
         completedBlocks: [BlockResult]
     ) {
@@ -73,8 +77,9 @@ final class UserDefaultsGameStatisticsStore: GameStatisticsStore {
                 snapshot: &snapshot
             )
         } else if playerCount == 4 {
+            let scope: GameStatisticsScope = gameMode == .pairs ? .fourPlayersPairs : .fourPlayers
             updateSnapshot(
-                scope: .fourPlayers,
+                scope: scope,
                 playerCount: playerCount,
                 perGameStats: perGameStats,
                 snapshot: &snapshot

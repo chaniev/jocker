@@ -56,6 +56,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
     init(
         playerCount: Int,
         displayStartPlayerIndex: Int = 0,
+        gameMode: GameMode = .freeForAll,
         playerNames: [String] = []
     ) {
         self.playerCount = playerCount
@@ -69,7 +70,12 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         self.playerNames = playerNames
 
         // Создаём layout
-        self.layout = ScoreTableLayout(playerCount: playerCount, headerHeight: headerHeight, rowHeight: rowHeight)
+        self.layout = ScoreTableLayout(
+            playerCount: playerCount,
+            gameMode: gameMode,
+            headerHeight: headerHeight,
+            rowHeight: rowHeight
+        )
         self.layoutData = layout.buildLayoutData()
 
         // Создаём сервисы
@@ -90,6 +96,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         )
         self.rowTextRenderer = ScoreTableRowTextRenderer(
             playerCount: playerCount,
+            gameMode: gameMode,
             playerDisplayOrder: self.playerDisplayOrder,
             rowMappings: self.layoutData.rowMappings
         )
@@ -328,6 +335,7 @@ final class ScoreTableView: UIView, UIScrollViewDelegate {
         )
 
         labelManager.updateTexts(
+            cardsTexts: rowTextSnapshot.cardsTexts,
             tricksTexts: rowTextSnapshot.tricksTexts,
             pointsTexts: rowTextSnapshot.pointsTexts
         )

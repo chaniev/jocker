@@ -145,6 +145,28 @@ final class PremiumRulesTests: XCTestCase {
         XCTAssertEqual(outcome.premiumPenaltyRoundScores[1], 100)
     }
 
+    func testFinalizeBlockScores_pairsMode_cancelsPenaltyWhenResolvedTargetIsTeammate() {
+        let roundsByPlayer = roundsByPlayer([
+            [
+                matchedResult(bid: 0, cardsInRound: 1),
+                mismatchedResult(bid: 1, tricksTaken: 0, cardsInRound: 1),
+                matchedResult(bid: 0, cardsInRound: 1),
+                mismatchedResult(bid: 0, tricksTaken: 1, cardsInRound: 1)
+            ]
+        ])
+
+        let outcome = PremiumRules.finalizeBlockScores(
+            blockRoundResults: roundsByPlayer,
+            blockNumber: GameBlock.second.rawValue,
+            playerCount: 4,
+            gameMode: .pairs
+        )
+
+        XCTAssertEqual(outcome.allPremiumPlayers.sorted(), [0, 2])
+        XCTAssertEqual(outcome.premiumPenalties, [0, 0, 0, 0])
+        XCTAssertTrue(outcome.premiumPenaltyRoundIndices.allSatisfy { $0 == nil })
+    }
+
     func testFinalizeBlockScores_zeroPlayersReturnsEmptyOutcome() {
         let outcome = PremiumRules.finalizeBlockScores(
             blockRoundResults: [],

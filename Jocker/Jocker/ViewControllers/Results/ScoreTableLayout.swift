@@ -48,22 +48,28 @@ struct ScoreTableLayout {
     }
 
     private let playerCount: Int
+    private let gameMode: GameMode
     private let headerHeight: CGFloat
     private let rowHeight: CGFloat
 
     // Минимальные размеры колонок
-    private let minLeftColumnWidth: CGFloat = 36
     private let minTrickColumnWidth: CGFloat = 44
     private let minPointsColumnWidth: CGFloat = 64
 
     init(
         playerCount: Int,
+        gameMode: GameMode = .freeForAll,
         headerHeight: CGFloat = 28,
         rowHeight: CGFloat = 24
     ) {
         self.playerCount = playerCount
+        self.gameMode = gameMode
         self.headerHeight = headerHeight
         self.rowHeight = rowHeight
+    }
+
+    private var minLeftColumnWidth: CGFloat {
+        return gameMode == .pairs ? 180 : 36
     }
 
     // MARK: - Построение структуры строк

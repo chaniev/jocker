@@ -129,6 +129,9 @@ final class ScoreTableLabelManager {
         label.font = config.cellFont
         label.textAlignment = .center
         label.textColor = config.textSecondaryColor
+        label.numberOfLines = 2
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.6
         label.text = rowPresentationResolver.cardsLabelText(for: rowKind)
         return label
     }
@@ -191,15 +194,18 @@ final class ScoreTableLabelManager {
     // MARK: - Обновление текста
 
     func updateTexts(
+        cardsTexts: [String],
         tricksTexts: [[String]],
         pointsTexts: [[String]]
     ) {
-        guard tricksTexts.count == rowMappings.count,
+        guard cardsTexts.count == rowMappings.count,
+              tricksTexts.count == rowMappings.count,
               pointsTexts.count == rowMappings.count else {
             return
         }
 
         for rowIndex in 0..<rowMappings.count {
+            cardsLabels[rowIndex].text = cardsTexts[rowIndex]
             guard tricksTexts[rowIndex].count == playerCount,
                   pointsTexts[rowIndex].count == playerCount else {
                 continue

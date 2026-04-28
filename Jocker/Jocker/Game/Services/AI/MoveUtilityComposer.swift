@@ -61,7 +61,13 @@ struct MoveUtilityComposer {
             premiumPreserveAdjustment +
             penaltyAvoidAdjustment +
             premiumDenyAdjustment
-        let opponentComponent = opponentBidPressureAdjustment + opponentIntentionAdjustment
+        let opponentComponent =
+            opponentBidPressureAdjustment +
+            opponentIntentionAdjustment +
+            partnerSupportUtilityAdjustment(
+                immediateWinProbability: immediateWinProbability,
+                context: context
+            )
         var jokerComponent = jokerAdjustment
 
         if !context.shouldChaseTrick {
@@ -280,6 +286,36 @@ struct MoveUtilityComposer {
         let minValue = baselineAnchor - stabilizationWindow
         let maxValue = baselineAnchor + stabilizationWindow
         return clamped(composed, min: minValue, max: maxValue)
+    }
+
+    private func partnerSupportUtilityAdjustment(
+        immediateWinProbability: Double,
+        context: BotTurnCandidateRankingService.UtilityContext
+    ) -> Double {
+        guard let matchContext = context.matchContext, matchContext.isPairsMode else { return 0.0 }
+        guard let partnerIndex = matchContext.partnerIndex else { return 0.0 }
+
+        let roundState = context.roundState ?? matchContext.round
+        guard let roundState else { return 0.0 }
+
+        let partnerNeeds = roundState.needsTricks(for: partnerIndex) ?? 0
+        guard partnerNeeds > 0 else { return 0.0 }
+
+        let ownNeeds = roundState.needsTricks(for: matchContext.playerIndex) ?? 0
+        let partnerIsBlind = roundState.isBlindBid.indices.contains(partnerIndex)
+            ? roundState.isBlindBid[partnerIndex]
+            : false
+        let partnerPriority = partnerNeeds > ownNeeds ? 1.0 : 0.55
+        let blindBoost = partnerIsBlind ? 1.35 : 1.0
+        let premiumBoost = matchContext.premium?.partnerIsPremiumCandidateSoFar == true ? 1.2 : 1.0
+        let trailingBoost = (matchContext.teamScoreMargin ?? 0) < 0 ? 1.15 : 1.0
+        let weight = 0.14 * partnerPriority * blindBoost * premiumBoost * trailingBoost
+
+        if context.shouldChaseTrick {
+            return -immediateWinProbability * weight
+        }
+
+        return (1.0 - immediateWinProbability) * weight
     }
 
     private func clamped(

@@ -20,6 +20,7 @@ class GameViewController: UIViewController {
     }
     
     var playerCount: Int = 4
+    var gameMode: GameMode = .freeForAll
     var playerNames: [String] = []
     var playerControlTypes: [PlayerControlType] = []
     var botDifficulty: BotDifficulty = .hard
@@ -47,6 +48,7 @@ class GameViewController: UIViewController {
         // Подбираем размер сцены под текущее соотношение сторон, чтобы на iPad не резались края.
         let inputConfiguration = GameSceneInputConfiguration(
             playerCount: playerCount,
+            gameMode: gameMode,
             playerNames: playerNames,
             playerControlTypes: playerControlTypes,
             botDifficulty: botDifficulty,
@@ -82,6 +84,7 @@ class GameViewController: UIViewController {
             scoreManager: scoreManager,
             firstColumnPlayerIndex: scene.scoreTableFirstPlayerIndex,
             playerNames: scene.currentPlayerNames,
+            gameMode: scene.gameMode,
             currentBlockIndex: scene.scoreTableCurrentBlockIndex,
             currentRoundIndex: scene.scoreTableCurrentRoundIndex
         )
@@ -112,7 +115,8 @@ class GameViewController: UIViewController {
         let historyViewController = DealHistoryViewController(
             dealHistory: dealHistory,
             playerNames: scene.currentPlayerNames,
-            playerControlTypes: scene.playerControlTypes
+            playerControlTypes: scene.playerControlTypes,
+            gameMode: scene.gameMode
         )
         historyViewController.modalPresentationStyle = .fullScreen
         historyViewController.modalTransitionStyle = .crossDissolve

@@ -13,6 +13,7 @@ struct ScoreTableRowTextRenderer {
     typealias InProgressRoundCell = ScoreTableInProgressRoundSnapshotProvider.Cell
 
     struct Snapshot: Equatable {
+        let cardsTexts: [String]
         let tricksTexts: [[String]]
         let pointsTexts: [[String]]
     }
@@ -29,15 +30,18 @@ struct ScoreTableRowTextRenderer {
     }()
 
     private let playerCount: Int
+    private let gameMode: GameMode
     private let playerDisplayOrder: [Int]
     private let rowMappings: [ScoreTableLayout.RowMapping]
 
     init(
         playerCount: Int,
+        gameMode: GameMode = .freeForAll,
         playerDisplayOrder: [Int],
         rowMappings: [ScoreTableLayout.RowMapping]
     ) {
         self.playerCount = playerCount
+        self.gameMode = gameMode
         self.playerDisplayOrder = playerDisplayOrder
         self.rowMappings = rowMappings
     }
@@ -46,6 +50,10 @@ struct ScoreTableRowTextRenderer {
         dataSnapshot: ScoreDataSnapshot,
         inProgressRoundSnapshot: InProgressRoundSnapshot
     ) -> Snapshot {
+        let partnerships = GamePartnerships(playerCount: playerCount, gameMode: gameMode)
+        var cardsTexts = rowMappings.map { mapping in
+            defaultCardsText(for: mapping.kind)
+        }
         var tricksTexts = Array(
             repeating: Array(repeating: "", count: playerCount),
             count: rowMappings.count
@@ -74,7 +82,9 @@ struct ScoreTableRowTextRenderer {
                 )
                 fillSummaryRowTexts(
                     rowIndex: rowIndex,
+                    partnerships: partnerships,
                     scores: scores,
+                    cardsTexts: &cardsTexts,
                     tricksTexts: &tricksTexts,
                     pointsTexts: &pointsTexts
                 )
@@ -85,14 +95,16 @@ struct ScoreTableRowTextRenderer {
                 )
                 fillSummaryRowTexts(
                     rowIndex: rowIndex,
+                    partnerships: partnerships,
                     scores: scores,
+                    cardsTexts: &cardsTexts,
                     tricksTexts: &tricksTexts,
                     pointsTexts: &pointsTexts
                 )
             }
         }
 
-        return Snapshot(tricksTexts: tricksTexts, pointsTexts: pointsTexts)
+        return Snapshot(cardsTexts: cardsTexts, tricksTexts: tricksTexts, pointsTexts: pointsTexts)
     }
 
     private func fillDealRowTexts(
@@ -156,10 +168,16 @@ struct ScoreTableRowTextRenderer {
 
     private func fillSummaryRowTexts(
         rowIndex: Int,
+        partnerships: GamePartnerships,
         scores: [Int]?,
+        cardsTexts: inout [String],
         tricksTexts: inout [[String]],
         pointsTexts: inout [[String]]
     ) {
+        if let scores, partnerships.isEnabled {
+            cardsTexts[rowIndex] = partnerships.teamSummaryText(teamScores: partnerships.teamTotals(from: scores))
+        }
+
         for displayIndex in 0..<playerCount {
             let playerIndex = playerDisplayOrder[displayIndex]
             tricksTexts[rowIndex][displayIndex] = ""
@@ -170,6 +188,13 @@ struct ScoreTableRowTextRenderer {
                 pointsTexts[rowIndex][displayIndex] = ""
             }
         }
+    }
+
+    private func defaultCardsText(for rowKind: ScoreTableLayout.RowKind) -> String {
+        if case let .deal(cards) = rowKind {
+            return "\(cards)"
+        }
+        return ""
     }
 
     private func subtotalScores(

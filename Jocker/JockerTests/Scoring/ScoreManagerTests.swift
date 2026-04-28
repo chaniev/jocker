@@ -581,6 +581,50 @@ final class ScoreManagerTests: XCTestCase {
         let winner = manager.getWinnerIndex()
         XCTAssertEqual(winner, 0)
     }
+
+    func testPairsMode_getWinningTeamIndex_usesPairTotals() {
+        let manager = ScoreManager(
+            playerCountProvider: { 4 },
+            gameModeProvider: { .pairs }
+        )
+
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 2,
+                bids: [1, 0, 1, 1],
+                tricksTaken: [1, 0, 1, 0]
+            )
+        )
+        _ = manager.finalizeBlock()
+
+        XCTAssertEqual(manager.totalTeamScores, [250, -150])
+        XCTAssertEqual(manager.getWinningTeamIndex(), 0)
+    }
+
+    func testPairsMode_currentBlockTeamScores_aggregatesActiveBlock() {
+        let manager = ScoreManager(
+            playerCountProvider: { 4 },
+            gameModeProvider: { .pairs }
+        )
+
+        manager.recordRoundResults(
+            validRoundResults(
+                cardsInRound: 1,
+                bids: [1, 1, 0, 0],
+                tricksTaken: [1, 0, 0, 0]
+            )
+        )
+
+        XCTAssertEqual(manager.currentBlockTeamScores, [150, -50])
+        XCTAssertEqual(manager.totalTeamScoresIncludingCurrentBlock, [150, -50])
+    }
     
     // MARK: - Таблица очков
     

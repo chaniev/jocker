@@ -20,13 +20,23 @@ class ScoreManager {
 
     /// Провайдер количества игроков (например, из GameState или другого источника)
     private let playerCountProvider: () -> Int
+    private let gameModeProvider: () -> GameMode
 
     /// Текущее количество игроков (кэш)
     private var storedPlayerCount: Int
+    private var storedGameMode: GameMode
 
     /// Количество игроков
     var playerCount: Int {
         return storedPlayerCount
+    }
+
+    var gameMode: GameMode {
+        return storedGameMode
+    }
+
+    var partnerships: GamePartnerships {
+        return GamePartnerships(playerCount: playerCount, gameMode: gameMode)
     }
 
     /// Результаты раундов в текущем блоке: [playerIndex][roundIndex]
@@ -42,15 +52,27 @@ class ScoreManager {
 
     // MARK: - Initialization
 
-    convenience init(playerCount: Int) {
-        self.init(playerCountProvider: { playerCount })
+    convenience init(
+        playerCount: Int,
+        gameMode: GameMode = .freeForAll
+    ) {
+        self.init(
+            playerCountProvider: { playerCount },
+            gameModeProvider: { gameMode }
+        )
     }
 
     /// Инициализация с динамическим источником количества игроков
-    init(playerCountProvider: @escaping () -> Int) {
+    init(
+        playerCountProvider: @escaping () -> Int,
+        gameModeProvider: @escaping () -> GameMode = { .freeForAll }
+    ) {
         self.playerCountProvider = playerCountProvider
+        self.gameModeProvider = gameModeProvider
         let initialCount = max(1, playerCountProvider())
+        let initialMode = gameModeProvider().normalized(for: initialCount)
         self.storedPlayerCount = initialCount
+        self.storedGameMode = initialMode
         self.currentBlockRoundResults = Array(repeating: [], count: initialCount)
         self.inProgressRoundResults = nil
         self.inProgressRoundBlockIndex = nil
@@ -60,7 +82,10 @@ class ScoreManager {
 
     /// Инициализация из состояния игры (актуализирует число игроков при запуске)
     convenience init(gameState: GameState) {
-        self.init(playerCountProvider: { gameState.playerCount })
+        self.init(
+            playerCountProvider: { gameState.playerCount },
+            gameModeProvider: { gameState.gameMode }
+        )
     }
 
     // MARK: - Запись результатов раунда
@@ -128,7 +153,8 @@ class ScoreManager {
         let finalization = PremiumRules.finalizeBlockScores(
             blockRoundResults: currentBlockRoundResults,
             blockNumber: blockNumber,
-            playerCount: playerCount
+            playerCount: playerCount,
+            gameMode: gameMode
         )
 
         let blockResult = BlockResult(
@@ -184,10 +210,39 @@ class ScoreManager {
         return (0..<playerCount).map { completed[$0] + current[$0] }
     }
 
+    var currentBlockTeamScores: [Int] {
+        return partnerships.teamTotals(from: currentBlockBaseScores)
+    }
+
+    var totalTeamScores: [Int] {
+        return partnerships.teamTotals(from: totalScores)
+    }
+
+    var totalTeamScoresIncludingCurrentBlock: [Int] {
+        return partnerships.teamTotals(from: totalScoresIncludingCurrentBlock)
+    }
+
+    func teamScores(for blockResult: BlockResult) -> [Int] {
+        return partnerships.teamTotals(from: blockResult.finalScores)
+    }
+
     // MARK: - Определение победителя
 
     /// Индекс игрока с наибольшим количеством очков
     func getWinnerIndex() -> Int? {
+        if gameMode == .pairs {
+            guard let winningTeamIndex = getWinningTeamIndex() else { return nil }
+            let winningMembers = partnerships.teamMembers(for: winningTeamIndex)
+            return winningMembers.max { lhs, rhs in
+                let lhsScore = totalScores.indices.contains(lhs) ? totalScores[lhs] : Int.min
+                let rhsScore = totalScores.indices.contains(rhs) ? totalScores[rhs] : Int.min
+                if lhsScore == rhsScore {
+                    return lhs > rhs
+                }
+                return lhsScore < rhsScore
+            }
+        }
+
         let scores = totalScores
         guard !scores.isEmpty else { return nil }
         return scores.enumerated().max(by: { $0.element < $1.element })?.offset
@@ -199,6 +254,22 @@ class ScoreManager {
         return scores.enumerated()
             .map { (playerIndex: $0.offset, score: $0.element) }
             .sorted { $0.score > $1.score }
+    }
+
+    func getWinningTeamIndex() -> Int? {
+        return partnerships.leadingTeamIndex(from: totalScores)
+    }
+
+    func getTeamScoreboard() -> [(teamIndex: Int, score: Int)] {
+        let scores = totalTeamScores
+        return scores.enumerated()
+            .map { (teamIndex: $0.offset, score: $0.element) }
+            .sorted { lhs, rhs in
+                if lhs.score == rhs.score {
+                    return lhs.teamIndex < rhs.teamIndex
+                }
+                return lhs.score > rhs.score
+            }
     }
 
     // MARK: - Сброс
@@ -217,7 +288,7 @@ class ScoreManager {
     /// если провайдер вернул другое положительное количество игроков.
     @discardableResult
     func synchronizePlayerCountIfNeeded() -> Bool {
-        return applyPlayerCountProviderUpdateIfNeeded()
+        return applyConfigurationProviderUpdatesIfNeeded()
     }
 
     // MARK: - Private Methods
@@ -243,10 +314,13 @@ class ScoreManager {
     /// Обновить количество игроков, если источник изменился.
     /// - Returns: `true`, если количество игроков изменилось и состояние было сброшено.
     @discardableResult
-    private func applyPlayerCountProviderUpdateIfNeeded() -> Bool {
+    private func applyConfigurationProviderUpdatesIfNeeded() -> Bool {
         let updatedCount = playerCountProvider()
-        guard updatedCount > 0, updatedCount != storedPlayerCount else { return false }
+        guard updatedCount > 0 else { return false }
+        let updatedMode = gameModeProvider().normalized(for: updatedCount)
+        guard updatedCount != storedPlayerCount || updatedMode != storedGameMode else { return false }
         storedPlayerCount = updatedCount
+        storedGameMode = updatedMode
         currentBlockRoundResults = Array(repeating: [], count: updatedCount)
         clearInProgressRoundResults()
         completedBlocks = []

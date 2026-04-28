@@ -51,6 +51,7 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
         dealHistory: DealHistory,
         playerNames: [String],
         playerControlTypes: [PlayerControlType] = [],
+        gameMode: GameMode = .freeForAll,
         exportService: DealHistoryExportService? = nil
     ) {
         self.dealHistory = dealHistory
@@ -61,7 +62,8 @@ final class DealHistoryViewController: UIViewController, UITableViewDataSource, 
         self.presentation = DealHistoryPresentationBuilder().build(
             dealHistory: dealHistory,
             playerNames: playerNames,
-            playerControlTypes: playerControlTypes
+            playerControlTypes: playerControlTypes,
+            gameMode: gameMode
         )
         super.init(nibName: nil, bundle: nil)
     }

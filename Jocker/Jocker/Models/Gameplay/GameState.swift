@@ -7,12 +7,207 @@
 
 import Foundation
 
+enum GameMode: String, CaseIterable, Codable {
+    case freeForAll
+    case pairs
+
+    var title: String {
+        switch self {
+        case .freeForAll:
+            return "Каждый сам за себя"
+        case .pairs:
+            return "Пара на пару"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .freeForAll:
+            return "Обычный"
+        case .pairs:
+            return "Пары"
+        }
+    }
+
+    func normalized(for playerCount: Int) -> GameMode {
+        switch self {
+        case .freeForAll:
+            return .freeForAll
+        case .pairs:
+            return playerCount == 4 ? .pairs : .freeForAll
+        }
+    }
+
+    var supportsTeams: Bool {
+        return self == .pairs
+    }
+}
+
+struct GamePartnerships: Equatable {
+    private enum Constants {
+        static let supportedPairsPlayerCount = 4
+    }
+
+    let playerCount: Int
+    let gameMode: GameMode
+
+    init(
+        playerCount: Int,
+        gameMode: GameMode
+    ) {
+        self.playerCount = playerCount
+        self.gameMode = gameMode.normalized(for: playerCount)
+    }
+
+    var isEnabled: Bool {
+        return gameMode == .pairs && playerCount == Constants.supportedPairsPlayerCount
+    }
+
+    var teamCount: Int {
+        return isEnabled ? 2 : 0
+    }
+
+    var orderedTeamIndices: [Int] {
+        return Array(0..<teamCount)
+    }
+
+    func partnerIndex(for playerIndex: Int) -> Int? {
+        guard isEnabled else { return nil }
+        guard isValidPlayerIndex(playerIndex) else { return nil }
+        return (normalizedPlayerIndex(playerIndex) + 2) % Constants.supportedPairsPlayerCount
+    }
+
+    func teamIndex(for playerIndex: Int) -> Int? {
+        guard isEnabled else { return nil }
+        guard isValidPlayerIndex(playerIndex) else { return nil }
+        return normalizedPlayerIndex(playerIndex).isMultiple(of: 2) ? 0 : 1
+    }
+
+    func teamMembers(for teamIndex: Int) -> [Int] {
+        guard isEnabled else { return [] }
+        switch teamIndex {
+        case 0:
+            return [0, 2]
+        case 1:
+            return [1, 3]
+        default:
+            return []
+        }
+    }
+
+    func areTeammates(_ firstPlayerIndex: Int, _ secondPlayerIndex: Int) -> Bool {
+        guard let firstTeam = teamIndex(for: firstPlayerIndex),
+              let secondTeam = teamIndex(for: secondPlayerIndex) else {
+            return false
+        }
+        return firstTeam == secondTeam
+    }
+
+    func opponentPlayerIndices(for playerIndex: Int) -> [Int] {
+        guard isEnabled else {
+            return (0..<playerCount).filter { $0 != playerIndex }
+        }
+        return (0..<playerCount).filter { candidate in
+            candidate != playerIndex && !areTeammates(playerIndex, candidate)
+        }
+    }
+
+    func teammatePlayerIndices(for playerIndex: Int) -> [Int] {
+        guard isEnabled else { return [] }
+        return teamMembers(for: teamIndex(for: playerIndex) ?? -1)
+            .filter { $0 != normalizedPlayerIndex(playerIndex) }
+    }
+
+    func teamTotals(from playerScores: [Int]) -> [Int] {
+        guard isEnabled else { return [] }
+        return orderedTeamIndices.map { teamIndex in
+            teamMembers(for: teamIndex).reduce(0) { partialResult, playerIndex in
+                partialResult + (playerScores.indices.contains(playerIndex) ? playerScores[playerIndex] : 0)
+            }
+        }
+    }
+
+    func leadingTeamIndex(from playerScores: [Int]) -> Int? {
+        let totals = teamTotals(from: playerScores)
+        guard !totals.isEmpty else { return nil }
+
+        return totals.enumerated().max { lhs, rhs in
+            if lhs.element == rhs.element {
+                return lhs.offset > rhs.offset
+            }
+            return lhs.element < rhs.element
+        }?.offset
+    }
+
+    func teamTotal(
+        forPlayerIndex playerIndex: Int,
+        from playerScores: [Int]
+    ) -> Int? {
+        guard let teamIndex = teamIndex(for: playerIndex) else { return nil }
+        let totals = teamTotals(from: playerScores)
+        guard totals.indices.contains(teamIndex) else { return nil }
+        return totals[teamIndex]
+    }
+
+    func opposingTeamTotal(
+        forPlayerIndex playerIndex: Int,
+        from playerScores: [Int]
+    ) -> Int? {
+        guard let ownTeamIndex = teamIndex(for: playerIndex) else { return nil }
+        let totals = teamTotals(from: playerScores)
+        guard totals.count == 2 else { return nil }
+        let opponentTeamIndex = ownTeamIndex == 0 ? 1 : 0
+        return totals[opponentTeamIndex]
+    }
+
+    func teamScoreMargin(
+        forPlayerIndex playerIndex: Int,
+        from playerScores: [Int]
+    ) -> Int? {
+        guard let ownTotal = teamTotal(forPlayerIndex: playerIndex, from: playerScores),
+              let opponentTotal = opposingTeamTotal(forPlayerIndex: playerIndex, from: playerScores) else {
+            return nil
+        }
+        return ownTotal - opponentTotal
+    }
+
+    func teamDisplayLabel(for teamIndex: Int) -> String {
+        let members = teamMembers(for: teamIndex)
+        guard !members.isEmpty else { return "" }
+        let numbers = members.map { "\($0 + 1)" }.joined(separator: "+")
+        return "Пара \(numbers)"
+    }
+
+    func teamSummaryText(teamScores: [Int]) -> String {
+        guard isEnabled, teamScores.count == teamCount else { return "" }
+        return orderedTeamIndices.map { teamIndex in
+            "\(teamMembers(for: teamIndex).map { "\($0 + 1)" }.joined(separator: "+")): \(Self.formattedSummaryScore(teamScores[teamIndex]))"
+        }
+        .joined(separator: "\n")
+    }
+
+    private func isValidPlayerIndex(_ playerIndex: Int) -> Bool {
+        return (0..<playerCount).contains(playerIndex)
+    }
+
+    private func normalizedPlayerIndex(_ playerIndex: Int) -> Int {
+        guard playerCount > 0 else { return 0 }
+        return ((playerIndex % playerCount) + playerCount) % playerCount
+    }
+
+    private static func formattedSummaryScore(_ rawScore: Int) -> String {
+        let scoreValue = Double(rawScore) / 100.0
+        return String(format: "%.1f", locale: Locale(identifier: "ru_RU"), scoreValue)
+    }
+}
+
 /// Менеджер состояния игры
 class GameState {
     
     // MARK: - Properties
     
     private(set) var playerCount: Int
+    private(set) var gameMode: GameMode
     private(set) var players: [PlayerInfo] = []
     private(set) var currentBlock: GameBlock = .first
     private(set) var currentRoundInBlock: Int = 0
@@ -25,8 +220,12 @@ class GameState {
     
     // MARK: - Initialization
     
-    init(playerCount: Int) {
+    init(
+        playerCount: Int,
+        gameMode: GameMode = .freeForAll
+    ) {
         self.playerCount = playerCount
+        self.gameMode = gameMode.normalized(for: playerCount)
         
         // Создаём игроков
         for i in 1...playerCount {
@@ -35,6 +234,10 @@ class GameState {
         }
         
         calculateRoundsInBlock()
+    }
+
+    var partnerships: GamePartnerships {
+        return GamePartnerships(playerCount: playerCount, gameMode: gameMode)
     }
     
     // MARK: - Game Flow
