@@ -35,8 +35,9 @@
 ## Агенты
 
 Расположение: `.codex/agents/<name>.toml` (формат как в CRM: `name`,
-`description`, `model`, `developer_instructions`). Все агенты ниже — к
-созданию; routing использовать уже сейчас при делегировании задач.
+`description`, `model`, `model_reasoning_effort`, `sandbox_mode`,
+`developer_instructions`). Все девять агентов созданы; использовать
+routing ниже при делегировании задач.
 
 ### Выбор агента по типу задачи
 
@@ -78,10 +79,11 @@
 ## Skills
 
 Расположение: `.agents/skills/<name>/SKILL.md` (frontmatter `name` +
-`description`, как в CRM). Статус: «адаптировать из CRM» — скопировать из
-CRM-репозитория и переписать привязки путей/команд; «новый» — написать с нуля.
+`description`, как в CRM). Все 14 скилов созданы: процессные — адаптированы
+из CRM с перепривязкой к путям и командам jocker, проектные — написаны под
+стек и правила этого репозитория.
 
-### Процессные (адаптировать из CRM)
+### Процессные (адаптированы из CRM)
 
 | Skill | Источник в CRM | Назначение |
 |---|---|---|
@@ -91,7 +93,7 @@ CRM-репозитория и переписать привязки путей/�
 | `implement-release-plan` | `.agents/skills/implement-release-plan/` | Реализация готовых implementation plans до проверенной интеграции в `main`; в Jocker release = merge + зелёный CI, без стенда |
 | `autoresearch-chatgpt` | `.agents/skills/autoresearch-chatgpt/` | Мета-скил: бенчмарк и улучшение самих скилов. Переносится как есть |
 
-### Проектные (новые)
+### Проектные (созданы под jocker)
 
 | Skill | Назначение |
 |---|---|

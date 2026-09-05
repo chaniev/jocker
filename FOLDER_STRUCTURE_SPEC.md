@@ -13,6 +13,10 @@ This document is the source of truth for repository structure and file placement
 ├── LICENSE
 ├── Makefile
 ├── README.md
+├── .agents/
+│   └── skills/                (agent skill bundles: one directory per skill with SKILL.md, e.g. joker-game-rules, bot-training-pipeline, task-worktree)
+├── .codex/
+│   └── agents/                (profile agent definitions: one <name>.toml per agent, e.g. game-rules-specialist, test-automator)
 ├── .github/
 │   └── workflows/
 │       └── ios-tests.yml
@@ -230,6 +234,8 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
 - `docs/CODEX_MCP_SKILLS_SETUP.md`: project-specific Codex setup guide covering recommended MCP servers, curated skills, and ready-to-paste `~/.codex/config.toml` snippets for this Swift/UIKit/SpriteKit repo.
 - `docs/AGENTS_SKILLS_HARNESS.md`: target-state catalog of profile agents (`.codex/agents/`), skills (`.agents/skills/`), agent routing tables, and the verification harness inventory (existing scripts/make targets plus CRM-parity gaps), formed by analogy with the CRM repo.
+- `.agents/skills/<name>/SKILL.md`: agent skill bundles. Process skills (`task-worktree`, `architecture-decision`, `product-plan-clarification`, `implement-release-plan`, `autoresearch-chatgpt`) are adapted from the CRM repo; project skills (`joker-game-rules`, `joker-game-ui`, `spritekit-uikit-best-practices`, `folder-structure`, `bot-ai-conventions`, `bot-training-pipeline`, `regression-packs`, `xctest-practices`, `ios-hig-audit`) are specific to this repository's stack, rules, and harness.
+- `.codex/agents/<name>.toml`: profile agent definitions (`game-rules-specialist`, `spritekit-gameplay-specialist`, `uikit-flow-specialist`, `game-ux-researcher`, `bot-ai-specialist`, `bot-training-specialist`, `test-automator`, `xcode-ci-specialist`, `refactoring-specialist`) with routing documented in `docs/AGENTS_SKILLS_HARNESS.md`.
 - `docs/PAIRS_MODE_IMPLEMENTATION_PLAN.md`: implementation plan for the 4-player `pairs` mode, covering gameplay-mode plumbing, scoring/premium changes, presentation, statistics separation, and bot cooperation updates.
 - `docs/PRODUCT_OWNER_REVIEW_RU.md`: Russian product-owner review with repository evidence, pilot scope, release gates, success signals, acceptance criteria, and decision ownership.
 - `docs/README_CARDS.md`: quick entrypoint/index to card-related documentation.
