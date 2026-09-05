@@ -1,13 +1,50 @@
-# Codex Project Rules (Repo-wide)
+# Jocker repo — agent instructions
 
-## File and structure rules
-- When creating a new class, enum, or interface, create a new file with a name that matches the type name.
-- Before making any code changes, read `FOLDER_STRUCTURE_SPEC.md` and any applicable `AGENTS.md` files in the directories you will touch.
-- Use `FOLDER_STRUCTURE_SPEC.md` as the source of truth for project structure, file placement, and folder conventions.
-- After changes that affect structure (new/moved/renamed files, new folders/groups, ownership/placement conventions), update `FOLDER_STRUCTURE_SPEC.md` to keep it accurate.
+## Stack (verified — not SwiftUI)
+- UIKit (AppDelegate, view controllers) + SpriteKit (SKScene for gameplay)
+- No SwiftUI, no Combine, no async/await, no SPM/CocoaPods
+- Pure Swift services/coordinators, `UserDefaults` for persistence
 
-## Development process
-- Use Git branching and code review practices.
-- Use CI/CD when applicable.
-- Keep documentation up to date.
-- Maintain unit test coverage.
+## Project structure
+- Xcode project at `Jocker/Jocker.xcodeproj` with 4 targets:
+  - `Jocker` (app), `JockerTests` (unit), `JockerUITests` (UI), `JockerSelfPlayTools` (training CLI)
+- `JockerSelfPlayTools` is a separate target — its sources (`BotSelfPlayEvolutionEngine+*.swift`, `BotTuning+SelfPlayEvolution.swift`, `BotTrainingRunner.swift`, `main.swift`) are NOT compiled into the app
+- Read `FOLDER_STRUCTURE_SPEC.md` before making structural changes; update it after
+
+## One type per file
+- New class/enum/struct → new file matching the type name exactly
+- App source under `Jocker/Jocker/`, tests under `Jocker/JockerTests/`
+
+## Commands
+| What | How |
+|---|---|
+| Run all tests | `bash scripts/run_all_tests.sh` |
+| Run a single test class | `xcodebuild test -project Jocker/Jocker.xcodeproj -scheme Jocker -destination "platform=iOS Simulator" -only-testing:JockerTests/BotTurnCandidateRankingServiceTests` |
+| Bot training (canonical) | `make bt` or `make train-bot` |
+| Bot training (final ensemble) | `make train-bot-final` |
+| Training pipeline smoke | `make training-pipeline-smoke` |
+| JOKER regression pack | `make joker-pack` / `make joker-pack-all` |
+| Phase guardrails pack | `make stage4-phase-pack` |
+| Ranking guardrails pack | `make stage6b-pack` / `make stage6b-pack-all` |
+| Baseline snapshot | `make bot-baseline` |
+| A/B comparison | `make bot-compare` |
+| Scope validation | `make stage3-scope-validate` |
+| Parallel benchmark | `make stage5-benchmark` |
+| List regression tests (dry) | `make <pack>-list` or `make <pack>-dry` |
+
+## Testing
+- All test artifacts go to `.derivedData/test-runs/<timestamp>/` (gitignored)
+- CI (GitHub Actions, `macos-15`) runs: `run_all_tests.sh` → `run_training_pipeline_smoke.sh`
+- Test file placement mirrors app structure under `Jocker/JockerTests/<feature>/`
+- Regression packs are shell scripts that run `xcodebuild test -only-testing:...` with targeted test lists
+
+## Bot AI
+- Config lives in `BotRuntimePolicy` + `BotTuning` with difficulty presets (`easy`/`normal`/`hard`)
+- Self-play evolution is a CLI tool (`JockerSelfPlayTools/main.swift`); not part of the app runtime
+- All training/baseline/benchmark scripts shell out to `train_bot_tuning.sh`
+
+## Style conventions
+- Classes for SpriteKit nodes and UIKit VCs; structs for models/services (prefer value types)
+- Protocols for testability (e.g., `GameStatisticsStore` / `UserDefaultsGameStatisticsStore`)
+- Default parameter labels, full `.self` for type references
+- Explicit `self.` in instance methods

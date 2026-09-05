@@ -37,6 +37,7 @@ This document is the source of truth for repository structure and file placement
 │   ├── CODEX_MCP_SKILLS_SETUP.md
 │   ├── CODE_REFACTORING_BACKLOG.md
 │   ├── PAIRS_MODE_IMPLEMENTATION_PLAN.md
+│   ├── PRODUCT_OWNER_REVIEW_RU.md
 │   ├── README_CARDS.md
 │   └── XCODE_INTEGRATION.md
 ├── scripts/
@@ -228,7 +229,9 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
 - `docs/CODEX_MCP_SKILLS_SETUP.md`: project-specific Codex setup guide covering recommended MCP servers, curated skills, and ready-to-paste `~/.codex/config.toml` snippets for this Swift/UIKit/SpriteKit repo.
+- `docs/AGENTS_SKILLS_HARNESS.md`: target-state catalog of profile agents (`.codex/agents/`), skills (`.agents/skills/`), agent routing tables, and the verification harness inventory (existing scripts/make targets plus CRM-parity gaps), formed by analogy with the CRM repo.
 - `docs/PAIRS_MODE_IMPLEMENTATION_PLAN.md`: implementation plan for the 4-player `pairs` mode, covering gameplay-mode plumbing, scoring/premium changes, presentation, statistics separation, and bot cooperation updates.
+- `docs/PRODUCT_OWNER_REVIEW_RU.md`: Russian product-owner review with repository evidence, pilot scope, release gates, success signals, acceptance criteria, and decision ownership.
 - `docs/README_CARDS.md`: quick entrypoint/index to card-related documentation.
 - `docs/XCODE_INTEGRATION.md`: how to open/build/test the project in Xcode (schemes, DerivedData, and CI alignment).
 - `docs/CODE_REFACTORING_BACKLOG.md`: codebase refactoring notes and no-behavior-change improvement backlog (maintainability/testability).
