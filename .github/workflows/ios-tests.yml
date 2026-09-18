@@ -2,6 +2,7 @@ name: iOS Tests
 
 on:
   push:
+  pull_request:
 
 concurrency:
   group: ios-tests-${{ github.ref }}
@@ -18,21 +19,31 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Run tests
-        run: bash scripts/run_all_tests.sh --destination "platform=iOS Simulator"
-
-      - name: Run training pipeline smoke
-        run: bash scripts/run_training_pipeline_smoke.sh
+      - name: Verify changes and mandatory CI checks
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        run: |
+          base="${PR_BASE:-$PUSH_BASE}"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base=HEAD
+          fi
+          make harness-ci BASE="$base"
 
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: xcode-test-artifacts
-          path: .derivedData/test-runs
-          if-no-files-found: ignore
+          path: |
+            .derivedData/harness-runs
+            !.derivedData/harness-runs/**/build/**
+          include-hidden-files: true
+          if-no-files-found: warn
           retention-days: 14

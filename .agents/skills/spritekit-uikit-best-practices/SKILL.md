@@ -5,14 +5,14 @@ description: Use when implementing, reviewing, or refactoring Jocker app sources
 
 # SpriteKit + UIKit best practices
 
-The root `AGENTS.md` is the verified authority for this stack. It overrides
-generic iOS guidance and any stale nested instruction file.
+Use the root and applicable nested `AGENTS.md` together. Keep their stack
+constraints consistent; report and repair stale conflicting guidance.
 
 ## Stack constraints (hard)
 
 - UIKit (`AppDelegate`, view controllers) + SpriteKit (`SKScene` for
   gameplay).
-- No SwiftUI. No Combine. No async/await. No SPM/CocoaPods dependencies.
+- No SwiftUI. No Combine. No async/await in app-target sources. Existing training-only concurrency is allowed. No SPM/CocoaPods dependencies.
 - Pure Swift services/coordinators; `UserDefaults` for persistence.
 - Concurrency and timing use completion handlers / delegation consistent
   with the existing code.
@@ -23,7 +23,7 @@ unrelated task.
 
 ## Type and file conventions
 
-- One type per file; the file name matches the type exactly.
+- One new top-level type per file; the file name matches the type exactly. Existing nested helper types and extensions are allowed.
 - Classes for SpriteKit nodes/scenes and UIKit view controllers; structs for
   models and services (prefer value types).
 - Protocols for testability, following the established pattern (e.g.

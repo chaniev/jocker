@@ -45,6 +45,10 @@ This document is the source of truth for repository structure and file placement
 │   ├── README_CARDS.md
 │   └── XCODE_INTEGRATION.md
 ├── scripts/
+│   ├── harness/
+│   │   ├── checks.json
+│   │   ├── verify.py
+│   │   └── tests/test_verify.py
 │   ├── run_all_tests.sh
 │   ├── run_bot_ab_comparison_snapshot.sh
 │   ├── run_bot_baseline_snapshot.sh
@@ -565,3 +569,7 @@ Jocker/JockerUITests/
 ## Type/File Rule
 
 - For new entities, keep one top-level type per file and match file name to type name.
+
+## Change verification harness
+
+`scripts/harness/checks.json` owns routing and command definitions; `verify.py` selects checks, executes existing scripts and writes versioned JSON evidence under `.derivedData/harness-runs/<run-id>/`. `tests/test_verify.py` covers routing, Git changes, failures and stale evidence. See `docs/AGENTS_SKILLS_HARNESS.md` for the invocation and report contract. Python bytecode is not a source artifact.

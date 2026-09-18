@@ -2,7 +2,7 @@
 
 ## Stack (verified — not SwiftUI)
 - UIKit (AppDelegate, view controllers) + SpriteKit (SKScene for gameplay)
-- No SwiftUI, no Combine, no async/await, no SPM/CocoaPods
+- No SwiftUI, no Combine, no async/await in app-target code, no SPM/CocoaPods. Existing training-only Swift concurrency is allowed.
 - Pure Swift services/coordinators, `UserDefaults` for persistence
 
 ## Project structure
@@ -12,8 +12,14 @@
 - Read `FOLDER_STRUCTURE_SPEC.md` before making structural changes; update it after
 
 ## One type per file
-- New class/enum/struct → new file matching the type name exactly
+- New top-level class/enum/struct → new file matching the type name exactly; existing nested helper types and extensions are allowed.
 - App source under `Jocker/Jocker/`, tests under `Jocker/JockerTests/`
+
+## Verification entry point
+- `make harness-plan BASE=<ref>` explains checks for the diff from the merge base, including local and untracked files.
+- `make harness-verify BASE=<ref>` executes them and saves a versioned JSON report.
+- `BASE` defaults to `HEAD` for local uncommitted work; use `origin/main` for a task branch.
+- A passed report validates checks for its recorded source fingerprint; it does not replace tuning acceptance or product review.
 
 ## Commands
 | What | How |
@@ -33,8 +39,8 @@
 | List regression tests (dry) | `make <pack>-list` or `make <pack>-dry` |
 
 ## Testing
-- All test artifacts go to `.derivedData/test-runs/<timestamp>/` (gitignored)
-- CI (GitHub Actions, `macos-15`) runs: `run_all_tests.sh` → `run_training_pipeline_smoke.sh`
+- Harness reports and child test artifacts go to `.derivedData/harness-runs/<run-id>/` (gitignored). Standalone scripts retain their `.derivedData/` defaults.
+- CI (GitHub Actions, `macos-15`) runs `make harness-ci`: instruction checks, harness tests, full Xcode tests and training smoke.
 - Test file placement mirrors app structure under `Jocker/JockerTests/<feature>/`
 - Regression packs are shell scripts that run `xcodebuild test -only-testing:...` with targeted test lists
 

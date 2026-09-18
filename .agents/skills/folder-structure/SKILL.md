@@ -11,7 +11,7 @@ the same change afterwards.
 
 ## Core rules
 
-- One type per file; the file name matches the type name exactly.
+- One new top-level type per file; the file name matches the type name exactly. Existing nested helper types and extensions are allowed.
 - App sources live under `Jocker/Jocker/`; unit tests under
   `Jocker/JockerTests/`; UI tests under `Jocker/JockerUITests/`.
 - Test file placement mirrors app structure under

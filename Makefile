@@ -174,3 +174,18 @@ bt-hard-fullgame-battle-esab:
 
 bt-hard-final-esab:
 	@$(TRAIN_SCRIPT) --difficulty hard --seed-list $(FINAL_ENSEMBLE_SEEDS) --ensemble-method median $(FULLGAME_BATTLE_ARGS) $(EARLY_STOP_BATTLE_ARGS) $(AB_VALIDATE_BATTLE_ARGS) $(PROGRESS_ARGS) --output .derivedData/bot-train-hard-final-ensemble-esab.log
+
+# Change verification (Python 3 standard library).
+.PHONY: harness-plan harness-verify harness-ci harness-test
+BASE ?= HEAD
+DESTINATION ?= platform=iOS Simulator
+export HARNESS_BASE := $(BASE)
+export HARNESS_DESTINATION := $(DESTINATION)
+harness-plan:
+	@python3 scripts/harness/verify.py plan --base "$$HARNESS_BASE"
+harness-verify:
+	@python3 scripts/harness/verify.py verify --base "$$HARNESS_BASE" --destination "$$HARNESS_DESTINATION"
+harness-ci:
+	@python3 scripts/harness/verify.py ci --base "$$HARNESS_BASE" --destination "$$HARNESS_DESTINATION"
+harness-test:
+	@python3 -m unittest discover -s scripts/harness/tests -v

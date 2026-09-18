@@ -23,7 +23,7 @@
 | `ux-researcher` | `game-ux-researcher` | UX-сценарий: вместо workflow CRM — потоки торгов, хода, результатов |
 | `test-automator` | `test-automator` | XCTest + regression packs вместо Playwright + xUnit |
 | `docker-expert` | `xcode-ci-specialist` | Инфраструктура: вместо Docker — Xcode-таргеты, схемы, симуляторы, GitHub Actions |
-| `python-pro` | — | В Jocker нет Python-слоя; harness — bash + Swift CLI |
+| `python-pro` | — | Приложение — Swift; orchestration harness — Python standard library поверх bash + Swift CLI |
 | `refactoring-specialist` | `refactoring-specialist` | Аналогичен CRM; питается `docs/CODE_REFACTORING_BACKLOG.md` |
 | — | `bot-ai-specialist` | Специфика Jocker: runtime-логика ботов |
 | — | `bot-training-specialist` | Специфика Jocker: self-play эволюция |
@@ -62,12 +62,12 @@ routing ниже при делегировании задач.
 | Улучшение игрового AI бота | `bot-ai-specialist` → `bot-training-specialist` → `test-automator` | `bot-ai-conventions` + `bot-training-pipeline` |
 | Обучение нового тюнинга ботов | `bot-training-specialist` | `bot-training-pipeline`; baseline + A/B до merge |
 | Локальная визуальная правка экрана | `uikit-flow-specialist` → `spritekit-gameplay-specialist` | `joker-game-ui` |
-| Рефакторинг модуля | `refactoring-specialist` → `test-automator` | `make run_all_tests.sh` до и после |
+| Рефакторинг модуля | `refactoring-specialist` → `test-automator` | `bash scripts/run_all_tests.sh` до и после |
 | Сборка/CI-инфраструктура | `xcode-ci-specialist` → `test-automator` | `xctest-practices` |
 
 Правила границ ответственности:
 
-- корневой `AGENTS.md` приоритетнее любого вложенного `AGENTS.md`;
+- вложенные `AGENTS.md` уточняют область работы и должны быть согласованы с корневыми правилами;
 - `spritekit-gameplay-specialist` и `uikit-flow-specialist` не меняют правила
   подсчёта и раздачи молча — только через `game-rules-specialist`;
 - `game-rules-specialist` не трогает presentation-слой;
@@ -146,15 +146,6 @@ routing ниже при делегировании задач.
   baseline-снапшота и A/B-сравнения на holdout-сидах;
 - `.derivedData/` gitignored и не должна содержать секретов.
 
-### Пробелы относительно CRM и следующая ступень
-
-| Пробел | Что сделать |
-|---|---|
-| Нет diff-aware входа (аналог `verify_change.py`): выбор проверок по изменённым путям | Добавить `scripts/harness/verify_change.sh|py`: правила вида «изменён `Scoring/` → joker-pack + scoring-тесты», «изменён `Models/Bot/` → stage-пакеты + baseline» |
-| Нет машинно-читаемого evidence (JSON) и итогового merge-гейта | Писать JSON-отчёт прогона (команды, статусы, exit codes) в артефакты; при необходимости — агрегатор по образцу `aggregate_evidence.py` |
-| Нет валидации инструкций (аналог `validate_agent_instructions.py`) | Актуальная проблема: вложенный `Jocker/Jocker/AGENTS.md` — шаблон про SwiftUI/MVVM/Combine/async-await и прямо противоречит корневому `AGENTS.md` (UIKit + SpriteKit, без SwiftUI). Заменить содержимое на актуальные правила стека или удалить файл |
-| Нет unit-тестов на harness-скрипты | При росте числа правил diff-awareSelection покрыть их тестами по образцу `scripts/harness/tests/` в CRM |
-
 ## Принципы использования
 
 1. По умолчанию задача маршрутизируется профильному агенту; нет профиля —
@@ -167,3 +158,20 @@ routing ниже при делегировании задач.
 4. Любое структурное изменение сопровождается обновлением
    `FOLDER_STRUCTURE_SPEC.md`; этот документ — при изменении набора
    агентов/скилов/harness.
+
+## Реализованный первый этап harness
+
+Единая конфигурация: `scripts/harness/checks.json`. Исполнение: `scripts/harness/verify.py` (Python 3, standard library). Новый агент или внешний сервис не требуется.
+
+- `make harness-plan BASE=origin/main` — показать пути и причины выбора проверок.
+- `make harness-verify BASE=origin/main` — выполнить выбранные проверки.
+- `make harness-ci BASE=<ref>` — дополнительно всегда выполнить полный Xcode suite и training smoke.
+- `make harness-test` — проверить сам harness без запуска Xcode.
+
+Локальный BASE по умолчанию HEAD: проверяются незакоммиченные изменения. Для всей task-ветки задавайте origin/main. Сравнение идёт от merge-base; учитываются staged, unstaged, untracked, удаления и обе стороны переименования. Неизвестные пути, включая UI и инфраструктуру, получают полный набор. Правила суммируются; обе директории runtime AI получают phase/ranking. На первом этапе CI сохраняет полный suite даже для документации.
+
+Артефакты: `.derivedData/harness-runs/<UTC timestamp>-<unique id>/summary.json`, логи каждой команды и вложенные результаты исходных скриптов. Сборочные файлы находятся в `build/` и не нужны для публикации отчёта.
+
+JSON schemaVersion=1 содержит mode, status, startedAt/finishedAt, destination, tools, state (head/base/mergeBase/fingerprint/paths), finalState, stale и checks (name/reasons/command/status/exitCode/log/error). Запись атомарная, обновляется после каждой проверки. passed означает все выбранные проверки прошли; failed — ошибка команды; blocked — невозможность исполнения, timeout, прерывание или изменившееся состояние исходников. Ещё не выполненные обязательные проверки остаются blocked. Пропуск обязательных проверок не поддерживается. Жёсткое завершение процесса оставляет последний отчёт blocked; GitHub cancellation не считается успехом.
+
+Проверка инструкций ограничена известным конфликтом стека и метаданными навыков; это не семантический анализ произвольных инструкций. Harness не заменяет holdout/baseline acceptance при замене tuning, scope validation и parallel benchmark при соответствующих изменениях. Experiment harness из плана 08, полный doctor окружения, проверка target membership и кеш training runner остаются отдельными этапами.

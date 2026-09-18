@@ -1,64 +1,11 @@
-# Swift / SwiftUI development rules
+# Jocker app and shared Swift sources
 
-## Code structure
-- You are an expert iOS developer using Swift and SwiftUI.
-- Prefer value types (`struct`) over classes; use protocol-oriented programming.
-- Use MVVM architecture with SwiftUI.
-- Structure code by `Features/`, `Core/`, `UI/`, `Resources/`.
-- Follow Apple Human Interface Guidelines.
+Follow the repository AGENTS.md and FOLDER_STRUCTURE_SPEC.md.
 
-## Naming
-- Use camelCase for variables/functions and PascalCase for types.
-- Use verbs for methods (e.g., `fetchData`).
-- Boolean names use `is/has/should` prefixes.
-- Use clear, descriptive names following Apple style.
-
-## Swift best practices
-- Use strong typing and correct optional handling.
-- Use async/await for concurrency.
-- Use `Result` for error handling.
-- Use `@Published` and `@StateObject` for state management.
-- Prefer `let` over `var`.
-- Use protocol extensions for shared code.
-
-## UI development
-- Prefer SwiftUI; use UIKit only when needed.
-- Use SF Symbols for icons.
-- Support dark mode and Dynamic Type.
-- Use Safe Area and `GeometryReader` appropriately.
-- Handle all screen sizes and orientations.
-- Implement proper keyboard handling.
-
-## Performance
-- Profile with Instruments.
-- Lazy-load views and images.
-- Optimize network requests.
-- Handle background tasks properly.
-- Use correct state management and memory practices.
-
-## Data & state
-- Use Core Data for complex models.
-- Use UserDefaults for preferences.
-- Use Combine for reactive code.
-- Maintain clean data flow.
-- Use proper dependency injection.
-- Handle state restoration.
-
-## Security
-- Encrypt sensitive data.
-- Use Keychain securely.
-- Use certificate pinning.
-- Use biometric auth when needed.
-- Enforce App Transport Security.
-- Validate inputs.
-
-## Essential features
-- Support deep linking, push notifications, background tasks, localization, error handling, and analytics/logging.
-
-## App Store guidelines
-- Provide privacy descriptions and app capability disclosures.
-- Handle in-app purchases properly.
-- Follow review guidelines and app thinning.
-- Use proper code signing.
-
-Follow Apple's documentation for detailed implementation guidance.
+- App UI uses UIKit + SpriteKit. No SwiftUI, Combine or Swift concurrency in app-target code.
+- Existing self-play sources in Game/Services/AI are training-target code; their async/await implementation is allowed. Determine ownership from project.pbxproj, not directory alone.
+- Rules and scoring belong in domain services; scenes and controllers present their state.
+- Use explicit self., value-type services and protocol-based dependencies.
+- New top-level types have matching files. Existing nested helper types and extensions are allowed.
+- Before changing gameplay, read joker-game-rules; before presentation work, read joker-game-ui.
+- Use make harness-plan BASE=<ref> and make harness-verify BASE=<ref> for change verification. Additional training acceptance gates remain in bot-training-pipeline.
