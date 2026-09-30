@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 
 MODULE = Path(__file__).resolve().parents[1] / "verify.py"
+sys.path.insert(0, str(MODULE.parent))
 spec = importlib.util.spec_from_file_location("verify", MODULE)
 verify = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verify)
@@ -92,3 +93,30 @@ class HarnessTests(unittest.TestCase):
                 self.assertEqual(verify.run(root, "ci", "missing", "test", 10), 1)
             report = json.loads(next(root.glob(".derivedData/harness-runs/*/summary.json")).read_text())
             self.assertEqual(report["status"], "blocked")
+
+    def test_environment_failure_does_not_execute_xcode_or_training(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts/harness").mkdir(parents=True)
+            (root / "scripts/harness/checks.json").write_text(json.dumps(CONFIG))
+            state = {"paths": [], "fingerprint": "a"}
+            plan = {"checks": [{"name": "full-tests", "kind": "xctest", "command": ["must-not-run"], "selectors": []}, {"name": "training-smoke", "kind": "training", "command": ["must-not-run"]}], "packSelectors": {}}
+            with patch.object(verify, "snapshot", return_value=state), patch.object(verify, "build_plan", return_value=plan), patch.object(verify, "doctor", return_value={"status": "blocked", "error": "simulator unavailable"}), patch.object(verify, "execute") as execute:
+                self.assertEqual(verify.run(root, "ci", "HEAD", "test", 10), 1)
+            execute.assert_not_called()
+            report = json.loads(next(root.glob(".derivedData/harness-runs/*/summary.json")).read_text())
+            self.assertEqual(report["schemaVersion"], 2)
+            self.assertTrue(all(c["status"] == "blocked" for c in report["checks"]))
+            self.assertTrue(all(c["durationSeconds"] >= 0 for c in report["checks"]))
+
+    def test_successful_command_without_test_evidence_is_not_green(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts/harness").mkdir(parents=True)
+            (root / "scripts/harness/checks.json").write_text(json.dumps(CONFIG))
+            plan = {"checks": [{"name": "selected-tests", "kind": "xctest", "command": ["test-command"], "selectors": ["JockerTests/A/testOne"]}], "packSelectors": {}}
+            with patch.object(verify, "snapshot", return_value={"paths": [], "fingerprint": "a"}), patch.object(verify, "build_plan", return_value=plan), patch.object(verify, "doctor", return_value={"status": "passed"}), patch.object(verify, "execute", return_value={"status": "passed", "exitCode": 0}), patch.object(verify, "collect_results", side_effect=ValueError("missing bundle")):
+                self.assertEqual(verify.run(root, "ci", "HEAD", "test", 10), 1)
+            report = json.loads(next(root.glob(".derivedData/harness-runs/*/summary.json")).read_text())
+            self.assertEqual(report["checks"][-1]["status"], "blocked")
+            self.assertEqual(report["checks"][-1]["resultsError"], "missing bundle")

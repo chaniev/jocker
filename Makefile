@@ -189,3 +189,7 @@ harness-ci:
 	@python3 scripts/harness/verify.py ci --base "$$HARNESS_BASE" --destination "$$HARNESS_DESTINATION"
 harness-test:
 	@python3 -m unittest discover -s scripts/harness/tests -v
+
+.PHONY: harness-doctor
+harness-doctor:
+	@python3 scripts/harness/verify.py doctor --destination "$$HARNESS_DESTINATION"

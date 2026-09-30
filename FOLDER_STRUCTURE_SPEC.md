@@ -48,7 +48,10 @@ This document is the source of truth for repository structure and file placement
 │   ├── harness/
 │   │   ├── checks.json
 │   │   ├── verify.py
-│   │   └── tests/test_verify.py
+│   │   ├── planning.py
+│   │   ├── environment.py
+│   │   ├── results.py
+│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py)
 │   ├── run_all_tests.sh
 │   ├── run_bot_ab_comparison_snapshot.sh
 │   ├── run_bot_baseline_snapshot.sh
@@ -573,3 +576,5 @@ Jocker/JockerUITests/
 ## Change verification harness
 
 `scripts/harness/checks.json` owns routing and command definitions; `verify.py` selects checks, executes existing scripts and writes versioned JSON evidence under `.derivedData/harness-runs/<run-id>/`. `tests/test_verify.py` covers routing, Git changes, failures and stale evidence. See `docs/AGENTS_SKILLS_HARNESS.md` for the invocation and report contract. Python bytecode is not a source artifact.
+
+Harness stage 2: `planning.py` reads canonical pack selectors and forms one XCTest invocation; `environment.py` resolves and prepares an eligible simulator before builds; `results.py` extracts structured results from `.xcresult`. Unit tests live under `scripts/harness/tests/`. These files do not belong to Xcode targets.

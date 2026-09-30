@@ -1,21 +1,115 @@
 {
   "schemaVersion": 1,
   "checks": {
-    "instructions": ["python3", "scripts/harness/verify.py", "instructions"],
-    "harness-tests": ["python3", "-m", "unittest", "discover", "-s", "scripts/harness/tests", "-v"],
-    "full-tests": ["bash", "scripts/run_all_tests.sh"],
-    "training-smoke": ["bash", "scripts/run_training_pipeline_smoke.sh"],
-    "joker": ["bash", "scripts/run_joker_regression_pack.sh"],
-    "phase": ["bash", "scripts/run_stage4_phase_guardrails.sh"],
-    "ranking": ["bash", "scripts/run_stage6b_ranking_guardrails.sh", "--include-flow-plumbing"]
+    "instructions": [
+      "python3",
+      "scripts/harness/verify.py",
+      "instructions"
+    ],
+    "harness-tests": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "scripts/harness/tests",
+      "-v"
+    ],
+    "full-tests": [
+      "bash",
+      "scripts/run_all_tests.sh"
+    ],
+    "training-smoke": [
+      "bash",
+      "scripts/run_training_pipeline_smoke.sh"
+    ],
+    "joker": [
+      "bash",
+      "scripts/run_joker_regression_pack.sh"
+    ],
+    "phase": [
+      "bash",
+      "scripts/run_stage4_phase_guardrails.sh"
+    ],
+    "ranking": [
+      "bash",
+      "scripts/run_stage6b_ranking_guardrails.sh",
+      "--include-flow-plumbing"
+    ]
   },
   "rules": [
-    {"patterns": ["**/AGENTS.md", "AGENTS.md", ".agents/**", ".codex/**", "docs/**", "README.md"], "checks": []},
-    {"patterns": ["Jocker/Jocker/Models/Bot/**", "Jocker/Jocker/Game/Services/AI/**", "Jocker/JockerTests/Bot/**"], "checks": ["joker", "phase", "ranking", "training-smoke"]},
-    {"patterns": ["**/BotSelfPlayEvolutionEngine*.swift", "**/BotTuning+SelfPlayEvolution.swift", "Jocker/JockerSelfPlayTools/**"], "checks": ["full-tests", "training-smoke"]},
-    {"patterns": ["Jocker/Jocker/Models/**", "Jocker/Jocker/Scoring/**", "Jocker/JockerTests/Rules/**", "Jocker/JockerTests/Scoring/**", "правила игры/**"], "checks": ["joker", "full-tests"]},
-    {"patterns": ["Jocker/Jocker/Game/Scenes/**", "Jocker/Jocker/Game/Coordinator/**", "Jocker/Jocker/Game/Services/Flow/**", "Jocker/JockerTests/Flow/**"], "checks": ["ranking", "full-tests"]}
+    {
+      "patterns": [
+        "**/AGENTS.md",
+        "AGENTS.md",
+        ".agents/**",
+        ".codex/**",
+        "docs/**",
+        "README.md"
+      ],
+      "checks": []
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/Models/Bot/**",
+        "Jocker/Jocker/Game/Services/AI/**",
+        "Jocker/JockerTests/Bot/**"
+      ],
+      "checks": [
+        "joker",
+        "phase",
+        "ranking",
+        "training-smoke"
+      ]
+    },
+    {
+      "patterns": [
+        "**/BotSelfPlayEvolutionEngine*.swift",
+        "**/BotTuning+SelfPlayEvolution.swift",
+        "Jocker/JockerSelfPlayTools/**"
+      ],
+      "checks": [
+        "full-tests",
+        "training-smoke"
+      ]
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/Models/**",
+        "Jocker/Jocker/Scoring/**",
+        "Jocker/JockerTests/Rules/**",
+        "Jocker/JockerTests/Scoring/**",
+        "правила игры/**"
+      ],
+      "checks": [
+        "joker",
+        "full-tests"
+      ]
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/Game/Scenes/**",
+        "Jocker/Jocker/Game/Coordinator/**",
+        "Jocker/Jocker/Game/Services/Flow/**",
+        "Jocker/JockerTests/Flow/**"
+      ],
+      "checks": [
+        "ranking",
+        "full-tests"
+      ]
+    }
   ],
-  "fallback": ["full-tests", "training-smoke"],
-  "ci": ["full-tests", "training-smoke"]
+  "fallback": [
+    "full-tests",
+    "training-smoke"
+  ],
+  "ci": [
+    "full-tests",
+    "training-smoke"
+  ],
+  "testPacks": [
+    "joker",
+    "phase",
+    "ranking"
+  ]
 }

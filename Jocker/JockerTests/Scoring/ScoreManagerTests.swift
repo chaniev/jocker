@@ -604,7 +604,11 @@ final class ScoreManagerTests: XCTestCase {
         )
         _ = manager.finalizeBlock()
 
-        XCTAssertEqual(manager.totalTeamScores, [250, -150])
+        // Базовые суммы пар: 350 и -100. Премии +100/+50 первой паре,
+        // штраф -50 игроку 4: итог 500 и -150 (общие правила премии сохраняются).
+        XCTAssertEqual(manager.completedBlocks[0].premiumBonuses, [100, 0, 50, 0])
+        XCTAssertEqual(manager.completedBlocks[0].premiumPenalties, [0, 0, 0, 50])
+        XCTAssertEqual(manager.totalTeamScores, [500, -150])
         XCTAssertEqual(manager.getWinningTeamIndex(), 0)
     }
 

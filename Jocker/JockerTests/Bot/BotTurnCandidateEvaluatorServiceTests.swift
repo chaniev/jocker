@@ -570,7 +570,8 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
 
     func testBestMove_whenEndgameDumpAndExactBidAtRisk_prefersControlledLossCard() {
         let trickNode = BotTrickNodeBuilder.make()
-        BotTrickNodeBuilder.play(card(.clubs, .queen), into: trickNode)
+        // Игрок 4 ведёт взятку, бот (игрок 1) ещё не ходил.
+        BotTrickNodeBuilder.play(card(.clubs, .queen), fromPlayer: 4, into: trickNode)
 
         let hand: [Card] = [
             card(.clubs, .ace),
@@ -585,7 +586,8 @@ final class BotTurnCandidateEvaluatorServiceTests: XCTestCase {
             trump: .hearts,
             targetBid: 1,
             currentTricks: 1,
-            cardsInRound: 3,
+            // Одна взятка уже взята; в руке остаются три из четырёх карт.
+            cardsInRound: 4,
             playerCount: 4,
             isBlind: false,
             matchContext: nil,

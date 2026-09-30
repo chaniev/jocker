@@ -22,9 +22,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Show Xcode version
-        run: xcodebuild -version
-
       - name: Verify changes and mandatory CI checks
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}

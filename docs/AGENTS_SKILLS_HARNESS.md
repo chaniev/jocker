@@ -159,7 +159,7 @@ routing ниже при делегировании задач.
    `FOLDER_STRUCTURE_SPEC.md`; этот документ — при изменении набора
    агентов/скилов/harness.
 
-## Реализованный первый этап harness
+## Первый этап harness (история, schemaVersion=1)
 
 Единая конфигурация: `scripts/harness/checks.json`. Исполнение: `scripts/harness/verify.py` (Python 3, standard library). Новый агент или внешний сервис не требуется.
 
@@ -175,3 +175,32 @@ routing ниже при делегировании задач.
 JSON schemaVersion=1 содержит mode, status, startedAt/finishedAt, destination, tools, state (head/base/mergeBase/fingerprint/paths), finalState, stale и checks (name/reasons/command/status/exitCode/log/error). Запись атомарная, обновляется после каждой проверки. passed означает все выбранные проверки прошли; failed — ошибка команды; blocked — невозможность исполнения, timeout, прерывание или изменившееся состояние исходников. Ещё не выполненные обязательные проверки остаются blocked. Пропуск обязательных проверок не поддерживается. Жёсткое завершение процесса оставляет последний отчёт blocked; GitHub cancellation не считается успехом.
 
 Проверка инструкций ограничена известным конфликтом стека и метаданными навыков; это не семантический анализ произвольных инструкций. Harness не заменяет holdout/baseline acceptance при замене tuning, scope validation и parallel benchmark при соответствующих изменениях. Experiment harness из плана 08, полный doctor окружения, проверка target membership и кеш training runner остаются отдельными этапами.
+
+## Второй этап harness (текущий контракт, schemaVersion=2)
+
+### Выбор и исполнение
+
+`make harness-plan BASE=main` показывает requestedChecks и исполняемый plan. `planning.py` получает актуальные selectors из `--list` существующих pack-скриптов: второго вручную поддерживаемого списка тестов нет. Выборки объединяются; selector класса покрывает selectors его методов. Выполняется ровно одна команда XCTest: полный suite при выборе full-tests, иначе `run_all_tests.sh --only-testing <selector>` с объединённой выборкой. Полный CI suite сохраняется.
+
+Для каждого выбранного пакета остаётся отдельный `<pack>-contract`: запуск его `--dry-run`. План хранит packSelectors, covers, selectionCountBeforeUnion и selectorsAfterUnion. Исключённые test targets/SelectedTests/SkippedTests в shared scheme блокируют допущение о полном покрытии. После прогона selectors сверяются с реально выполненными тестами из xcresult; отсутствующая выборка, нулевой прогон или дубли не дают зелёный статус. Команды других проверок, включая training smoke, не поглощаются XCTest.
+
+### Окружение
+
+`make harness-doctor DESTINATION='platform=iOS Simulator'` создаёт отдельный JSON-отчёт. Перед дорогими проверками doctor вызывается автоматически. Он проверяет Xcode/Swift, shared scheme, наличие структурированного xcresulttool API (Xcode 16+), список доступных runtime/device и допустимые destinations схемы. Затем фиксирует конкретный UUID и ожидает готовности симулятора. Общий destination выбирает актуальную доступную версию iOS, предпочитая iPhone; явно заданные id/name/OS не подменяются другим устройством.
+
+При ошибке doctor запись имеет status=blocked, пробы с кодами завершения и диагностикой сохранены, сборка и training smoke не запускаются. Документационные проверки не требуют симулятора. Doctor не гарантирует отсутствие более поздних ошибок установки/запуска приложения; они остаются ошибками соответствующего прогона.
+
+### Отчёт и измерения
+
+schemaVersion=2 добавляет requestedDestination, environment (resolvedDestination/device/версии/пробы), plan и requestedChecks. У каждой завершённой проверки есть startedAt, finishedAt, durationSeconds, command (для subprocess), exitCode и log. Общая durationSeconds включает подготовку и чтение результатов.
+
+У XCTest есть testResults: total/passed/failed/skipped/expectedFailures, resultBundle, tests (identifier/status/durationSeconds при наличии в Xcode), failures (identifier/message), missingSelectors и duplicateTests. Число упавших тестов отличается от числа assertions: несколько сообщений могут относиться к одному тесту. Исходный JSON xcresulttool сохраняется рядом с bundle. При отсутствии достоверного результата успешный exit code не превращается в passed. Сборочные ошибки и провалы тестов не маскируются. Сверка source fingerprint до/после исполнения сохраняется.
+
+### Восстановление базовой проверки
+
+- Тесты таблицы читают реально созданные UILabel по стабильным accessibility identifiers вместо отражения старых private-полей. Проверки значений и зачёркивания сохранены.
+- Парный тест учитывает премии +100/+50 и штраф -50: итог команд 500 и -150. Основание: `правила игры/пара на пару.txt` — «при игре пару на пару общие правила игры не меняются»; обычная премия регулируется `присуждение премии.txt`.
+- В тесте выбора хода бот больше не числится уже сыгравшим в той же взятке; четыре карты раунда согласованы с одной взятой и тремя оставшимися.
+- UI-тест явно выбирает «Каждый сам за себя» после выбора четырёх игроков.
+
+Runtime-политики ботов, tuning, правила scoring и UI-поток не изменяются. Дополнительные gates для замены tuning и experiment harness этапа 08 остаются самостоятельными. Измерять ускорение следует на одинаковых SHA, Xcode и simulator; удаление повторных запусков не задаёт гарантированный процент ускорения.

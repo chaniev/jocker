@@ -112,12 +112,13 @@ final class ScoreTableLabelManager {
             contentView.addSubview(cardsLabel)
             cardsLabels.append(cardsLabel)
 
-            for _ in 0..<playerCount {
+            for displayIndex in 0..<playerCount {
                 let tricksLabel = buildTricksLabel()
                 contentView.addSubview(tricksLabel)
                 tricksLabels[rowIndex].append(tricksLabel)
 
                 let pointsLabel = buildPointsLabel(style: pointsLabelStyle)
+                pointsLabel.accessibilityIdentifier = "score_points_\(rowIndex)_\(displayIndex)"
                 contentView.addSubview(pointsLabel)
                 pointsLabels[rowIndex].append(pointsLabel)
             }

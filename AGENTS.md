@@ -16,8 +16,9 @@
 - App source under `Jocker/Jocker/`, tests under `Jocker/JockerTests/`
 
 ## Verification entry point
+- `make harness-doctor` checks Xcode, shared scheme, xcresulttool support and boots an eligible simulator; verification invokes it automatically before builds.
 - `make harness-plan BASE=<ref>` explains checks for the diff from the merge base, including local and untracked files.
-- `make harness-verify BASE=<ref>` executes them and saves a versioned JSON report.
+- `make harness-verify BASE=<ref>` executes them and saves a versioned JSON report. Overlapping XCTest selections are combined; full-suite execution covers pack tests, while pack dry-run contracts remain separate.
 - `BASE` defaults to `HEAD` for local uncommitted work; use `origin/main` for a task branch.
 - A passed report validates checks for its recorded source fingerprint; it does not replace tuning acceptance or product review.
 

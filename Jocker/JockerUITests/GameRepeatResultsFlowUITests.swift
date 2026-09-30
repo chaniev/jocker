@@ -34,6 +34,10 @@ final class GameRepeatResultsFlowUITests: XCTestCase {
             "Кнопка выбора 4 игроков не найдена."
         )
         fourPlayersButton.tap()
+
+        let modeButton = app.buttons["Каждый сам за себя"]
+        XCTAssertTrue(modeButton.waitForExistence(timeout: 5), "Не появился выбор режима игры.")
+        modeButton.tap()
     }
 
     private func finishGameViaUITestControl(_ app: XCUIApplication) {

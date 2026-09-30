@@ -10,6 +10,11 @@ from pathlib import Path
 import subprocess
 import sys
 import uuid
+import time
+
+from planning import build_plan
+from environment import doctor
+from results import collect_results
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -112,52 +117,93 @@ def run(root, mode, base, destination, timeout):
     if mode == "plan":
         config = json.loads((root / "scripts/harness/checks.json").read_text())
         state = snapshot(root, base)
-        print(json.dumps({"state": state, "checks": select_checks(state["paths"], config)}, indent=2, ensure_ascii=False))
+        selected = select_checks(state["paths"], config)
+        print(json.dumps({"state": state, "requestedChecks": selected,
+                          "plan": build_plan(root, selected, config)}, indent=2, ensure_ascii=False))
         return 0
+    started = time.monotonic()
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
     directory = root / ".derivedData/harness-runs" / (stamp + "-" + uuid.uuid4().hex[:8])
     directory.mkdir(parents=True)
     report_path = directory / "summary.json"
-    report = {"schemaVersion": 1, "status": "blocked", "mode": mode,
+    report = {"schemaVersion": 2, "status": "blocked", "mode": mode,
               "startedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-              "destination": destination, "checks": []}
+              "requestedDestination": destination, "checks": [],
+              "tools": {"python": sys.version, "platform": sys.platform}}
     write_report(report_path, report)
     print("Harness report: " + str(report_path), flush=True)
     try:
-        config = json.loads((root / "scripts/harness/checks.json").read_text())
-        report["tools"] = {"python": sys.version, "platform": sys.platform}
-        for tool, command in [("git", ["git", "--version"]), ("xcode", ["xcodebuild", "-version"])]:
-            try:
-                probe = subprocess.run(command, cwd=root, capture_output=True, text=True, timeout=15)
-                report["tools"][tool] = {"exitCode": probe.returncode, "output": probe.stdout + probe.stderr}
-            except (OSError, subprocess.TimeoutExpired) as error:
-                report["tools"][tool] = {"error": str(error)}
-        state = snapshot(root, base)
-        report["state"] = state
-        selected = select_checks(state["paths"], config, ci=mode == "ci")
-        for name, reasons in selected.items():
-            command = list(config["checks"][name])
-            if name in ("full-tests", "joker", "phase", "ranking", "training-smoke"):
-                command += ["--output-root", str(directory / name)]
-            if name in ("full-tests", "joker", "phase", "ranking"):
-                command += ["--destination", destination, "--derived-data-path", str(directory / "build")]
-            report["checks"].append({"name": name, "reasons": reasons, "command": command, "status": "blocked", "exitCode": None})
-        write_report(report_path, report)
-        for check in report["checks"]:
-            log = directory / (check["name"] + ".log")
-            print("Running " + check["name"], flush=True)
-            check["log"] = str(log)
-            check.update(execute(check["command"], root, log, timeout))
+        if mode == "doctor":
+            report["environment"] = doctor(root, destination)
+            report["status"] = report["environment"]["status"]
+        else:
+            config = json.loads((root / "scripts/harness/checks.json").read_text())
+            state = snapshot(root, base)
+            report["state"] = state
+            selected = select_checks(state["paths"], config, ci=mode == "ci")
+            plan = build_plan(root, selected, config)
+            report["plan"] = plan
+            report["requestedChecks"] = selected
+            needs_simulator = any(c["kind"] == "xctest" for c in plan["checks"])
+            needs_environment = any(c["kind"] in ("xctest", "training") for c in plan["checks"])
+            for item in plan["checks"]:
+                if item["kind"] in ("xctest", "training") and needs_environment:
+                    report["checks"].append({"name": "doctor", "kind": "doctor", "status": "blocked", "exitCode": None})
+                    needs_environment = False
+                report["checks"].append({**item, "command": list(item["command"]), "status": "blocked", "exitCode": None})
             write_report(report_path, report)
-            print(check["name"] + ": " + check["status"], flush=True)
-        report["finalState"] = snapshot(root, base)
-        report["stale"] = report["state"] != report["finalState"]
-        statuses = [c["status"] for c in report["checks"]]
-        report["status"] = "blocked" if report["stale"] or "blocked" in statuses else ("failed" if "failed" in statuses else "passed")
-    except (OSError, ValueError, subprocess.CalledProcessError) as error:
+            for check in report["checks"]:
+                check_started = time.monotonic()
+                check["startedAt"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                print("Running " + check["name"], flush=True)
+                if check["kind"] == "doctor":
+                    report["environment"] = doctor(root, destination, needs_simulator)
+                    check["status"] = report["environment"]["status"]
+                    check["exitCode"] = 0 if check["status"] == "passed" else None
+                    destination = report["environment"].get("resolvedDestination", destination)
+                elif check["kind"] in ("xctest", "training") and report["environment"]["status"] != "passed":
+                    check["error"] = "Environment preflight blocked execution"
+                else:
+                    artifacts = directory / check["name"]
+                    if check["kind"] in ("xctest", "training"):
+                        check["command"] += ["--output-root", str(artifacts)]
+                    if check["kind"] == "xctest":
+                        check["command"] += ["--destination", destination, "--derived-data-path", str(directory / "build")]
+                        for selector in check["selectors"]:
+                            check["command"] += ["--only-testing", selector]
+                    check["log"] = str(directory / (check["name"] + ".log"))
+                    write_report(report_path, report)
+                    check.update(execute(check["command"], root, Path(check["log"]), timeout))
+                    if check["kind"] == "xctest":
+                        required = sorted(set(check["selectors"] + [s for values in plan["packSelectors"].values() for s in values]))
+                        if check["name"] == "full-tests":
+                            required += report["environment"]["testTargets"]
+                        try:
+                            check["testResults"] = collect_results(root, artifacts, required)
+                            results = check["testResults"]
+                            if results["total"] == 0 or results["missingSelectors"] or results["duplicateTests"]:
+                                check.update(status="blocked", error="Incomplete or duplicated XCTest execution; see testResults")
+                            elif results["failed"] or results["result"] == "Failed":
+                                check["status"] = "failed"
+                        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+                            check["resultsError"] = str(error)
+                            if check["status"] == "passed":
+                                check["status"] = "blocked"
+                check["durationSeconds"] = time.monotonic() - check_started
+                check["finishedAt"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                write_report(report_path, report)
+                print(check["name"] + ": " + check["status"], flush=True)
+                if check.get("error") == "KeyboardInterrupt":
+                    break
+            report["finalState"] = snapshot(root, base)
+            report["stale"] = report["state"] != report["finalState"]
+            statuses = [c["status"] for c in report["checks"]]
+            report["status"] = "blocked" if report["stale"] or "blocked" in statuses else ("failed" if "failed" in statuses else "passed")
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         report["error"] = str(error)
         report["status"] = "blocked"
     finally:
+        report["durationSeconds"] = time.monotonic() - started
         report["finishedAt"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         write_report(report_path, report)
     print("Harness: " + report["status"], flush=True)
@@ -166,7 +212,7 @@ def run(root, mode, base, destination, timeout):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=["plan", "verify", "ci", "instructions"])
+    parser.add_argument("mode", choices=["plan", "verify", "ci", "doctor", "instructions"])
     parser.add_argument("--base", default="HEAD")
     parser.add_argument("--destination", default="platform=iOS Simulator")
     parser.add_argument("--timeout", type=int, default=1800, help="Seconds per check")

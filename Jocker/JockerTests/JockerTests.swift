@@ -263,26 +263,29 @@ final class JockerTests: XCTestCase {
     }
     
     private func displayedPoints(at rowIndex: Int, in tableView: ScoreTableView) -> [String] {
-        guard let pointsLabels = Mirror(reflecting: tableView).descendant("pointsLabels") as? [[UILabel]] else {
-            XCTFail("Не удалось получить pointsLabels из ScoreTableView")
-            return []
+        return (0..<4).map { displayIndex in
+            guard let label = self.pointsLabel(at: rowIndex, playerDisplayIndex: displayIndex, in: tableView) else {
+                XCTFail("Не найдена ячейка очков строки \(rowIndex), игрока \(displayIndex)")
+                return ""
+            }
+            return self.displayedText(of: label)
         }
-        
-        guard pointsLabels.indices.contains(rowIndex) else {
-            XCTFail("Индекс строки \(rowIndex) вне диапазона")
-            return []
-        }
-        
-        return pointsLabels[rowIndex].map { $0.text ?? "" }
     }
 
     private func pointsLabel(at rowIndex: Int, playerDisplayIndex: Int, in tableView: ScoreTableView) -> UILabel? {
-        guard let pointsLabels = Mirror(reflecting: tableView).descendant("pointsLabels") as? [[UILabel]] else {
-            return nil
+        return self.findLabel(identifier: "score_points_\(rowIndex)_\(playerDisplayIndex)", in: tableView)
+    }
+
+    private func findLabel(identifier: String, in view: UIView) -> UILabel? {
+        if let label = view as? UILabel, label.accessibilityIdentifier == identifier {
+            return label
         }
-        guard pointsLabels.indices.contains(rowIndex) else { return nil }
-        guard pointsLabels[rowIndex].indices.contains(playerDisplayIndex) else { return nil }
-        return pointsLabels[rowIndex][playerDisplayIndex]
+        for child in view.subviews {
+            if let label = self.findLabel(identifier: identifier, in: child) {
+                return label
+            }
+        }
+        return nil
     }
 
     private func displayedText(of label: UILabel) -> String {
@@ -309,19 +312,7 @@ final class JockerTests: XCTestCase {
     }
 
     private func dealRowIndex(blockIndex: Int, roundIndex: Int, in tableView: ScoreTableView) -> Int? {
-        guard let rowMappings = Mirror(reflecting: tableView).descendant("layout", "rowMappings") as? [Any] else {
-            return nil
-        }
-
-        for (rowIndexCandidate, rowMapping) in rowMappings.enumerated() {
-            let mirror = Mirror(reflecting: rowMapping)
-            guard let mappedBlockIndex = mirror.descendant("blockIndex") as? Int else { continue }
-            guard mappedBlockIndex == blockIndex else { continue }
-            guard let mappedRoundIndex = mirror.descendant("roundIndex") as? Int else { continue }
-            guard mappedRoundIndex == roundIndex else { continue }
-            return rowIndexCandidate
-        }
-
-        return nil
+        let mappings = ScoreTableLayout(playerCount: 4).buildLayoutData().rowMappings
+        return mappings.firstIndex { $0.blockIndex == blockIndex && $0.roundIndex == roundIndex }
     }
 }

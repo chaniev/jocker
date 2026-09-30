@@ -32,6 +32,14 @@ packs prove the specific behavior an area owns.
 When in doubt, run the pack plus the full suite; do not substitute a pack for
 the full suite on structural changes.
 
+## Unified harness execution
+
+`make harness-verify BASE=<ref>` discovers canonical pack selections, checks
+their dry-run commands and executes the union once. When full-tests is selected,
+it covers the packs; the JSON report verifies the required selectors occurred
+in xcresult. A passing combined run satisfies the selected pack checks; do not
+repeat the same tests solely because multiple packs refer to them.
+
 ## Inspection before runs
 
 Every pack has list/dry modes — use them before executing:

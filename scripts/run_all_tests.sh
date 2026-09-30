@@ -11,6 +11,7 @@ usage() {
   (полный лог + .xcresult + summary) в отдельную папку.
 
 Параметры:
+  --only-testing <selector>   Repeat to run a union of selected XCTest classes/methods
   --project <path>            Путь до .xcodeproj (по умолчанию: Jocker/Jocker.xcodeproj)
   --scheme <name>             Схема для тестов (по умолчанию: Jocker)
   --configuration <name>      Конфигурация сборки (по умолчанию: Debug)
@@ -55,8 +56,15 @@ destination="platform=iOS Simulator"
 output_root=".derivedData/test-runs"
 derived_data_path=".derivedData/xcode-tests"
 
+test_selectors=(test)
+
 while (($# > 0)); do
   case "$1" in
+    --only-testing)
+      require_value "${2:-}" "--only-testing"
+      test_selectors+=("-only-testing:$2")
+      shift 2
+      ;;
     --project)
       project_path="${2:-}"
       require_value "$project_path" "--project"
@@ -148,7 +156,7 @@ xcodebuild \
   -destination "$destination" \
   -derivedDataPath "$derived_data_abs" \
   -resultBundlePath "$result_bundle_path" \
-  test | tee "$log_path"
+  "${test_selectors[@]}" 2>&1 | tee "$log_path"
 test_exit_code=${PIPESTATUS[0]}
 set -e
 
