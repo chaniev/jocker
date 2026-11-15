@@ -7,6 +7,15 @@ from results import parse_results
 
 
 class ResultsTests(unittest.TestCase):
+    def test_class_named_like_its_target_keeps_both_identifier_components(self):
+        summary = {"totalTestCount": 2, "passedTests": 2, "failedTests": 0, "skippedTests": 0,
+                   "expectedFailures": 0, "result": "Passed", "testFailures": []}
+        tree = {"testNodes": [{"nodeType": "Unit test bundle", "name": "JockerTests", "children": [
+            {"nodeType": "Test Case", "name": "testTable()", "nodeIdentifier": "JockerTests/testTable()", "result": "Passed"},
+            {"nodeType": "Test Case", "name": "testOther()", "nodeIdentifier": "JockerTests/OtherTests/testOther()", "result": "Passed"}]}]}
+        self.assertEqual([t["identifier"] for t in parse_results(summary, tree)["tests"]],
+                         ["JockerTests/JockerTests/testTable", "JockerTests/OtherTests/testOther"])
+
     def test_failure_messages_and_unique_test_counts_come_from_xcresult(self):
         summary = {"totalTestCount": 2, "passedTests": 1, "failedTests": 1, "skippedTests": 0, "expectedFailures": 0, "result": "Failed", "testFailures": [
             {"targetName": "JockerTests", "testIdentifierString": "Example/testBad()", "failureText": "Expected 500, got 250"},

@@ -15,7 +15,7 @@ def parse_results(summary, tree):
                 target = node["name"].removesuffix(".xctest")
             if node["nodeType"] == "Test Case":
                 identifier = normalize_identifier(node.get("nodeIdentifier", node["name"]))
-                if target and not identifier.startswith(target + "/"):
+                if target and not (identifier.startswith(target + "/") and identifier.count("/") >= 2):
                     identifier = target + "/" + identifier
                 tests.append({"identifier": identifier, "status": node.get("result", "unknown"),
                               "durationSeconds": node.get("durationInSeconds"), "durationText": node.get("duration")})
