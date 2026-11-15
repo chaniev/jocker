@@ -29,3 +29,15 @@ PROD-014/015 имеют pending. Причина needs-clarification для вс�
 | `backlog/PROD-013-small-screen-readability.md` | [backlog/needs-clarification/PROD-013-small-screen-readability.md](../../backlog/needs-clarification/PROD-013-small-screen-readability.md) |
 | `backlog/PROD-014-player-pilot.md` | [backlog/needs-clarification/PROD-014-player-pilot.md](../../backlog/needs-clarification/PROD-014-player-pilot.md) |
 | `backlog/PROD-015-monetization-validation.md` | [backlog/needs-clarification/PROD-015-monetization-validation.md](../../backlog/needs-clarification/PROD-015-monetization-validation.md) |
+
+## Проверка переноса — 16.11.2026
+
+- `make harness-verify BASE=origin/main`: passed; полный XCTest и training smoke прошли.
+- 55 тестов проверяющих скриптов: passed, включая 14 сценариев требований и статусов.
+- Четыре новых/изменённых набора инструкций проверены quick_validate: valid.
+- Все 15 исходных текстов карточек сверены с origin/main: содержание сохранено;
+  изменены metadata, относительные ссылки и добавлено состояние переноса.
+- Отчёт проверки: `.derivedData/harness-runs/20261115-210439-ceffccd2/summary.json`
+  в рабочей копии `jocker-worktrees/requirements-workflow`.
+- Последующая правка только документации уточняет каталог возможностей и
+  самостоятельность нормативного текста принятого REQ; проверяется отдельно.
