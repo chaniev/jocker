@@ -16,6 +16,21 @@ CONFIG = json.loads(MODULE.with_name("checks.json").read_text())
 
 
 class HarnessTests(unittest.TestCase):
+    def test_local_modules_are_targeted_but_mixed_changes_and_ci_remain_full(self):
+        for path, group in [
+            ("ViewControllers/Results/ScoreTableView.swift", "results-tests"),
+            ("ViewControllers/Statistics/GameStatisticsTableView.swift", "statistics-tests"),
+            ("Game/Services/History/DealHistoryStore.swift", "history-tests"),
+            ("Game/Services/Settings/GamePlayersSettingsStore.swift", "settings-tests"),
+        ]:
+            selected = verify.select_checks(["Jocker/Jocker/" + path], CONFIG)
+            self.assertIn(group, selected)
+            self.assertNotIn("full-tests", selected)
+            self.assertNotIn("training-smoke", selected)
+            self.assertIn("full-tests", verify.select_checks(["Jocker/Jocker/" + path], CONFIG, ci=True))
+        paths = ["Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift", "Jocker/Jocker/Scoring/ScoreManager.swift"]
+        self.assertTrue({"results-tests", "full-tests", "joker"} <= verify.select_checks(paths, CONFIG).keys())
+
     def test_both_runtime_ai_locations(self):
         for path in ["Jocker/Jocker/Models/Bot/BotTuning.swift", "Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift"]:
             self.assertTrue({"phase", "ranking", "training-smoke"} <= verify.select_checks([path], CONFIG).keys())

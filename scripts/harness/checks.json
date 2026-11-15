@@ -79,7 +79,7 @@
         "Jocker/Jocker/Scoring/**",
         "Jocker/JockerTests/Rules/**",
         "Jocker/JockerTests/Scoring/**",
-        "правила игры/**"
+        "\u043f\u0440\u0430\u0432\u0438\u043b\u0430 \u0438\u0433\u0440\u044b/**"
       ],
       "checks": [
         "joker",
@@ -97,6 +97,45 @@
         "ranking",
         "full-tests"
       ]
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/ViewControllers/Results/**",
+        "Jocker/JockerTests/Results/**",
+        "Jocker/JockerTests/JockerTests.swift",
+        "Jocker/JockerUITests/GameRepeatResultsFlowUITests.swift"
+      ],
+      "checks": [
+        "results-tests"
+      ]
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/ViewControllers/Statistics/**",
+        "Jocker/Jocker/Game/Services/Statistics/**",
+        "Jocker/JockerTests/Statistics/**"
+      ],
+      "checks": [
+        "statistics-tests"
+      ]
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/Game/Services/History/**",
+        "Jocker/JockerTests/History/**"
+      ],
+      "checks": [
+        "history-tests"
+      ]
+    },
+    {
+      "patterns": [
+        "Jocker/Jocker/Game/Services/Settings/**",
+        "Jocker/JockerTests/Players/**"
+      ],
+      "checks": [
+        "settings-tests"
+      ]
     }
   ],
   "fallback": [
@@ -111,5 +150,24 @@
     "joker",
     "phase",
     "ranking"
-  ]
+  ],
+  "testGroups": {
+    "results-tests": [
+      "Jocker/JockerTests/Results/**/*.swift",
+      "Jocker/JockerTests/JockerTests.swift",
+      "Jocker/JockerUITests/GameRepeatResultsFlowUITests.swift"
+    ],
+    "statistics-tests": [
+      "Jocker/JockerTests/Statistics/**/*.swift",
+      "Jocker/JockerTests/Results/GameResultsPresentationIntegrationTests.swift"
+    ],
+    "history-tests": [
+      "Jocker/JockerTests/History/**/*.swift",
+      "Jocker/JockerTests/Results/DealHistoryPresentationBuilderTests.swift"
+    ],
+    "settings-tests": [
+      "Jocker/JockerTests/Players/**/*.swift",
+      "Jocker/JockerUITests/GameRepeatResultsFlowUITests.swift"
+    ]
+  }
 }

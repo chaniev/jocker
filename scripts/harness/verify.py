@@ -202,6 +202,7 @@ def run(root, mode, base, destination, timeout):
                     check.update(execute(check["command"], root, Path(check["log"]), timeout))
                     if check["kind"] == "xctest":
                         required = sorted(set(check["selectors"] + [s for values in plan["packSelectors"].values() for s in values]))
+                        required += [s for values in plan.get("groupSelectors", {}).values() for s in values]
                         if check["name"] == "full-tests":
                             required += report["environment"]["testTargets"]
                         try:
