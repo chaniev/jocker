@@ -1,12 +1,16 @@
 # PROD-006 Короткие упражнения по заказу и розыгрышу
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P2
 - Этап: Следующий этап
 - Тип: Функциональность
 - Предварительный объём: Средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-TRAIN-001 — implements
 
 ## Проблема
 
@@ -44,10 +48,15 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/Models/Gameplay/GameConstants.swift](../Jocker/Jocker/Models/Gameplay/GameConstants.swift)
-- [Jocker/Jocker/Models/Gameplay/BiddingRules.swift](../Jocker/Jocker/Models/Gameplay/BiddingRules.swift)
-- [Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift](../Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift)
-- [Jocker/Jocker/Scoring/PremiumRules.swift](../Jocker/Jocker/Scoring/PremiumRules.swift)
+- [Jocker/Jocker/Models/Gameplay/GameConstants.swift](../../Jocker/Jocker/Models/Gameplay/GameConstants.swift)
+- [Jocker/Jocker/Models/Gameplay/BiddingRules.swift](../../Jocker/Jocker/Models/Gameplay/BiddingRules.swift)
+- [Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift](../../Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift)
+- [Jocker/Jocker/Scoring/PremiumRules.swift](../../Jocker/Jocker/Scoring/PremiumRules.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

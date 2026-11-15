@@ -1,12 +1,16 @@
 # PROD-004 Обратная связь для хода и объяснение начисленных очков
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P1
 - Этап: Ближайший выпуск
 - Тип: Пользовательский сценарий
 - Предварительный объём: Средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-UI-002 — implements
 
 ## Проблема
 
@@ -45,11 +49,16 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift](../Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift)
-- [Jocker/Jocker/Game/Nodes/CardHandNode.swift](../Jocker/Jocker/Game/Nodes/CardHandNode.swift)
-- [Jocker/Jocker/ViewControllers/Results/ScoreTableViewController.swift](../Jocker/Jocker/ViewControllers/Results/ScoreTableViewController.swift)
-- [Jocker/Jocker/Scoring/ScoreCalculator.swift](../Jocker/Jocker/Scoring/ScoreCalculator.swift)
-- [Jocker/Jocker/Scoring/PremiumRules.swift](../Jocker/Jocker/Scoring/PremiumRules.swift)
+- [Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift](../../Jocker/Jocker/Game/Scenes/GameScene+PlayingFlow.swift)
+- [Jocker/Jocker/Game/Nodes/CardHandNode.swift](../../Jocker/Jocker/Game/Nodes/CardHandNode.swift)
+- [Jocker/Jocker/ViewControllers/Results/ScoreTableViewController.swift](../../Jocker/Jocker/ViewControllers/Results/ScoreTableViewController.swift)
+- [Jocker/Jocker/Scoring/ScoreCalculator.swift](../../Jocker/Jocker/Scoring/ScoreCalculator.swift)
+- [Jocker/Jocker/Scoring/PremiumRules.swift](../../Jocker/Jocker/Scoring/PremiumRules.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

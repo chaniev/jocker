@@ -1,12 +1,16 @@
 # PROD-005 Пошаговый разбор завершённой раздачи
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P2
 - Этап: Следующий этап
 - Тип: Функциональность
 - Предварительный объём: Средний–крупный
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-HIST-002 — implements
 
 ## Проблема
 
@@ -45,10 +49,15 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/Models/History/DealHistory.swift](../Jocker/Jocker/Models/History/DealHistory.swift)
-- [Jocker/Jocker/Game/Services/History/DealHistoryStore.swift](../Jocker/Jocker/Game/Services/History/DealHistoryStore.swift)
-- [Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift](../Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift)
-- [Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift](../Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift)
+- [Jocker/Jocker/Models/History/DealHistory.swift](../../Jocker/Jocker/Models/History/DealHistory.swift)
+- [Jocker/Jocker/Game/Services/History/DealHistoryStore.swift](../../Jocker/Jocker/Game/Services/History/DealHistoryStore.swift)
+- [Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift](../../Jocker/Jocker/ViewControllers/Results/DealHistoryViewController.swift)
+- [Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift](../../Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

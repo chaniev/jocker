@@ -56,3 +56,14 @@
 - Protocols for testability (e.g., `GameStatisticsStore` / `UserDefaultsGameStatisticsStore`)
 - Default parameter labels, full `.self` for type references
 - Explicit `self.` in instance methods
+
+## Requirements and backlog workflow
+- `docs/requirements/README.md` defines the product registry, decision and implementation states.
+- For game mechanics, `правила игры/` remains the primary source; a conflicting REQ requires an explicit product decision before implementation.
+- Every active backlog card and unfinished backlog plan carries requirements metadata. Behavior-changing work references REQ; behavior-preserving work may use `none` with a reason. `pending` belongs only in needs-clarification.
+- Proposed requirements do not authorize implementation. Record explicit decisions already supplied by the user; do not request them again.
+- Update affected requirements, their history and CHANGELOG in the same task as the behavior change. Mark implemented only with evidence in main.
+- Before backlog work read `backlog/AGENTS.md`. Capture `зафиксируй` / `зафикчируй` text verbatim into `backlog/inbox/YYYY-MM-DD.md` (user's current date), appending without triage.
+- Use `codex-backlog-skill` for requested triage/status reconciliation, `product-plan-clarification` for product questions, `tasks-ready-to-implementation` for planning, and `implement-release-plan` for authorized execution.
+- Historical plans in docs/ require an up-to-date backlog card and requirements mapping when resumed; they are not automatically executable.
+- `make requirements-check BASE=<ref>` validates traceability and requirements CHANGELOG co-change; the verification harness and CI include it.

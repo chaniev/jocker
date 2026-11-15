@@ -39,6 +39,10 @@
     "target-membership": [
       "python3",
       "scripts/harness/targets.py"
+    ],
+    "requirements": [
+      "python3",
+      "scripts/validate_requirements.py"
     ]
   },
   "rules": [
@@ -49,7 +53,8 @@
         ".agents/**",
         ".codex/**",
         "docs/**",
-        "README.md"
+        "README.md",
+        "backlog/**"
       ],
       "checks": []
     },
@@ -83,7 +88,7 @@
         "Jocker/Jocker/Scoring/**",
         "Jocker/JockerTests/Rules/**",
         "Jocker/JockerTests/Scoring/**",
-        "\u043f\u0440\u0430\u0432\u0438\u043b\u0430 \u0438\u0433\u0440\u044b/**"
+        "правила игры/**"
       ],
       "checks": [
         "joker",

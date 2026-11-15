@@ -1,12 +1,16 @@
 # PROD-011 Понятное обозначение партнёра и команд в парах
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P2
 - Этап: Небольшие улучшения
 - Тип: Игровое представление
 - Предварительный объём: Небольшой–средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-UI-005 — implements
 
 ## Проблема
 
@@ -43,9 +47,14 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift)
-- [Jocker/Jocker/Game/Nodes/PlayerNode.swift](../Jocker/Jocker/Game/Nodes/PlayerNode.swift)
-- [Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift](../Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift)
+- [Jocker/Jocker/Game/Nodes/PlayerNode.swift](../../Jocker/Jocker/Game/Nodes/PlayerNode.swift)
+- [Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift](../../Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

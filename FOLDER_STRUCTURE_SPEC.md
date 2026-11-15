@@ -18,12 +18,18 @@ This document is the source of truth for repository structure and file placement
 ├── .codex/
 │   └── agents/                (profile agent definitions: one <name>.toml per agent, e.g. game-rules-specialist, test-automator)
 ├── .github/
+│   ├── pull_request_template.md
 │   └── workflows/
 │       └── ios-tests.yml
 ├── backlog/
 │   ├── README.md               (product backlog index, priorities, dependencies and workflow)
-│   └── PROD-NNN-*.md           (one product task per file; initial tasks PROD-001–PROD-015)
+│   ├── AGENTS.md               (backlog workflow invariants)
+│   ├── needs-clarification/    (initial PROD-001–PROD-015; other queues created on first use)
+│   ├── implementation-plans/   (unfinished plans, created on first use)
+│   ├── done/YYYY-MM-DD/        (completed cards and plans, created on first use)
+│   └── logs/                  (append-only workflow evidence)
 ├── docs/
+│   ├── requirements/          (README, domain REQ cards, template and CHANGELOG)
 │   ├── BOT_AI_FULL_TEST_COVERAGE_PLAN.md
 │   ├── BOT_AI_IMPROVEMENT_PLAN.md
 │   ├── BOT_AI_IMPROVEMENT_PLAN_REVIEW.md
@@ -55,7 +61,8 @@ This document is the source of truth for repository structure and file placement
 │   │   ├── environment.py
 │   │   ├── results.py
 │   │   ├── targets.py
-│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py, test_targets.py, test_training_cache.py)
+│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py, test_targets.py, test_training_cache.py, test_requirements.py)
+│   ├── validate_requirements.py
 │   ├── run_all_tests.sh
 │   ├── run_bot_ab_comparison_snapshot.sh
 │   ├── run_bot_baseline_snapshot.sh
@@ -234,8 +241,14 @@ Selected, non-exhaustive list of key files and what they own.
 
 ### Tooling & Documentation
 
+- `docs/requirements/`: desired behavior registry; two independent statuses, task relations, decision evidence and CHANGELOG. Game rule source texts retain their authority.
+- `backlog/AGENTS.md`: capture, triage, planning, implementation and completion rules. Queues (created when first used): inbox, processing, processed, needs-clarification, tasks-ready, risky, implementation-plans, implementation, done/YYYY-MM-DD, logs. Product IDs use PROD; technical IDs use TASK.
+- `scripts/validate_requirements.py`: standard-library validation of requirements, task/plan traceability, lifecycle and CHANGELOG co-change; exposed by make requirements-check and the harness.
+- `scripts/harness/tests/test_requirements.py`: behavioral regression cases for requirements/workflow validation.
+- `.github/pull_request_template.md`: requirement mapping and verification evidence for review.
+
 - `backlog/README.md`: product backlog entrypoint, proposal-to-task mapping, priorities, sequencing and status conventions.
-- `backlog/PROD-NNN-*.md`: individual product task cards with problem, outcome, scope, acceptance criteria, evidence, dependencies and unresolved product decisions; initial range PROD-001–PROD-015.
+- `backlog/<status>/PROD-NNN-*.md`: individual product task cards with problem, outcome, scope, acceptance criteria, evidence, dependencies and unresolved product decisions; initial range PROD-001–PROD-015.
 - `Makefile`: developer convenience targets; `make bt` / `make train-bot` point to the canonical full-match training workflow, `make train-bot-final` runs the canonical final validation workflow, and legacy short random-round profiles are now prefixed `legacy-` (`legacy-bt-<difficulty>-<smoke|balanced|battle>`). `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make training-pipeline-smoke` runs compile/baseline/evolution smoke checks for the checked-in runner (including a tiny parallel evolution with `--max-parallel-evaluations 2`). `make stage3-scope-validate` runs the Stage-03 runtime-scope validation harness (`old-scope`, `critical-runtime`, gated `full-scope`) and writes a consolidated summary under `.derivedData/stage3-runtime-scope-runs/<timestamp>/`; `make stage3-scope-validate-medium` runs the same ladder on the intermediate `medium` compare profile, and `make stage3-scope-validate-smoke` runs it on the smoke profile. `make stage5-benchmark` runs the Stage-05 parallel benchmark (canonical profile `bt-hard-fullgame-balanced`, sequential vs 2/4 parallel, parity and speedup summary under `.derivedData/stage5-parallel-benchmark/<timestamp>/`). `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage4-phase-pack` runs the Stage-4 phase-conditioned runtime guardrails pack (`make stage4-phase-pack-list`, `make stage4-phase-pack-dry` for inspection). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`run-mode=baselineOnly`) with persisted artifacts. `make bot-compare` / `make bot-compare-medium` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
 - `docs/BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
 - `docs/BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md`: concrete step-by-step refactoring plan for `BotRuntimePolicy.swift` and `BotTuning.swift`, including fixed design decisions, execution order, and completion criteria.
@@ -249,7 +262,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
 - `docs/CODEX_MCP_SKILLS_SETUP.md`: project-specific Codex setup guide covering recommended MCP servers, curated skills, and ready-to-paste `~/.codex/config.toml` snippets for this Swift/UIKit/SpriteKit repo.
 - `docs/AGENTS_SKILLS_HARNESS.md`: target-state catalog of profile agents (`.codex/agents/`), skills (`.agents/skills/`), agent routing tables, and the verification harness inventory (existing scripts/make targets plus CRM-parity gaps), formed by analogy with the CRM repo.
-- `.agents/skills/<name>/SKILL.md`: agent skill bundles. Process skills (`task-worktree`, `architecture-decision`, `product-plan-clarification`, `implement-release-plan`, `autoresearch-chatgpt`) are adapted from the CRM repo; project skills (`joker-game-rules`, `joker-game-ui`, `spritekit-uikit-best-practices`, `folder-structure`, `bot-ai-conventions`, `bot-training-pipeline`, `regression-packs`, `xctest-practices`, `ios-hig-audit`) are specific to this repository's stack, rules, and harness.
+- `.agents/skills/<name>/SKILL.md`: agent skill bundles. Process skills (`task-worktree`, `architecture-decision`, `product-plan-clarification`, `codex-backlog-skill`, `tasks-ready-to-implementation`, `implement-release-plan`, `autoresearch-chatgpt`) are adapted from the CRM repo; project skills (`joker-game-rules`, `joker-game-ui`, `spritekit-uikit-best-practices`, `folder-structure`, `bot-ai-conventions`, `bot-training-pipeline`, `regression-packs`, `xctest-practices`, `ios-hig-audit`) are specific to this repository's stack, rules, and harness.
 - `.codex/agents/<name>.toml`: profile agent definitions (`game-rules-specialist`, `spritekit-gameplay-specialist`, `uikit-flow-specialist`, `game-ux-researcher`, `bot-ai-specialist`, `bot-training-specialist`, `test-automator`, `xcode-ci-specialist`, `refactoring-specialist`) with routing documented in `docs/AGENTS_SKILLS_HARNESS.md`.
 - `docs/PAIRS_MODE_IMPLEMENTATION_PLAN.md`: implementation plan for the 4-player `pairs` mode, covering gameplay-mode plumbing, scoring/premium changes, presentation, statistics separation, and bot cooperation updates.
 - `docs/PRODUCT_OWNER_REVIEW_RU.md`: Russian product-owner review with repository evidence, pilot scope, release gates, success signals, acceptance criteria, and decision ownership.

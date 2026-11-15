@@ -1,12 +1,16 @@
 # PROD-013 Читаемость карт и таблиц на небольшом iPhone
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P1
 - Этап: Подготовка ближайшего выпуска
 - Тип: Проверка и улучшение интерфейса
 - Предварительный объём: Средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-UI-007 — implements
 
 ## Проблема
 
@@ -43,10 +47,15 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift)
-- [Jocker/Jocker/Game/Scenes/GameSceneLayoutResolver.swift](../Jocker/Jocker/Game/Scenes/GameSceneLayoutResolver.swift)
-- [Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift](../Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift)
-- [Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift](../Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift)
+- [Jocker/Jocker/Game/Scenes/GameSceneLayoutResolver.swift](../../Jocker/Jocker/Game/Scenes/GameSceneLayoutResolver.swift)
+- [Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift](../../Jocker/Jocker/ViewControllers/Results/GameResultsViewController.swift)
+- [Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift](../../Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

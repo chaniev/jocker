@@ -1,12 +1,16 @@
 # PROD-007 Архив партий и личный прогресс
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P2
 - Этап: После проверки интереса
 - Тип: Функциональность
 - Предварительный объём: Средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-HIST-003 — implements
 
 ## Проблема
 
@@ -45,10 +49,15 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift](../Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift)
-- [Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift](../Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift)
-- [Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift](../Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift)
-- [Jocker/Jocker/ViewControllers/Statistics/GameStatisticsPresentationProvider.swift](../Jocker/Jocker/ViewControllers/Statistics/GameStatisticsPresentationProvider.swift)
+- [Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift](../../Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift)
+- [Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift](../../Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift)
+- [Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift](../../Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift)
+- [Jocker/Jocker/ViewControllers/Statistics/GameStatisticsPresentationProvider.swift](../../Jocker/Jocker/ViewControllers/Statistics/GameStatisticsPresentationProvider.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

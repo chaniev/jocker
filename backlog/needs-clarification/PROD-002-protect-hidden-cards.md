@@ -1,12 +1,16 @@
 # PROD-002 Защита скрытых карт в истории и экспорте
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P0
 - Этап: Сначала
 - Тип: Проверка и исправление дефекта
 - Предварительный объём: Небольшой–средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-HIST-001 — implements
 
 ## Проблема
 
@@ -43,11 +47,16 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/Game/Scenes/GameScene.swift](../Jocker/Jocker/Game/Scenes/GameScene.swift)
-- [Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift)
-- [Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift](../Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift)
-- [Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift](../Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift)
-- [Jocker/Jocker/ViewControllers/Results/DealHistoryExportCoordinator.swift](../Jocker/Jocker/ViewControllers/Results/DealHistoryExportCoordinator.swift)
+- [Jocker/Jocker/Game/Scenes/GameScene.swift](../../Jocker/Jocker/Game/Scenes/GameScene.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift)
+- [Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift](../../Jocker/Jocker/ViewControllers/Results/ScoreTableTapTargetResolver.swift)
+- [Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift](../../Jocker/Jocker/ViewControllers/Results/DealHistoryPresentationBuilder.swift)
+- [Jocker/Jocker/ViewControllers/Results/DealHistoryExportCoordinator.swift](../../Jocker/Jocker/ViewControllers/Results/DealHistoryExportCoordinator.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

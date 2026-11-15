@@ -1,12 +1,16 @@
 # PROD-003 Понятный первый запуск и выбор сложности
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P1
 - Этап: Ближайший выпуск
 - Тип: Пользовательский сценарий
 - Предварительный объём: Средний
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-UI-001 — implements
 
 ## Проблема
 
@@ -45,10 +49,15 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift)
-- [Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift)
-- [Jocker/Jocker/Models/Players/GamePlayersSettings.swift](../Jocker/Jocker/Models/Players/GamePlayersSettings.swift)
-- [Jocker/Jocker/Models/Bot/BotDifficulty.swift](../Jocker/Jocker/Models/Bot/BotDifficulty.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/GameParametersViewController.swift)
+- [Jocker/Jocker/Models/Players/GamePlayersSettings.swift](../../Jocker/Jocker/Models/Players/GamePlayersSettings.swift)
+- [Jocker/Jocker/Models/Bot/BotDifficulty.swift](../../Jocker/Jocker/Models/Bot/BotDifficulty.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

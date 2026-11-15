@@ -193,3 +193,7 @@ harness-test:
 .PHONY: harness-doctor
 harness-doctor:
 	@python3 scripts/harness/verify.py doctor --destination "$$HARNESS_DESTINATION"
+
+.PHONY: requirements-check
+requirements-check:
+	@python3 scripts/validate_requirements.py --base "$$HARNESS_BASE"

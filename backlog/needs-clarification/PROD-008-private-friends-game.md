@@ -1,12 +1,16 @@
 # PROD-008 Приватная игра с друзьями
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P3
 - Этап: Позже
 - Тип: Инициатива с предварительной проверкой спроса
 - Предварительный объём: Очень крупный
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-ONLINE-001 — implements
 
 ## Проблема
 
@@ -46,8 +50,13 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift)
-- [Jocker/Jocker/Models/Players/PlayerControlType.swift](../Jocker/Jocker/Models/Players/PlayerControlType.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/PlayerSelectionViewController.swift)
+- [Jocker/Jocker/Models/Players/PlayerControlType.swift](../../Jocker/Jocker/Models/Players/PlayerControlType.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

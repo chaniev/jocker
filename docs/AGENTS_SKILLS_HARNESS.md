@@ -91,6 +91,8 @@ routing ниже при делегировании задач.
 | `architecture-decision` | `.agents/skills/architecture-decision/` | ADR для значимых решений (кандидаты: интеграция SLM по `docs/SLM_INTEGRATION_PROPOSAL.md`, рефакторинг `BotRuntimePolicy`). Не для продуктовых решений |
 | `product-plan-clarification` | `.agents/skills/product-plan-clarification/` | Продуктовые пробелы и приоритетные вопросы до реализации (например, по `docs/PRODUCT_OWNER_REVIEW_RU.md`) |
 | `implement-release-plan` | `.agents/skills/implement-release-plan/` | Реализация готовых implementation plans до проверенной интеграции в `main`; в Jocker release = merge + зелёный CI, без стенда |
+| `codex-backlog-skill` | `.agents/skills/codex-backlog-skill/` | Разбор входящих и сверка статусов; сохраняет источники и REQ-связи |
+| `tasks-ready-to-implementation` | `.agents/skills/tasks-ready-to-implementation/` | Готовые планы, evidence решений и явный переход к реализации |
 | `autoresearch-chatgpt` | `.agents/skills/autoresearch-chatgpt/` | Мета-скил: бенчмарк и улучшение самих скилов. Переносится как есть |
 
 ### Проектные (созданы под jocker)
@@ -109,8 +111,6 @@ routing ниже при делегировании задач.
 
 ### Отложенные (создать при появлении базы)
 
-- `tasks-ready-to-implementation`, `codex-backlog-skill` — после определения
-  переходов задач в implementation/done; текущие карточки и индекс находятся в `backlog/`;
 - `app-store-release` — при подготовке к публикации (аналог
   `deploy-project`: без потери данных, с release notes);
 - `design-first-ui-prompting` — адаптировать из CRM для генерации визуальных
@@ -217,3 +217,14 @@ Runtime-политики ботов, tuning, правила scoring и UI-пот
 - Кеш standalone runner теперь хранится в `.derivedData/dev-tools/bot-training/<fingerprint>/`. Ключ включает состав и содержимое Swift-файлов, путь/версию компилятора, SDK, флаги и влияющие на toolchain переменные окружения. Время изменения файлов не используется. Проверяются исполняемый файл и его SHA-256; повреждение кеша вызывает пересборку. Параллельные запросы компиляции сериализуются, бинарник и manifest публикуются атомарно; ошибка сборки или изменение исходников во время неё не разрешают запуск старого runner. `train_bot_tuning.sh` остаётся каноническим entrypoint и сохраняет прежние CLI-аргументы.
 
 В CI лимит одной проверки — 35 минут при общем лимите workflow 45 минут: измеренный полный XCTest на GitHub занял около 29 минут и оставлял слишком мало запаса в прежнем 30-минутном лимите. Локальный `harness-verify` сохраняет 30-минутный лимит; состав обязательных проверок не сокращён.
+
+## Процесс требований (перенесён 15.11.2026)
+
+Точка входа — [backlog/README.md](../backlog/README.md); нормативный формат —
+[docs/requirements/README.md](requirements/README.md). Перенесены capture,
+triage, status reconciliation, planning и execution gates из CRM с сохранением
+UIKit/SpriteKit, игровых правил и отдельных проверок обучения ботов.
+`make requirements-check` запускается также через harness локально и в CI.
+Проверки включают REQ-ссылки, раздельные статусы, задачи/планы, ready gate и
+совместное изменение доменных карточек с CHANGELOG. Проверка не заменяет
+человеческое принятие требований и evidence реализации в main.

@@ -1,12 +1,16 @@
 # PROD-014 Пилот с игроками и проверка повторной ценности
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P1
 - Этап: Подготовить сейчас, провести после готовности сборки
 - Тип: Продуктовое исследование
 - Предварительный объём: Исследование 7–14 дней использования после набора
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- pending — Согласовать протокол пилота, владельца исследования и критерии результата.
 
 ## Проблема
 
@@ -48,9 +52,14 @@
 
 ## Основания в проекте
 
-- [docs/PRODUCT_OWNER_REVIEW_RU.md](../docs/PRODUCT_OWNER_REVIEW_RU.md)
-- [Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift](../Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift)
-- [Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift](../Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift)
+- [docs/PRODUCT_OWNER_REVIEW_RU.md](../../docs/PRODUCT_OWNER_REVIEW_RU.md)
+- [Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift](../../Jocker/Jocker/Models/Statistics/GameStatisticsSnapshot.swift)
+- [Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift](../../Jocker/Jocker/Models/Statistics/GameStatisticsPlayerRecord.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.

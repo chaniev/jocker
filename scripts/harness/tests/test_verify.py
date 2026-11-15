@@ -41,7 +41,7 @@ class HarnessTests(unittest.TestCase):
 
     def test_docs_and_ci(self):
         selected = verify.select_checks(["docs/guide.md"], CONFIG)
-        self.assertEqual(set(selected), {"instructions", "harness-tests", "target-membership"})
+        self.assertEqual(set(selected), {"instructions", "harness-tests", "target-membership", "requirements"})
         self.assertIn("training-smoke", verify.select_checks([], CONFIG, ci=True))
         self.assertIn("full-tests", verify.select_checks([], CONFIG, ci=True))
 

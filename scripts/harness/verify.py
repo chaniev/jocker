@@ -48,7 +48,7 @@ def snapshot(root, base):
 
 
 def select_checks(paths, config, ci=False):
-    reasons = {"instructions": ["always"], "harness-tests": ["always"], "target-membership": ["always"]}
+    reasons = {"instructions": ["always"], "harness-tests": ["always"], "target-membership": ["always"], "requirements": ["always"]}
     for path in paths:
         matches = [r for r in config["rules"] if any(fnmatch.fnmatchcase(path, p) for p in r["patterns"])]
         checks = set(c for r in matches for c in r["checks"]) if matches else set(config["fallback"])
@@ -168,6 +168,9 @@ def run(root, mode, base, destination, timeout):
             report["state"] = state
             selected = select_checks(state["paths"], config, ci=mode == "ci")
             plan = build_plan(root, selected, config)
+            for check in plan["checks"]:
+                if check["name"] == "requirements":
+                    check["command"] = check["command"] + ["--base", base]
             report["plan"] = plan
             report["requestedChecks"] = selected
             needs_simulator = any(c["kind"] == "xctest" for c in plan["checks"])

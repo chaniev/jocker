@@ -1,12 +1,16 @@
 # PROD-001 Сохранение и продолжение незавершённой партии
 
-- Статус: Backlog
+- Статус: needs-clarification
 - Приоритет: P1
 - Этап: Сначала
 - Тип: Функциональность
 - Предварительный объём: Крупный
 - Создано: 2026-11-15
-- Источник предложения: [продуктовый бэклог](README.md)
+- Источник предложения: [продуктовый бэклог](../README.md)
+
+## Requirements
+
+- REQ-SAVE-001 — implements
 
 ## Проблема
 
@@ -45,10 +49,15 @@
 
 ## Основания в проекте
 
-- [Jocker/Jocker/App/AppDelegate.swift](../Jocker/Jocker/App/AppDelegate.swift)
-- [Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift](../Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift)
-- [Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift](../Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift)
-- [Jocker/Jocker/Models/Gameplay/GameConstants.swift](../Jocker/Jocker/Models/Gameplay/GameConstants.swift)
+- [Jocker/Jocker/App/AppDelegate.swift](../../Jocker/Jocker/App/AppDelegate.swift)
+- [Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift](../../Jocker/Jocker/ViewControllers/GameFlow/GameViewController.swift)
+- [Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift](../../Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift)
+- [Jocker/Jocker/Models/Gameplay/GameConstants.swift](../../Jocker/Jocker/Models/Gameplay/GameConstants.swift)
 
-[К списку задач](README.md)
+[К списку задач](../README.md)
 
+
+## Состояние после переноса процесса
+
+15.11.2026 — предложение сохранено; продуктовое одобрение не зафиксировано.
+Переход к планированию требует согласования результата и закрытия блокирующих вопросов.
