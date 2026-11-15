@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import sys
 import unittest
 from unittest.mock import patch
@@ -29,6 +30,25 @@ class EnvironmentTests(unittest.TestCase):
         self.assertEqual(probe.call_count, 1)
         self.assertGreaterEqual(result["durationSeconds"], 0)
 
+    def test_cold_simulator_install_progress_and_longer_timeout(self):
+        device_id = "11111111-1111-1111-1111-111111111111"
+        devices = {"com.apple.iOS-18-0": [{"udid": device_id, "name": "iPhone", "state": "Booted", "isAvailable": True}]}
+        def respond(root, command, timeout):
+            output = ""
+            if "devices" in command:
+                self.assertEqual(timeout, 180)
+                output = "Install Started\nInstall Succeeded\n" + json.dumps({"devices": devices})
+            elif "runtimes" in command:
+                self.assertEqual(timeout, 180)
+                output = json.dumps({"runtimes": self.runtimes})
+            elif "-showdestinations" in command:
+                output = "{ platform:iOS Simulator, id:" + device_id + " }"
+            return {"exitCode": 0, "output": output}
+        with patch("environment.probe", side_effect=respond), patch("environment.scheme_targets", return_value=["JockerTests"]):
+            result = doctor(Path("."), "platform=iOS Simulator")
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["resolvedDestination"], "platform=iOS Simulator,id=" + device_id)
+
     def test_ineligible_section_is_not_used_even_for_available_simulator(self):
         allowed = "11111111-1111-1111-1111-111111111111"
         rejected = "22222222-2222-2222-2222-222222222222"
@@ -37,3 +57,4 @@ class EnvironmentTests(unittest.TestCase):
                   'Ineligible destinations for the Jocker scheme:\n'
                   '{ platform:iOS Simulator, id:' + rejected + ', name:iPhone, error:Unsupported SDK }')
         self.assertEqual(eligible_destinations(output), {allowed})
+        self.assertEqual(eligible_destinations(output.replace("Ineligible destinations", "Destinations incompatible")), {allowed})

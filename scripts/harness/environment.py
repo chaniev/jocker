@@ -21,7 +21,7 @@ def probe(root, command, timeout=30):
 def eligible_destinations(output):
     # Xcode also prints real device IDs in its ineligible section.
     # Those must never be considered just because simctl says the device exists.
-    available = re.split(r"Ineligible destinations", output, flags=re.IGNORECASE)[0]
+    available = re.split(r"Ineligible destinations|Destinations incompatible", output, flags=re.IGNORECASE)[0]
     return set(re.findall(r"platform:iOS Simulator,[^\n}]*?id:([A-Fa-f0-9-]{36})", available))
 
 
@@ -69,8 +69,16 @@ def doctor(root, destination, needs_simulator=True):
             # Structured xcresult reports require the test-results subcommands (Xcode 16+).
             require(["xcrun", "xcresulttool", "get", "test-results", "summary", "--help"])
             require(["xcrun", "xcresulttool", "get", "test-results", "tests", "--help"])
-            devices = json.loads(require(["xcrun", "simctl", "list", "devices", "available", "--json"]))["devices"]
-            runtimes = json.loads(require(["xcrun", "simctl", "list", "runtimes", "--json"]))["runtimes"]
+            # First use after an Xcode update may install simulator components.
+            # simctl can print installation progress before its JSON payload.
+            def simulator_list(arguments):
+                output = require(["xcrun", "simctl", "list"] + arguments + ["--json"], 180)
+                start = re.search(r"(?m)^\s*\{", output)
+                if start is None:
+                    raise ValueError("simctl returned no JSON payload")
+                return json.loads(output[start.start():])
+            devices = simulator_list(["devices", "available"])["devices"]
+            runtimes = simulator_list(["runtimes"])["runtimes"]
             destinations = require(["xcodebuild", "-project", PROJECT, "-scheme", SCHEME, "-showdestinations"], 60)
             eligible = eligible_destinations(destinations)
             resolved, device = resolve_destination(destination, devices, runtimes, eligible)
