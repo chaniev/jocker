@@ -30,12 +30,12 @@ description: Подготовить проверяемые implementation plans 
 Шаблон (пути в ссылках — относительно файла, branch с префиксом codex/):
 
 ```md
-# План: PROD-XXX Название
+# План: JCR-XXX Название
 
 ## Metadata
-- source_task: [PROD-XXX](../tasks-ready/PROD-XXX-short.md)
+- source_task: [JCR-XXX](../tasks-ready/JCR-XXX-short.md)
 - requirements: REQ-UI-001 (implements)
-- branch: codex/PROD-XXX-short
+- branch: codex/JCR-XXX-short
 - readiness: no
 - dependencies: none
 

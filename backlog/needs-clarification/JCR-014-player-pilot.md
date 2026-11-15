@@ -1,4 +1,4 @@
-# PROD-014 Пилот с игроками и проверка повторной ценности
+# JCR-014 Пилот с игроками и проверка повторной ценности
 
 - Статус: needs-clarification
 - Приоритет: P1
@@ -42,7 +42,7 @@
 
 ## Зависимости и связи
 
-Подготовка возможна сразу. Перед недельным самостоятельным использованием закрыть [PROD-002](PROD-002-protect-hidden-cards.md) и проверить [PROD-001](PROD-001-save-and-resume.md); оценить готовность [PROD-003](PROD-003-clear-first-start.md), [PROD-004](PROD-004-gameplay-feedback.md), [PROD-010](PROD-010-score-table-back-button.md) и [PROD-013](PROD-013-small-screen-readability.md). Раннее модерируемое наблюдение допустимо с явно записанными ограничениями.
+Подготовка возможна сразу. Перед недельным самостоятельным использованием закрыть [JCR-002](JCR-002-protect-hidden-cards.md) и проверить [JCR-001](JCR-001-save-and-resume.md); оценить готовность [JCR-003](JCR-003-clear-first-start.md), [JCR-004](JCR-004-gameplay-feedback.md), [JCR-010](JCR-010-score-table-back-button.md) и [JCR-013](JCR-013-small-screen-readability.md). Раннее модерируемое наблюдение допустимо с явно записанными ограничениями.
 
 ## Уточнения перед планированием
 

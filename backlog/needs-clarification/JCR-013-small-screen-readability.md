@@ -1,4 +1,4 @@
-# PROD-013 Читаемость карт и таблиц на небольшом iPhone
+# JCR-013 Читаемость карт и таблиц на небольшом iPhone
 
 - Статус: needs-clarification
 - Приоритет: P1
@@ -39,7 +39,7 @@
 
 ## Зависимости и связи
 
-Самостоятельная проверка; повторить для изменённых экранов [PROD-003](PROD-003-clear-first-start.md), [PROD-004](PROD-004-gameplay-feedback.md), [PROD-010](PROD-010-score-table-back-button.md) и [PROD-011](PROD-011-pairs-partner-visibility.md).
+Самостоятельная проверка; повторить для изменённых экранов [JCR-003](JCR-003-clear-first-start.md), [JCR-004](JCR-004-gameplay-feedback.md), [JCR-010](JCR-010-score-table-back-button.md) и [JCR-011](JCR-011-pairs-partner-visibility.md).
 
 ## Уточнения перед планированием
 

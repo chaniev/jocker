@@ -236,7 +236,10 @@ def validate_active_backlog(
     tasks: dict[Path, str] = {}
     identifiers: dict[str, Path] = {}
     for path in sorted((ROOT / "backlog").rglob("*.md")):
-        match = re.match(r"((?:PROD|TASK)-\d{3})-", path.name)
+        match = re.match(r"((?:JCR|TASK|PROD)-\d{3})-", path.name)
+        if match and match[1].startswith("PROD-"):
+            errors.append(f"{relative(path)}: obsolete task prefix PROD; use JCR with the same number")
+            continue
         if not match or path.name.endswith(".plan.md"):
             continue
         identifier = match[1]

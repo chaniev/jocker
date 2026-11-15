@@ -52,18 +52,18 @@ Player can continue an interrupted game.
 """)
 
     def task(self, status="tasks-ready", relation="REQ-UI-001 — implements"):
-        return self.write(f"backlog/{status}/PROD-001-continue.md", f"""# PROD-001 Continue
+        return self.write(f"backlog/{status}/JCR-001-continue.md", f"""# JCR-001 Continue
 - Статус: {status}
 ## Requirements
 - {relation}
 """)
 
     def plan(self, status="implementation", readiness="yes", relation="REQ-UI-001 (implements)"):
-        return self.write("backlog/implementation-plans/PROD-001-continue.plan.md", f"""# Plan
+        return self.write("backlog/implementation-plans/JCR-001-continue.plan.md", f"""# Plan
 ## Metadata
-- source_task: [PROD-001](../{status}/PROD-001-continue.md)
+- source_task: [JCR-001](../{status}/JCR-001-continue.md)
 - requirements: {relation}
-- branch: codex/PROD-001-continue
+- branch: codex/JCR-001-continue
 - readiness: {readiness}
 ## Решения и evidence
 Decision recorded in [source](../source.md).
@@ -163,9 +163,14 @@ none
         self.plan("needs-clarification", "no", "pending — Decide how much progress to preserve")
         self.assertEqual([], self.errors())
 
+    def test_old_task_prefix_is_rejected_instead_of_silently_skipped(self):
+        task = self.task()
+        task.rename(task.with_name("PROD-001-continue.md"))
+        self.assertTrue(any("obsolete task prefix" in e for e in self.errors()))
+
     def test_status_and_task_id_drift_are_detected(self):
         task = self.task()
-        self.write("backlog/risky/PROD-001-duplicate.md", task.read_text())
+        self.write("backlog/risky/JCR-001-duplicate.md", task.read_text())
         errors = self.errors()
         self.assertTrue(any("duplicate task ID" in e for e in errors))
         self.assertTrue(any("status must match" in e for e in errors))

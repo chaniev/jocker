@@ -24,7 +24,7 @@ This document is the source of truth for repository structure and file placement
 ├── backlog/
 │   ├── README.md               (product backlog index, priorities, dependencies and workflow)
 │   ├── AGENTS.md               (backlog workflow invariants)
-│   ├── needs-clarification/    (initial PROD-001–PROD-015; other queues created on first use)
+│   ├── needs-clarification/    (initial JCR-001–JCR-015; other queues created on first use)
 │   ├── implementation-plans/   (unfinished plans, created on first use)
 │   ├── done/YYYY-MM-DD/        (completed cards and plans, created on first use)
 │   └── logs/                  (append-only workflow evidence)
@@ -242,13 +242,13 @@ Selected, non-exhaustive list of key files and what they own.
 ### Tooling & Documentation
 
 - `docs/requirements/`: desired behavior registry; two independent statuses, task relations, decision evidence and CHANGELOG. Game rule source texts retain their authority.
-- `backlog/AGENTS.md`: capture, triage, planning, implementation and completion rules. Queues (created when first used): inbox, processing, processed, needs-clarification, tasks-ready, risky, implementation-plans, implementation, done/YYYY-MM-DD, logs. Product IDs use PROD; technical IDs use TASK.
+- `backlog/AGENTS.md`: capture, triage, planning, implementation and completion rules. Queues (created when first used): inbox, processing, processed, needs-clarification, tasks-ready, risky, implementation-plans, implementation, done/YYYY-MM-DD, logs. Product IDs use JCR; technical IDs use TASK.
 - `scripts/validate_requirements.py`: standard-library validation of requirements, task/plan traceability, lifecycle and CHANGELOG co-change; exposed by make requirements-check and the harness.
 - `scripts/harness/tests/test_requirements.py`: behavioral regression cases for requirements/workflow validation.
 - `.github/pull_request_template.md`: requirement mapping and verification evidence for review.
 
 - `backlog/README.md`: product backlog entrypoint, proposal-to-task mapping, priorities, sequencing and status conventions.
-- `backlog/<status>/PROD-NNN-*.md`: individual product task cards with problem, outcome, scope, acceptance criteria, evidence, dependencies and unresolved product decisions; initial range PROD-001–PROD-015.
+- `backlog/<status>/JCR-NNN-*.md`: individual product task cards with problem, outcome, scope, acceptance criteria, evidence, dependencies and unresolved product decisions; initial range JCR-001–JCR-015.
 - `Makefile`: developer convenience targets; `make bt` / `make train-bot` point to the canonical full-match training workflow, `make train-bot-final` runs the canonical final validation workflow, and legacy short random-round profiles are now prefixed `legacy-` (`legacy-bt-<difficulty>-<smoke|balanced|battle>`). `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make training-pipeline-smoke` runs compile/baseline/evolution smoke checks for the checked-in runner (including a tiny parallel evolution with `--max-parallel-evaluations 2`). `make stage3-scope-validate` runs the Stage-03 runtime-scope validation harness (`old-scope`, `critical-runtime`, gated `full-scope`) and writes a consolidated summary under `.derivedData/stage3-runtime-scope-runs/<timestamp>/`; `make stage3-scope-validate-medium` runs the same ladder on the intermediate `medium` compare profile, and `make stage3-scope-validate-smoke` runs it on the smoke profile. `make stage5-benchmark` runs the Stage-05 parallel benchmark (canonical profile `bt-hard-fullgame-balanced`, sequential vs 2/4 parallel, parity and speedup summary under `.derivedData/stage5-parallel-benchmark/<timestamp>/`). `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage4-phase-pack` runs the Stage-4 phase-conditioned runtime guardrails pack (`make stage4-phase-pack-list`, `make stage4-phase-pack-dry` for inspection). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`run-mode=baselineOnly`) with persisted artifacts. `make bot-compare` / `make bot-compare-medium` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
 - `docs/BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
 - `docs/BOT_RUNTIME_POLICY_AND_TUNING_REFACTORING_PLAN.md`: concrete step-by-step refactoring plan for `BotRuntimePolicy.swift` and `BotTuning.swift`, including fixed design decisions, execution order, and completion criteria.
@@ -590,7 +590,7 @@ Jocker/JockerUITests/
 - Resource files (`.sks`, assets, storyboards) stay under `Jocker/Jocker/Resources/`, `Jocker/Jocker/Assets.xcassets/`, and `Jocker/Jocker/Base.lproj/`.
 - Developer automation scripts are placed in `scripts/` at repository root.
 - Project plans, reviews and specifications live under `docs/` at repository root.
-- Product backlog cards live under `backlog/` with stable `PROD-NNN` IDs; keep the index and individual card statuses consistent. Implementation plans are separate from backlog registration.
+- Product backlog cards live under `backlog/` with stable `JCR-NNN` IDs; keep the index and individual card statuses consistent. Implementation plans are separate from backlog registration.
 - Game rules reference notes live under `правила игры/`.
 
 ## Type/File Rule

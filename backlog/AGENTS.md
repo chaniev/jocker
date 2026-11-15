@@ -3,7 +3,7 @@
 Read root AGENTS.md, backlog/README.md and docs/requirements/README.md.
 Capture, triage, status reconciliation and planning do not authorize app changes.
 
-- Preserve source notes, permanent PROD/TASK IDs and append-only logs.
+- Preserve source notes, permanent JCR/TASK IDs and append-only logs.
 - Search active cards, plans and dated done directories for duplicates.
 - Card `- Статус:` matches its directory. Active cards contain `## Requirements`.
 - Use REQ relations, concrete behavior-preserving `none`, or `pending` only in
