@@ -20,6 +20,7 @@
 - `make harness-plan BASE=<ref>` explains checks for the diff from the merge base, including local and untracked files.
 - `make harness-verify BASE=<ref>` executes them and saves a versioned JSON report. Overlapping XCTest selections are combined; full-suite execution covers pack tests, while pack dry-run contracts remain separate.
 - `BASE` defaults to `HEAD` for local uncommitted work; use `origin/main` for a task branch.
+- Verification always checks Xcode source membership. Local Results/Statistics/History/Settings changes use module test groups; CI retains the full suite.
 - A passed report validates checks for its recorded source fingerprint; it does not replace tuning acceptance or product review.
 
 ## Commands

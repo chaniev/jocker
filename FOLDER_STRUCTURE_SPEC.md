@@ -52,7 +52,7 @@ This document is the source of truth for repository structure and file placement
 │   │   ├── environment.py
 │   │   ├── results.py
 │   │   ├── targets.py
-│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py, test_targets.py)
+│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py, test_targets.py, test_training_cache.py)
 │   ├── run_all_tests.sh
 │   ├── run_bot_ab_comparison_snapshot.sh
 │   ├── run_bot_baseline_snapshot.sh
@@ -62,7 +62,8 @@ This document is the source of truth for repository structure and file placement
 │   ├── run_stage5_parallel_benchmark.sh
 │   ├── run_training_pipeline_smoke.sh
 │   ├── run_stage6b_ranking_guardrails.sh
-│   └── train_bot_tuning.sh
+│   ├── train_bot_tuning.sh
+│   └── training_runner_cache.py
 ├── правила игры/
 │   ├── выбор козыря.txt
 │   ├── выбор первого раздающего.txt
@@ -249,7 +250,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/README_CARDS.md`: quick entrypoint/index to card-related documentation.
 - `docs/XCODE_INTEGRATION.md`: how to open/build/test the project in Xcode (schemes, DerivedData, and CI alignment).
 - `docs/CODE_REFACTORING_BACKLOG.md`: codebase refactoring notes and no-behavior-change improvement backlog (maintainability/testability).
-- `.github/workflows/ios-tests.yml`: GitHub Actions CI workflow that runs Xcode tests on macOS for every `push` and uploads test run artifacts from `.derivedData/test-runs`.
+- `.github/workflows/ios-tests.yml`: GitHub Actions CI workflow that runs `make harness-ci` on macOS for pushes and pull requests and uploads `.derivedData/harness-runs` (excluding build files).
 - `scripts/run_all_tests.sh`: developer CLI entrypoint for full `xcodebuild test` run with persisted artifacts (`xcodebuild.log`, `TestResults.xcresult`, and `summary.txt`) under `.derivedData/test-runs/<timestamp>/`.
 - `scripts/run_bot_ab_comparison_snapshot.sh`: Stage-0 companion harness for reproducible `baseline vs candidate` A/B validation (`A=basePreset`, `B=tunedOutput`); runs `train_bot_tuning.sh` with fixed training/validation seed profiles and saves raw/parsed A/B artifacts (`ab-*-section.txt`, `ab-*-metrics.txt`, `comparison-table.md`) under `.derivedData/bot-ab-runs/<timestamp>/`.
 - `scripts/run_bot_baseline_snapshot.sh`: Stage-0 baseline harness for bot AI metrics; runs `train_bot_tuning.sh` in baseline-only mode (`--run-mode baselineOnly`) on fixed seed lists and stores artifacts (`train_bot_tuning.log`, `summary.txt`, `baseline-metrics.txt`, `command.txt`) under `.derivedData/bot-baseline-runs/<timestamp>/`.
@@ -259,6 +260,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `scripts/run_stage5_parallel_benchmark.sh`: Stage-05 parallel evaluation benchmark; warms runner via `--compile-only`, runs canonical profile (`bt-hard-fullgame-balanced`) with `--max-parallel-evaluations 1`, `2`, and `4`, saves raw logs and writes `summary.txt` with parity (aggregated metrics and best candidate) and speedup; artifacts under `.derivedData/stage5-parallel-benchmark/<timestamp>/`.
 - `scripts/run_training_pipeline_smoke.sh`: checked-in smoke harness for the training pipeline; compiles the Swift runner, runs a short `baselineOnly` evaluation, runs a short 1-generation evolution, runs a tiny parallel evolution (`--max-parallel-evaluations 2`), and asserts that baseline mode does not enter the generation loop.
 - `scripts/run_stage6b_ranking_guardrails.sh`: developer CLI entrypoint for Stage-6b opponent-aware ranking guardrails pack (selected `BotTurnCandidateRankingServiceTests` for `BLIND-004`, `PREMIUM-010/011`, `PHASE-003`, `JOKER-016`), with optional `--include-flow-plumbing` mode that adds cross-service Stage-6 guardrails (`GameScenePlayingFlowTests` opponent-model snapshot plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks); persists artifacts (`xcodebuild.log`, `TestResults.xcresult`, `summary.txt`, and `selected-tests.txt`) under `.derivedData/stage6b-ranking-runs/<timestamp>/`.
+- `scripts/training_runner_cache.py`: content-addressed standalone runner build cache. Fingerprints ordered source paths/content, compiler, SDK and flags; serializes concurrent builds, verifies input stability and binary integrity, and publishes binaries/manifests atomically under `.derivedData/dev-tools/bot-training/<fingerprint>/`. `scripts/harness/tests/test_training_cache.py` exercises hits, invalidation, failures and concurrent builds.
 - `scripts/train_bot_tuning.sh`: thin shell entrypoint for offline self-play training; compiles the checked-in Swift runner from `Jocker/JockerSelfPlayTools/`, forwards CLI arguments, and optionally persists stdout logs.
 - `Jocker/Jocker.xcodeproj/xcshareddata/xcschemes/Jocker.xcscheme`: shared Xcode scheme committed for CI/automation so `xcodebuild test -scheme Jocker` works on clean GitHub runners.
 - `Jocker/Jocker.xcodeproj/project.pbxproj`: defines target boundaries; `JockerSelfPlayTools` (static library) owns self-play/training sources, while `Jocker` app target excludes them from runtime build.

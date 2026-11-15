@@ -136,7 +136,7 @@ routing ниже при делегировании задач.
 | Параллельный бенчмарк (Stage 5) | `make stage5-benchmark` | `.derivedData/stage5-parallel-benchmark/<ts>/` |
 | Каноническое обучение | `make bt` / `make train-bot` | `.derivedData/bot-train-main.log` |
 | Финальный ансамбль | `make train-bot-final` | `.derivedData/bot-train-final.log` |
-| CI | `.github/workflows/ios-tests.yml` (macos-15) | `run_all_tests.sh` → `run_training_pipeline_smoke.sh`, upload артефактов (14 дней) |
+| CI | `.github/workflows/ios-tests.yml` (macos-15) | `make harness-ci`, upload отчётов и логов (14 дней) |
 
 Правила:
 
@@ -213,3 +213,5 @@ Runtime-политики ботов, tuning, правила scoring и UI-пот
 - Группы и regression packs объединяются в один XCTest запуск. В отчёте `groupSelectors` дополняет `packSelectors`; фактически выполненные классы проверяются по xcresult, в том числе при полном прогоне. Пустая группа блокирует план.
 - Проверка `target-membership` всегда сверяет Swift-файлы с Sources build phases Xcode. Она выявляет отсутствующее или запрещённое членство, удалённые файлы, дубли и зависимость приложения от тренировочной библиотеки. `main.swift` тренировочного CLI — явное исключение: его компилирует shell entrypoint, а Xcode tools target является статической библиотекой.
 - Обнаруженный пропуск `GameTurnServiceTests.swift` исправлен: файл теперь входит в `JockerTests`.
+
+- Кеш standalone runner теперь хранится в `.derivedData/dev-tools/bot-training/<fingerprint>/`. Ключ включает состав и содержимое Swift-файлов, путь/версию компилятора, SDK, флаги и влияющие на toolchain переменные окружения. Время изменения файлов не используется. Проверяются исполняемый файл и его SHA-256; повреждение кеша вызывает пересборку. Параллельные запросы компиляции сериализуются, бинарник и manifest публикуются атомарно; ошибка сборки или изменение исходников во время неё не разрешают запуск старого runner. `train_bot_tuning.sh` остаётся каноническим entrypoint и сохраняет прежние CLI-аргументы.
