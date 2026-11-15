@@ -51,7 +51,8 @@ This document is the source of truth for repository structure and file placement
 │   │   ├── planning.py
 │   │   ├── environment.py
 │   │   ├── results.py
-│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py)
+│   │   ├── targets.py
+│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py, test_targets.py)
 │   ├── run_all_tests.sh
 │   ├── run_bot_ab_comparison_snapshot.sh
 │   ├── run_bot_baseline_snapshot.sh
@@ -512,7 +513,8 @@ Jocker/JockerTests/
 │   ├── GameSceneInteractionStateTests.swift
 │   ├── GameSceneInteractionTransitionPolicyTests.swift
 │   ├── GameScenePlayingFlowTests.swift
-│   └── GameStateTests.swift
+│   ├── GameStateTests.swift
+│   └── GameTurnServiceTests.swift
 ├── History/
 │   ├── DealHistoryExportServiceTests.swift
 │   └── DealHistoryStoreTests.swift
@@ -578,3 +580,5 @@ Jocker/JockerUITests/
 `scripts/harness/checks.json` owns routing and command definitions; `verify.py` selects checks, executes existing scripts and writes versioned JSON evidence under `.derivedData/harness-runs/<run-id>/`. `tests/test_verify.py` covers routing, Git changes, failures and stale evidence. See `docs/AGENTS_SKILLS_HARNESS.md` for the invocation and report contract. Python bytecode is not a source artifact.
 
 Harness stage 2: `planning.py` reads canonical pack selectors and forms one XCTest invocation; `environment.py` resolves and prepares an eligible simulator before builds; `results.py` extracts structured results from `.xcresult`. Unit tests live under `scripts/harness/tests/`. These files do not belong to Xcode targets.
+
+`targets.py` validates explicit PBX source membership, missing/new Swift files, duplicate build entries and app dependencies on training. Runtime sources may be shared with `JockerSelfPlayTools`; training engine sources belong only to that library. `Jocker/JockerSelfPlayTools/main.swift` is deliberately CLI-only because the Xcode tools target is a static library. Conditional source exclusions, synchronized groups and generated-source build rules fail closed until supported. `test_targets.py` covers boundary violations.

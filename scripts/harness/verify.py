@@ -48,7 +48,7 @@ def snapshot(root, base):
 
 
 def select_checks(paths, config, ci=False):
-    reasons = {"instructions": ["always"], "harness-tests": ["always"]}
+    reasons = {"instructions": ["always"], "harness-tests": ["always"], "target-membership": ["always"]}
     for path in paths:
         matches = [r for r in config["rules"] if any(fnmatch.fnmatchcase(path, p) for p in r["patterns"])]
         checks = set(c for r in matches for c in r["checks"]) if matches else set(config["fallback"])

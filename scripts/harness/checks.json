@@ -35,6 +35,10 @@
       "bash",
       "scripts/run_stage6b_ranking_guardrails.sh",
       "--include-flow-plumbing"
+    ],
+    "target-membership": [
+      "python3",
+      "scripts/harness/targets.py"
     ]
   },
   "rules": [

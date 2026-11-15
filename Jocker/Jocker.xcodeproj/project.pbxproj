@@ -251,7 +251,8 @@
 			E009650331E84562AC4DA317 /* BotMatchContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7F900E350594FD990CEB211 /* BotMatchContextBuilder.swift */; };
 			F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000082F5600010037CA75 /* BotTuningTests.swift */; };
 			F4B100032F5600010037CA75 /* BotBlockPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B100042F5600010037CA75 /* BotBlockPhaseTests.swift */; };
-	/* End PBXBuildFile section */
+			B8846B412026111500000002 /* GameTurnServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8846B412026111500000001 /* GameTurnServiceTests.swift */; };
+/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		7E4AC95C2F268D860037CA75 /* PBXContainerItemProxy */ = {
@@ -524,6 +525,7 @@
 		F400000C2F5600010037CA75 /* BotOpponentModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotOpponentModel.swift; sourceTree = "<group>"; };
 		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
 		F0A1B2C32F800A010037CA75 /* TrainingRunResultFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingRunResultFormatter.swift; sourceTree = "<group>"; };
+		B8846B412026111500000001 /* GameTurnServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -922,6 +924,7 @@
 				D4C900042F8008010037CA75 /* GameSceneInteractionTransitionPolicyTests.swift */,
 				D2B100012F7300010037CA75 /* GameScenePlayingFlowTests.swift */,
 				DD1000012F3E00010037CA75 /* GameStateTests.swift */,
+				B8846B412026111500000001 /* GameTurnServiceTests.swift */,
 			);
 			path = Flow;
 			sourceTree = "<group>";
@@ -1461,6 +1464,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B8846B412026111500000002 /* GameTurnServiceTests.swift in Sources */,
 				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
 				B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */,
 				D4CC00012F800B010037CA75 /* ScoreTableInProgressRoundSnapshotProviderTests.swift in Sources */,
