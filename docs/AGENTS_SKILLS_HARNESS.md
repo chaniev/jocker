@@ -30,7 +30,7 @@
 | `crm-mobile-first-ui` (skill) | `joker-game-ui` (skill) | Обязательный UI-скил на каждом клиентском этапе |
 | `csharp-xunit` (skill) | `xctest-practices` (skill) | Механика тестов под стек проекта |
 | `deploy-project` (skill) | — | Нет стенда деплоя; при выходе в App Store завести `app-store-release` |
-| `codex-backlog-skill`, `tasks-ready-to-implementation` (skills) | — (пока) | Требуют backlog-структуру, которой в Jocker нет |
+| `codex-backlog-skill`, `tasks-ready-to-implementation` (skills) | — (пока) | Карточки продукта заведены в `backlog/`; workflow implementation/done и эти skills пока не подключены |
 
 ## Агенты
 
@@ -109,8 +109,8 @@ routing ниже при делегировании задач.
 
 ### Отложенные (создать при появлении базы)
 
-- `tasks-ready-to-implementation`, `codex-backlog-skill` — после заведения
-  backlog-структуры (`backlog/implementation/`, `backlog/done/`);
+- `tasks-ready-to-implementation`, `codex-backlog-skill` — после определения
+  переходов задач в implementation/done; текущие карточки и индекс находятся в `backlog/`;
 - `app-store-release` — при подготовке к публикации (аналог
   `deploy-project`: без потери данных, с release notes);
 - `design-first-ui-prompting` — адаптировать из CRM для генерации визуальных
