@@ -113,6 +113,32 @@ def write_report(path, report):
     temp.replace(path)
 
 
+def print_failures(report):
+    """Keep failure reasons visible even after CI artifacts expire."""
+    failures = []
+    if report.get("error"):
+        failures.append(("planning", report["error"]))
+    environment = report.get("environment", {})
+    if environment.get("status") == "blocked":
+        details = environment.get("error", "Environment unavailable")
+        for probe in environment.get("probes", []):
+            if probe.get("exitCode") != 0:
+                details += "\n" + (probe.get("error") or probe.get("errorOutput") or probe.get("output", ""))
+        failures.append(("doctor", details))
+    for check in report.get("checks", []):
+        if check["status"] == "passed" or check["kind"] == "doctor":
+            continue
+        details = check.get("error") or check.get("resultsError") or "Exit code: " + str(check.get("exitCode"))
+        if check.get("log") and Path(check["log"]).is_file():
+            details += "\n" + Path(check["log"]).read_text(errors="replace")[-4000:]
+        failures.append((check["name"], details))
+    for name, details in failures:
+        print(name + ": " + details, flush=True)
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            escaped = details.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print("::error title=Harness " + name + "::" + escaped, flush=True)
+
+
 def run(root, mode, base, destination, timeout):
     if mode == "plan":
         config = json.loads((root / "scripts/harness/checks.json").read_text())
@@ -206,6 +232,7 @@ def run(root, mode, base, destination, timeout):
         report["durationSeconds"] = time.monotonic() - started
         report["finishedAt"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         write_report(report_path, report)
+    print_failures(report)
     print("Harness: " + report["status"], flush=True)
     return 0 if report["status"] == "passed" else 1
 
