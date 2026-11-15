@@ -87,7 +87,8 @@ def source_membership(project):
             if phase["isa"] == "PBXFrameworksBuildPhase":
                 for build_id in phase["files"]:
                     ref = objects[build_id].get("fileRef")
-                    if ref == targets["JockerSelfPlayTools"]["productReference"]:
+                    if (ref == targets["JockerSelfPlayTools"]["productReference"]
+                            or Path(objects.get(ref, {}).get("path", "")).name == "libJockerSelfPlayTools.a"):
                         raise ValueError("App links the training library")
     check_app_dependencies(targets["Jocker"], set())
     return membership
@@ -112,7 +113,8 @@ def validate(root, project):
         owner = parts[1]
         if owner == "Jocker":
             filename = parts[-1]
-            training = filename.startswith("BotSelfPlayEvolutionEngine") or filename == "BotTuning+SelfPlayEvolution.swift"
+            training = (filename.startswith("BotSelfPlayEvolutionEngine")
+                        or filename in ("BotTuning+SelfPlayEvolution.swift", "BotTrainingRunner.swift"))
             required = "JockerSelfPlayTools" if training else "Jocker"
             allowed = {required} if training else {"Jocker", "JockerSelfPlayTools"}
         else:

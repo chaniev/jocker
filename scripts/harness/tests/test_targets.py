@@ -54,6 +54,11 @@ class TargetMembershipTests(unittest.TestCase):
         self.objects["Jocker-sources"]["files"].append("Jocker/BotSelfPlayEvolutionEngine.swift-build")
         self.assertTrue(any("Forbidden membership Jocker:" in e for e in validate(self.root, self.project)["errors"]))
 
+    def test_runner_moved_under_app_still_requires_training_membership(self):
+        self.add_source("Jocker/BotTrainingRunner.swift", ["Jocker"])
+        errors = validate(self.root, self.project)["errors"]
+        self.assertTrue(any("Forbidden membership Jocker:" in e for e in errors))
+
     def test_wrong_test_target_and_duplicate_source_are_rejected(self):
         self.add_source("JockerTests/Misplaced.swift", ["Jocker"])
         self.assertEqual(validate(self.root, self.project)["status"], "failed")
@@ -72,6 +77,10 @@ class TargetMembershipTests(unittest.TestCase):
         self.objects["link"] = {"isa": "PBXBuildFile", "fileRef": "JockerSelfPlayTools-product"}
         self.objects["frameworks"] = {"isa": "PBXFrameworksBuildPhase", "files": ["link"]}
         self.objects["Jocker"]["buildPhases"].append("frameworks")
+        with self.assertRaisesRegex(ValueError, "links"):
+            validate(self.root, self.project)
+        self.objects["manual-library"] = {"isa": "PBXFileReference", "path": "libJockerSelfPlayTools.a"}
+        self.objects["link"]["fileRef"] = "manual-library"
         with self.assertRaisesRegex(ValueError, "links"):
             validate(self.root, self.project)
 
