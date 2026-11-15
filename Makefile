@@ -186,7 +186,7 @@ harness-plan:
 harness-verify:
 	@python3 scripts/harness/verify.py verify --base "$$HARNESS_BASE" --destination "$$HARNESS_DESTINATION"
 harness-ci:
-	@python3 scripts/harness/verify.py ci --base "$$HARNESS_BASE" --destination "$$HARNESS_DESTINATION"
+	@python3 scripts/harness/verify.py ci --base "$$HARNESS_BASE" --destination "$$HARNESS_DESTINATION" --timeout 2100
 harness-test:
 	@python3 -m unittest discover -s scripts/harness/tests -v
 
