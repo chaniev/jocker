@@ -59,7 +59,7 @@ routing ниже при делегировании задач.
 |---|---|---|
 | Новый режим игры (пример: «пара на пару») | `game-ux-researcher` → `game-rules-specialist` → `uikit-flow-specialist` + `spritekit-gameplay-specialist` → `bot-ai-specialist` → `test-automator` | Обязательно `joker-game-rules` и `joker-game-ui` |
 | Изменение правила подсчёта очков / премии | `game-rules-specialist` → `test-automator` | `joker-game-rules`; проверка `make joker-pack` |
-| Улучшение игрового AI бота | `bot-ai-specialist` → `bot-training-specialist` → `test-automator` | `bot-ai-conventions` + `bot-training-pipeline` |
+| Улучшение игрового AI бота | `bot-ai-specialist` → `test-automator` | `bot-ai-conventions`; обучение — отдельная задача по явному запросу |
 | Обучение нового тюнинга ботов | `bot-training-specialist` | `bot-training-pipeline`; baseline + A/B до merge |
 | Локальная визуальная правка экрана | `uikit-flow-specialist` → `spritekit-gameplay-specialist` | `joker-game-ui` |
 | Рефакторинг модуля | `refactoring-specialist` → `test-automator` | `bash scripts/run_all_tests.sh` до и после |
@@ -165,7 +165,7 @@ routing ниже при делегировании задач.
 
 - `make harness-plan BASE=origin/main` — показать пути и причины выбора проверок.
 - `make harness-verify BASE=origin/main` — выполнить выбранные проверки.
-- `make harness-ci BASE=<ref>` — дополнительно всегда выполнить полный Xcode suite и training smoke.
+- `make harness-ci BASE=<ref>` — дополнительно всегда выполнить полный Xcode suite.
 - `make harness-test` — проверить сам harness без запуска Xcode.
 
 Локальный BASE по умолчанию HEAD: проверяются незакоммиченные изменения. Для всей task-ветки задавайте origin/main. Сравнение идёт от merge-base; учитываются staged, unstaged, untracked, удаления и обе стороны переименования. Неизвестные пути, включая UI и инфраструктуру, получают полный набор. Правила суммируются; обе директории runtime AI получают phase/ranking. На первом этапе CI сохраняет полный suite даже для документации.
@@ -182,13 +182,20 @@ JSON schemaVersion=1 содержит mode, status, startedAt/finishedAt, destin
 
 `make harness-plan BASE=main` показывает requestedChecks и исполняемый plan. `planning.py` получает актуальные selectors из `--list` существующих pack-скриптов: второго вручную поддерживаемого списка тестов нет. Выборки объединяются; selector класса покрывает selectors его методов. Выполняется ровно одна команда XCTest: полный suite при выборе full-tests, иначе `run_all_tests.sh --only-testing <selector>` с объединённой выборкой. Полный CI suite сохраняется.
 
-Для каждого выбранного пакета остаётся отдельный `<pack>-contract`: запуск его `--dry-run`. План хранит packSelectors, covers, selectionCountBeforeUnion и selectorsAfterUnion. Исключённые test targets/SelectedTests/SkippedTests в shared scheme блокируют допущение о полном покрытии. После прогона selectors сверяются с реально выполненными тестами из xcresult; отсутствующая выборка, нулевой прогон или дубли не дают зелёный статус. Команды других проверок, включая training smoke, не поглощаются XCTest.
+Для каждого выбранного пакета остаётся отдельный `<pack>-contract`: запуск его `--dry-run`. План хранит packSelectors, covers, selectionCountBeforeUnion и selectorsAfterUnion. Исключённые test targets/SelectedTests/SkippedTests в shared scheme блокируют допущение о полном покрытии. После прогона selectors сверяются с реально выполненными тестами из xcresult; отсутствующая выборка, нулевой прогон или дубли не дают зелёный статус. Команды других проверок не поглощаются XCTest.
+
+С 16.11.2026 обучение/переобучение ботов, включая `training-pipeline-smoke`,
+исключено из автоматических проверок после доработок и из CI, в том числе
+для изменений ботов, тренировочного CLI и неизвестных путей. Обучение
+запускается отдельной задачей только по явному запросу пользователя;
+команды Makefile остаются доступны. При замене проверенного тюнинга
+по-прежнему необходимы baseline + A/B evidence.
 
 ### Окружение
 
 `make harness-doctor DESTINATION='platform=iOS Simulator'` создаёт отдельный JSON-отчёт. Перед дорогими проверками doctor вызывается автоматически. Он проверяет Xcode/Swift, shared scheme, наличие структурированного xcresulttool API (Xcode 16+), список доступных runtime/device и допустимые destinations схемы. Затем фиксирует конкретный UUID и ожидает готовности симулятора. Общий destination выбирает актуальную доступную версию iOS, предпочитая iPhone; явно заданные id/name/OS не подменяются другим устройством.
 
-При ошибке doctor запись имеет status=blocked, пробы с кодами завершения и диагностикой сохранены, сборка и training smoke не запускаются. Документационные проверки не требуют симулятора. Doctor не гарантирует отсутствие более поздних ошибок установки/запуска приложения; они остаются ошибками соответствующего прогона.
+При ошибке doctor запись имеет status=blocked, пробы с кодами завершения и диагностикой сохранены, сборка и XCTest не запускаются. Документационные проверки не требуют симулятора. Doctor не гарантирует отсутствие более поздних ошибок установки/запуска приложения; они остаются ошибками соответствующего прогона.
 
 ### Отчёт и измерения
 

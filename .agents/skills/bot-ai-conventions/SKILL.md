@@ -63,7 +63,8 @@ tests and training evidence, not by narrative.
 
 - `make stage4-phase-pack` and `make stage6b-pack` for policy changes;
   `make stage6b-pack-all` when flow plumbing changed.
-- `make training-pipeline-smoke` after evolution/runner changes.
+- Training/retraining and `make training-pipeline-smoke` run only as a separate
+  explicitly requested task, not automatically after policy/evolution/runner changes.
 - Replacing checked-in tuning requires `make bot-baseline` and
   `make bot-compare` evidence tied to the candidate commit.
 
@@ -74,5 +75,5 @@ tests and training evidence, not by narrative.
 - A quality claim without pack or comparison evidence is not done.
 
 Report the decision-level delta (what changes per difficulty in observable
-play), the evidence run, and the training handoff if parameters need
-retraining.
+play), the evidence run, and any recommendation for a separate training task
+if parameters need retraining. A recommendation does not start training.

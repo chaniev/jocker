@@ -33,7 +33,7 @@ class HarnessTests(unittest.TestCase):
 
     def test_both_runtime_ai_locations(self):
         for path in ["Jocker/Jocker/Models/Bot/BotTuning.swift", "Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift"]:
-            self.assertTrue({"phase", "ranking", "training-smoke"} <= verify.select_checks([path], CONFIG).keys())
+            self.assertTrue({"phase", "ranking"} <= verify.select_checks([path], CONFIG).keys())
 
     def test_unknown_and_structural_paths_are_conservative(self):
         for path in ["new-component/file.swift", "Jocker/Jocker.xcodeproj/project.pbxproj", "scripts/harness/verify.py"]:
@@ -42,12 +42,30 @@ class HarnessTests(unittest.TestCase):
     def test_docs_and_ci(self):
         selected = verify.select_checks(["docs/guide.md"], CONFIG)
         self.assertEqual(set(selected), {"instructions", "harness-tests", "target-membership", "requirements"})
-        self.assertIn("training-smoke", verify.select_checks([], CONFIG, ci=True))
         self.assertIn("full-tests", verify.select_checks([], CONFIG, ci=True))
 
     def test_training_files_union_rules(self):
         selected = verify.select_checks(["Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Evolution.swift"], CONFIG)
-        self.assertTrue({"full-tests", "training-smoke", "phase"} <= selected.keys())
+        self.assertTrue({"full-tests", "phase"} <= selected.keys())
+
+    def test_verification_never_schedules_training_automatically(self):
+        paths = [
+            "Jocker/Jocker/Models/Bot/BotTuning.swift",
+            "Jocker/Jocker/Game/Services/AI/BotTurnStrategyService.swift",
+            "Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Evolution.swift",
+            "Jocker/JockerSelfPlayTools/main.swift",
+            "scripts/train_bot_tuning.sh",
+            "scripts/harness/verify.py",
+            "new-component/file.swift",
+            "docs/guide.md",
+        ]
+        for ci in (False, True):
+            for changed in [[], *[[path] for path in paths], paths]:
+                with self.subTest(ci=ci, paths=changed):
+                    selected = verify.select_checks(changed, CONFIG, ci=ci)
+                    plan = verify.build_plan(MODULE.parents[2], selected, CONFIG)
+                    self.assertNotIn("training-smoke", selected)
+                    self.assertFalse(any(check["kind"] == "training" for check in plan["checks"]))
 
     def test_diff_rename_delete_untracked_and_fingerprint(self):
         with tempfile.TemporaryDirectory() as directory:

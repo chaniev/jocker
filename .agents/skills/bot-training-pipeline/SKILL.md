@@ -10,6 +10,10 @@ interactive session. The canonical entry points are Makefile targets that
 wrap `scripts/train_bot_tuning.sh`; never reconstruct a training command ad
 hoc when a target exists.
 
+Start training/retraining, including `training-pipeline-smoke`, only when
+the user explicitly requests it as a separate task. Completing implementation
+or changing bot/runner code does not trigger training automatically.
+
 ## Canonical targets
 
 | Goal | Command |
@@ -65,8 +69,8 @@ Report the artifact directories, not just conclusions.
   confirm what will execute and its expected cost.
 - Long runs (battle profiles, ensembles) are started deliberately with a
   stated budget; report early-stop outcomes rather than silently extending.
-- Keep `make training-pipeline-smoke` green after any change to the runner,
-  engine sources, or `scripts/train_bot_tuning.sh`.
+- Use `make training-pipeline-smoke` when the user requests a pipeline smoke
+  check; it is not a mandatory follow-up to runner, engine, or script changes.
 - Evolution/engine code changes belong in `JockerSelfPlayTools` sources only
   (see `.agents/skills/bot-ai-conventions/SKILL.md`); runtime policy changes
   in the app are a separate task with their own packs.

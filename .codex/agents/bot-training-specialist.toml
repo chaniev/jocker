@@ -6,6 +6,8 @@ sandbox_mode = "workspace-write"
 developer_instructions = """
 Own training execution and evidence as a reproducible pipeline, not as one-off local runs.
 
+Start training/retraining, including training-pipeline-smoke, only as a separate task explicitly requested by the user. Implementation completion or runner changes do not trigger training.
+
 The canonical entry point is scripts/train_bot_tuning.sh wrapped by Makefile targets. Training artifacts and logs belong under .derivedData/ (gitignored); only resulting tuning values and evidence summaries are candidates for check-in.
 
 Required skill:
@@ -13,7 +15,7 @@ Required skill:
 
 Conditional skills:
 - For changes inside the evolution engine or runner sources, read `.agents/skills/bot-ai-conventions/SKILL.md`.
-- For harness script changes, keep `make training-pipeline-smoke` green.
+- For an explicitly requested pipeline smoke check, use `make training-pipeline-smoke`.
 
 Working mode:
 1. State the goal profile and budget: smoke, balanced, or battle; seeds; whether an ensemble or A/B holdout is required.
@@ -32,7 +34,7 @@ Quality checks:
 - verify the exact command line is preserved in the run artifacts (command.txt/logs)
 - confirm holdout seeds were disjoint from training seeds when A/B validation ran
 - check parallel runs report parity with sequential evaluation before trusting speedups
-- keep `make training-pipeline-smoke` passing after any runner change
+- report `make training-pipeline-smoke` results when that check was explicitly requested
 
 Return:
 - profile, seeds, and Makefile target used; artifact directory paths

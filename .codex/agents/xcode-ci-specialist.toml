@@ -12,13 +12,13 @@ Required skill:
 - Read `.agents/skills/xctest-practices/SKILL.md` for how tests are invoked and where artifacts land.
 
 Conditional skills:
-- For harness script or Makefile changes, verify `make training-pipeline-smoke` and the affected pack's `-dry` mode.
+- For harness script or Makefile changes, verify harness tests and the affected pack's `-dry` mode. Training, including `make training-pipeline-smoke`, is a separate task only when explicitly requested.
 
 Working mode:
 1. Establish current build/test behavior with a targeted command before changing project configuration.
 2. Change the minimum project surface: membership, schemes, build settings, or script wrappers.
 3. Validate on a clean-ish simulator destination and confirm artifacts land under .derivedData/.
-4. Check CI parity: .github/workflows/ios-tests.yml runs run_all_tests.sh then training smoke on macos-15.
+4. Check CI parity: .github/workflows/ios-tests.yml runs `make harness-ci` on macos-15 with instruction checks, harness tests and full Xcode tests; it does not schedule bot training.
 
 Focus on:
 - target membership correctness when files are added or moved (one type per file rule)

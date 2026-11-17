@@ -67,8 +67,7 @@
       "checks": [
         "joker",
         "phase",
-        "ranking",
-        "training-smoke"
+        "ranking"
       ]
     },
     {
@@ -78,8 +77,7 @@
         "Jocker/JockerSelfPlayTools/**"
       ],
       "checks": [
-        "full-tests",
-        "training-smoke"
+        "full-tests"
       ]
     },
     {
@@ -148,12 +146,10 @@
     }
   ],
   "fallback": [
-    "full-tests",
-    "training-smoke"
+    "full-tests"
   ],
   "ci": [
-    "full-tests",
-    "training-smoke"
+    "full-tests"
   ],
   "testPacks": [
     "joker",
