@@ -42,11 +42,12 @@
 
 ## Testing
 - Harness reports and child test artifacts go to `.derivedData/harness-runs/<run-id>/` (gitignored). Standalone scripts retain their `.derivedData/` defaults.
-- CI (GitHub Actions, `macos-15`) runs `make harness-ci`: instruction checks, harness tests, full Xcode tests and training smoke.
+- CI (GitHub Actions, `macos-15`) runs `make harness-ci`: instruction checks, harness tests and full Xcode tests; bot training is not scheduled automatically.
 - Test file placement mirrors app structure under `Jocker/JockerTests/<feature>/`
 - Regression packs are shell scripts that run `xcodebuild test -only-testing:...` with targeted test lists
 
 ## Bot AI
+- Bot training/retraining, including `training-pipeline-smoke`, is a separate task run only when explicitly requested by the user. Do not add it as a mandatory step after implementation, including bot changes, or to routine local/CI verification. Manual training commands remain available; replacing checked-in tuning still requires baseline + A/B evidence.
 - Config lives in `BotRuntimePolicy` + `BotTuning` with difficulty presets (`easy`/`normal`/`hard`)
 - Self-play evolution is a CLI tool (`JockerSelfPlayTools/main.swift`); not part of the app runtime
 - All training/baseline/benchmark scripts shell out to `train_bot_tuning.sh`
