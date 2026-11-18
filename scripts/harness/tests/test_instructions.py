@@ -49,7 +49,8 @@ class InstructionTests(unittest.TestCase):
             original = path.read_text()
             for bad in ("Use MVVM architecture with SwiftUI", "Use Combine for reactive code",
                         "Use async/await for concurrency", "SwiftUI first, UIKit when needed",
-                        "Use @StateObject for state"):
+                        "Use @StateObject for state", "- Combine for reactive code",
+                        "- async/await for concurrency"):
                 with self.subTest(name=name, bad=bad):
                     if name.endswith(".toml"):
                         path.write_text(original.replace("Follow root AGENTS.md.", bad))
@@ -61,7 +62,8 @@ class InstructionTests(unittest.TestCase):
     def test_prohibitions_and_training_exception_are_not_conflicts(self):
         self.write("Jocker/Jocker/AGENTS.md", "Do not use SwiftUI. Never use Combine.\n"
                    "No SwiftUI, no Combine, no async/await in app code.\n"
-                   "Training-only sources may use async/await.\n")
+                   "Training-only sources may use async/await.\n"
+                   "Training-only code: async/await for concurrency.\n")
         self.assertEqual(self.errors(), "")
         with (self.root / "Jocker/Jocker/AGENTS.md").open("a") as stream:
             stream.write("No SwiftUI. Use Combine for reactive code.\n")

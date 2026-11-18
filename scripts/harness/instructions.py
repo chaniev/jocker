@@ -26,7 +26,8 @@ NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 CONFLICT = re.compile(
     r"\b(?:use|prefer|adopt|introduce)\s+(?:MVVM\s+architecture\s+with\s+)?"
     r"(?:SwiftUI|Combine|async/await)\b|\bSwiftUI[- ]first\b|"
-    r"\busing Swift and SwiftUI\b|@(?:Published|StateObject)\b", re.I)
+    r"\busing Swift and SwiftUI\b|@(?:Published|StateObject)\b|"
+    r"\bCombine for reactive code\b|\basync/await for concurrency\b", re.I)
 NEGATION = re.compile(r"\b(?:no|not|never|without|avoid|forbid|forbidden)\b|запрещ|\bне\s", re.I)
 LINK = re.compile(r"\[[^\]\n]+\]\((<[^>\n]+>|[^)\s]+)(?:\s+\"[^\"]*\")?\)")
 
@@ -132,7 +133,7 @@ def check_sources(root):
                     prefix = clause[:match.start()]
                     if NEGATION.search(prefix):
                         continue
-                    if match[0].lower().endswith("async/await") and re.search(r"training[- ](?:only|target)", clause, re.I):
+                    if "async/await" in match[0].lower() and re.search(r"training[- ](?:only|target)", clause, re.I):
                         continue
                     errors.append(f"{label}: known stack conflict: {clause.strip()}")
         for match in LINK.finditer(content):

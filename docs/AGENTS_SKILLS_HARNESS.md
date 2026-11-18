@@ -1,195 +1,93 @@
-# AGENTS_SKILLS_HARNESS.md
+# Инструкции, навыки, агенты и harness Jocker
 
-## Назначение
+## Источники и применение
 
-Список скилов, профильных агентов и верификационного harness проекта Jocker,
-сформированный по аналогии с CRM-репозиторием
-(`docs/AGENT_ROUTING.md` + `docs/HARNESS.md`, `.agents/skills/`,
-`.codex/agents/`, `scripts/harness/`).
+[AGENTS.md](../AGENTS.md) определяет владельцев правил, стек, хранение данных,
+проверки и локальную интеграцию. [Спецификация структуры](../FOLDER_STRUCTURE_SPEC.md)
+определяет размещение файлов. Этот документ — каталог и описание устройства
+harness; он не вводит второй набор общих правил.
 
-Документ описывает целевое состояние: какие агенты и скилы заводить, куда
-класть, когда использовать, и что уже существует в harness. Читать после:
+Выбирать навыки по затронутой области. Профили описывают ответственность при
+разрешённом делегировании; наличие профиля не требует запускать отдельного агента
+для каждой задачи. Для небольшой задачи достаточно исполнителя с нужными навыками.
 
-1. корневого `AGENTS.md` (стек и команды);
-2. `FOLDER_STRUCTURE_SPEC.md` (структура и размещение файлов).
+- Продуктовая постановка и статусы: [бэклог](../backlog/README.md) и [реестр требований](requirements/README.md).
+- Игровой контракт: [правила игры](../правила%20игры/); технические решения: [принятые ADR](architecture/adr/README.md).
+- Редакторские точки входа: [Swift](../.cursor/rules/swift.mdc) и [размещение файлов](../.cursor/rules/file.mdc).
+- Исторические планы в docs/ используются по правилам возобновления из корневого AGENTS.md.
 
-## Карта соответствия CRM → Jocker
+## Каталог
 
-| CRM | Jocker | Комментарий |
-|---|---|---|
-| `dotnet-backend-specialist` | `game-rules-specialist` | Доменное ядро: вместо доменных сущностей и API — правила игры, скоринг, модели |
-| `react-specialist` | `spritekit-gameplay-specialist` | Клиентский слой: вместо React-компонентов — SKScene/SKNode и игровой стол |
-| `ui-designer` | `uikit-flow-specialist` | Implement-ready спецификация экранов: вместо Mantine — UIKit VC и навигация |
-| `ux-researcher` | `game-ux-researcher` | UX-сценарий: вместо workflow CRM — потоки торгов, хода, результатов |
-| `test-automator` | `test-automator` | XCTest + regression packs вместо Playwright + xUnit |
-| `docker-expert` | `xcode-ci-specialist` | Инфраструктура: вместо Docker — Xcode-таргеты, схемы, симуляторы, GitHub Actions |
-| `python-pro` | — | Приложение — Swift; orchestration harness — Python standard library поверх bash + Swift CLI |
-| `refactoring-specialist` | `refactoring-specialist` | Аналогичен CRM; питается `docs/CODE_REFACTORING_BACKLOG.md` |
-| — | `bot-ai-specialist` | Специфика Jocker: runtime-логика ботов |
-| — | `bot-training-specialist` | Специфика Jocker: self-play эволюция |
-| `crm-mobile-first-ui` (skill) | `joker-game-ui` (skill) | Обязательный UI-скил на каждом клиентском этапе |
-| `csharp-xunit` (skill) | `xctest-practices` (skill) | Механика тестов под стек проекта |
-| `deploy-project` (skill) | — | Нет стенда деплоя; при выходе в App Store завести `app-store-release` |
-| `codex-backlog-skill`, `tasks-ready-to-implementation` (skills) | Одноимённые skills Jocker | Разбор входящих, сверка статусов, планы и переходы implementation/done подключены к реестру требований |
+Раздел между маркерами формируется из `name`/`description` в SKILL.md и профилях
+агентов. После изменения метаданных выполнить:
 
-## Агенты
+```sh
+python3 scripts/harness/instructions.py catalog --write
+```
 
-Расположение: `.codex/agents/<name>.toml` (формат как в CRM: `name`,
-`description`, `model`, `model_reasoning_effort`, `sandbox_mode`,
-`developer_instructions`). Все девять агентов созданы; использовать
-routing ниже при делегировании задач.
+<!-- instruction-catalog:start -->
 
-### Выбор агента по типу задачи
+Навыки: 16. Агенты: 9.
 
-| Тип задачи | Основной агент | Когда использовать |
-|---|---|---|
-| Правила игры: раздача, козырь, джокер, подсчёт очков, премии, режим «пара на пару», модели в `Models/` и `Scoring/` | `game-rules-specialist` | Когда задача затрагивает игровые правила или скоринг; сверка кода с `правила игры/*.txt` обязательна |
-| `SKScene`, `SKNode`, игровой стол, анимации, жесты, `Game/Coordinator`, `Game/Services` | `spritekit-gameplay-specialist` | Геймплей-клиент и взаимодействие сцены с правилами |
-| `ViewControllers/` (Bidding, GameFlow, Results, Statistics), экраны, навигация, accessibility | `uikit-flow-specialist` | Экранные флоу и представление, без изменения правил |
-| Анализ игрового сценария: трение игрока, лишние действия, информационная архитектура экрана | `game-ux-researcher` | Перед новым экраном или существенной переработкой флоу; результат — UX-контракт |
-| `BotRuntimePolicy`, `BotTuning`, пресеты сложности, ранжирование ходов (`Models/Bot/`) | `bot-ai-specialist` | Runtime-поведение ботов в приложении |
-| `JockerSelfPlayTools`, `train_bot_tuning.sh`, ансамбли, baseline/A/B, guardrails-профили | `bot-training-specialist` | Обучение и валидация тюнинга ботов |
-| XCTest (`JockerTests/`, `JockerUITests/`), regression packs, стабилизация CI-тестов | `test-automator` | Покрытие риском тестами, инфраструктура тестирования |
-| Xcode-проект: таргеты, схемы, `project.pbxproj`, симуляторы, `.github/workflows/`, `Makefile` | `xcode-ci-specialist` | Сборка, границы таргетов, CI, окружение |
-| Структурный рефакторинг без изменения поведения | `refactoring-specialist` | По `docs/CODE_REFACTORING_BACKLOG.md` и планам рефакторинга |
-
-### Маршрутизация типовых сценариев
-
-| Сценарий | Последовательность агентов | Skills |
-|---|---|---|
-| Новый режим игры (пример: «пара на пару») | `game-ux-researcher` → `game-rules-specialist` → `uikit-flow-specialist` + `spritekit-gameplay-specialist` → `bot-ai-specialist` → `test-automator` | Обязательно `joker-game-rules` и `joker-game-ui` |
-| Изменение правила подсчёта очков / премии | `game-rules-specialist` → `test-automator` | `joker-game-rules`; проверка `make joker-pack` |
-| Улучшение игрового AI бота | `bot-ai-specialist` → `test-automator` | `bot-ai-conventions`; обучение — отдельная задача по явному запросу |
-| Обучение нового тюнинга ботов | `bot-training-specialist` | `bot-training-pipeline`; baseline + A/B до merge |
-| Локальная визуальная правка экрана | `uikit-flow-specialist` → `spritekit-gameplay-specialist` | `joker-game-ui` |
-| Рефакторинг модуля | `refactoring-specialist` → `test-automator` | Релевантный baseline до изменения; итоговый harness без повторов покрытых тестов |
-| Сборка/CI-инфраструктура | `xcode-ci-specialist` → `test-automator` | `xctest-practices` |
-
-Правила границ ответственности:
-
-- вложенные `AGENTS.md` уточняют область работы и должны быть согласованы с корневыми правилами;
-- `spritekit-gameplay-specialist` и `uikit-flow-specialist` не меняют правила
-  подсчёта и раздачи молча — только через `game-rules-specialist`;
-- `game-rules-specialist` не трогает presentation-слой;
-- `bot-training-specialist` не меняет runtime приложения: источники
-  `JockerSelfPlayTools` не компилируются в app-таргет;
-- `test-automator` проверяет завершение игрового сценария (итог счета,
-  переход хода), а не только наличие элементов UI.
-
-## Skills
-
-Расположение: `.agents/skills/<name>/SKILL.md` (frontmatter `name` +
-`description`, как в CRM). Все 14 скилов созданы: процессные — адаптированы
-из CRM с перепривязкой к путям и командам jocker, проектные — написаны под
-стек и правила этого репозитория.
-
-### Процессные (адаптированы из CRM)
-
-| Skill | Источник в CRM | Назначение |
-|---|---|---|
-| `task-worktree` | `.agents/skills/task-worktree/` | Изолированные worktree для задач; в Jocker без Docker-стека. Использовать перед любой задачей, меняющей код, и при параллельной работе |
-| `architecture-decision` | `.agents/skills/architecture-decision/` | ADR для значимых решений (кандидаты: интеграция SLM по `docs/SLM_INTEGRATION_PROPOSAL.md`, рефакторинг `BotRuntimePolicy`). Не для продуктовых решений |
-| `product-plan-clarification` | `.agents/skills/product-plan-clarification/` | Продуктовые пробелы и приоритетные вопросы до реализации (например, по `docs/PRODUCT_OWNER_REVIEW_RU.md`) |
-| `implement-release-plan` | `.agents/skills/implement-release-plan/` | Реализация готовых implementation plans до проверенной интеграции в `main`; в Jocker завершение = локальный merge + обязательные локальные проверки; push и CI — по отдельному запросу |
-| `codex-backlog-skill` | `.agents/skills/codex-backlog-skill/` | Разбор входящих и сверка статусов; сохраняет источники и REQ-связи |
-| `tasks-ready-to-implementation` | `.agents/skills/tasks-ready-to-implementation/` | Готовые планы, evidence решений и явный переход к реализации |
-| `autoresearch-chatgpt` | `.agents/skills/autoresearch-chatgpt/` | Мета-скил: бенчмарк и улучшение самих скилов. Переносится как есть |
-
-### Проектные (созданы под jocker)
-
-| Skill | Назначение |
+| Навык | Когда использовать |
 |---|---|
-| `joker-game-rules` | Правила игры как источник истины: сверка кода с `правила игры/*.txt` (козырь, джокер, `подсчет очков`, `присуждение премии`, `пара на пару`). Использовать для любой правки правил, скоринга, раздачи |
-| `joker-game-ui` | Игровой UI на UIKit + SpriteKit: экраны и состояния (торги, ход, результаты, статистика), анимации стола, accessibility. Аналог `crm-mobile-first-ui` — обязателен на каждом клиентском этапе |
-| `spritekit-uikit-best-practices` | Технические конвенции UIKit/SpriteKit и доступа к хранилищам по корневому AGENTS.md и ADR-0001: настройки в UserDefaults, партии и каноническая статистика в атомарных файлах |
-| `folder-structure` | Правила `FOLDER_STRUCTURE_SPEC.md`: one type per file, размещение app/test-кода, обновление спеки после структурных изменений |
-| `bot-ai-conventions` | Границы `BotRuntimePolicy` + `BotTuning`, пресеты easy/normal/hard, запрет компиляции `JockerSelfPlayTools` в app, поведение ботов в режиме «пара на пару» (кооперация пар) |
-| `bot-training-pipeline` | Канонический процесс обучения: `make bt` / `make train-bot-final`, профили smoke/balanced/battle, ансамбли по сидам, early stop + A/B holdout, обязательный baseline-snapshot и A/B-сравнение до замены тюнинга |
-| `regression-packs` | Работа с guardrails-пакетами: `joker-pack`, `stage4-phase-pack`, `stage6b-pack` (+ `-list`/`-dry`), правила добавления новых тестов в пакеты |
-| `xctest-practices` | Механика XCTest: зеркалирование структуры в `JockerTests/<feature>/`, `-only-testing`, артефакты в `.derivedData/test-runs/<timestamp>/`, deterministic-тесты без тайминговых хрупкостей |
-| `ios-hig-audit` | Независимый аудит интерфейса по Apple HIG только по явному запросу; не перепроектирует игровой флоу и не подменяет `joker-game-ui` (аналог `web-design-guidelines`) |
+| [architecture-decision](../.agents/skills/architecture-decision/SKILL.md) | Evaluate and record a significant Jocker technical or architectural choice as an ADR when alternatives affect boundaries, contracts, data, runtime, or long-term reversibility. Do not use for product decisions or routine local implementation choices. |
+| [autoresearch-chatgpt](../.agents/skills/autoresearch-chatgpt/SKILL.md) | Benchmark and improve an attached ChatGPT or Codex skill through bounded, isolated trials, binary evals, one-change prompt mutations, and holdout validation. Use when the user asks to optimize, benchmark, evaluate, stress-test, or systematically improve a SKILL.md or skill bundle. Produce an improved candidate without overwriting the source, plus eval definitions, trial results, and a mutation log. |
+| [bot-ai-conventions](../.agents/skills/bot-ai-conventions/SKILL.md) | Use for any change to bot intelligence in the app target — BotRuntimePolicy, BotTuning, difficulty presets, turn-candidate ranking, opponent modeling, and pairs-mode cooperation under Models/Bot/. Also use when touching the JockerSelfPlayTools evolution sources or their target boundary. |
+| [bot-training-pipeline](../.agents/skills/bot-training-pipeline/SKILL.md) | Use for self-play training runs, tuning replacement, and training-side validation — canonical Makefile profiles (bt, train-bot-final, esab variants), ensembles, early stopping, A/B holdout, baseline snapshots, scope validation, and parallel benchmarks. Use before starting or resuming training, and before accepting any new BotTuning values. |
+| [codex-backlog-skill](../.agents/skills/codex-backlog-skill/SKILL.md) | Разобрать входящие заметки в задачи Jocker или сверить статусы выбранных задач с подтверждённой реализацией. Использовать по запросу triage или сверки бэклога; не запускает реализацию. |
+| [folder-structure](../.agents/skills/folder-structure/SKILL.md) | Use before any structural change — adding, moving, or renaming files and directories in the Jocker repository — and after it, to keep FOLDER_STRUCTURE_SPEC.md authoritative. Covers the one-type-per-file rule, app/test placement mirroring, target boundaries, and artifact locations. |
+| [implement-release-plan](../.agents/skills/implement-release-plan/SKILL.md) | Реализовать один или несколько implementation plans до проверенной локальной интеграции в основную ветку; при явном запросе дополнительно выполнить прогон CI. Использовать для полного исполнения готовых планов (например, docs/PAIRS_MODE_IMPLEMENTATION_PLAN.md), координации зависимого набора, локального merge, актуализации планов и безопасной очистки task-ресурсов. |
+| [ios-hig-audit](../.agents/skills/ios-hig-audit/SKILL.md) | Use only when an independent compliance audit of an implemented Jocker interface is explicitly requested — Apple HIG alignment, accessibility, Dynamic Type, dark mode, touch targets, and interaction consistency. Reports findings without redesigning the game flow or overriding joker-game-ui. |
+| [joker-game-rules](../.agents/skills/joker-game-rules/SKILL.md) | Use for any change to Joker game behavior — dealing, bidding, trump and joker mechanics, trick play, scoring, premiums, block/match structure, or the pairs mode. Treats the texts in 'правила игры/' as the source of truth and reconciles code against them. Use before implementing, reviewing, or testing gameplay changes in Models/, Scoring/, or gameplay flow. |
+| [joker-game-ui](../.agents/skills/joker-game-ui/SKILL.md) | Design, implement, review, or test Joker screens and gameplay presentation for players — bidding, trick play, results, statistics, and the pairs mode UI on UIKit + SpriteKit. Use for new screens, flow redesigns, interaction states, visual quality, and player-facing acceptance. Preserve rules-core ownership and complete every screen state before polish. |
+| [product-plan-clarification](../.agents/skills/product-plan-clarification/SKILL.md) | Выявлять продуктовые пробелы в уже сформированной задаче и формировать приоритетные вопросы для уточнения ожидаемого поведения, ценности и границ продукта. Использовать после создания задачи, до подготовки implementation plan, технического ревью или начала реализации. |
+| [regression-packs](../.agents/skills/regression-packs/SKILL.md) | Use when running, extending, or creating Jocker regression packs — targeted xcodebuild test sets for JOKER rules behavior, phase guardrails, and ranking guardrails. Covers pack selection by changed area, -list/-dry inspection, adding tests to a pack, and artifact expectations. |
+| [spritekit-uikit-best-practices](../.agents/skills/spritekit-uikit-best-practices/SKILL.md) | Use when implementing, reviewing, or refactoring Jocker app sources to follow the verified stack conventions — UIKit + SpriteKit without SwiftUI/Combine/async-await, value-type services, protocol-based testability, explicit self., one type per file. Derives behavior from root AGENTS.md and FOLDER_STRUCTURE_SPEC.md; use for mechanics and structure, not for game rules or UX design. |
+| [task-worktree](../.agents/skills/task-worktree/SKILL.md) | Create, resume, verify, and safely clean up isolated Git worktrees for Joker implementation tasks. Use before starting or resuming any task that changes project code, when several tasks must run in parallel, when an implementation plan declares a branch, or when a merged task workspace must be removed. |
+| [tasks-ready-to-implementation](../.agents/skills/tasks-ready-to-implementation/SKILL.md) | Подготовить проверяемые implementation plans для выбранных задач Jocker и, при явном запросе начать работу, перевести готовые задачи в implementation. Использовать после продуктового уточнения, до реализации. |
+| [xctest-practices](../.agents/skills/xctest-practices/SKILL.md) | Use when creating, reviewing, or substantially restructuring XCTest tests in JockerTests or JockerUITests — test placement, deterministic setup, targeted execution with -only-testing, artifact locations, and assertion quality. Derives behavior expectations from game rules and existing contracts, not from generic examples. |
 
-### Отложенные (создать при появлении базы)
+| Профиль агента | Когда использовать |
+|---|---|
+| [bot-ai-specialist](../.codex/agents/bot-ai-specialist.toml) | Use for in-app bot intelligence: BotRuntimePolicy, BotTuning, difficulty presets, turn-candidate ranking, opponent modeling, and bot cooperation in pairs mode under Models/Bot/. |
+| [bot-training-specialist](../.codex/agents/bot-training-specialist.toml) | Use for self-play training and validation work: the JockerSelfPlayTools CLI, train_bot_tuning.sh profiles, ensembles, early stopping, A/B holdout validation, baseline snapshots, and benchmark runs. |
+| [game-rules-specialist](../.codex/agents/game-rules-specialist.toml) | Use for changes to Joker game rules, dealing, trump and joker handling, scoring, premiums, and gameplay modes. Owns the domain core under Models/, Scoring/, and the rules sources in 'правила игры/'. |
+| [game-ux-researcher](../.codex/agents/game-ux-researcher.toml) | Use when a task needs analysis of a Joker game flow as a player experience: friction, unnecessary actions, unclear feedback, and information architecture. Produces a UX contract for designers and implementers; does not implement. |
+| [refactoring-specialist](../.codex/agents/refactoring-specialist.toml) | Use when a task needs a low-risk structural refactor that preserves behavior while improving readability, modularity, or maintainability. |
+| [spritekit-gameplay-specialist](../.codex/agents/spritekit-gameplay-specialist.toml) | Use for SpriteKit gameplay client work: game scenes, nodes, animations, gestures, the table presentation layer, and the coordinator/services plumbing under Game/. |
+| [test-automator](../.codex/agents/test-automator.toml) | Use when a task needs implementation of automated tests, regression pack improvements, or targeted regression coverage in JockerTests/JockerUITests. |
+| [uikit-flow-specialist](../.codex/agents/uikit-flow-specialist.toml) | Use for UIKit screen and navigation work under ViewControllers/ (Bidding, GameFlow, Results, Statistics, Common), including screen states, accessibility, and implement-ready UI specifications. |
+| [xcode-ci-specialist](../.codex/agents/xcode-ci-specialist.toml) | Use for Xcode project and CI work: target boundaries, project.pbxproj, shared schemes, simulator destinations, DerivedData layout, Makefile wrappers, and the GitHub Actions workflow. |
 
-- `app-store-release` — при подготовке к публикации (аналог
-  `deploy-project`: без потери данных, с release notes);
-- `design-first-ui-prompting` — адаптировать из CRM для генерации визуальных
-  концепций игровых экранов.
+<!-- instruction-catalog:end -->
 
-## Harness
+## Проверка инструкций
 
-### Существующие компоненты
+[Проверка](../scripts/harness/instructions.py) входит в обязательный harness.
+Она проверяет наличие входных документов, метаданные навыков и профилей,
+известные утвердительные рекомендации несовместимого стека, существование
+локальных Markdown-ссылок и явных ссылок на инструкции, соответствие каталога
+текущим метаданным. Проверяются AGENTS.md, навыки и их Markdown-ресурсы,
+профили агентов и правила Cursor; `.derivedData/` и `.git/` исключены.
 
-Канонические команды определены корневым `AGENTS.md` и `Makefile`;
-`FOLDER_STRUCTURE_SPEC.md` (раздел Tooling & Documentation) — детальная спека.
+Файловые ссылки проверяются без проверки якорей и внешних URL. Шаблоны внутри
+Markdown code fences исключены. Профили используют существующий простой формат
+TOML: строковые поля и многострочный developer_instructions; иной формат требует
+явного расширения проверяющего кода. Проверка известных формулировок не является
+семантическим анализом: согласованность продуктовых решений проверяется по источникам.
 
-| Компонент | Команда | Артефакты |
-|---|---|---|
-| Полный прогон тестов схемы | `bash scripts/run_all_tests.sh` | `.derivedData/test-runs/<ts>/` (лог, `.xcresult`, `summary.txt`) |
-| Smoke тренировочного пайплайна | `make training-pipeline-smoke` | compile + baseline + evolution проверки |
-| JOKER regression pack | `make joker-pack` / `joker-pack-all` | `.derivedData/joker-regression-runs/<ts>/` |
-| Phase guardrails (Stage 4) | `make stage4-phase-pack` | `.derivedData/stage4-phase-runs/<ts>/` |
-| Ranking guardrails (Stage 6b) | `make stage6b-pack` / `stage6b-pack-all` | `.derivedData/stage6b-ranking-runs/<ts>/` |
-| Baseline-снапшот бота (Stage 0) | `make bot-baseline` | `.derivedData/bot-baseline-runs/<ts>/` |
-| A/B сравнение тюнинга | `make bot-compare` | `.derivedData/bot-ab-runs/<ts>/` |
-| Scope-валидация эволюции (Stage 3) | `make stage3-scope-validate` | `.derivedData/stage3-runtime-scope-runs/<ts>/` |
-| Параллельный бенчмарк (Stage 5) | `make stage5-benchmark` | `.derivedData/stage5-parallel-benchmark/<ts>/` |
-| Каноническое обучение | `make bt` / `make train-bot` | `.derivedData/bot-train-main.log` |
-| Финальный ансамбль | `make train-bot-final` | `.derivedData/bot-train-final.log` |
-| CI | `.github/workflows/ios-tests.yml` (macos-15) | `make harness-ci`, upload отчётов и логов (14 дней) |
+## Harness: текущий контракт, schemaVersion=2
 
-Правила:
-
-- все пакеты имеют режимы инспекции `make <pack>-list` / `make <pack>-dry` —
-  проверять выборку перед прогоном;
-- замена проверенного тюнинга ботов допускается только после
-  baseline-снапшота и A/B-сравнения на holdout-сидах;
-- `.derivedData/` gitignored и не должна содержать секретов.
-
-## Принципы использования
-
-1. По умолчанию задача маршрутизируется профильному агенту; нет профиля —
-   выполняется локально с чтением корневого `AGENTS.md`.
-2. `game-ux-researcher` определяет задачу и препятствия, но не подменяет
-   `uikit-flow-specialist` / `spritekit-gameplay-specialist`.
-3. Продуктовые решения (правила игры, режимы, баланс) не принимаются
-   агентами молча — только через владеленные планы/ревью
-   (`docs/PRODUCT_OWNER_REVIEW_RU.md`).
-4. Любое структурное изменение сопровождается обновлением
-   `FOLDER_STRUCTURE_SPEC.md`; этот документ — при изменении набора
-   агентов/скилов/harness.
-
-## Первый этап harness (история, schemaVersion=1)
-
-Единая конфигурация: `scripts/harness/checks.json`. Исполнение: `scripts/harness/verify.py` (Python 3, standard library). Новый агент или внешний сервис не требуется.
-
-- `make harness-plan BASE=origin/main` — показать пути и причины выбора проверок.
-- `make harness-verify BASE=origin/main` — выполнить выбранные проверки.
-- `make harness-ci BASE=<ref>` — дополнительно всегда выполнить полный Xcode suite.
-- `make harness-test` — проверить сам harness без запуска Xcode.
-
-Локальный BASE по умолчанию HEAD: проверяются незакоммиченные изменения. Для всей task-ветки задавайте origin/main. Сравнение идёт от merge-base; учитываются staged, unstaged, untracked, удаления и обе стороны переименования. Неизвестные пути, включая UI и инфраструктуру, получают полный набор. Правила суммируются; обе директории runtime AI получают phase/ranking. На первом этапе CI сохраняет полный suite даже для документации.
-
-Артефакты: `.derivedData/harness-runs/<UTC timestamp>-<unique id>/summary.json`, логи каждой команды и вложенные результаты исходных скриптов. Сборочные файлы находятся в `build/` и не нужны для публикации отчёта.
-
-JSON schemaVersion=1 содержит mode, status, startedAt/finishedAt, destination, tools, state (head/base/mergeBase/fingerprint/paths), finalState, stale и checks (name/reasons/command/status/exitCode/log/error). Запись атомарная, обновляется после каждой проверки. passed означает все выбранные проверки прошли; failed — ошибка команды; blocked — невозможность исполнения, timeout, прерывание или изменившееся состояние исходников. Ещё не выполненные обязательные проверки остаются blocked. Пропуск обязательных проверок не поддерживается. Жёсткое завершение процесса оставляет последний отчёт blocked; GitHub cancellation не считается успехом.
-
-Проверка инструкций ограничена известным конфликтом стека и метаданными навыков; это не семантический анализ произвольных инструкций. Harness не заменяет holdout/baseline acceptance при замене tuning, scope validation и parallel benchmark при соответствующих изменениях. Experiment harness из плана 08, полный doctor окружения, проверка target membership и кеш training runner остаются отдельными этапами.
-
-## Второй этап harness (текущий контракт, schemaVersion=2)
+Команды и обязательное покрытие определяет [AGENTS.md](../AGENTS.md),
+маршрутизацию — [checks.json](../scripts/harness/checks.json),
+исполнение — [verify.py](../scripts/harness/verify.py).
 
 ### Выбор и исполнение
 
-`make harness-plan BASE=main` показывает requestedChecks и исполняемый plan. `planning.py` получает актуальные selectors из `--list` существующих pack-скриптов: второго вручную поддерживаемого списка тестов нет. Выборки объединяются; selector класса покрывает selectors его методов. Выполняется ровно одна команда XCTest: полный suite при выборе full-tests, иначе `run_all_tests.sh --only-testing <selector>` с объединённой выборкой. Полный CI suite сохраняется.
+`make harness-plan BASE=origin/main` показывает requestedChecks и исполняемый plan. `planning.py` получает актуальные selectors из `--list` существующих pack-скриптов: второго вручную поддерживаемого списка тестов нет. Выборки объединяются; selector класса покрывает selectors его методов. Выполняется ровно одна команда XCTest: полный suite при выборе full-tests, иначе `run_all_tests.sh --only-testing <selector>` с объединённой выборкой. Полный CI suite сохраняется.
 
 Для каждого выбранного пакета остаётся отдельный `<pack>-contract`: запуск его `--dry-run`. План хранит packSelectors, covers, selectionCountBeforeUnion и selectorsAfterUnion. Исключённые test targets/SelectedTests/SkippedTests в shared scheme блокируют допущение о полном покрытии. После прогона selectors сверяются с реально выполненными тестами из xcresult; отсутствующая выборка, нулевой прогон или дубли не дают зелёный статус. Команды других проверок не поглощаются XCTest.
-
-С 16.11.2026 обучение/переобучение ботов, включая `training-pipeline-smoke`,
-исключено из автоматических проверок после доработок и из CI, в том числе
-для изменений ботов, тренировочного CLI и неизвестных путей. Обучение
-запускается отдельной задачей только по явному запросу пользователя;
-команды Makefile остаются доступны. При замене проверенного тюнинга
-по-прежнему необходимы baseline + A/B evidence.
 
 ### Окружение
 
@@ -203,38 +101,20 @@ schemaVersion=2 добавляет requestedDestination, environment (resolvedDe
 
 У XCTest есть testResults: total/passed/failed/skipped/expectedFailures, resultBundle, tests (identifier/status/durationSeconds при наличии в Xcode), failures (identifier/message), missingSelectors и duplicateTests. Число упавших тестов отличается от числа assertions: несколько сообщений могут относиться к одному тесту. Исходный JSON xcresulttool сохраняется рядом с bundle. При отсутствии достоверного результата успешный exit code не превращается в passed. Сборочные ошибки и провалы тестов не маскируются. Сверка source fingerprint до/после исполнения сохраняется.
 
-### Восстановление базовой проверки
 
-- Тесты таблицы читают реально созданные UILabel по стабильным accessibility identifiers вместо отражения старых private-полей. Проверки значений и зачёркивания сохранены.
-- Парный тест учитывает премии +100/+50 и штраф -50: итог команд 500 и -150. Основание: `правила игры/пара на пару.txt` — «при игре пару на пару общие правила игры не меняются»; обычная премия регулируется `присуждение премии.txt`.
-- В тесте выбора хода бот больше не числится уже сыгравшим в той же взятке; четыре карты раунда согласованы с одной взятой и тремя оставшимися.
-- UI-тест явно выбирает «Каждый сам за себя» после выбора четырёх игроков.
+### Дополнительные механизмы
 
-Runtime-политики ботов, tuning, правила scoring и UI-поток не изменяются. Дополнительные gates для замены tuning и experiment harness этапа 08 остаются самостоятельными. Измерять ускорение следует на одинаковых SHA, Xcode и simulator; удаление повторных запусков не задаёт гарантированный процент ускорения.
+- Локальные группы Results, Statistics, History и Settings обнаруживают классы XCTest в исходниках. Смешанные изменения объединяют группы и пакеты; неизвестные пути и CI сохраняют полный набор. Пустая группа блокирует план.
+- `target-membership` сверяет Swift-файлы с Sources build phases, выявляет отсутствующее/запрещённое членство, дубли и зависимость приложения от тренировочной библиотеки. `main.swift` CLI компилирует shell entrypoint; Xcode tools target является статической библиотекой.
+- Doctor допускает до 180 секунд на холодную подготовку CoreSimulator. Ошибки подготовки и дочерних проверок попадают в CI annotations.
+- Отчёты и вложенные артефакты сохраняются в `.derivedData/harness-runs/<run-id>/`. CI хранит опубликованные артефакты 14 дней; лимит проверки — 35 минут при лимите workflow 45 минут, локальный лимит — 30 минут.
+- Кеш standalone training runner расположен в `.derivedData/dev-tools/bot-training/<fingerprint>/`. Ключ учитывает содержимое исходников, compiler/SDK, флаги и влияющие переменные окружения. Бинарник проверяется по SHA-256, параллельные сборки сериализуются, публикация атомарна. Его наличие не запускает обучение.
 
+## История
 
-## Доработка harness, ноябрь 2026
-
-- Doctor допускает до 180 секунд на холодную подготовку компонентов CoreSimulator и читает JSON после установочного вывода. Ошибки подготовки и дочерних проверок видны в CI annotations, даже после истечения срока хранения артефактов.
-- Локальные изменения в Results, Statistics, сервисах History и Settings и соответствующих тестах выбирают модульные группы из `checks.json`. Классы обнаруживаются в исходниках XCTest; новые тесты автоматически входят в группу. Results включает тесты таблицы и UI-сценарий повторного открытия результатов. Смешанные изменения суммируют проверки; неизвестные пути, правила, общие компоненты и CI сохраняют полный набор.
-- Группы и regression packs объединяются в один XCTest запуск. В отчёте `groupSelectors` дополняет `packSelectors`; фактически выполненные классы проверяются по xcresult, в том числе при полном прогоне. Пустая группа блокирует план.
-- Проверка `target-membership` всегда сверяет Swift-файлы с Sources build phases Xcode. Она выявляет отсутствующее или запрещённое членство, удалённые файлы, дубли и зависимость приложения от тренировочной библиотеки. `main.swift` тренировочного CLI — явное исключение: его компилирует shell entrypoint, а Xcode tools target является статической библиотекой.
-- Обнаруженный пропуск `GameTurnServiceTests.swift` исправлен: файл теперь входит в `JockerTests`.
-
-- Кеш standalone runner теперь хранится в `.derivedData/dev-tools/bot-training/<fingerprint>/`. Ключ включает состав и содержимое Swift-файлов, путь/версию компилятора, SDK, флаги и влияющие на toolchain переменные окружения. Время изменения файлов не используется. Проверяются исполняемый файл и его SHA-256; повреждение кеша вызывает пересборку. Параллельные запросы компиляции сериализуются, бинарник и manifest публикуются атомарно; ошибка сборки или изменение исходников во время неё не разрешают запуск старого runner. `train_bot_tuning.sh` остаётся каноническим entrypoint и сохраняет прежние CLI-аргументы.
-
-В CI лимит одной проверки — 35 минут при общем лимите workflow 45 минут: измеренный полный XCTest на GitHub занял около 29 минут и оставлял слишком мало запаса в прежнем 30-минутном лимите. Локальный `harness-verify` сохраняет 30-минутный лимит; состав обязательных проверок не сокращён.
-
-## Процесс требований (перенесён 15.11.2026)
-
-Точка входа — [backlog/README.md](../backlog/README.md); нормативный формат —
-[docs/requirements/README.md](requirements/README.md). Перенесены capture,
-triage, status reconciliation, planning и execution gates из CRM с сохранением
-UIKit/SpriteKit, игровых правил и отдельных проверок обучения ботов.
-`make requirements-check` запускается также через harness локально и в CI.
-Проверки включают REQ-ссылки, раздельные статусы, задачи/планы, ready gate и
-совместное изменение доменных карточек с CHANGELOG. Проверка не заменяет
-человеческое принятие требований и evidence реализации в main.
-
-С 16.11.2026 продуктовые задачи и примеры планов используют `JCR-NNN`;
-технические задачи сохраняют `TASK-NNN`. Правила выдачи номера описаны в backlog.
+Первый этап harness ввёл выбор проверок по diff и версионированный JSON-отчёт.
+Второй объединил XCTest-выборки, добавил doctor и чтение xcresult. В ноябре 2026
+добавлены модульные группы, проверка target membership, кеш runner и реестр
+требований. 18.11.2026 каталог переведён на генерацию из метаданных, а проверка
+инструкций расширена. Подробности прежних редакций сохраняются в истории Git;
+действующие правила находятся в источниках, перечисленных выше.

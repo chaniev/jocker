@@ -5,63 +5,24 @@ description: Use before any structural change — adding, moving, or renaming fi
 
 # Folder structure
 
-`FOLDER_STRUCTURE_SPEC.md` is the source of truth for repository structure
-and file placement. Read it before making structural changes; update it in
-the same change afterwards.
+Read [FOLDER_STRUCTURE_SPEC.md](../../../FOLDER_STRUCTURE_SPEC.md) before adding,
+moving or renaming files. It owns placement, type/file conventions and target
+boundaries. [AGENTS.md](../../../AGENTS.md) owns the stack and verification policy.
 
-## Core rules
+## Procedure
 
-- One new top-level type per file; the file name matches the type name exactly. Existing nested helper types and extensions are allowed.
-- App sources live under `Jocker/Jocker/`; unit tests under
-  `Jocker/JockerTests/`; UI tests under `Jocker/JockerUITests/`.
-- Test file placement mirrors app structure under
-  `Jocker/JockerTests/<feature>/`.
-- The Xcode project has four targets with fixed ownership:
-  - `Jocker` — app;
-  - `JockerTests` — unit tests;
-  - `JockerUITests` — UI tests;
-  - `JockerSelfPlayTools` — training CLI (`BotSelfPlayEvolutionEngine+*.swift`,
-    `BotTuning+SelfPlayEvolution.swift`, `BotTrainingRunner.swift`,
-    `main.swift`). These sources are NOT compiled into the app.
-- A new source file must be added to the correct target membership in
-  `project.pbxproj`; a file in the wrong target is a structural defect.
+1. Find the owning layer and test location in the specification. For a new
+   placement convention, explain the reason and update that source in the same task.
+2. Add or move the file and update its consumers. Keep filesystem paths and Xcode
+   groups aligned; register Swift sources in the correct Sources build phases.
+   Directory alone does not establish membership, especially for training sources.
+3. Update the affected tree and responsibility entries in the specification,
+   including tooling/documentation files outside Xcode. Keep task status in backlog
+   cards and link to them instead of repeating it in structural descriptions.
+4. For skill/profile additions, removals, renames or metadata changes, regenerate
+   the catalog according to the root maintenance instructions.
+5. Use the root harness for verification. Report old/new paths, target membership
+   changes and the resulting check evidence; do not repeat covered tests.
 
-## Where things go
-
-| Content | Location |
-|---|---|
-| Game rules logic, models | `Jocker/Jocker/Models/`, `Jocker/Jocker/Scoring/` |
-| SpriteKit gameplay | `Jocker/Jocker/Game/` (Scenes, Nodes, Coordinator, Services) |
-| Screens and navigation | `Jocker/Jocker/ViewControllers/` (Bidding, GameFlow, Results, Statistics, Common) |
-| App bootstrap | `Jocker/Jocker/App/` |
-| Cross-cutting helpers | `Jocker/Jocker/Core/` |
-| Unit tests | `Jocker/JockerTests/<feature>/` mirroring app layout |
-| Shell harness scripts | `scripts/` |
-| Make wrappers | `Makefile` |
-| Rules source texts | `правила игры/` (never edited as part of code tasks) |
-| Plans, reviews, specs | `docs/` |
-| Build/test/training artifacts | `.derivedData/` (gitignored, never committed) |
-
-## Rules of engagement
-
-- Before adding a directory or moving files, check the spec's Repository
-  Layout and Placement Conventions sections; if the intended home does not
-  exist, that is a structural decision — propose it and update the spec.
-- After any structural change (new directories, moved files, new top-level
-  artifacts, new scripts), update `FOLDER_STRUCTURE_SPEC.md` in the same
-  change: the layout tree and the Tooling & Documentation entries.
-- Do not commit artifacts: test runs, `.xcresult` bundles, training logs, and
-  `bot-train-*.log` files belong under `.derivedData/`.
-- Do not edit files under `правила игры/` as part of implementation; rule
-  changes are product decisions routed through plans.
-- Agent infrastructure lives in `.agents/skills/<name>/SKILL.md` and
-  `.codex/agents/<name>.toml`; changes to that set update
-  `docs/AGENTS_SKILLS_HARNESS.md`.
-
-## Verification
-
-For a structural change, report: files moved/added with old and new paths,
-target membership updates, `FOLDER_STRUCTURE_SPEC.md` diff, and that
-`make harness-verify BASE=origin/main` passes the required checks, including
-target membership and the selected build/test coverage. Do not repeat tests
-already covered by the harness.
+Game rule texts are product contracts: changing them is not a side effect of
+moving source files. Build/test/training outputs stay in gitignored `.derivedData/`.

@@ -84,3 +84,9 @@
 - Use `codex-backlog-skill` for requested triage/status reconciliation, `product-plan-clarification` for product questions, `tasks-ready-to-implementation` for planning, and `implement-release-plan` for authorized execution.
 - Historical plans in docs/ require an up-to-date backlog card and requirements mapping when resumed; they are not automatically executable.
 - `make requirements-check BASE=<ref>` validates traceability and requirements CHANGELOG co-change; the verification harness and CI include it.
+
+## Maintaining instructions
+- Change a rule in its owning source first (see Instruction ownership and conflicts); update dependent links/guidance in the same task. Skills own procedures, agent profiles own role boundaries, and editor rules are entry points into those sources.
+- Keep reusable instructions separate from historical task status. Backlog cards own task progress; structural documentation links to them rather than copying their current status into several sections.
+- After adding, removing, renaming or changing skill/profile metadata, run `python3 scripts/harness/instructions.py catalog --write`. Do not hand-edit the generated section in `docs/AGENTS_SKILLS_HARNESS.md`.
+- `python3 scripts/harness/verify.py instructions` checks required entry points, known affirmative stack conflicts, metadata, local file links and catalog drift. It is also part of the harness; it does not prove semantic consistency, product acceptance or external-link availability.

@@ -17,6 +17,8 @@ This document is the source of truth for repository structure and file placement
 │   └── skills/                (agent skill bundles: one directory per skill with SKILL.md, e.g. joker-game-rules, bot-training-pipeline, task-worktree)
 ├── .codex/
 │   └── agents/                (profile agent definitions: one <name>.toml per agent, e.g. game-rules-specialist, test-automator)
+├── .cursor/
+│   └── rules/                 (swift.mdc and file.mdc: links to project instruction owners)
 ├── .github/
 │   ├── pull_request_template.md
 │   └── workflows/
@@ -25,9 +27,10 @@ This document is the source of truth for repository structure and file placement
 │   ├── README.md               (product backlog index, priorities, dependencies and workflow)
 │   ├── AGENTS.md               (backlog workflow invariants)
 │   ├── needs-clarification/    (cards awaiting decisions; JCR-002–JCR-015)
-│   ├── tasks-ready/            (accepted requirements and ready plans; JCR-001)
-│   ├── implementation-plans/   (unfinished plans; JCR-001 save/resume)
-│   ├── done/YYYY-MM-DD/        (completed cards and plans, created on first use)
+│   ├── tasks-ready/            (accepted requirements and ready plans; created when nonempty)
+│   ├── implementation-plans/   (unfinished plans, one per task)
+│   ├── implementation/         (authorized tasks in progress)
+│   ├── done/YYYY-MM-DD/        (completed cards and plans; task cards own status/evidence)
 │   └── logs/                  (append-only workflow evidence)
 ├── docs/
 │   ├── requirements/          (README, domain REQ cards, template and CHANGELOG)
@@ -65,7 +68,7 @@ This document is the source of truth for repository structure and file placement
 │   │   ├── environment.py
 │   │   ├── results.py
 │   │   ├── targets.py
-│   │   └── tests/              (test_verify.py, test_planning.py, test_environment.py, test_results.py, test_targets.py, test_training_cache.py, test_requirements.py)
+│   │   └── tests/              (harness, instruction, target, cache and requirements regression tests)
 │   ├── validate_requirements.py
 │   ├── run_all_tests.sh
 │   ├── run_bot_ab_comparison_snapshot.sh
@@ -174,7 +177,7 @@ Selected, non-exhaustive list of key files and what they own.
 - `Jocker/Jocker/Game/Services/Flow/GameAnimationService.swift`: deal and delayed trick-resolution animation scheduling/cancellation.
 - `Jocker/Jocker/Game/Services/Settings/GamePlayersSettingsStore.swift`: persistence of editable player names and per-bot difficulty presets (`UserDefaults`, v1 key).
 - `Jocker/Jocker/Game/Services/Statistics/GameStatisticsStore.swift`: storage contract for game statistics persistence and retrieval.
-- `Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift`: `UserDefaults`-backed aggregation for all/3-player/4-player FFA/4-player pairs statistics, with snapshot-version fallback loading.
+- `Jocker/Jocker/Game/Services/Statistics/UserDefaultsGameStatisticsStore.swift`: legacy statistics adapter used for migration/compatibility; `FileGameStatisticsStore.swift` owns canonical durable statistics under ADR-0001.
 - `Jocker/Jocker/Models/Gameplay/GameState.swift`: canonical runtime match state (players, block/round/dealer progression, and active game mode/partnership helpers for `pairs`).
 - `Jocker/Jocker/Game/Nodes/TrickNode.swift`: current trick state and move legality checks (including joker lead modes).
 - `Jocker/Jocker/Models/Gameplay/TrickTakingResolver.swift`: pure winner algorithm for a trick with joker semantics.
@@ -253,8 +256,7 @@ Selected, non-exhaustive list of key files and what they own.
 
 - `backlog/README.md`: product backlog entrypoint, proposal-to-task mapping, priorities, sequencing and status conventions.
 - `backlog/<status>/JCR-NNN-*.md`: individual product task cards with problem, outcome, scope, acceptance criteria, evidence, dependencies and unresolved product decisions; initial range JCR-001–JCR-015.
-- `backlog/tasks-ready/JCR-001-save-and-resume.md`: accepted save/resume requirements and planning decisions (storage ADR and silent in-game autosave failure); implementation has not started.
-- `backlog/implementation-plans/JCR-001-save-and-resume.plan.md`: save/resume implementation sequence, state/UI contracts, verification and readiness gate; planning does not start execution.
+- [JCR-001 card](backlog/done/2026-11-18/JCR-001-save-and-resume.md) and [plan](backlog/done/2026-11-18/JCR-001-save-and-resume.plan.md): authoritative lifecycle and verification evidence for save/resume; persistence source placement is listed below.
 - `docs/architecture/adr/README.md`: index of proposed/accepted architecture decisions. Accepted `0001-durable-game-session-persistence.md` specifies durable checkpoints, statistics migration and completion recovery for JCR-001, with the owner's silent autosave-failure exception during ordinary play.
 - `Makefile`: developer convenience targets; `make bt` / `make train-bot` point to the canonical full-match training workflow, `make train-bot-final` runs the canonical final validation workflow, and legacy short random-round profiles are now prefixed `legacy-` (`legacy-bt-<difficulty>-<smoke|balanced|battle>`). `bt-hard-fullgame-<smoke|balanced|battle>` run full-match (4-block) single-seed training with seat rotation; `bt-hard-final` runs multi-seed ensemble full-match training. `make training-pipeline-smoke` runs compile/baseline/evolution smoke checks for the checked-in runner (including a tiny parallel evolution with `--max-parallel-evaluations 2`). `make stage3-scope-validate` runs the Stage-03 runtime-scope validation harness (`old-scope`, `critical-runtime`, gated `full-scope`) and writes a consolidated summary under `.derivedData/stage3-runtime-scope-runs/<timestamp>/`; `make stage3-scope-validate-medium` runs the same ladder on the intermediate `medium` compare profile, and `make stage3-scope-validate-smoke` runs it on the smoke profile. `make stage5-benchmark` runs the Stage-05 parallel benchmark (canonical profile `bt-hard-fullgame-balanced`, sequential vs 2/4 parallel, parity and speedup summary under `.derivedData/stage5-parallel-benchmark/<timestamp>/`). `make joker-pack` / `make joker-pack-all` run the Stage-5 `JOKER` regression pack (`strict` only vs `strict+probe`). `make stage4-phase-pack` runs the Stage-4 phase-conditioned runtime guardrails pack (`make stage4-phase-pack-list`, `make stage4-phase-pack-dry` for inspection). `make stage6b-pack` runs the Stage-6b opponent-aware ranking guardrails pack; `make stage6b-pack-all` adds cross-service Stage-6 guardrails (flow plumbing + evaluator/strategy `no-evidence` neutrality + style-shift checks) (`make stage6b-pack-list`, `make stage6b-pack-dry` for inspection). `make bot-baseline` / `make bot-baseline-smoke` run the Stage-0 baseline snapshot harness (`run-mode=baselineOnly`) with persisted artifacts. `make bot-compare` / `make bot-compare-medium` / `make bot-compare-smoke` run the Stage-0 A/B comparison harness (baseline preset vs tuned candidate) with parsed A/B summary artifacts.
 - `docs/BOT_AI_IMPROVEMENT_PLAN.md`: staged implementation roadmap for bot gameplay AI improvements (premiums/blind/joker/phase-aware decisions/opponent adaptation), including acceptance criteria and PR slicing.
@@ -268,9 +270,9 @@ Selected, non-exhaustive list of key files and what they own.
 - `docs/BOT_AI_TEST_SCENARIOS.md`: draft catalog of deterministic bot-AI regression scenarios (`BLIND` / `PREMIUM` / `JOKER` / `PHASE`) plus baseline comparison templates and reproducibility fields for stage-0 measurements.
 - `docs/CARDS_DOCUMENTATION.md`: rules notes and card/game documentation.
 - `docs/CODEX_MCP_SKILLS_SETUP.md`: project-specific Codex setup guide covering recommended MCP servers, curated skills, and ready-to-paste `~/.codex/config.toml` snippets for this Swift/UIKit/SpriteKit repo.
-- `docs/AGENTS_SKILLS_HARNESS.md`: target-state catalog of profile agents (`.codex/agents/`), skills (`.agents/skills/`), agent routing tables, and the verification harness inventory (existing scripts/make targets plus CRM-parity gaps), formed by analogy with the CRM repo.
-- `.agents/skills/<name>/SKILL.md`: agent skill bundles. Process skills (`task-worktree`, `architecture-decision`, `product-plan-clarification`, `codex-backlog-skill`, `tasks-ready-to-implementation`, `implement-release-plan`, `autoresearch-chatgpt`) are adapted from the CRM repo; project skills (`joker-game-rules`, `joker-game-ui`, `spritekit-uikit-best-practices`, `folder-structure`, `bot-ai-conventions`, `bot-training-pipeline`, `regression-packs`, `xctest-practices`, `ios-hig-audit`) are specific to this repository's stack, rules, and harness.
-- `.codex/agents/<name>.toml`: profile agent definitions (`game-rules-specialist`, `spritekit-gameplay-specialist`, `uikit-flow-specialist`, `game-ux-researcher`, `bot-ai-specialist`, `bot-training-specialist`, `test-automator`, `xcode-ci-specialist`, `refactoring-specialist`) with routing documented in `docs/AGENTS_SKILLS_HARNESS.md`.
+- `docs/AGENTS_SKILLS_HARNESS.md`: generated skill/profile catalog and current harness implementation details; shared policies remain in AGENTS.md.
+- `.agents/skills/<name>/SKILL.md`: task-specific procedures with name/description metadata. The complete inventory is generated in [the catalog](docs/AGENTS_SKILLS_HARNESS.md).
+- `.codex/agents/<name>.toml`: role boundaries and configuration; the same generated catalog lists current profiles.
 - `docs/PAIRS_MODE_IMPLEMENTATION_PLAN.md`: implementation plan for the 4-player `pairs` mode, covering gameplay-mode plumbing, scoring/premium changes, presentation, statistics separation, and bot cooperation updates.
 - `docs/PRODUCT_OWNER_REVIEW_RU.md`: Russian product-owner review with repository evidence, pilot scope, release gates, success signals, acceptance criteria, and decision ownership.
 - `docs/README_CARDS.md`: quick entrypoint/index to card-related documentation.
@@ -293,6 +295,8 @@ Selected, non-exhaustive list of key files and what they own.
 
 ## App Source Layout
 
+Selected source layout; the JCR-001 persistence contract section below also lists snapshot DTOs and their ownership.
+
 ```
 Jocker/Jocker/
 ├── AGENTS.md
@@ -305,6 +309,7 @@ Jocker/Jocker/
 │   │   ├── GameSceneCoordinator.swift
 │   │   ├── GameEnvironment.swift
 │   │   ├── GameSceneModalPresenter.swift
+│   │   ├── GameSessionPersistenceCoordinator.swift
 │   │   ├── GameResultsPersistenceCoordinator.swift
 │   │   └── DealHistoryPresentationCoordinator.swift
 │   ├── Nodes/
@@ -328,6 +333,7 @@ Jocker/Jocker/
 │   │   ├── GameSceneInteractionTransitionPolicy.swift
 │   │   ├── GameScene+DealingFlow.swift
 │   │   ├── GameScene+BiddingFlow.swift
+│   │   ├── GameScene+Persistence.swift
 │   │   ├── GameScene+PlayingFlow.swift
 │   │   └── GameScene+ModalFlow.swift
 │   └── Services/
@@ -378,9 +384,17 @@ Jocker/Jocker/
 │       ├── History/
 │       │   ├── DealHistoryExportService.swift
 │       │   └── DealHistoryStore.swift
+│       ├── Persistence/
+│       │   ├── GameSessionStore.swift
+│       │   ├── FileGameSessionStore.swift
+│       │   ├── GameSessionCodec.swift
+│       │   ├── GameSessionError.swift
+│       │   └── GamePersistenceRepository.swift
 │       ├── Settings/
 │       │   └── GamePlayersSettingsStore.swift
 │       └── Statistics/
+│           ├── FileGameStatisticsStore.swift
+│           ├── GameStatisticsAccumulator.swift
 │           ├── GameStatisticsStore.swift
 │           └── UserDefaultsGameStatisticsStore.swift
 ├── Models/
@@ -491,6 +505,8 @@ Jocker/Jocker/
 
 ## Test Targets Layout
 
+Selected test layout; persistence tests and fixtures are listed in the JCR-001 section below.
+
 ```
 Jocker/JockerTests/
 ├── AGENTS.md
@@ -576,6 +592,7 @@ Jocker/JockerTests/
 
 Jocker/JockerUITests/
 ├── AGENTS.md
+├── GameResumeFlowUITests.swift
 ├── GameRepeatResultsFlowUITests.swift
 ├── JockerUITests.swift
 └── JockerUITestsLaunchTests.swift
@@ -647,4 +664,4 @@ Harness stage 2: `planning.py` reads canonical pack selectors and forms one XCTe
 - `scripts/harness/instructions.py` checks instruction entry points, known stack conflicts, metadata and local links; it generates the catalog in `docs/AGENTS_SKILLS_HARNESS.md`.
 - `scripts/harness/tests/test_instructions.py` covers instruction regressions and catalog generation. Both are Python tooling, outside Xcode targets.
 
-- `backlog/implementation/TASK-001-instruction-consistency.md` and its plan under `backlog/implementation-plans/` track the three authorized instruction-maintenance stages; `backlog/logs/implementation-log.md` is append-only execution evidence.
+- [Backlog index](backlog/README.md) links to instruction-maintenance tasks in their current lifecycle locations; `backlog/logs/implementation-log.md` stores append-only execution evidence.

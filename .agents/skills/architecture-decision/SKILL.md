@@ -10,8 +10,8 @@ behavior or approving the decision on behalf of its owner.
 
 ## Establish authority and evidence
 
-1. Read the root `AGENTS.md`. Treat any nested `AGENTS.md` as subordinate;
-   the root file is verified for this stack.
+1. Read [AGENTS.md](../../../AGENTS.md#instruction-ownership-and-conflicts)
+   for source ownership and conflict handling; do not define another precedence list.
 2. Read the governing product sources: the relevant texts in
    `правила игры/`, the source implementation plan, existing ADRs, and
    accepted reviews such as `docs/PRODUCT_OWNER_REVIEW_RU.md` that constrain

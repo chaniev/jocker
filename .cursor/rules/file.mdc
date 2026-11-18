@@ -1,8 +1,9 @@
 ---
-description: расположение файлов и классов
+description: Jocker file placement entry point
 alwaysApply: true
 ---
 
-- When creating a new class, enum, or interface, create a new file with a name that matches the name of the class, enum, or interface
-- Use `FOLDER_STRUCTURE_SPEC.md` as the source of truth when analyzing or planning changes that touch project structure, file placement, or folder conventions
-- After code changes that affect structure (new/moved/renamed files, new folders/groups, changes in ownership/placement conventions), update `FOLDER_STRUCTURE_SPEC.md` so it stays accurate
+Follow [FOLDER_STRUCTURE_SPEC.md](../../FOLDER_STRUCTURE_SPEC.md) for placement
+and type/file conventions. Use [folder-structure](../../.agents/skills/folder-structure/SKILL.md)
+when adding, moving or renaming files; it defines how to update the specification
+and verify target membership. Shared policy belongs to [AGENTS.md](../../AGENTS.md).

@@ -5,43 +5,17 @@ description: Use when implementing, reviewing, or refactoring Jocker app sources
 
 # SpriteKit + UIKit best practices
 
-Use the root and applicable nested `AGENTS.md` together. Keep their stack
-constraints consistent; report and repair stale conflicting guidance.
+Read [AGENTS.md](../../../AGENTS.md) for the stack, persistence, style and
+verification contract, and applicable nested instructions for local ownership.
+[ADR-0001](../../../docs/architecture/adr/0001-durable-game-session-persistence.md)
+defines durable session/statistics storage; do not infer a storage backend from
+legacy store names. [FOLDER_STRUCTURE_SPEC.md](../../../FOLDER_STRUCTURE_SPEC.md)
+owns type placement and build target boundaries.
 
-## Stack constraints (hard)
-
-- UIKit (`AppDelegate`, view controllers) + SpriteKit (`SKScene` for
-  gameplay).
-- No SwiftUI. No Combine. No async/await in app-target sources. Existing training-only concurrency is allowed. No SPM/CocoaPods dependencies.
-- Pure Swift services/coordinators. Follow the root persistence contract and
-  [ADR-0001](../../../docs/architecture/adr/0001-durable-game-session-persistence.md):
-  settings use `UserDefaults`; game sessions and canonical statistics use atomic
-  files with migration of legacy statistics.
-- Concurrency and timing use completion handlers / delegation consistent
-  with the existing code.
-
-When existing code violates a convention, match the surrounding style in a
-small change and note the debt; do not stage a framework migration inside an
-unrelated task.
-
-## Type and file conventions
-
-- One new top-level type per file; the file name matches the type exactly. Existing nested helper types and extensions are allowed.
-- Classes for SpriteKit nodes/scenes and UIKit view controllers; structs for
-  models and services (prefer value types).
-- Protocols for testability, following the established pattern (e.g.
-  `GameStatisticsStore` / `FileGameStatisticsStore`).
-- App sources under `Jocker/Jocker/`; tests under `Jocker/JockerTests/`
-  mirroring app structure.
-- New files must be added to the correct Xcode target; `JockerSelfPlayTools`
-  sources are never part of the app target.
-
-## Style conventions
-
-- Explicit `self.` in instance methods.
-- Default parameter labels; full `.self` for type references.
-- Clear naming: verbs for methods, `is/has/should` for booleans, no
-  unexplained abbreviations.
+This skill covers implementation mechanics. Use completion handlers/delegation
+consistent with the existing app. When a small change encounters older style,
+keep scope local and record the debt instead of starting a framework migration.
+Use descriptive names: verbs for methods and `is/has/should` for booleans.
 
 ## SpriteKit-specific rules
 
@@ -72,10 +46,8 @@ unrelated task.
 
 For any diff in `Game/` or `ViewControllers/`:
 
-- no SwiftUI/Combine/async/await introduced;
-- one type per file preserved; new files in the right target;
+- root stack/style contract and target ownership preserved;
 - rules/scoring logic not duplicated into presentation;
-- explicit `self.` in instance methods and closures;
 - scene/VC teardown releases observers, actions, timers;
 - tests updated under the mirrored `JockerTests/<feature>/` path.
 
