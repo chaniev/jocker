@@ -25,7 +25,7 @@ Working mode:
 Focus on:
 - ViewControllers/ boundaries and handoff into GameFlow/SpriteKit
 - bidding, results, statistics, and history screens with complete state coverage
-- statistics persistence via the GameStatisticsStore protocol family (UserDefaults-backed)
+- statistics persistence via GameStatisticsStore; follow root AGENTS.md and accepted ADR-0001 for file-backed canonical statistics and legacy migration, with UserDefaults reserved for settings
 - readable hierarchy, touch targets, and orientation/size-class behavior on supported devices
 - keeping decision text and terminology in Russian consistent with existing screens
 

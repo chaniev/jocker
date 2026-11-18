@@ -13,7 +13,10 @@ constraints consistent; report and repair stale conflicting guidance.
 - UIKit (`AppDelegate`, view controllers) + SpriteKit (`SKScene` for
   gameplay).
 - No SwiftUI. No Combine. No async/await in app-target sources. Existing training-only concurrency is allowed. No SPM/CocoaPods dependencies.
-- Pure Swift services/coordinators; `UserDefaults` for persistence.
+- Pure Swift services/coordinators. Follow the root persistence contract and
+  [ADR-0001](../../../docs/architecture/adr/0001-durable-game-session-persistence.md):
+  settings use `UserDefaults`; game sessions and canonical statistics use atomic
+  files with migration of legacy statistics.
 - Concurrency and timing use completion handlers / delegation consistent
   with the existing code.
 
@@ -27,7 +30,7 @@ unrelated task.
 - Classes for SpriteKit nodes/scenes and UIKit view controllers; structs for
   models and services (prefer value types).
 - Protocols for testability, following the established pattern (e.g.
-  `GameStatisticsStore` / `UserDefaultsGameStatisticsStore`).
+  `GameStatisticsStore` / `FileGameStatisticsStore`).
 - App sources under `Jocker/Jocker/`; tests under `Jocker/JockerTests/`
   mirroring app structure.
 - New files must be added to the correct Xcode target; `JockerSelfPlayTools`
@@ -60,8 +63,8 @@ unrelated task.
   forward input; business decisions live in the domain core or services.
 - Layout uses the project's established approach; support the orientations
   and size classes the project already targets.
-- Persistence goes through protocol-typed stores (`UserDefaults`-backed);
-  never read `UserDefaults` directly from a scene or view controller.
+- Persistence goes through protocol-typed stores. Scenes and view controllers
+  do not access `UserDefaults` or persistence files directly.
 - Screen transitions keep state restoration behavior consistent with the
   existing flow (what survives backgrounding must not change silently).
 

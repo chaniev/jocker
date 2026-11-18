@@ -101,7 +101,7 @@ routing ниже при делегировании задач.
 |---|---|
 | `joker-game-rules` | Правила игры как источник истины: сверка кода с `правила игры/*.txt` (козырь, джокер, `подсчет очков`, `присуждение премии`, `пара на пару`). Использовать для любой правки правил, скоринга, раздачи |
 | `joker-game-ui` | Игровой UI на UIKit + SpriteKit: экраны и состояния (торги, ход, результаты, статистика), анимации стола, accessibility. Аналог `crm-mobile-first-ui` — обязателен на каждом клиентском этапе |
-| `spritekit-uikit-best-practices` | Технические конвенции стека: SwiftUI/Combine/async-await запрещены, классы для SK-нод и VC, struct для моделей/сервисов, протоколы для тестируемости, explicit `self.`, `UserDefaults` для персистенции |
+| `spritekit-uikit-best-practices` | Технические конвенции UIKit/SpriteKit и доступа к хранилищам по корневому AGENTS.md и ADR-0001: настройки в UserDefaults, партии и каноническая статистика в атомарных файлах |
 | `folder-structure` | Правила `FOLDER_STRUCTURE_SPEC.md`: one type per file, размещение app/test-кода, обновление спеки после структурных изменений |
 | `bot-ai-conventions` | Границы `BotRuntimePolicy` + `BotTuning`, пресеты easy/normal/hard, запрет компиляции `JockerSelfPlayTools` в app, поведение ботов в режиме «пара на пару» (кооперация пар) |
 | `bot-training-pipeline` | Канонический процесс обучения: `make bt` / `make train-bot-final`, профили smoke/balanced/battle, ансамбли по сидам, early stop + A/B holdout, обязательный baseline-snapshot и A/B-сравнение до замены тюнинга |
