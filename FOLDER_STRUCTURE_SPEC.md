@@ -637,5 +637,6 @@ Harness stage 2: `planning.py` reads canonical pack selectors and forms one XCTe
   variant selection, relaunch, replacement and foreground handling.
 - These DTOs and stores belong only to the app target. Shared game/score models
   expose passive, model-typed restore APIs and remain usable by the training target.
-- `backlog/implementation/` contains explicitly started work; JCR-001 moved here
-  from `tasks-ready/` on 2026-11-18. Task progress is recorded under `backlog/logs/`.
+- `backlog/done/2026-11-18/` contains the completed JCR-001 card and its plan,
+  including main integration and verification evidence. Task progress is recorded
+  under `backlog/logs/`; `implementation/` is the queue for unfinished started work.
