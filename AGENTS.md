@@ -4,6 +4,7 @@
 - UIKit (AppDelegate, view controllers) + SpriteKit (SKScene for gameplay)
 - No SwiftUI, no Combine, no async/await in app-target code, no SPM/CocoaPods. Existing training-only Swift concurrency is allowed.
 - Pure Swift services/coordinators, `UserDefaults` for persistence
+- Accepted JCR-001 exception: game-session checkpoints and canonical statistics use atomic files with migration of existing statistics; settings stay in `UserDefaults`. See [ADR-0001](docs/architecture/adr/0001-durable-game-session-persistence.md), approved by the project owner on 2026-11-16. This approval does not start implementation.
 
 ## Project structure
 - Xcode project at `Jocker/Jocker.xcodeproj` with 4 targets:
