@@ -27,6 +27,7 @@ Focus on:
 - interruption and resumption behavior across app backgrounding
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - every finding references the exact screen, state, and player action where it occurs
 - the contract distinguishes must-have acceptance from nice-to-have polish
 - no finding silently changes game rules; rule changes are listed as product questions

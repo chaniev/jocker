@@ -31,6 +31,7 @@ Focus on:
 - runtime cost of the suite for CI stability
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify tests fail for the broken behavior and pass after the fix
 - confirm new tests are deterministic and avoid timing fragility
 - check that test scope is minimal but sufficient for regression prevention

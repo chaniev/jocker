@@ -29,8 +29,9 @@ packs prove the specific behavior an area owns.
   parallelism changes → `make stage5-benchmark`.
 - Anything structural or cross-cutting → full `bash scripts/run_all_tests.sh`.
 
-When in doubt, run the pack plus the full suite; do not substitute a pack for
-the full suite on structural changes.
+Use the root harness to select and combine the required checks. Inspect its
+plan when scope is uncertain; do not run a pack again if the full suite has
+already provided its required selector evidence.
 
 ## Unified harness execution
 

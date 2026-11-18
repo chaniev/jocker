@@ -59,6 +59,7 @@ This document is the source of truth for repository structure and file placement
 ├── scripts/
 │   ├── harness/
 │   │   ├── checks.json
+│   │   ├── instructions.py     (instruction checks and generated catalog)
 │   │   ├── verify.py
 │   │   ├── planning.py
 │   │   ├── environment.py
@@ -640,3 +641,10 @@ Harness stage 2: `planning.py` reads canonical pack selectors and forms one XCTe
 - `backlog/done/2026-11-18/` contains the completed JCR-001 card and its plan,
   including main integration and verification evidence. Task progress is recorded
   under `backlog/logs/`; `implementation/` is the queue for unfinished started work.
+
+## Instruction maintenance tooling
+
+- `scripts/harness/instructions.py` checks instruction entry points, known stack conflicts, metadata and local links; it generates the catalog in `docs/AGENTS_SKILLS_HARNESS.md`.
+- `scripts/harness/tests/test_instructions.py` covers instruction regressions and catalog generation. Both are Python tooling, outside Xcode targets.
+
+- `backlog/implementation/TASK-001-instruction-consistency.md` and its plan under `backlog/implementation-plans/` track the three authorized instruction-maintenance stages; `backlog/logs/implementation-log.md` is append-only execution evidence.

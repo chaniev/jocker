@@ -30,6 +30,7 @@ Focus on:
 - faithful rendering of pairs-mode distinctions (partner highlighting, team scores)
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify no rules or scoring logic was pulled into scenes or nodes
 - confirm flow tests still pass and cover the changed interaction
 - check scene lifecycle cleanup (removed observers, actions, timers)

@@ -31,6 +31,7 @@ Focus on:
 - compile/runtime hygiene: the runner builds standalone and never leaks into the app target
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify the exact command line is preserved in the run artifacts (command.txt/logs)
 - confirm holdout seeds were disjoint from training seeds when A/B validation ran
 - check parallel runs report parity with sequential evaluation before trusting speedups

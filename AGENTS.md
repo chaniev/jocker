@@ -1,5 +1,13 @@
 # Jocker repo — agent instructions
 
+## Instruction ownership and conflicts
+- The current user request defines task scope and authorization. Preserve decisions already supplied; do not request them again.
+- This file owns repository-wide stack, persistence, style, verification and delivery policy. Nested `AGENTS.md`, skills, agent profiles and editor rules specialize it without contradicting it.
+- `правила игры/` owns game mechanics; accepted requirements in `docs/requirements/` own the additional product contract. Conflicts require an explicit product decision; proposed requirements do not authorize changes.
+- Accepted ADRs own technical decisions within those contracts. `FOLDER_STRUCTURE_SPEC.md` owns placement and target boundaries; `project.pbxproj` records actual build membership.
+- An authorized, ready task plan describes the intended change within those constraints. Code, tests and build configuration are evidence of current behavior, not authority to override accepted target behavior. Other plans, reviews and historical notes are context.
+- For a conflict, identify the owning source and apply an already accepted decision. Ask only for an unresolved product or material architectural choice; continue independent work. Update stale dependent guidance in the same task.
+
 ## Stack (verified — not SwiftUI)
 - UIKit (AppDelegate, view controllers) + SpriteKit (SKScene for gameplay)
 - No SwiftUI, no Combine, no async/await in app-target code, no SPM/CocoaPods. Existing training-only Swift concurrency is allowed.
@@ -22,6 +30,14 @@
 - `BASE` defaults to `HEAD` for local uncommitted work; use `origin/main` for a task branch.
 - Verification always checks Xcode source membership. Local Results/Statistics/History/Settings changes use module test groups; CI retains the full suite.
 - A passed report validates checks for its recorded source fingerprint; it does not replace tuning acceptance or product review.
+- Use targeted tests during iteration. Completion uses the harness-selected mandatory checks; a passing combined run satisfies its selected groups and packs. Do not rerun covered tests solely because another instruction names their standalone command.
+- Reuse verification after a conflict-free merge when the candidate and integrated source trees match. Repeat affected checks when source content, integration or the relevant environment changes.
+
+## Workspaces and delivery
+- Implement code changes in a dedicated worktree using `task-worktree`. New task branches use `codex/JCR-NNN-short-name` or `codex/TASK-NNN-short-name`; preserve an existing plan's declared branch when resuming, including legacy names.
+- For authorized implementation-plan execution, completion means verified local integration into `main` and updated task evidence. For other requests, follow the requested deliverable; analysis or planning alone does not authorize implementation.
+- Push, remote PR creation, CI execution and release publication require authorization covering that action. Local implementation does not imply remote publication. CI still runs the full suite when invoked.
+- Remove only this task's clean, merged worktree/branch after preserving required evidence; keep unfinished work. `task-worktree` owns the mechanics.
 
 ## Commands
 | What | How |

@@ -53,11 +53,15 @@ xcodebuild test \
   -only-testing:JockerTests/BotTurnCandidateRankingServiceTests
 ```
 
-Run everything through the canonical entry point so artifacts persist:
+For completion, use the root verification contract. The harness persists
+artifacts and combines required groups/packs without repeated XCTest runs:
 
 ```bash
-bash scripts/run_all_tests.sh
+make harness-verify BASE=origin/main
 ```
+
+The standalone full-suite command remains `bash scripts/run_all_tests.sh` when
+a full run is explicitly needed outside the harness. Do not repeat a covered run.
 
 ## Artifacts
 
@@ -72,7 +76,7 @@ bash scripts/run_all_tests.sh
 - setup is explicit and local; no hidden ordering between tests;
 - assertions check player/game-observable outcomes;
 - the test fails for the broken behavior (demonstrated) and passes after;
-- targeted class run provided for iteration; full-suite/pack run cited for
-  completion;
+- targeted class run provided for iteration; harness evidence cited for
+  completion, including any required pack coverage;
 - runtime cost of the addition is reasonable for CI (45-minute workflow
   budget).

@@ -30,10 +30,11 @@ Focus on:
 - keeping decision text and terminology in Russian consistent with existing screens
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify every user action produces visible feedback or a state change
 - confirm no business rules (scoring, bidding validity) were re-implemented in VCs
 - check dark mode, Dynamic Type, and safe-area behavior where the project already supports them
-- run `bash scripts/run_all_tests.sh` or the targeted test classes for touched screens
+- use targeted screen tests during iteration and the root harness contract for completion
 
 Return:
 - screens and states changed, with the state inventory

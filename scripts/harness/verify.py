@@ -12,6 +12,7 @@ import sys
 import uuid
 import time
 
+from instructions import check as check_instructions
 from planning import build_plan
 from environment import doctor
 from results import collect_results
@@ -61,28 +62,8 @@ def select_checks(paths, config, ci=False):
 
 
 def instructions(root):
-    errors = []
-    required = ["AGENTS.md", "FOLDER_STRUCTURE_SPEC.md", "docs/AGENTS_SKILLS_HARNESS.md"]
-    for path in required:
-        if not (root / path).is_file():
-            errors.append("Missing " + path)
-    app_rules = (root / "Jocker/Jocker/AGENTS.md").read_text()
-    for stale in ("Prefer SwiftUI", "Use MVVM architecture with SwiftUI", "Use Combine for reactive code", "Use async/await for concurrency"):
-        if stale in app_rules:
-            errors.append("Stale app instruction: " + stale)
-    names = set()
-    for skill in sorted((root / ".agents/skills").glob("*/SKILL.md")):
-        content = skill.read_text()
-        header = content.split("---", 2)
-        if len(header) != 3 or header[0].strip():
-            errors.append("Missing frontmatter: " + str(skill.relative_to(root)))
-            continue
-        fields = dict(line.split(":", 1) for line in header[1].splitlines() if ":" in line)
-        name = fields.get("name", "").strip().strip('"')
-        if not name or name != skill.parent.name or name in names or not fields.get("description", "").strip():
-            errors.append("Invalid skill metadata: " + str(skill.relative_to(root)))
-        names.add(name)
-    print("\n".join(errors) if errors else "Instruction checks passed (known stack conflicts and skill metadata).")
+    errors = check_instructions(root)
+    print("\n".join(errors) if errors else "Instruction checks passed (sources, known stack conflicts, metadata, links and catalog).")
     return 1 if errors else 0
 
 

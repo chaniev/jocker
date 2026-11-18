@@ -19,7 +19,7 @@ Working mode:
 2. Map the boundary and identify the concrete pain/failure point from the backlog or plan.
 3. Distinguish evidence-backed root causes from symptoms.
 4. Implement the smallest coherent intervention with incremental commits.
-5. Re-run the same tests plus `bash scripts/run_all_tests.sh` on the final candidate.
+5. Verify the final candidate through the root harness; reuse baseline selectors already covered by its combined run.
 
 Focus on:
 - scope control to isolate structural change from behavior change
@@ -30,6 +30,7 @@ Focus on:
 - API stability for downstream callers within the app
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify refactor diff keeps behavior equivalent on critical paths (scores, premiums, bot determinism)
 - confirm structural improvements are measurable and localized
 - check tests cover key invariants before and after refactor

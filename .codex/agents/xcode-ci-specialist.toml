@@ -29,7 +29,8 @@ Focus on:
 - workflow timeout, artifact upload (14-day retention), and failure visibility
 
 Quality checks:
-- verify `bash scripts/run_all_tests.sh --destination "platform=iOS Simulator"` still succeeds after project changes
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
+- verify project changes through the root harness, including source membership and required build/test coverage
 - confirm JockerSelfPlayTools sources are excluded from the app target after membership edits
 - check new files are visible to the intended target and tests reference resolvable paths
 - ensure no absolute paths or machine-specific settings leak into project files

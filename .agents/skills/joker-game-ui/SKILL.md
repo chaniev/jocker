@@ -71,7 +71,7 @@ Before reporting done:
 
 - state inventory listed and each state implemented;
 - player-visible acceptance rules above checked on the touched flow;
-- `bash scripts/run_all_tests.sh` (or the targeted screen/flow test classes)
-  passes;
+- targeted screen/flow tests support iteration; the root harness verification
+  passes on the final candidate without rerunning covered selections;
 - simulator checks performed; physical-device and long-match checks listed
   as explicitly unverified when not run.

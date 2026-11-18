@@ -62,4 +62,6 @@ the same change afterwards.
 
 For a structural change, report: files moved/added with old and new paths,
 target membership updates, `FOLDER_STRUCTURE_SPEC.md` diff, and that
-`bash scripts/run_all_tests.sh` still compiles the expected targets.
+`make harness-verify BASE=origin/main` passes the required checks, including
+target membership and the selected build/test coverage. Do not repeat tests
+already covered by the harness.

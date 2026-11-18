@@ -17,18 +17,18 @@ Determine:
 - primary repository directory;
 - worktree parent directory.
 
-Use the plan's branch verbatim. Otherwise choose exactly one prefix:
+Follow the root AGENTS.md workspace policy. Preserve the plan's declared branch
+when resuming (including legacy names); otherwise use the task's ID:
 
 ```text
-feature/TASK-XXX-short-name
-fix/TASK-XXX-short-name
-refactor/TASK-XXX-short-name
+codex/JCR-NNN-short-name
+codex/TASK-NNN-short-name
 ```
 
 Default the worktree path to a sibling of the primary repository:
 
 ```text
-../jocker-worktrees/TASK-XXX-short-name
+../jocker-worktrees/<task-id>-short-name
 ```
 
 Adjust the parent path to the user's local layout when necessary, but keep the
@@ -52,7 +52,7 @@ the current directory is primary.
 
 Stop and report the conflict when:
 
-- the task branch is checked out in another worktree;
+- the task branch is checked out in a worktree belonging to another task;
 - a target directory exists but is not the registered task worktree;
 - a branch or worktree appears to belong to another task;
 - the intended branch differs from the implementation plan;
@@ -150,11 +150,11 @@ share simulator build state. Do not point a task run at another worktree's
 
 Before handoff:
 
-1. run repository-required validation (`bash scripts/run_all_tests.sh` and
-   the packs required by the affected area);
+1. run `make harness-verify BASE=origin/main` following the root verification
+   contract; reuse covered pack results instead of running them again;
 2. verify intended changes are committed;
 3. verify no unexplained files remain;
-4. push the task branch when the user requested or the workflow requires it;
+4. push or run remote CI only when the current authorization covers it;
 5. report worktree path, branch, commit SHA, and validation outcome.
 
 Do not remove the task worktree merely because implementation is complete.
@@ -169,11 +169,10 @@ Before cleanup, resolve the exact worktree and branch. Confirm:
 - required commits are available outside the worktree;
 - the branch is merged, or the user explicitly authorized removal.
 
-Remove the worktree and prune stale administrative records:
+Remove only the resolved task worktree (do not prune unrelated registrations):
 
 ```bash
 git worktree remove '<worktree-path>'
-git worktree prune
 ```
 
 Delete the local task branch only after confirming it is merged:

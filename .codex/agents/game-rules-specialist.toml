@@ -30,10 +30,11 @@ Focus on:
 - deterministic, seed-friendly behavior so self-play training and tests stay reproducible
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify every behavior change traces to a specific rules text or an explicit product decision
 - confirm scoring and premium edge cases are covered by tests (joker, last block, pairs cooperation)
 - check that no presentation-layer type gained rules logic
-- run `bash scripts/run_all_tests.sh` or the targeted `-only-testing` class for the touched area
+- use targeted tests during iteration and the root harness contract for completion
 
 Return:
 - the rules text that governed the change (file and short quote)

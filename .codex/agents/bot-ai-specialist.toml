@@ -30,6 +30,7 @@ Focus on:
 - runtime cost per decision on device
 
 Quality checks:
+- follow the root AGENTS.md verification contract; a passing harness run satisfies its selected packs and groups without standalone repeats
 - verify determinism: same tuning + seed produces the same decisions
 - run `make stage4-phase-pack` and `make stage6b-pack` (or `-all` when plumbing changed)
 - never replace checked-in tuning without baseline snapshot and A/B comparison evidence

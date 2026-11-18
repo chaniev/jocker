@@ -62,7 +62,7 @@ routing ниже при делегировании задач.
 | Улучшение игрового AI бота | `bot-ai-specialist` → `test-automator` | `bot-ai-conventions`; обучение — отдельная задача по явному запросу |
 | Обучение нового тюнинга ботов | `bot-training-specialist` | `bot-training-pipeline`; baseline + A/B до merge |
 | Локальная визуальная правка экрана | `uikit-flow-specialist` → `spritekit-gameplay-specialist` | `joker-game-ui` |
-| Рефакторинг модуля | `refactoring-specialist` → `test-automator` | `bash scripts/run_all_tests.sh` до и после |
+| Рефакторинг модуля | `refactoring-specialist` → `test-automator` | Релевантный baseline до изменения; итоговый harness без повторов покрытых тестов |
 | Сборка/CI-инфраструктура | `xcode-ci-specialist` → `test-automator` | `xctest-practices` |
 
 Правила границ ответственности:
@@ -90,7 +90,7 @@ routing ниже при делегировании задач.
 | `task-worktree` | `.agents/skills/task-worktree/` | Изолированные worktree для задач; в Jocker без Docker-стека. Использовать перед любой задачей, меняющей код, и при параллельной работе |
 | `architecture-decision` | `.agents/skills/architecture-decision/` | ADR для значимых решений (кандидаты: интеграция SLM по `docs/SLM_INTEGRATION_PROPOSAL.md`, рефакторинг `BotRuntimePolicy`). Не для продуктовых решений |
 | `product-plan-clarification` | `.agents/skills/product-plan-clarification/` | Продуктовые пробелы и приоритетные вопросы до реализации (например, по `docs/PRODUCT_OWNER_REVIEW_RU.md`) |
-| `implement-release-plan` | `.agents/skills/implement-release-plan/` | Реализация готовых implementation plans до проверенной интеграции в `main`; в Jocker release = merge + зелёный CI, без стенда |
+| `implement-release-plan` | `.agents/skills/implement-release-plan/` | Реализация готовых implementation plans до проверенной интеграции в `main`; в Jocker завершение = локальный merge + обязательные локальные проверки; push и CI — по отдельному запросу |
 | `codex-backlog-skill` | `.agents/skills/codex-backlog-skill/` | Разбор входящих и сверка статусов; сохраняет источники и REQ-связи |
 | `tasks-ready-to-implementation` | `.agents/skills/tasks-ready-to-implementation/` | Готовые планы, evidence решений и явный переход к реализации |
 | `autoresearch-chatgpt` | `.agents/skills/autoresearch-chatgpt/` | Мета-скил: бенчмарк и улучшение самих скилов. Переносится как есть |
