@@ -52,14 +52,6 @@ extension GameScene {
             teamSummaries: teamSummaries,
             onClose: { [weak self] in
                 guard let self else { return }
-                self.sessionState = self.gameResultsPersistenceCoordinator.persistGameStatisticsIfNeeded(
-                    sessionState: self.sessionState,
-                    playerSummaries: playerSummaries,
-                    playerCount: self.playerCount,
-                    gameMode: self.gameMode,
-                    completedBlocks: self.scoreManager.completedBlocks,
-                    statisticsStore: self.gameStatisticsStore
-                )
                 self.modalPresenter.dismissGameViewControllerToStartScreen(from: self.view)
             }
         )
@@ -252,10 +244,17 @@ extension GameScene {
     func requestJokerDecisionAndPlay(cardNode: CardNode, playerIndex: Int) {
         let isLeadCard = trickNode.playedCards.isEmpty
         let fallbackDecision = isLeadCard ? JokerPlayDecision.defaultLead : JokerPlayDecision.defaultNonLead
+        self.flow.stage = .joker
+        self.checkpoint()
+        let generation = self.flowGeneration
+        var resolved = false
         setPendingInteractionModal(.jokerDecision)
 
         let applyDecision: (JokerPlayDecision?) -> Void = { [weak self, weak cardNode] decision in
             guard let self = self else { return }
+            guard !resolved, self.flowGeneration == generation, !self.isSessionPaused, !self.isExitingSession else { return }
+            resolved = true
+            self.flow.stage = .playing
             self.clearPendingInteractionModal(.jokerDecision)
 
             guard self.players.indices.contains(playerIndex),
@@ -267,6 +266,7 @@ extension GameScene {
             }
 
             guard let resolvedDecision = decision else {
+                self.checkpoint()
                 self.updateGameInfoLabel()
                 self.updateTurnUI(animated: true)
                 return
@@ -291,6 +291,7 @@ extension GameScene {
             onJokerDecisionRequested(isLeadCard, applyDecision)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                 guard let self else { return }
+                guard self.flowGeneration == generation, !self.isSessionPaused, !self.isExitingSession else { return }
                 guard self.isAwaitingJokerDecision else { return }
                 guard !self.isJokerDecisionModalPresented else { return }
 
@@ -325,6 +326,7 @@ extension GameScene {
             }
         )
 
+        self.installExitButton(on: modal)
         if !modalPresenter.presentOverlay(modal, from: view) {
             completion(fallbackDecision)
         }
@@ -337,13 +339,18 @@ extension GameScene {
         makeModal: (@escaping (Result) -> Void) -> UIViewController
     ) {
         setPendingInteractionModal(pendingModal)
+        let generation = self.flowGeneration
+        var resolved = false
 
         let resolve: (Result) -> Void = { [weak self] result in
-            self?.clearPendingInteractionModal(pendingModal)
+            guard let self, !resolved, self.flowGeneration == generation, !self.isSessionPaused, !self.isExitingSession else { return }
+            resolved = true
+            self.clearPendingInteractionModal(pendingModal)
             completion(result)
         }
 
         let modal = makeModal(resolve)
+        self.installExitButton(on: modal)
         if !modalPresenter.presentOverlay(modal, from: view) {
             clearPendingInteractionModal(pendingModal)
             completion(fallbackResult())

@@ -205,6 +205,10 @@ struct Deck {
         self.cards.append(contentsOf: cards)
     }
     
+    mutating func restore(cards: [Card]) {
+        self.cards = cards
+    }
+
     /// Количество оставшихся карт
     var count: Int {
         return cards.count

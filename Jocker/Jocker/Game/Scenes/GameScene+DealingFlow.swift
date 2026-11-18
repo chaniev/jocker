@@ -1,328 +1,134 @@
-//
-//  GameScene+DealingFlow.swift
-//  Jocker
-//
-//  Created by Codex on 15.02.2026.
-//
-
 import SpriteKit
 
 extension GameScene {
-    // MARK: - Dealing Flow
-
     func dealCards() {
-        guard canDealCards else {
-            updateDealButtonState()
+        guard self.canDealCards else { self.updateDealButtonState(); return }
+        self.removeAction(forKey: ActionKey.botTurn)
+        self.resetTransientDealFlowState()
+        self.coordinator.cancelPendingTrickResolution(on: self)
+        guard self.coordinator.prepareForDealing(gameState: self.gameState, scoreManager: self.scoreManager, playerCount: self.playerCount) else {
+            _ = self.tryPresentGameResultsIfNeeded()
             return
         }
-
-        removeAction(forKey: ActionKey.botTurn)
-        resetTransientDealFlowState()
-
-        coordinator.cancelPendingTrickResolution(on: self)
-
-        guard coordinator.prepareForDealing(
-            gameState: gameState,
-            scoreManager: scoreManager,
-            playerCount: playerCount
-        ) else {
-            updateGameInfoLabel()
-            updateTurnUI(animated: true)
-            updateDealButtonState()
-            _ = tryPresentGameResultsIfNeeded()
-            return
-        }
-
-        markDidDealAtLeastOnce()
-        updateDealButtonState()
-        updateGameInfoLabel()
-        updateTurnUI(animated: false)
-
-        // Сбрасываем колоду и перемешиваем
-        deck.reset()
-        deck.shuffle()
-
-        // Очищаем руки игроков и взятку
-        for player in players {
-            player.hand.removeAllCards(animated: true)
+        self.markDidDealAtLeastOnce()
+        self.coordinator.markDidDeal()
+        self.deck.reset()
+        self.deck.shuffle()
+        for player in self.players {
+            player.hand.removeAllCards(animated: false)
             player.resetForNewRound()
         }
-        trickNode.clearTrick(
-            toPosition: trickNode.centerPosition,
-            animated: false
-        )
-        clearJokerLeadInfo()
-        currentTrump = nil
-
-        sessionState.pendingBids = Array(repeating: 0, count: playerCount)
-        sessionState.pendingBlindSelections = Array(repeating: false, count: playerCount)
-
-        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
-        dealHistoryStore.startDeal(
-            blockIndex: blockIndex,
-            roundIndex: gameState.currentRoundInBlock
-        )
-
-        if gameState.currentBlock == .fourth {
-            startPreDealBlindFlowIfNeeded { [weak self] in
-                self?.runDealFlowForCurrentRound()
-            }
-            return
-        }
-
-        runDealFlowForCurrentRound()
+        self.trickNode.clearTrick(toPosition: self.trickNode.centerPosition, animated: false)
+        self.currentTrump = nil
+        self.clearJokerLeadInfo()
+        self.flow = GameFlowResumeState()
+        self.flow.bids = Array(repeating: 0, count: self.playerCount)
+        self.flow.blindSelections = Array(repeating: false, count: self.playerCount)
+        self.flow.answered = Array(repeating: false, count: self.playerCount)
+        self.sessionState.pendingBids = self.flow.bids
+        self.sessionState.pendingBlindSelections = self.flow.blindSelections
+        self.dealHistoryStore.startDeal(blockIndex: self.gameState.currentBlock.rawValue - 1, roundIndex: self.gameState.currentRoundInBlock)
+        self.flow.stage = self.gameState.currentBlock == .fourth ? .blind : .deal
+        self.flow.order = self.biddingOrder()
+        self.checkpoint()
+        self.resumeSessionFlow()
     }
 
-    private func runDealFlowForCurrentRound() {
-        let cardsPerPlayer = gameState.currentCardsPerPlayer
-        let firstPlayerToDeal = (gameState.currentDealer + 1) % playerCount
-        let trumpRule = TrumpSelectionRules.rule(
-            for: gameState.currentBlock,
-            cardsPerPlayer: cardsPerPlayer,
-            dealerIndex: gameState.currentDealer,
-            playerCount: playerCount
-        )
+    func continueBlindFlow() {
+        self.setPrimaryInteractionFlow(.preDealBlind)
+        guard self.flow.step < self.flow.order.count else {
+            self.clearPrimaryInteractionFlow(.preDealBlind)
+            self.flow.stage = .deal
+            self.checkpoint()
+            self.runDealFlowForCurrentRound()
+            return
+        }
+        let player = self.flow.order[self.flow.step]
+        let generation = self.flowGeneration
+        let step = self.flow.step
+        let bids = self.gameState.allowedBids(forPlayer: player, bids: self.flow.bids)
+        let canChoose = self.gameState.canChooseBlindBid(forPlayer: player, blindSelections: self.flow.blindSelections)
+        let apply: (Bool, Int?) -> Void = { [weak self] blind, bid in
+            guard let self, self.flowGeneration == generation, self.flow.step == step, !self.isSessionPaused, !self.isExitingSession else { return }
+            let isBlind = blind && canChoose
+            self.flow.bids[player] = isBlind ? (bid.flatMap { bids.contains($0) ? $0 : nil } ?? bids.first ?? 0) : 0
+            self.flow.blindSelections[player] = isBlind
+            self.flow.answered[player] = true
+            self.flow.step += 1
+            self.sessionState.pendingBids = self.flow.bids
+            self.sessionState.pendingBlindSelections = self.flow.blindSelections
+            if isBlind { self.players[player].setBid(self.flow.bids[player], isBlind: true, animated: true) }
+            self.checkpoint()
+            self.scheduleResume(after: 0.35)
+        }
+        if !canChoose { apply(false, nil) }
+        else if self.isHumanPlayer(player) {
+            self.requestHumanPreDealBlindChoice(context: .init(playerIndex: player, allowedBlindBids: bids, canChooseBlind: true), completion: apply)
+        } else {
+            let bid = self.botBiddingService(for: player).makePreDealBlindBid(playerIndex: player,
+                dealerIndex: self.gameState.currentDealer, cardsInRound: self.gameState.currentCardsPerPlayer,
+                allowedBlindBids: bids, canChooseBlind: true, totalScores: self.scoreManager.totalScoresIncludingCurrentBlock,
+                matchContext: self.botMatchContext(for: player))
+            apply(bid != nil, bid)
+        }
+    }
 
-        switch trumpRule.strategy {
+    func runDealFlowForCurrentRound() {
+        let cards = self.gameState.currentCardsPerPlayer
+        let first = (self.gameState.currentDealer + 1) % self.playerCount
+        let rule = TrumpSelectionRules.rule(for: self.gameState.currentBlock, cardsPerPlayer: cards,
+            dealerIndex: self.gameState.currentDealer, playerCount: self.playerCount)
+        switch rule.strategy {
         case .automaticTopDeckCard:
-            let dealResult = deck.dealCards(
-                playerCount: playerCount,
-                cardsPerPlayer: cardsPerPlayer,
-                startingPlayerIndex: firstPlayerToDeal
-            )
-            let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
-            let roundIndex = gameState.currentRoundInBlock
-            dealHistoryStore.setInitialHands(
-                dealResult.hands,
-                blockIndex: blockIndex,
-                roundIndex: roundIndex
-            )
-
-            coordinator.runDealAnimation(
-                on: self,
-                playerCount: playerCount,
-                firstPlayerToDeal: firstPlayerToDeal,
-                players: players,
-                hands: dealResult.hands,
-                trumpCard: dealResult.trump,
-                trumpIndicator: trumpIndicator,
-                onTrumpResolved: { [weak self] trump in
-                    guard let self else { return }
-                    self.currentTrump = trump
-                    let blockIndex = max(0, self.gameState.currentBlock.rawValue - 1)
-                    self.dealHistoryStore.setTrump(
-                        trump,
-                        blockIndex: blockIndex,
-                        roundIndex: self.gameState.currentRoundInBlock
-                    )
-                },
-                onHighlightTurn: { [weak self] in
-                    self?.updateTurnUI(animated: true)
-                    self?.startBiddingFlowIfNeeded()
-                }
-            )
+            let deal = self.deck.dealCards(playerCount: self.playerCount, cardsPerPlayer: cards, startingPlayerIndex: first)
+            self.displayDealtHands(deal.hands)
+            self.currentTrump = deal.trump?.suit
+            self.trumpIndicator.setTrumpSuit(self.currentTrump, animated: true)
+            self.dealHistoryStore.setInitialHands(deal.hands, blockIndex: self.gameState.currentBlock.rawValue - 1, roundIndex: self.gameState.currentRoundInBlock)
+            self.dealHistoryStore.setTrump(self.currentTrump, blockIndex: self.gameState.currentBlock.rawValue - 1, roundIndex: self.gameState.currentRoundInBlock)
+            self.startBiddingFlowIfNeeded()
         case .playerOnDealerLeft:
-            runPlayerChosenTrumpDealFlow(
-                firstPlayerToDeal: firstPlayerToDeal,
-                cardsPerPlayer: cardsPerPlayer,
-                chooserPlayerIndex: trumpRule.chooserPlayerIndex,
-                cardsToDealBeforeChoicePerPlayer: trumpRule.cardsToDealBeforeChoicePerPlayer
-            )
+            let initialCount = min(cards, rule.cardsToDealBeforeChoicePerPlayer)
+            let initial = self.deck.dealCards(playerCount: self.playerCount, cardsPerPlayer: initialCount, startingPlayerIndex: first)
+            let remaining = self.deck.dealCards(playerCount: self.playerCount, cardsPerPlayer: cards - initialCount, startingPlayerIndex: first)
+            self.displayDealtHands(initial.hands)
+            self.flow.remainingHands = remaining.hands.map { $0.map(CardSnapshot.init) }
+            self.flow.chooser = rule.chooserPlayerIndex
+            self.flow.stage = .trump
+            self.dealHistoryStore.setInitialHands((0..<self.playerCount).map { initial.hands[$0] + remaining.hands[$0] },
+                blockIndex: self.gameState.currentBlock.rawValue - 1, roundIndex: self.gameState.currentRoundInBlock)
+            self.checkpoint()
+            self.continueTrumpFlow()
         }
-
-        coordinator.markDidDeal()
     }
 
-    private func startPreDealBlindFlowIfNeeded(onCompleted: @escaping () -> Void) {
-        guard gameState.phase == .bidding else {
-            onCompleted()
-            return
-        }
-        guard gameState.currentBlock == .fourth else {
-            onCompleted()
-            return
-        }
-
-        setPrimaryInteractionFlow(.preDealBlind)
-        processPreDealBlindStep(order: biddingOrder(), step: 0, onCompleted: onCompleted)
-    }
-
-    private func processPreDealBlindStep(
-        order: [Int],
-        step: Int,
-        onCompleted: @escaping () -> Void
-    ) {
-        guard gameState.phase == .bidding else {
-            clearPrimaryInteractionFlow(.preDealBlind)
-            onCompleted()
-            return
-        }
-
-        guard step < order.count else {
-            clearPrimaryInteractionFlow(.preDealBlind)
-            onCompleted()
-            return
-        }
-
-        let playerIndex = order[step]
-        let allowedBlindBids = gameState.allowedBids(forPlayer: playerIndex, bids: sessionState.pendingBids)
-        let canChooseBlind = gameState.canChooseBlindBid(
-            forPlayer: playerIndex,
-            blindSelections: sessionState.pendingBlindSelections
-        )
-
-        let applySelection: (_ isBlind: Bool, _ bid: Int?) -> Void = { [weak self] isBlind, bid in
-            guard let self else { return }
-            guard self.gameState.phase == .bidding else { return }
-
-            if isBlind && canChooseBlind {
-                let fallbackBlindBid = allowedBlindBids.first ?? 0
-                let resolvedBlindBid: Int
-                if let bid, allowedBlindBids.contains(bid) {
-                    resolvedBlindBid = bid
-                } else {
-                    resolvedBlindBid = fallbackBlindBid
-                }
-                self.sessionState.pendingBlindSelections[playerIndex] = true
-                self.sessionState.pendingBids[playerIndex] = resolvedBlindBid
-                self.players[playerIndex].setBid(resolvedBlindBid, isBlind: true, animated: true)
-            } else {
-                self.sessionState.pendingBlindSelections[playerIndex] = false
-                self.sessionState.pendingBids[playerIndex] = 0
+    func continueTrumpFlow() {
+        self.setPrimaryInteractionFlow(.trumpSelection)
+        self.trumpIndicator.setAwaitingTrumpSelection(animated: false)
+        let generation = self.flowGeneration
+        self.requestTrumpChoice(context: .init(playerIndex: self.flow.chooser, handCards: self.players[self.flow.chooser].hand.cards)) { [weak self] trump in
+            guard let self, self.flowGeneration == generation, !self.isSessionPaused, !self.isExitingSession else { return }
+            self.currentTrump = trump
+            self.trumpIndicator.setTrumpSuit(trump, animated: true)
+            self.dealHistoryStore.setTrump(trump, blockIndex: self.gameState.currentBlock.rawValue - 1, roundIndex: self.gameState.currentRoundInBlock)
+            for index in self.players.indices {
+                let cards = self.flow.remainingHands[index].compactMap { try? $0.restore() }
+                self.players[index].hand.addCards(cards, animated: false)
+                self.players[index].hand.sortCardsStandard(animated: true)
             }
-
-            self.updateGameInfoLabel()
-            self.updateTurnUI(animated: true)
-
-            self.run(
-                .sequence([
-                    .wait(forDuration: 0.2),
-                    .run { [weak self] in
-                        self?.processPreDealBlindStep(
-                            order: order,
-                            step: step + 1,
-                            onCompleted: onCompleted
-                        )
-                    }
-                ])
-            )
+            self.flow.remainingHands = []
+            self.clearPrimaryInteractionFlow(.trumpSelection)
+            self.startBiddingFlowIfNeeded()
         }
-
-        if !canChooseBlind {
-            applySelection(false, nil)
-            return
-        }
-
-        if isHumanPlayer(playerIndex) {
-            requestHumanPreDealBlindChoice(
-                context: .init(
-                    playerIndex: playerIndex,
-                    allowedBlindBids: allowedBlindBids,
-                    canChooseBlind: canChooseBlind
-                ),
-                completion: applySelection
-            )
-            return
-        }
-
-        let blindBid = botBiddingService(for: playerIndex).makePreDealBlindBid(
-            playerIndex: playerIndex,
-            dealerIndex: gameState.currentDealer,
-            cardsInRound: gameState.currentCardsPerPlayer,
-            allowedBlindBids: allowedBlindBids,
-            canChooseBlind: canChooseBlind,
-            totalScores: scoreManager.totalScoresIncludingCurrentBlock,
-            matchContext: botMatchContext(for: playerIndex)
-        )
-        applySelection(blindBid != nil, blindBid)
     }
 
-    private func runPlayerChosenTrumpDealFlow(
-        firstPlayerToDeal: Int,
-        cardsPerPlayer: Int,
-        chooserPlayerIndex: Int,
-        cardsToDealBeforeChoicePerPlayer: Int
-    ) {
-        let cardsBeforeChoice = min(cardsPerPlayer, max(0, cardsToDealBeforeChoicePerPlayer))
-        let initialDeal = deck.dealCards(
-            playerCount: playerCount,
-            cardsPerPlayer: cardsBeforeChoice,
-            startingPlayerIndex: firstPlayerToDeal
-        )
-
-        let remainingCardsPerPlayer = max(0, cardsPerPlayer - cardsBeforeChoice)
-        let remainingDeal = deck.dealCards(
-            playerCount: playerCount,
-            cardsPerPlayer: remainingCardsPerPlayer,
-            startingPlayerIndex: firstPlayerToDeal
-        )
-        let combinedHands = (0..<playerCount).map { index in
-            let initialHand = initialDeal.hands.indices.contains(index) ? initialDeal.hands[index] : []
-            let remainingHand = remainingDeal.hands.indices.contains(index) ? remainingDeal.hands[index] : []
-            return initialHand + remainingHand
-        }
-        let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
-        let roundIndex = gameState.currentRoundInBlock
-        dealHistoryStore.setInitialHands(
-            combinedHands,
-            blockIndex: blockIndex,
-            roundIndex: roundIndex
-        )
-
-        setPrimaryInteractionFlow(.trumpSelection)
-        trumpIndicator.setAwaitingTrumpSelection(animated: true)
-
-        coordinator.runDealStageAnimation(
-            on: self,
-            playerCount: playerCount,
-            firstPlayerToDeal: firstPlayerToDeal,
-            players: players,
-            hands: initialDeal.hands
-        ) { [weak self] in
-            guard let self else { return }
-            let chooserHand = initialDeal.hands.indices.contains(chooserPlayerIndex)
-                ? initialDeal.hands[chooserPlayerIndex]
-                : []
-
-            self.updateTurnUI(animated: true)
-            self.requestTrumpChoice(
-                context: .init(
-                    playerIndex: chooserPlayerIndex,
-                    handCards: chooserHand
-                )
-            ) { [weak self] selectedTrump in
-                guard let self else { return }
-                self.currentTrump = selectedTrump
-                let blockIndex = max(0, self.gameState.currentBlock.rawValue - 1)
-                self.dealHistoryStore.setTrump(
-                    selectedTrump,
-                    blockIndex: blockIndex,
-                    roundIndex: self.gameState.currentRoundInBlock
-                )
-                let animateTrumpReveal = !self.isBotPlayer(chooserPlayerIndex)
-                self.trumpIndicator.setTrumpSuit(selectedTrump, animated: animateTrumpReveal)
-
-                if remainingCardsPerPlayer == 0 {
-                    self.clearPrimaryInteractionFlow(.trumpSelection)
-                    self.updateGameInfoLabel()
-                    self.updateTurnUI(animated: true)
-                    self.startBiddingFlowIfNeeded()
-                    return
-                }
-
-                self.coordinator.runDealStageAnimation(
-                    on: self,
-                    playerCount: self.playerCount,
-                    firstPlayerToDeal: firstPlayerToDeal,
-                    players: self.players,
-                    hands: remainingDeal.hands
-                ) { [weak self] in
-                    guard let self else { return }
-                    self.clearPrimaryInteractionFlow(.trumpSelection)
-                    self.updateGameInfoLabel()
-                    self.updateTurnUI(animated: true)
-                    self.startBiddingFlowIfNeeded()
-                }
+    private func displayDealtHands(_ hands: [[Card]]) {
+        for index in self.players.indices {
+            self.players[index].hand.addCards(hands[index], animated: false)
+            self.players[index].hand.sortCardsStandard(animated: false)
+            for (cardIndex, node) in self.players[index].hand.cardNodes.enumerated() {
+                node.alpha = 0
+                node.run(.sequence([.wait(forDuration: Double(cardIndex) * 0.04), .fadeIn(withDuration: 0.15)]))
             }
         }
     }

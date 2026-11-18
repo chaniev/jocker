@@ -272,6 +272,14 @@ class ScoreManager {
             }
     }
 
+    func restore(completedBlocks: [BlockResult], currentRounds: [[RoundResult]], inProgress: [RoundResult]?, inProgressBlock: Int?, inProgressRound: Int?) {
+        self.completedBlocks = completedBlocks
+        self.currentBlockRoundResults = currentRounds
+        self.inProgressRoundResults = inProgress
+        self.inProgressRoundBlockIndex = inProgressBlock
+        self.inProgressRoundIndex = inProgressRound
+    }
+
     // MARK: - Сброс
 
     /// Полный сброс менеджера для новой игры

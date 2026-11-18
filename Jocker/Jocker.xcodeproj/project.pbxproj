@@ -252,6 +252,37 @@
 			F40000072F5600010037CA75 /* BotTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40000082F5600010037CA75 /* BotTuningTests.swift */; };
 			F4B100032F5600010037CA75 /* BotBlockPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B100042F5600010037CA75 /* BotBlockPhaseTests.swift */; };
 			B8846B412026111500000002 /* GameTurnServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8846B412026111500000001 /* GameTurnServiceTests.swift */; };
+		454043EB5C75C74403025562 /* GameSessionPersistenceCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7409086E8F27E2B127FD34B3; };
+		E38256D87C7B4B9EA1CEBFB2 /* GameScene+Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B05FC7D80EE136DE88E77CC; };
+		DBC9060BE973985F847B964C /* FileGameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C404992F509EC07E29A06D23; };
+		A6FA338A98B42B0B54F68E38 /* GamePersistenceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE84A9A11C0C08CA203F89F; };
+		6BA4D958449DF5DB43CCEB7F /* GameSessionCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9284A3CF7D6BDC034D6F74; };
+		04CC578EFD144ABA54C5BA39 /* GameSessionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = B65EEFE34B8BA11C14FE9319; };
+		658E062EFBAB5D224E647390 /* GameSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93294954134D942ECB18C0E; };
+		5FC1B8059C0D456206472CA1 /* FileGameStatisticsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969A4F017213A8CB48A085B2; };
+		11A6773FC812F73FEDC6EFE7 /* GameStatisticsAccumulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1110A7A171BE58AE018DBB0A; };
+		31082910E2E5DA930A500877 /* CardSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4688434B14307132813B9F20; };
+		35C272A7FD983E99FED118B9 /* BlockResultSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC8A1EAF7F6502FAAD7D8D9; };
+		B32892FA8147AFF02B478A84 /* GameFlowResumeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1FFD02FCB8E175BA7387168; };
+		451A46404273B56C2BD1327A /* GameSessionSlot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 802FB21E4339B1FFFE9E8FE4; };
+		AC1A024AF2F7E4B2B1F5DCA1 /* GameSessionSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32B54DAB1D61653FF529419; };
+		9D47456E197B849829218711 /* GameStateSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA98627B2C719DD6E64781A2; };
+		C8899D30B48BD177754EB581 /* RoundResultSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E865EFA9C138E0D300F23B0; };
+		33B045CC5C59D158549350AF /* DealHistoryKeySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E3D72265B36E60B9D26AA97; };
+		03AC5CBA50EAE119D050F0B0 /* DealHistorySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F57F5B17E24CF41D8E8CA0; };
+		2BB602EDD259BAF36838C66E /* DealTrainingMoveSampleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A33363F5913A10148A5E7A25; };
+		D7CD0B41452ECC8399D14096 /* DealTrickHistorySnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78E89497877277354496320; };
+		110B1AD5C4834521BBD34D6D /* DealTrickMoveSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1415BBFBA5E46EB082C434C9; };
+		D30E604A6D0104CEA3A54046 /* JokerDeclarationSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B607C0D830670A7D3B67FBE4; };
+		14B52D265405DED9435CE373 /* ScoreManagerSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0BB4A235E38702094923D3; };
+		9606ED01085E8B88E305FA84 /* FileGameSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3BC2DDEF47B7CA3832A2E6; };
+		20A5BCA3BBE6B83166652BEC /* GameCompletionRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6273F2265854E99A92AAC108; };
+		EFD66501D42C670923FE0E83 /* GameSessionSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10759A6849F6CA243B08464E; };
+		338840C07B5E8C51CC03282E /* GameSessionTestFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B15A40D3CCB582E824F50C; };
+		925CD9798282B6995413B0AF /* GameSessionRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F683A13DD52EF0A12E3BB0C; };
+		0431D09A9C63982F03B7FBCB /* GameResumeFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74867BBC22B21BD0F6CA2F96; };
+		3D810A4F7492605371112423 /* GameSessionSchemaFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FD2062B048EDCD7E6B2C667; };
+		BF81DF89A210363910033628 /* GameSessionLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE44AD5878C0E420081F84A9; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -526,6 +557,37 @@
 		F40000082F5600010037CA75 /* BotTuningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotTuningTests.swift; sourceTree = "<group>"; };
 		F0A1B2C32F800A010037CA75 /* TrainingRunResultFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingRunResultFormatter.swift; sourceTree = "<group>"; };
 		B8846B412026111500000001 /* GameTurnServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTurnServiceTests.swift; sourceTree = "<group>"; };
+		7409086E8F27E2B127FD34B3 /* GameSessionPersistenceCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Coordinator/GameSessionPersistenceCoordinator.swift"; sourceTree = SOURCE_ROOT; };
+		0B05FC7D80EE136DE88E77CC /* GameScene+Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Scenes/GameScene+Persistence.swift"; sourceTree = SOURCE_ROOT; };
+		C404992F509EC07E29A06D23 /* FileGameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Persistence/FileGameSessionStore.swift"; sourceTree = SOURCE_ROOT; };
+		CFE84A9A11C0C08CA203F89F /* GamePersistenceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Persistence/GamePersistenceRepository.swift"; sourceTree = SOURCE_ROOT; };
+		8B9284A3CF7D6BDC034D6F74 /* GameSessionCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Persistence/GameSessionCodec.swift"; sourceTree = SOURCE_ROOT; };
+		B65EEFE34B8BA11C14FE9319 /* GameSessionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Persistence/GameSessionError.swift"; sourceTree = SOURCE_ROOT; };
+		F93294954134D942ECB18C0E /* GameSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Persistence/GameSessionStore.swift"; sourceTree = SOURCE_ROOT; };
+		969A4F017213A8CB48A085B2 /* FileGameStatisticsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Statistics/FileGameStatisticsStore.swift"; sourceTree = SOURCE_ROOT; };
+		1110A7A171BE58AE018DBB0A /* GameStatisticsAccumulator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Game/Services/Statistics/GameStatisticsAccumulator.swift"; sourceTree = SOURCE_ROOT; };
+		4688434B14307132813B9F20 /* CardSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Cards/CardSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		BAC8A1EAF7F6502FAAD7D8D9 /* BlockResultSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Gameplay/BlockResultSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		F1FFD02FCB8E175BA7387168 /* GameFlowResumeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Gameplay/GameFlowResumeState.swift"; sourceTree = SOURCE_ROOT; };
+		802FB21E4339B1FFFE9E8FE4 /* GameSessionSlot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Gameplay/GameSessionSlot.swift"; sourceTree = SOURCE_ROOT; };
+		D32B54DAB1D61653FF529419 /* GameSessionSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Gameplay/GameSessionSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		DA98627B2C719DD6E64781A2 /* GameStateSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Gameplay/GameStateSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		5E865EFA9C138E0D300F23B0 /* RoundResultSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Gameplay/RoundResultSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		5E3D72265B36E60B9D26AA97 /* DealHistoryKeySnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/History/DealHistoryKeySnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		B4F57F5B17E24CF41D8E8CA0 /* DealHistorySnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/History/DealHistorySnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		A33363F5913A10148A5E7A25 /* DealTrainingMoveSampleSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/History/DealTrainingMoveSampleSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		E78E89497877277354496320 /* DealTrickHistorySnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/History/DealTrickHistorySnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		1415BBFBA5E46EB082C434C9 /* DealTrickMoveSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/History/DealTrickMoveSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		B607C0D830670A7D3B67FBE4 /* JokerDeclarationSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Models/Joker/JokerDeclarationSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		3C0BB4A235E38702094923D3 /* ScoreManagerSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Jocker/Scoring/ScoreManagerSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		0C3BC2DDEF47B7CA3832A2E6 /* FileGameSessionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Game/Services/Persistence/FileGameSessionStoreTests.swift"; sourceTree = SOURCE_ROOT; };
+		6273F2265854E99A92AAC108 /* GameCompletionRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Game/Services/Persistence/GameCompletionRecoveryTests.swift"; sourceTree = SOURCE_ROOT; };
+		10759A6849F6CA243B08464E /* GameSessionSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Models/Gameplay/GameSessionSnapshotTests.swift"; sourceTree = SOURCE_ROOT; };
+		F7B15A40D3CCB582E824F50C /* GameSessionTestFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Models/Gameplay/GameSessionTestFixture.swift"; sourceTree = SOURCE_ROOT; };
+		5F683A13DD52EF0A12E3BB0C /* GameSessionRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Game/Services/Persistence/GameSessionRestoreTests.swift"; sourceTree = SOURCE_ROOT; };
+		74867BBC22B21BD0F6CA2F96 /* GameResumeFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerUITests/GameResumeFlowUITests.swift"; sourceTree = SOURCE_ROOT; };
+		1FD2062B048EDCD7E6B2C667 /* GameSessionSchemaFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Models/Gameplay/Fixtures/GameSessionSchemaFixtures.swift"; sourceTree = SOURCE_ROOT; };
+		CE44AD5878C0E420081F84A9 /* GameSessionLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JockerTests/Game/Scenes/GameSessionLifecycleTests.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -564,6 +626,37 @@
 		7E4AC9392F268D810037CA75 = {
 			isa = PBXGroup;
 			children = (
+				CE44AD5878C0E420081F84A9 /* GameSessionLifecycleTests.swift */,
+				1FD2062B048EDCD7E6B2C667 /* GameSessionSchemaFixtures.swift */,
+				74867BBC22B21BD0F6CA2F96 /* GameResumeFlowUITests.swift */,
+				5F683A13DD52EF0A12E3BB0C /* GameSessionRestoreTests.swift */,
+				F7B15A40D3CCB582E824F50C /* GameSessionTestFixture.swift */,
+				10759A6849F6CA243B08464E /* GameSessionSnapshotTests.swift */,
+				6273F2265854E99A92AAC108 /* GameCompletionRecoveryTests.swift */,
+				0C3BC2DDEF47B7CA3832A2E6 /* FileGameSessionStoreTests.swift */,
+				3C0BB4A235E38702094923D3 /* ScoreManagerSnapshot.swift */,
+				B607C0D830670A7D3B67FBE4 /* JokerDeclarationSnapshot.swift */,
+				1415BBFBA5E46EB082C434C9 /* DealTrickMoveSnapshot.swift */,
+				E78E89497877277354496320 /* DealTrickHistorySnapshot.swift */,
+				A33363F5913A10148A5E7A25 /* DealTrainingMoveSampleSnapshot.swift */,
+				B4F57F5B17E24CF41D8E8CA0 /* DealHistorySnapshot.swift */,
+				5E3D72265B36E60B9D26AA97 /* DealHistoryKeySnapshot.swift */,
+				5E865EFA9C138E0D300F23B0 /* RoundResultSnapshot.swift */,
+				DA98627B2C719DD6E64781A2 /* GameStateSnapshot.swift */,
+				D32B54DAB1D61653FF529419 /* GameSessionSnapshot.swift */,
+				802FB21E4339B1FFFE9E8FE4 /* GameSessionSlot.swift */,
+				F1FFD02FCB8E175BA7387168 /* GameFlowResumeState.swift */,
+				BAC8A1EAF7F6502FAAD7D8D9 /* BlockResultSnapshot.swift */,
+				4688434B14307132813B9F20 /* CardSnapshot.swift */,
+				1110A7A171BE58AE018DBB0A /* GameStatisticsAccumulator.swift */,
+				969A4F017213A8CB48A085B2 /* FileGameStatisticsStore.swift */,
+				F93294954134D942ECB18C0E /* GameSessionStore.swift */,
+				B65EEFE34B8BA11C14FE9319 /* GameSessionError.swift */,
+				8B9284A3CF7D6BDC034D6F74 /* GameSessionCodec.swift */,
+				CFE84A9A11C0C08CA203F89F /* GamePersistenceRepository.swift */,
+				C404992F509EC07E29A06D23 /* FileGameSessionStore.swift */,
+				0B05FC7D80EE136DE88E77CC /* GameScene+Persistence.swift */,
+				7409086E8F27E2B127FD34B3 /* GameSessionPersistenceCoordinator.swift */,
 				7E4AC9442F268D810037CA75 /* Jocker */,
 				C2A100322F8A10010037CA75 /* JockerSelfPlayTools */,
 				7E4AC95E2F268D860037CA75 /* JockerTests */,
@@ -1304,6 +1397,29 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 				files = (
+				14B52D265405DED9435CE373 /* ScoreManagerSnapshot.swift in Sources */,
+				D30E604A6D0104CEA3A54046 /* JokerDeclarationSnapshot.swift in Sources */,
+				110B1AD5C4834521BBD34D6D /* DealTrickMoveSnapshot.swift in Sources */,
+				D7CD0B41452ECC8399D14096 /* DealTrickHistorySnapshot.swift in Sources */,
+				2BB602EDD259BAF36838C66E /* DealTrainingMoveSampleSnapshot.swift in Sources */,
+				03AC5CBA50EAE119D050F0B0 /* DealHistorySnapshot.swift in Sources */,
+				33B045CC5C59D158549350AF /* DealHistoryKeySnapshot.swift in Sources */,
+				C8899D30B48BD177754EB581 /* RoundResultSnapshot.swift in Sources */,
+				9D47456E197B849829218711 /* GameStateSnapshot.swift in Sources */,
+				AC1A024AF2F7E4B2B1F5DCA1 /* GameSessionSnapshot.swift in Sources */,
+				451A46404273B56C2BD1327A /* GameSessionSlot.swift in Sources */,
+				B32892FA8147AFF02B478A84 /* GameFlowResumeState.swift in Sources */,
+				35C272A7FD983E99FED118B9 /* BlockResultSnapshot.swift in Sources */,
+				31082910E2E5DA930A500877 /* CardSnapshot.swift in Sources */,
+				11A6773FC812F73FEDC6EFE7 /* GameStatisticsAccumulator.swift in Sources */,
+				5FC1B8059C0D456206472CA1 /* FileGameStatisticsStore.swift in Sources */,
+				658E062EFBAB5D224E647390 /* GameSessionStore.swift in Sources */,
+				04CC578EFD144ABA54C5BA39 /* GameSessionError.swift in Sources */,
+				6BA4D958449DF5DB43CCEB7F /* GameSessionCodec.swift in Sources */,
+				A6FA338A98B42B0B54F68E38 /* GamePersistenceRepository.swift in Sources */,
+				DBC9060BE973985F847B964C /* FileGameSessionStore.swift in Sources */,
+				E38256D87C7B4B9EA1CEBFB2 /* GameScene+Persistence.swift in Sources */,
+				454043EB5C75C74403025562 /* GameSessionPersistenceCoordinator.swift in Sources */,
 					7E4AC94C2F268D820037CA75 /* GameScene.swift in Sources */,
 					CD81814B49344F7A8CEC9784 /* GameSceneInputConfiguration.swift in Sources */,
 					C3B200092FD700010037CA75 /* GameSceneLayoutResolver.swift in Sources */,
@@ -1464,6 +1580,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BF81DF89A210363910033628 /* GameSessionLifecycleTests.swift in Sources */,
+				3D810A4F7492605371112423 /* GameSessionSchemaFixtures.swift in Sources */,
+				925CD9798282B6995413B0AF /* GameSessionRestoreTests.swift in Sources */,
+				338840C07B5E8C51CC03282E /* GameSessionTestFixture.swift in Sources */,
+				EFD66501D42C670923FE0E83 /* GameSessionSnapshotTests.swift in Sources */,
+				20A5BCA3BBE6B83166652BEC /* GameCompletionRecoveryTests.swift in Sources */,
+				9606ED01085E8B88E305FA84 /* FileGameSessionStoreTests.swift in Sources */,
 				B8846B412026111500000002 /* GameTurnServiceTests.swift in Sources */,
 				C0DE50012F5000010037CA75 /* GameFlowIntegrationTests.swift in Sources */,
 				B70010022F7800010037CA75 /* GameResultsPresentationIntegrationTests.swift in Sources */,
@@ -1541,6 +1664,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0431D09A9C63982F03B7FBCB /* GameResumeFlowUITests.swift in Sources */,
 				B70020022F7800020037CA75 /* GameRepeatResultsFlowUITests.swift in Sources */,
 				7E4AC96C2F268D860037CA75 /* JockerUITestsLaunchTests.swift in Sources */,
 				7E4AC96A2F268D860037CA75 /* JockerUITests.swift in Sources */,

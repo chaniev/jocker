@@ -233,6 +233,56 @@ final class DealHistoryStore {
             .compactMap { history(for: $0) }
     }
 
+    struct Snapshot: Codable {
+        var histories: [DealHistorySnapshot]
+        var pending: [DealTrainingMoveSampleSnapshot]
+    }
+
+    func snapshot() -> Snapshot {
+        var pending: [DealTrainingMoveSampleSnapshot] = []
+        for (key, history) in self.historiesByDealKey {
+            for sample in history.pendingTrickMoveSamples {
+                pending.append(DealTrainingMoveSampleSnapshot(DealTrainingMoveSample(
+                    blockIndex: key.blockIndex, roundIndex: key.roundIndex,
+                    trickIndex: sample.trickIndex, moveIndexInTrick: sample.moveIndexInTrick,
+                    playerIndex: sample.playerIndex, playerCount: sample.playerCount,
+                    cardsInRound: sample.cardsInRound, trump: sample.trump, playerBid: sample.playerBid,
+                    playerTricksTakenBeforeMove: sample.playerTricksTakenBeforeMove,
+                    handBeforeMove: sample.handBeforeMove, legalCards: sample.legalCards,
+                    playedCardsInTrickBeforeMove: sample.playedCardsInTrickBeforeMove,
+                    selectedCard: sample.selectedCard, selectedJokerPlayStyle: sample.selectedJokerPlayStyle,
+                    selectedJokerLeadDeclaration: sample.selectedJokerLeadDeclaration,
+                    trickWinnerPlayerIndex: 0, didPlayerWinTrick: false
+                )))
+            }
+        }
+        return Snapshot(histories: self.allHistories().map(DealHistorySnapshot.init), pending: pending)
+    }
+
+    func restore(_ snapshot: Snapshot) throws {
+        var restored: [DealHistoryKey: MutableDealHistory] = [:]
+        for saved in snapshot.histories {
+            let history = try saved.restore()
+            restored[history.key] = MutableDealHistory(trump: history.trump, initialHands: history.initialHands,
+                tricks: history.tricks, trainingSamples: history.trainingSamples, pendingTrickMoveSamples: [])
+        }
+        for saved in snapshot.pending {
+            let sample = try saved.restore()
+            let key = DealHistoryKey(blockIndex: sample.blockIndex, roundIndex: sample.roundIndex)
+            guard restored[key] != nil else { throw GameSessionError.invalidSnapshot }
+            restored[key]?.pendingTrickMoveSamples.append(PendingTrainingMoveSample(
+                trickIndex: sample.trickIndex, moveIndexInTrick: sample.moveIndexInTrick,
+                playerIndex: sample.playerIndex, playerCount: sample.playerCount,
+                cardsInRound: sample.cardsInRound, trump: sample.trump, playerBid: sample.playerBid,
+                playerTricksTakenBeforeMove: sample.playerTricksTakenBeforeMove,
+                handBeforeMove: sample.handBeforeMove, legalCards: sample.legalCards,
+                playedCardsInTrickBeforeMove: sample.playedCardsInTrickBeforeMove,
+                selectedCard: sample.selectedCard, selectedJokerPlayStyle: sample.selectedJokerPlayStyle,
+                selectedJokerLeadDeclaration: sample.selectedJokerLeadDeclaration))
+        }
+        self.historiesByDealKey = restored
+    }
+
     func reset() {
         historiesByDealKey.removeAll()
     }

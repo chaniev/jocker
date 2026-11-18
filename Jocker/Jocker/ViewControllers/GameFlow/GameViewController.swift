@@ -19,6 +19,10 @@ class GameViewController: UIViewController {
         static let finishButtonTopInset: CGFloat = 12
     }
     
+    var restoredSession: GameSessionSnapshot?
+    private var hasStartedRestoredSession = false
+    private var lifecycleObservers: [NSObjectProtocol] = []
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     var playerCount: Int = 4
     var gameMode: GameMode = .freeForAll
     var playerNames: [String] = []
@@ -46,7 +50,7 @@ class GameViewController: UIViewController {
         skView.ignoresSiblingOrder = true
         
         // Подбираем размер сцены под текущее соотношение сторон, чтобы на iPad не резались края.
-        let inputConfiguration = GameSceneInputConfiguration(
+        let inputConfiguration = self.restoredSession?.configuration ?? GameSceneInputConfiguration(
             playerCount: playerCount,
             gameMode: gameMode,
             playerNames: playerNames,
@@ -59,6 +63,8 @@ class GameViewController: UIViewController {
             inputConfiguration: inputConfiguration,
             environment: .live
         )
+        scene.resumeSnapshot = self.restoredSession
+        scene.onExitRequested = { [weak self] in self?.exitToMenu() }
         scene.scaleMode = .aspectFill
         scene.onScoreButtonTapped = { [weak self] in
             self?.presentScoreTable()
@@ -74,7 +80,69 @@ class GameViewController: UIViewController {
         
         // Показываем сцену
         skView.presentScene(scene)
+        scene.installExitButton(on: self)
+        self.observeLifecycle()
         setupUITestControlsIfNeeded()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if let scene = self.gameScene {
+            scene.tableExitLeadingConstraint?.constant = scene.tableExitLeadingInset()
+        }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if self.restoredSession != nil && !self.hasStartedRestoredSession {
+            self.hasStartedRestoredSession = true
+            self.gameScene?.resumeSessionFlow()
+        }
+    }
+
+    deinit {
+        self.lifecycleObservers.forEach(NotificationCenter.default.removeObserver)
+    }
+
+    private func observeLifecycle() {
+        self.lifecycleObservers.append(NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            self.backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in self?.endBackgroundTask() }
+            self.gameScene?.pauseSession()
+            // Programmatic dismissal does not submit a fallback choice. Tokens invalidate old callbacks.
+            self.presentedViewController?.dismiss(animated: false)
+            if self.gameScene?.flow.stage != .terminal {
+                self.gameScene?.checkpoint { [weak self] _ in self?.endBackgroundTask() }
+            } else { self.endBackgroundTask() }
+        })
+        self.lifecycleObservers.append(NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.gameScene?.foregroundSession()
+        })
+    }
+
+    private func endBackgroundTask() {
+        if self.backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(self.backgroundTask)
+            self.backgroundTask = .invalid
+        }
+    }
+
+    private func exitToMenu() {
+        guard let scene = self.gameScene, !scene.isExitingSession else { return }
+        scene.exitSession { [weak self] result in
+            guard let self else { return }
+            let finish = { [weak self] in self?.presentingViewController?.dismiss(animated: true) }
+            let showResult = { [weak self] in
+                guard let self else { return }
+                if case .failure = result {
+                    let alert = UIAlertController(title: "Прогресс не сохранён", message: "Не удалось сохранить последние действия. Несохранённый прогресс будет потерян.", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "Выйти в меню", style: .default) { _ in finish() })
+                    self.present(alert, animated: true)
+                } else { finish() }
+            }
+            if self.presentedViewController != nil { self.dismiss(animated: false, completion: showResult) }
+            else { showResult() }
+        }
     }
 
     private func presentScoreTable() {
@@ -153,6 +221,7 @@ class GameViewController: UIViewController {
                     completion(nil)
                 }
             )
+            self.gameScene?.installExitButton(on: jokerVC)
             jokerVC.modalPresentationStyle = .overFullScreen
             jokerVC.modalTransitionStyle = .crossDissolve
             presenter.present(jokerVC, animated: true)

@@ -42,7 +42,7 @@
 
 ## Зависимости и связи
 
-Подготовка возможна сразу. Перед недельным самостоятельным использованием закрыть [JCR-002](JCR-002-protect-hidden-cards.md) и проверить [JCR-001](../tasks-ready/JCR-001-save-and-resume.md); оценить готовность [JCR-003](JCR-003-clear-first-start.md), [JCR-004](JCR-004-gameplay-feedback.md), [JCR-010](JCR-010-score-table-back-button.md) и [JCR-013](JCR-013-small-screen-readability.md). Раннее модерируемое наблюдение допустимо с явно записанными ограничениями.
+Подготовка возможна сразу. Перед недельным самостоятельным использованием закрыть [JCR-002](JCR-002-protect-hidden-cards.md) и проверить [JCR-001](../implementation/JCR-001-save-and-resume.md); оценить готовность [JCR-003](JCR-003-clear-first-start.md), [JCR-004](JCR-004-gameplay-feedback.md), [JCR-010](JCR-010-score-table-back-button.md) и [JCR-013](JCR-013-small-screen-readability.md). Раннее модерируемое наблюдение допустимо с явно записанными ограничениями.
 
 ## Уточнения перед планированием
 

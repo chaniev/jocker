@@ -30,10 +30,19 @@ extension GameScene {
         let order = biddingOrder().filter { playerIndex in
             gameState.currentBlock != .fourth || !sessionState.pendingBlindSelections[playerIndex]
         }
-        processBiddingStep(order: order, step: 0)
+        self.flow.stage = .bidding
+        self.flow.order = order
+        self.flow.step = 0
+        self.flow.answered = self.sessionState.pendingBlindSelections
+        self.flow.bids = self.sessionState.pendingBids
+        self.flow.blindSelections = self.sessionState.pendingBlindSelections
+        self.checkpoint()
+        self.scheduleResume(after: 0.35)
     }
 
-    private func processBiddingStep(order: [Int], step: Int) {
+    func processBiddingStep(order: [Int], step: Int) {
+        guard !self.isSessionPaused, !self.isExitingSession else { return }
+        self.setPrimaryInteractionFlow(.bidding)
         guard gameState.phase == .bidding else {
             clearPrimaryInteractionFlow(.bidding)
             sessionState.resetTransientDealFlowState()
@@ -77,7 +86,8 @@ extension GameScene {
                 self.players[playerIndex].setBid(resolvedBid, isBlind: false, animated: true)
                 self.updateGameInfoLabel()
                 self.updateTurnUI(animated: true)
-                self.processBiddingStep(order: order, step: step + 1)
+                self.advanceBiddingCursor(player: playerIndex, nextStep: step + 1)
+                self.scheduleResume(after: 0.35)
             }
             return
         }
@@ -95,14 +105,8 @@ extension GameScene {
         updateGameInfoLabel()
         updateTurnUI(animated: true)
 
-        run(
-            .sequence([
-                .wait(forDuration: timing(for: playerIndex).biddingStepDelay),
-                .run { [weak self] in
-                    self?.processBiddingStep(order: order, step: step + 1)
-                }
-            ])
-        )
+        self.advanceBiddingCursor(player: playerIndex, nextStep: step + 1)
+        self.scheduleResume(after: timing(for: playerIndex).biddingStepDelay)
     }
 
     private func applyBidsToGameStateAndStartPlaying(_ bids: [Int], blindSelections: [Bool]) {
@@ -133,10 +137,22 @@ extension GameScene {
             safetyCounter += 1
         }
 
+        self.flow.stage = .playing
+        self.flow.bids = bids
+        self.flow.blindSelections = blindSelections
+        self.checkpoint()
         syncInProgressRoundResultsForScoreTable()
         updateGameInfoLabel()
         updateTurnUI(animated: true)
         runBotTurnIfNeeded()
+    }
+
+    private func advanceBiddingCursor(player: Int, nextStep: Int) {
+        self.flow.bids = self.sessionState.pendingBids
+        self.flow.blindSelections = self.sessionState.pendingBlindSelections
+        self.flow.answered[player] = true
+        self.flow.step = nextStep
+        self.checkpoint()
     }
 
     private func displayedBidsForBiddingModal(order: [Int], step: Int) -> [Int?] {

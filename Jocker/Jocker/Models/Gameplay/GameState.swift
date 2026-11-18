@@ -471,6 +471,18 @@ class GameState {
         phase = .gameEnd
     }
     
+    /// Passive restoration after validation by the persistence mapper.
+    func restore(players: [PlayerInfo], block: GameBlock, round: Int, dealer: Int, currentPlayer: Int, phase: GamePhase) {
+        self.players = players
+        self.currentBlock = block
+        self.currentRoundInBlock = round
+        self.currentDealer = dealer
+        self.currentPlayer = currentPlayer
+        self.phase = phase
+        self.calculateRoundsInBlock()
+        self.updateCardsPerPlayer()
+    }
+
     // MARK: - Helper Methods
     
     /// Получить информацию об игроке

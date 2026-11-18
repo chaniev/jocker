@@ -11,6 +11,7 @@ class PlayerSelectionViewController: UIViewController {
     private var selectedPlayerCount: Int = 4
     private var selectedGameMode: GameMode = .freeForAll
     private var isStartingGame = false
+    private var hasRecoveryError = false
 
     private let playersSettingsStore = GamePlayersSettingsStore()
     private var gamePlayersSettings: GamePlayersSettings = .default
@@ -97,8 +98,25 @@ class PlayerSelectionViewController: UIViewController {
         gamePlayersSettings = playersSettingsStore.loadSettings()
 
         view.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.15, alpha: 1.0)
+        GamePersistenceRepository.shared.sessions.recover { [weak self] result in
+            guard let self else { return }
+            if case .failure = result { self.hasRecoveryError = true; self.presentRecoveryErrorIfNeeded() }
+        }
         setupUI()
         updateButtonStates()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self.presentRecoveryErrorIfNeeded()
+    }
+
+    private func presentRecoveryErrorIfNeeded() {
+        guard self.hasRecoveryError, self.view.window != nil, self.presentedViewController == nil, !self.isStartingGame else { return }
+        self.hasRecoveryError = false
+        let alert = UIAlertController(title: "Запись итогов отложена", message: "Не удалось обновить статистику или историю. Сохранённые итоги остаются в очереди; можно продолжать и начинать новые партии.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "ОК", style: .default))
+        self.present(alert, animated: true)
     }
 
     private func setupUI() {
@@ -157,7 +175,7 @@ class PlayerSelectionViewController: UIViewController {
                 if self.selectedPlayerCount == 4 {
                     self.presentGameModeSelection()
                 } else {
-                    self.startGame()
+                    self.checkSavedGame()
                 }
             }
         }
@@ -206,11 +224,47 @@ class PlayerSelectionViewController: UIViewController {
         present(parametersViewController, animated: true)
     }
 
-    private func startGame() {
+    private func checkSavedGame() {
+        let slot = GameSessionSlot(playerCount: self.selectedPlayerCount, gameMode: self.selectedGameMode)
+        GamePersistenceRepository.shared.sessions.load(slot) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(nil): self.startGame()
+            case .success(let snapshot?):
+                let alert = UIAlertController(title: "Сохранённая игра", message: "Начав новую игру, вы безвозвратно удалите прежнюю партию и весь её прогресс. Она не попадёт в статистику и историю.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Продолжить сохранённую игру", style: .default) { [weak self] _ in self?.startGame(restored: snapshot) })
+                alert.addAction(UIAlertAction(title: "Начать новую", style: .destructive) { [weak self] _ in self?.discardSavedGame(slot) })
+                alert.addAction(UIAlertAction(title: "Отмена", style: .cancel) { [weak self] _ in self?.isStartingGame = false })
+                self.present(alert, animated: true)
+            case .failure:
+                let alert = UIAlertController(title: "Сохранение недоступно", message: "Не удалось прочитать сохранение. При начале новой игры прежний прогресс будет потерян.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Начать новую", style: .destructive) { [weak self] _ in self?.discardSavedGame(slot) })
+                alert.addAction(UIAlertAction(title: "Назад", style: .cancel) { [weak self] _ in self?.isStartingGame = false })
+                self.present(alert, animated: true)
+            }
+        }
+    }
+
+    private func discardSavedGame(_ slot: GameSessionSlot) {
+        GamePersistenceRepository.shared.sessions.discard(slot) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success: self.startGame()
+            case .failure:
+                let alert = UIAlertController(title: "Не удалось удалить сохранение", message: "Новая партия ещё не начата. Повторите удаление или вернитесь к выбору варианта.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Повторить", style: .default) { [weak self] _ in self?.discardSavedGame(slot) })
+                alert.addAction(UIAlertAction(title: "Назад", style: .cancel) { [weak self] _ in self?.isStartingGame = false })
+                self.present(alert, animated: true)
+            }
+        }
+    }
+
+    private func startGame(restored: GameSessionSnapshot? = nil) {
         let activeNames = gamePlayersSettings.activePlayerNames(playerCount: selectedPlayerCount)
         let activeDifficulties = gamePlayersSettings.activeBotDifficulties(playerCount: selectedPlayerCount)
 
         let gameVC = GameViewController()
+        gameVC.restoredSession = restored
         gameVC.playerCount = selectedPlayerCount
         gameVC.gameMode = selectedGameMode.normalized(for: selectedPlayerCount)
         gameVC.playerNames = activeNames
@@ -235,12 +289,12 @@ class PlayerSelectionViewController: UIViewController {
         alert.addAction(UIAlertAction(title: GameMode.freeForAll.title, style: .default) { [weak self] _ in
             guard let self else { return }
             self.selectedGameMode = .freeForAll
-            self.startGame()
+            self.checkSavedGame()
         })
         alert.addAction(UIAlertAction(title: GameMode.pairs.title, style: .default) { [weak self] _ in
             guard let self else { return }
             self.selectedGameMode = .pairs
-            self.startGame()
+            self.checkSavedGame()
         })
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel) { [weak self] _ in
             self?.isStartingGame = false

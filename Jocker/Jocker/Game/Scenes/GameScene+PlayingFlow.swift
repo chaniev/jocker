@@ -10,7 +10,7 @@ import SpriteKit
 extension GameScene {
     // MARK: - Playing Flow
 
-    private func registerTrickWin(for playerIndex: Int) {
+    func registerTrickWin(for playerIndex: Int) {
         guard playerIndex >= 0, playerIndex < playerCount else { return }
         let playedCards = trickNode.playedCards
         let blockIndex = max(0, gameState.currentBlock.rawValue - 1)
@@ -37,6 +37,8 @@ extension GameScene {
             playerCount: playerCount
         )
         resetTrumpStateIfRoundFinished()
+        self.flow.stage = self.gameState.phase == .roundEnd ? .roundEnd : .playing
+        if self.scoreManager.completedBlocks.count < GameConstants.totalBlocks { self.checkpoint() }
 
         updateGameInfoLabel()
         updateTurnUI(animated: true)
@@ -165,6 +167,8 @@ extension GameScene {
         )
 
         gameState.playCard(byPlayer: playerIndex)
+        self.flow.stage = .playing
+        self.checkpoint()
 
         if resolveTrickIfNeeded(resolutionDelay: timing(for: playerIndex).trickResolutionDelay) {
             return
@@ -228,16 +232,10 @@ extension GameScene {
 
     @discardableResult
     private func resolveTrickIfNeeded(resolutionDelay: TimeInterval) -> Bool {
-        return coordinator.resolveTrickIfNeeded(
-            on: self,
-            trickNode: trickNode,
-            playerCount: playerCount,
-            trump: currentTrump,
-            resolutionDelay: resolutionDelay
-        ) { [weak self] winnerIndex in
-            guard let self = self else { return }
-            self.registerTrickWin(for: winnerIndex)
-        }
+        guard self.trickNode.playedCards.count == self.playerCount,
+              let winner = TrickTakingResolver.winnerPlayerIndex(playedCards: self.trickNode.playedCards, trump: self.currentTrump) else { return false }
+        self.registerTrickWin(for: winner)
+        return true
     }
 
     func selectedHandCard(at point: CGPoint) -> (playerIndex: Int, cardNode: CardNode)? {
@@ -291,7 +289,7 @@ extension GameScene {
         return findAncestor(from: node, as: CardNode.self, maxDepth: 12)
     }
 
-    private func trickTargetPosition(for playerIndex: Int) -> CGPoint {
+    func trickTargetPosition(for playerIndex: Int) -> CGPoint {
         let center = trickNode.centerPosition
         guard players.indices.contains(playerIndex) else { return center }
 

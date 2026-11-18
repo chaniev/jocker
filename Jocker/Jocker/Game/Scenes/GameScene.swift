@@ -86,6 +86,16 @@ class GameScene: SKScene {
     private(set) var environment: GameEnvironment = .live
     private(set) var coordinator: GameSceneCoordinator = GameEnvironment.live.makeCoordinator()
     var sessionState = GameSceneSessionState()
+    var resumeSnapshot: GameSessionSnapshot?
+    var persistence: GameSessionPersistenceCoordinator?
+    var flow = GameFlowResumeState()
+    var flowGeneration = 0
+    var isSessionPaused = false
+    var isExitingSession = false
+    var terminalCommitted = false
+    var terminalInFlight = false
+    var onExitRequested: (() -> Void)?
+    var tableExitLeadingConstraint: NSLayoutConstraint?
     let nodeFactory = GameSceneNodeFactory()
     let modalPresenter = GameSceneModalPresenter()
     let gameResultsPersistenceCoordinator = GameResultsPersistenceCoordinator()
@@ -147,7 +157,7 @@ class GameScene: SKScene {
     }
 
     var isInteractionBlocked: Bool {
-        return coordinator.isInteractionLocked || interactionState.isBlockingInteraction
+        return isSessionPaused || isExitingSession || terminalInFlight || flow.stage == .terminal || coordinator.isInteractionLocked || interactionState.isBlockingInteraction
     }
 
     convenience init(size: CGSize, environment: GameEnvironment) {
@@ -357,7 +367,18 @@ class GameScene: SKScene {
         setupTurnIndicator()
         updateGameInfoLabel()
         updateTurnUI(animated: false)
-        beginFirstDealerSelectionFlow()
+        if let store = self.environment.sessionStore {
+            self.persistence = GameSessionPersistenceCoordinator(store: store, restored: self.resumeSnapshot)
+        }
+        if let snapshot = self.resumeSnapshot {
+            do {
+                try self.restoreSession(snapshot)
+            } catch {
+                self.showSessionError(message: "Сохранение не удалось восстановить. Прогресс этой партии недоступен.")
+            }
+        } else {
+            beginFirstDealerSelectionFlow()
+        }
 
         // Повторный layout на следующем runloop учитывает финальные safe area insets.
         DispatchQueue.main.async { [weak self] in
@@ -776,6 +797,15 @@ class GameScene: SKScene {
             startingPlayerIndex: firstPlayerOnLeft
         )
 
+        self.firstDealerIndex = selection.dealerIndex
+        self.gameState.startGame(initialDealerIndex: selection.dealerIndex)
+        self.deck.reset()
+        self.flow.stage = .readyToDeal
+        self.checkpoint()
+        if self.isUITestMode {
+            self.finishFirstDealerSelectionFlow(selectedDealerIndex: selection.dealerIndex)
+            return
+        }
         runFirstDealerSelectionAnimation(
             tableCard: selection.tableCard,
             dealtCards: selection.dealtCards,
@@ -876,7 +906,6 @@ class GameScene: SKScene {
         removeAction(forKey: ActionKey.firstDealerSelection)
 
         firstDealerIndex = selectedDealerIndex
-        resetForNewGameSession()
         gameState.startGame(initialDealerIndex: selectedDealerIndex)
 
         firstDealerAnnouncementNode?.removeFromParent()
@@ -895,6 +924,10 @@ class GameScene: SKScene {
     }
 
     func resetForNewGameSession() {
+        self.flowGeneration += 1
+        self.flow = GameFlowResumeState()
+        self.terminalCommitted = false
+        self.terminalInFlight = false
         removeAllActions()
         removeAction(forKey: ActionKey.firstDealerSelection)
         removeAction(forKey: ActionKey.botTurn)
@@ -930,6 +963,15 @@ class GameScene: SKScene {
         sessionState.resetForNewGameSession()
         resetAllInteractionFlowState()
         updateDealButtonState()
+    }
+
+    func settleSessionPresentation() {
+        self.firstDealerAnnouncementNode?.removeFromParent()
+        self.firstDealerAnnouncementNode = nil
+        self.firstDealerAnnouncementLabel = nil
+        self.firstDealerSelectionCardsNode?.removeFromParent()
+        self.firstDealerSelectionCardsNode = nil
+        self.clearPrimaryInteractionFlow(.selectingFirstDealer)
     }
 
     private func clearInProgressRoundResultsForScoreTable() {
@@ -1048,8 +1090,21 @@ class GameScene: SKScene {
         firstDealerAnnouncementLabel = label
     }
 
-    private func refreshLayout() {
-        setupPlayers()
+    func tableExitLeadingInset() -> CGFloat {
+        guard let view = self.view else { return 12 }
+        let rightEdge = self.layoutResolver.scoreButtonPosition().x + GameSceneLayoutResolver.Metrics.actionButtonSize.width / 2
+        return max(0, rightEdge * view.bounds.width / self.size.width - view.safeAreaInsets.left + 12)
+    }
+
+    func refreshLayout() {
+        // Layout must not recreate hands or invalidate a pending joker's card node.
+        if let table = self.pokerTable {
+            let positions = self.layoutResolver.playerSeatPositions(playerCount: self.playerCount,
+                tableWidth: table.tableWidth, tableHeight: table.tableHeight)
+            for (index, position) in positions.enumerated() where self.players.indices.contains(index) {
+                self.players[index].position = position
+            }
+        }
 
         gameInfoLabel?.position = layoutResolver.gameInfoLabelPosition()
         scoreButton?.position = layoutResolver.scoreButtonPosition()
@@ -1191,22 +1246,13 @@ class GameScene: SKScene {
         guard completedBlockCount > sessionState.lastPresentedBlockResultsCount else { return false }
         guard gameState.currentRoundInBlock + 1 >= gameState.totalRoundsInBlock else { return false }
 
-        sessionState = gameResultsPersistenceCoordinator.exportCompletedBlockHistoryIfNeeded(
-            sessionState: sessionState,
-            completedBlockCount: completedBlockCount,
-            histories: dealHistoryStore.allHistories(),
-            playerCount: playerCount,
-            gameMode: gameMode,
-            playerNames: currentPlayerNames,
-            playerControlTypes: playerControlTypes,
-            exportService: dealHistoryExportService
-        )
 
         if !presentBlockResultsModal(forCompletedBlockCount: completedBlockCount) {
             return false
         }
 
         sessionState.lastPresentedBlockResultsCount = completedBlockCount
+        self.checkpoint()
         return true
     }
 
@@ -1223,19 +1269,19 @@ class GameScene: SKScene {
             (gameState.phase == .roundEnd && isFinalRoundCompleted)
         guard shouldPresent else { return false }
 
+        if self.persistence != nil && !self.terminalCommitted {
+            self.commitTerminalSession()
+            return true
+        }
+
         let playerSummaries = buildFinalGamePlayerSummaries()
         guard !playerSummaries.isEmpty else { return false }
 
-        sessionState = gameResultsPersistenceCoordinator.exportFinalGameHistoryIfNeeded(
-            sessionState: sessionState,
-            histories: dealHistoryStore.allHistories(),
-            playerCount: playerCount,
-            gameMode: gameMode,
-            playerNames: currentPlayerNames,
-            playerControlTypes: playerControlTypes,
-            exportService: dealHistoryExportService
-        )
-
+        if self.persistence == nil {
+            self.sessionState = self.gameResultsPersistenceCoordinator.persistGameStatisticsIfNeeded(
+                sessionState: self.sessionState, playerSummaries: playerSummaries, playerCount: self.playerCount,
+                gameMode: self.gameMode, completedBlocks: self.scoreManager.completedBlocks, statisticsStore: self.gameStatisticsStore)
+        }
         sessionState.hasPresentedGameResultsModal = true
         gameState.markGameEnded()
         updateGameInfoLabel()

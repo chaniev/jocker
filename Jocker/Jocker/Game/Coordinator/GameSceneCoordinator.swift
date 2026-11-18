@@ -52,6 +52,12 @@ final class GameSceneCoordinator {
         )
     }
 
+    var roundSnapshot: GameRoundService.Snapshot { self.roundService.snapshot }
+
+    func restoreRound(_ snapshot: GameRoundService.Snapshot) {
+        self.roundService.restore(snapshot)
+    }
+
     func markDidDeal() {
         roundService.markDidDeal()
     }

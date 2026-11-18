@@ -17,6 +17,25 @@ final class GameRoundService {
     private var hasDealtAtLeastOnce = false
     private var lastRecordedRoundKey: RoundRecordKey?
 
+    struct Snapshot: Codable {
+        var hasDealt: Bool
+        var block: Int?
+        var round: Int?
+    }
+
+    var snapshot: Snapshot {
+        Snapshot(hasDealt: self.hasDealtAtLeastOnce, block: self.lastRecordedRoundKey?.block, round: self.lastRecordedRoundKey?.round)
+    }
+
+    func restore(_ snapshot: Snapshot) {
+        self.hasDealtAtLeastOnce = snapshot.hasDealt
+        if let block = snapshot.block, let round = snapshot.round {
+            self.lastRecordedRoundKey = RoundRecordKey(block: block, round: round)
+        } else {
+            self.lastRecordedRoundKey = nil
+        }
+    }
+
     func markDidDeal() {
         hasDealtAtLeastOnce = true
     }

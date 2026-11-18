@@ -18,15 +18,18 @@ struct GameEnvironment {
     let makeBotTrumpSelectionService: (BotTuning) -> BotTrumpSelectionService
     let makeBotTurnService: (BotTuning) -> GameTurnService
 
+    var sessionStore: GameSessionStore? = nil
+
     static let live = GameEnvironment(
         makeCoordinator: { GameSceneCoordinator() },
-        makeGameStatisticsStore: { UserDefaultsGameStatisticsStore() },
+        makeGameStatisticsStore: { GamePersistenceRepository.shared.statistics },
         makeDealHistoryStore: { DealHistoryStore() },
         makeDealHistoryExportService: { DealHistoryExportService() },
         makeBotTuning: { BotTuning(difficulty: $0) },
         makeBotBiddingService: { BotBiddingService(tuning: $0) },
         makeBotTrumpSelectionService: { BotTrumpSelectionService(tuning: $0) },
-        makeBotTurnService: { GameTurnService(tuning: $0) }
+        makeBotTurnService: { GameTurnService(tuning: $0) },
+        sessionStore: GamePersistenceRepository.shared.sessions
     )
 }
 

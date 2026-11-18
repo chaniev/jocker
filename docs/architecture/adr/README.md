@@ -5,4 +5,4 @@ ADR фиксируют технические решения в рамках п�
 
 | ADR | Статус | Задача |
 |---|---|---|
-| [0001 — Надёжное сохранение и завершение партии](0001-durable-game-session-persistence.md) | Accepted — владелец проекта, 16.11.2026 | [JCR-001](../../../backlog/tasks-ready/JCR-001-save-and-resume.md) |
+| [0001 — Надёжное сохранение и завершение партии](0001-durable-game-session-persistence.md) | Accepted — владелец проекта, 16.11.2026 | [JCR-001](../../../backlog/implementation/JCR-001-save-and-resume.md) |

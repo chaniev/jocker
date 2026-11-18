@@ -15,7 +15,7 @@ final class GameRepeatResultsFlowUITests: XCTestCase {
 
     func testRepeatedGameFlow_presentsFinalResultsWindowTwice() throws {
         let app = XCUIApplication()
-        app.launchArguments.append("-uiTestMode")
+        app.launchArguments += ["-uiTestMode", "-sessionTestID", UUID().uuidString]
         app.launch()
 
         startFourPlayerGame(app)

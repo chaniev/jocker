@@ -6,7 +6,7 @@ Accepted (пользователь текущего чата, владелец �
 Подготовлено Codex; принято владельцем ответом «Да, подтверждаю предложенный
 способ хранения». Дополнительный ответ об ошибке автосохранения обычного хода
 учтён в решении ниже. Источник —
-[карточка JCR-001](../../../backlog/tasks-ready/JCR-001-save-and-resume.md#дополнительные-решения-по-плану).
+[карточка JCR-001](../../../backlog/implementation/JCR-001-save-and-resume.md#дополнительные-решения-по-плану).
 Продуктовое требование: [REQ-SAVE-001](../../requirements/01-сохранение.md).
 Реализация не начата.
 
@@ -186,7 +186,7 @@ training CLI; общие модели сохраняют совместимос�
 ## Продуктовое уточнение — 16.11.2026
 
 Источник: три ответа владельца в текущем чате, дословно сохранённые в
-[JCR-001](../../../backlog/tasks-ready/JCR-001-save-and-resume.md#дополнительные-решения-по-плану).
+[JCR-001](../../../backlog/implementation/JCR-001-save-and-resume.md#дополнительные-решения-по-плану).
 Это уточнение наблюдаемого поведения; новый способ хранения не выбирался.
 
 - Ошибка самого первого сохранения обрабатывается так же, как ошибка обычного
@@ -214,7 +214,7 @@ commit; недоступная статистика и несколько сле
 ## Links
 
 - [План JCR-001](../../../backlog/implementation-plans/JCR-001-save-and-resume.plan.md)
-- [Продуктовые решения](../../../backlog/tasks-ready/JCR-001-save-and-resume.md#принятые-продуктовые-решения)
+- [Продуктовые решения](../../../backlog/implementation/JCR-001-save-and-resume.md#принятые-продуктовые-решения)
 - [GameStatisticsStore](../../../Jocker/Jocker/Game/Services/Statistics/GameStatisticsStore.swift)
 - [GameResultsPersistenceCoordinator](../../../Jocker/Jocker/Game/Coordinator/GameResultsPersistenceCoordinator.swift)
 - [DealHistoryExportService](../../../Jocker/Jocker/Game/Services/History/DealHistoryExportService.swift)

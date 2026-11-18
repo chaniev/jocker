@@ -29,10 +29,11 @@ final class GameStatisticsViewController: UIViewController {
     )
     private let scopeSegmentedControl = UISegmentedControl(items: GameStatisticsScope.allCases.map(\.title))
     private let statisticsTableView = GameStatisticsTableView()
+    private let unavailableLabel = UILabel()
     private let closeButton = PrimaryPanelButton(title: "Назад")
 
     init(
-        statisticsStore: GameStatisticsStore = UserDefaultsGameStatisticsStore(),
+        statisticsStore: GameStatisticsStore = GamePersistenceRepository.shared.statistics,
         playersSettingsStore: GamePlayersSettingsStore = GamePlayersSettingsStore()
     ) {
         self.statisticsStore = statisticsStore
@@ -52,12 +53,32 @@ final class GameStatisticsViewController: UIViewController {
         setupHeader()
         setupStatisticsTable()
         setupCloseButton()
+        self.unavailableLabel.text = "Статистика временно недоступна. Сохранённые данные не удалены."
+        self.unavailableLabel.numberOfLines = 0
+        self.unavailableLabel.textAlignment = .center
+        self.unavailableLabel.textColor = .white
+        self.unavailableLabel.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(self.unavailableLabel)
+        NSLayoutConstraint.activate([
+            self.unavailableLabel.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            self.unavailableLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 40),
+            self.unavailableLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -40)
+        ])
+        self.unavailableLabel.isHidden = true
         applySelectedScope(index: 0)
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        snapshot = statisticsStore.loadSnapshot()
+        switch self.statisticsStore.loadSnapshotResult() {
+        case .success(let snapshot):
+            self.snapshot = snapshot
+            self.unavailableLabel.isHidden = true
+            self.statisticsTableView.isHidden = false
+        case .failure:
+            self.statisticsTableView.isHidden = true
+            self.unavailableLabel.isHidden = false
+        }
         playersSettings = playersSettingsStore.loadSettings()
         refreshStatisticsTable()
     }

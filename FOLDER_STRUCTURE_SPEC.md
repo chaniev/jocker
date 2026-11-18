@@ -610,3 +610,32 @@ Jocker/JockerUITests/
 Harness stage 2: `planning.py` reads canonical pack selectors and forms one XCTest invocation; `environment.py` resolves and prepares an eligible simulator before builds; `results.py` extracts structured results from `.xcresult`. Unit tests live under `scripts/harness/tests/`. These files do not belong to Xcode targets.
 
 `targets.py` validates explicit PBX source membership, missing/new Swift files, duplicate build entries and app dependencies on training. Runtime sources may be shared with `JockerSelfPlayTools`; training engine sources belong only to that library. `Jocker/JockerSelfPlayTools/main.swift` is deliberately CLI-only because the Xcode tools target is a static library. Conditional source exclusions, synchronized groups and generated-source build rules fail closed until supported. `test_targets.py` covers boundary violations.
+
+## JCR-001 — durable game sessions
+
+- `Jocker/Jocker/Game/Services/Persistence/`: `GameSessionStore`, serialized
+  `FileGameSessionStore`, versioned `GameSessionCodec`, `GameSessionError`, and
+  app-owned `GamePersistenceRepository`. Active slots, discard tombstones and
+  independent match receipts live in Application Support, outside the repository.
+- `Jocker/Jocker/Models/Gameplay/`: `GameSessionSnapshot`, `GameSessionSlot`,
+  `GameFlowResumeState`, `GameStateSnapshot`, `RoundResultSnapshot`, and
+  `BlockResultSnapshot` define the explicit v1 persistence contract.
+- `Jocker/Jocker/Models/Cards/CardSnapshot.swift`,
+  `Models/Joker/JokerDeclarationSnapshot.swift`, and `Models/History/*Snapshot.swift`
+  preserve stable card/declaration identifiers and complete history data.
+- `Jocker/Jocker/Scoring/ScoreManagerSnapshot.swift`: passive score restore with
+  recorded round scores, without applying premiums twice.
+- `Jocker/Jocker/Game/Coordinator/GameSessionPersistenceCoordinator.swift`:
+  distinct live/persisted revisions; `Game/Scenes/GameScene+Persistence.swift`:
+  checkpoint capture, rendering, generation tokens and lifecycle continuation.
+- `Jocker/Jocker/Game/Services/Statistics/FileGameStatisticsStore.swift` and
+  `GameStatisticsAccumulator.swift`: canonical atomic aggregate, legacy import,
+  match-ID deduplication and shared arithmetic.
+- Tests mirror these features under `Jocker/JockerTests/Models/Gameplay/`
+  (including frozen v1 payloads in `Fixtures/`), `Game/Services/Persistence/`
+  and `Game/Scenes/`; `Jocker/JockerUITests/GameResumeFlowUITests.swift` verifies
+  variant selection, relaunch, replacement and foreground handling.
+- These DTOs and stores belong only to the app target. Shared game/score models
+  expose passive, model-typed restore APIs and remain usable by the training target.
+- `backlog/implementation/` contains explicitly started work; JCR-001 moved here
+  from `tasks-ready/` on 2026-11-18. Task progress is recorded under `backlog/logs/`.
