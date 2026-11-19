@@ -63,7 +63,7 @@ def select_checks(paths, config, ci=False):
 
 def instructions(root):
     errors = check_instructions(root)
-    print("\n".join(errors) if errors else "Instruction checks passed (sources, known stack conflicts, metadata, links and catalog).")
+    print("\n".join(errors) if errors else "Instruction checks passed (sources, known stack conflicts, metadata, links, structural paths and catalog).")
     return 1 if errors else 0
 
 

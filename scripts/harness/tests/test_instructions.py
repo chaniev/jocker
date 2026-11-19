@@ -138,3 +138,60 @@ class InstructionTests(unittest.TestCase):
     def test_generated_artifacts_are_not_instruction_sources(self):
         self.write(".derivedData/temporary/AGENTS.md", "Use SwiftUI first.\n")
         self.assertEqual(self.errors(), "")
+
+    def test_structure_contract_detects_renamed_file_and_missing_directory(self):
+        source = self.write("Game/State.swift", "struct State {}\n")
+        self.write("FOLDER_STRUCTURE_SPEC.md", "| State | `./Game/State.swift` |\n"
+                   "- Services: `./Services/`\n")
+        directory = self.root / "Services"
+        directory.mkdir()
+        self.assertEqual(self.errors(), "")
+        source.rename(source.with_name("Renamed.swift"))
+        directory.rmdir()
+        errors = self.errors()
+        self.assertIn("missing structure file: ./Game/State.swift", errors)
+        self.assertIn("missing structure directory: ./Services/", errors)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(verify.instructions(self.root), 1)
+
+    def test_structure_contract_requires_a_file_or_directory_of_the_right_kind(self):
+        self.write("Game/State.swift", "struct State {}\n")
+        self.write("FOLDER_STRUCTURE_SPEC.md", "`./Game/` and `./Game/State.swift`\n")
+        self.assertEqual(self.errors(), "")
+        self.write("FOLDER_STRUCTURE_SPEC.md", "`./Game` and `./Game/State.swift/`\n")
+        self.assertIn("missing structure file: ./Game", self.errors())
+        self.assertIn("missing structure directory: ./Game/State.swift/", self.errors())
+
+    def test_structure_glob_tracks_family_without_listing_each_file(self):
+        first = self.write("Game/Engine.swift", "struct Engine {}\n")
+        second = self.write("Game/Engine+Run.swift", "extension Engine {}\n")
+        self.write("FOLDER_STRUCTURE_SPEC.md", "`./Game/Engine*.swift`\n")
+        self.assertEqual(self.errors(), "")
+        first.unlink()
+        self.assertEqual(self.errors(), "")
+        second.unlink()
+        self.assertIn("missing structure file: ./Game/Engine*.swift", self.errors())
+
+    def test_structure_templates_examples_and_unicode(self):
+        self.write("правила игры/ход.txt", "Rules\n")
+        self.write("FOLDER_STRUCTURE_SPEC.md", "`./правила игры/` and `./правила игры/ход.txt`\n"
+                   "`./backlog/<queue>/` and `./.derivedData/<run-id>/` are templates.\n"
+                   "```text\n`./missing-example.swift`\n```\n"
+                   "`Type+Purpose.swift` is a naming example.\n")
+        self.assertEqual(self.errors(), "")
+
+    def test_structure_paths_cannot_escape_repository_or_use_malformed_globs(self):
+        for path in ("./../outside.swift", "./Game/**invalid.swift"):
+            with self.subTest(path=path):
+                self.write("FOLDER_STRUCTURE_SPEC.md", "`" + path + "`\n")
+                self.assertIn("invalid structure path:", self.errors())
+
+    def test_structure_directory_glob_requires_directory_and_rejects_external_symlink(self):
+        self.write("Game/Area.swift", "struct Area {}\n")
+        self.write("FOLDER_STRUCTURE_SPEC.md", "`./Game/*/`\n")
+        self.assertIn("missing structure directory: ./Game/*/", self.errors())
+        (self.root / "Game/Area").mkdir()
+        self.assertEqual(self.errors(), "")
+        with tempfile.TemporaryDirectory() as external:
+            (self.root / "Game/External").symlink_to(external, target_is_directory=True)
+            self.assertIn("structure path leaves repository:", self.errors())

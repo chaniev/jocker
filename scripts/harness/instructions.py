@@ -1,7 +1,7 @@
 """Bounded instruction checks and a catalog generated from repository metadata.
 
 This is not a semantic policy evaluator. It checks known affirmative stack
-conflicts, local instruction links, required entry points and catalog drift.
+conflicts, local links, structural paths, required entry points and catalog drift.
 Only the scalar/triple-quoted profile format used by .codex/agents is accepted.
 """
 import argparse
@@ -120,11 +120,41 @@ def source_paths(root):
     return sorted(path for path in paths if path.is_file())
 
 
+def check_structure_paths(root, content):
+    """Check explicit ./ paths in the spec; templates are not existence claims.
+
+    Paths are read from the contract itself, not a second maintained inventory.
+    This checks existence/kind only; targets.py owns Xcode membership.
+    """
+    errors = []
+    label = "FOLDER_STRUCTURE_SPEC.md"
+    repository = root.resolve()
+    for target in sorted(set(re.findall(r"`(\./[^`\n]*)`", content))):
+        if re.search(r"<[^<>]+>", target):
+            continue
+        relative = target[2:].rstrip("/") or "."
+        kind = "directory" if target.endswith("/") else "file"
+        try:
+            if Path(relative).is_absolute() or ".." in Path(relative).parts:
+                raise ValueError("expected a repository-relative path")
+            matches = list(root.glob(relative)) if any(c in relative for c in "*?[") else [root / relative]
+            outside = [p for p in matches if not p.resolve().is_relative_to(repository)]
+            if outside:
+                errors.append(f"{label}: structure path leaves repository: {target}")
+            elif not any(p.is_dir() if kind == "directory" else p.is_file() for p in matches):
+                errors.append(f"{label}: missing structure {kind}: {target}")
+        except (OSError, ValueError, RuntimeError) as error:
+            errors.append(f"{label}: invalid structure path: {target}: {error}")
+    return errors
+
+
 def check_sources(root):
     errors = ["Missing " + path for path in REQUIRED if not (root / path).is_file()]
     for path in source_paths(root):
         label = path.relative_to(root).as_posix()
         content = prose(path.read_text())
+        if label == "FOLDER_STRUCTURE_SPEC.md":
+            errors += check_structure_paths(root, content)
         for line in content.splitlines():
             # Match known affirmative clauses, not prohibitions or the explicit
             # training-target concurrency exception. Report the clause for repair.
@@ -198,7 +228,7 @@ def main():
     if args.write:
         parser.error("--write requires catalog mode")
     errors = check(ROOT)
-    print("\n".join(errors) if errors else "Instruction checks passed (sources, known stack conflicts, metadata, links and catalog).")
+    print("\n".join(errors) if errors else "Instruction checks passed (sources, known stack conflicts, metadata, links, structural paths and catalog).")
     return bool(errors)
 
 
