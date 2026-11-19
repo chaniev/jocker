@@ -4,6 +4,21 @@
 
 This document is the source of truth for repository structure and file placement.
 
+## Build Target Boundaries
+
+| Build | Purpose and source membership |
+|---|---|
+| `Jocker` | UIKit/SpriteKit app; runtime sources, including app-only persistence DTOs/stores |
+| `JockerTests` | Unit/integration tests; may link the training library |
+| `JockerUITests` | XCUITest sources |
+| `JockerSelfPlayTools` | Xcode static library: training engine, adapter, runner and selected shared runtime sources; never linked into the app |
+| Standalone CLI | Built by `scripts/train_bot_tuning.sh`; training/shared sources plus `Jocker/JockerSelfPlayTools/main.swift`, which belongs to no Xcode Sources phase |
+
+The specification owns intended boundaries; `project.pbxproj` records actual membership.
+Training files can live under `Game/Services/AI/`; directory alone does not prove
+membership. Existing training-only concurrency is allowed only in sources excluded
+from the app. Runtime sources shared with training retain app constraints.
+
 ## Repository Layout
 
 ```
@@ -608,7 +623,7 @@ Jocker/JockerUITests/
 - Scoring logic is placed in `Jocker/Jocker/Scoring/`.
 - UIKit controllers and views are grouped by flow in `Jocker/Jocker/ViewControllers/Bidding/`, `Jocker/Jocker/ViewControllers/GameFlow/`, `Jocker/Jocker/ViewControllers/Results/`, and `Jocker/Jocker/ViewControllers/Statistics/`.
 - Shared AI test builders and service fixtures live in `Jocker/JockerTests/Bot/` next to the bot service regression suites they support.
-- Unit tests are grouped by feature under `Jocker/JockerTests/` subfolders.
+- Unit tests follow the source-to-test mapping below; preserve existing feature groups.
 - Xcode Project Navigator groups under `Models/`, `Game/Services/`, `ViewControllers/`, and `JockerTests/` should mirror these filesystem subfolders 1:1.
 - Shared core primitives are placed in `Jocker/Jocker/Core/`.
 - Resource files (`.sks`, assets, storyboards) stay under `Jocker/Jocker/Resources/`, `Jocker/Jocker/Assets.xcassets/`, and `Jocker/Jocker/Base.lproj/`.
@@ -616,6 +631,31 @@ Jocker/JockerUITests/
 - Project plans, reviews and specifications live under `docs/` at repository root.
 - Product backlog cards live under `backlog/` with stable `JCR-NNN` IDs; keep the index and individual card statuses consistent. Implementation plans are separate from backlog registration.
 - Game rules reference notes live under `правила игры/`.
+
+## Source-to-Test Mapping
+
+Paths below are relative to `Jocker/Jocker/` and `Jocker/JockerTests/` respectively.
+Specific entries take precedence over broader entries. Existing suites stay in place.
+
+| Source area | Test directory |
+|---|---|
+| `Models/Bot/`, `Game/Services/AI/`, training engine/runner | `Bot/` |
+| `Models/Gameplay/BiddingRules.swift`, `Models/Gameplay/TrickTakingResolver.swift` | `Rules/` |
+| `Models/Gameplay/GameState.swift`, `Game/Services/Flow/`, gameplay scenes/coordinators | `Flow/` |
+| Session persistence models and fixtures | `Models/Gameplay/`, fixtures in `Models/Gameplay/Fixtures/` |
+| `Game/Services/Persistence/`, session persistence coordinator | `Game/Services/Persistence/` |
+| Session lifecycle/scene persistence | `Game/Scenes/` |
+| Other card/gameplay/history/joker/player models | `Models/` |
+| `Models/Players/PlayerDisplayNameFormatter.swift`, `Game/Services/Settings/` | `Players/` |
+| `Game/Services/History/` | `History/` |
+| `Scoring/` | `Scoring/` |
+| `ViewControllers/Results/` | `Results/` |
+| Statistics models, services and controllers | `Statistics/` |
+
+UI flows live under `Jocker/JockerUITests/`. Shared bot builders/fixtures stay in
+`Bot/`; other fixtures stay with their owning suite. Existing integration suites
+can span types. For a new area absent from this table, mirror its full app-relative
+directory under `Jocker/JockerTests/`; document a new exception here only when needed.
 
 ## Type/File Rule
 

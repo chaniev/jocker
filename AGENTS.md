@@ -15,8 +15,8 @@
 
 ## Project structure
 - Xcode project at `Jocker/Jocker.xcodeproj` with 4 targets:
-  - `Jocker` (app), `JockerTests` (unit), `JockerUITests` (UI), `JockerSelfPlayTools` (training CLI)
-- `JockerSelfPlayTools` is a separate target — its sources (`BotSelfPlayEvolutionEngine+*.swift`, `BotTuning+SelfPlayEvolution.swift`, `BotTrainingRunner.swift`, `main.swift`) are NOT compiled into the app
+  - `Jocker` (app), `JockerTests` (unit), `JockerUITests` (UI), `JockerSelfPlayTools` (training static library)
+- Training engine/runner sources are excluded from the app. `Jocker/JockerSelfPlayTools/main.swift` is standalone CLI-only, not an Xcode target input. See the target table in `FOLDER_STRUCTURE_SPEC.md`.
 - Read `FOLDER_STRUCTURE_SPEC.md` before making structural changes; update it after
 
 ## One type per file
@@ -59,7 +59,7 @@
 ## Testing
 - Harness reports and child test artifacts go to `.derivedData/harness-runs/<run-id>/` (gitignored). Standalone scripts retain their `.derivedData/` defaults.
 - CI (GitHub Actions, `macos-15`) runs `make harness-ci`: instruction checks, harness tests and full Xcode tests; bot training is not scheduled automatically.
-- Test file placement mirrors app structure under `Jocker/JockerTests/<feature>/`
+- Test placement follows the source-to-test mapping in `FOLDER_STRUCTURE_SPEC.md`; existing feature groups are preserved.
 - Regression packs are shell scripts that run `xcodebuild test -only-testing:...` with targeted test lists
 
 ## Bot AI

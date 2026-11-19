@@ -50,6 +50,7 @@
       "patterns": [
         "**/AGENTS.md",
         "AGENTS.md",
+        "FOLDER_STRUCTURE_SPEC.md",
         ".agents/**",
         ".codex/**",
         "docs/**",

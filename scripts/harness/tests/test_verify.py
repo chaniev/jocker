@@ -44,6 +44,18 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(set(selected), {"instructions", "harness-tests", "target-membership", "requirements"})
         self.assertIn("full-tests", verify.select_checks([], CONFIG, ci=True))
 
+    def test_structure_spec_preserves_documentation_and_source_check_selection(self):
+        documentation = ["FOLDER_STRUCTURE_SPEC.md"]
+        mandatory = {"instructions", "harness-tests", "target-membership", "requirements"}
+        self.assertEqual(set(verify.select_checks(documentation, CONFIG)), mandatory)
+        for source in ("Jocker/Jocker/ViewControllers/Results/ScoreTableView.swift",
+                       "Jocker/Jocker/Scoring/ScoreManager.swift",
+                       "Jocker/Jocker.xcodeproj/project.pbxproj"):
+            with self.subTest(source=source):
+                self.assertEqual(set(verify.select_checks([source] + documentation, CONFIG)),
+                                 set(verify.select_checks([source], CONFIG)))
+        self.assertIn("full-tests", verify.select_checks(documentation, CONFIG, ci=True))
+
     def test_training_files_union_rules(self):
         selected = verify.select_checks(["Jocker/Jocker/Game/Services/AI/BotSelfPlayEvolutionEngine+Evolution.swift"], CONFIG)
         self.assertTrue({"full-tests", "phase"} <= selected.keys())
