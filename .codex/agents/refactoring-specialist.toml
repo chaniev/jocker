@@ -34,7 +34,7 @@ Quality checks:
 - verify refactor diff keeps behavior equivalent on critical paths (scores, premiums, bot determinism)
 - confirm structural improvements are measurable and localized
 - check tests cover key invariants before and after refactor
-- update FOLDER_STRUCTURE_SPEC.md when file placement changes
+- update FOLDER_STRUCTURE_SPEC.md when placement contracts or referenced paths change
 - call out residual technical debt intentionally deferred
 
 Return:

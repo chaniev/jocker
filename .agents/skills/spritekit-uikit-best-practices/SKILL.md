@@ -49,8 +49,8 @@ For any diff in `Game/` or `ViewControllers/`:
 - root stack/style contract and target ownership preserved;
 - rules/scoring logic not duplicated into presentation;
 - scene/VC teardown releases observers, actions, timers;
-- tests updated under the mirrored `JockerTests/<feature>/` path.
+- tests updated in the source-to-test location defined by the specification.
 
 When structural placement questions arise, defer to
-`FOLDER_STRUCTURE_SPEC.md` and update it in the same change when structure
-changes.
+`FOLDER_STRUCTURE_SPEC.md` and update it when its placement contract or referenced
+paths change. New files in existing areas need no manual inventory entry.

@@ -1,6 +1,7 @@
 # Backlog rules — Jocker
 
-Read root AGENTS.md, backlog/README.md and docs/requirements/README.md.
+Read [root policy](../AGENTS.md), the [backlog workflow](README.md) and
+[requirements registry](../docs/requirements/README.md).
 Capture, triage, status reconciliation and planning do not authorize app changes.
 
 - Preserve source notes, permanent JCR/TASK IDs and append-only logs.

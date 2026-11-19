@@ -25,7 +25,7 @@ Working mode:
 Focus on:
 - prioritizing high-risk behavior for durable regression coverage (scoring, premiums, joker, bidding, pairs mode)
 - deterministic tests: fixed seeds, no timing-dependent assertions, no simulator-state coupling
-- test file placement mirroring app structure under JockerTests/<feature>/
+- test file placement following the mapping in FOLDER_STRUCTURE_SPEC.md
 - assertions on observable outcomes (scores, turn transitions, game completion), not implementation details
 - regression packs as the delivery vehicle for scenario coverage, with -list/-dry inspection before runs
 - runtime cost of the suite for CI stability

@@ -11,10 +11,10 @@ existing contracts (see `.agents/skills/joker-game-rules/SKILL.md`).
 
 ## Placement and naming
 
-- Mirror app structure: a type under `Jocker/Jocker/<area>/` is tested under
-  `Jocker/JockerTests/<feature>/` with a `<TypeName>Tests.swift` file.
-- One test class per tested type; keep fixtures local to the class that uses
-  them.
+- Follow the [source-to-test mapping](../../../FOLDER_STRUCTURE_SPEC.md#test-targets-layout),
+  including its fallback for new areas and fixture locations. Preserve existing suites.
+- Use `<TypeName>Tests.swift` for type-focused tests; integration suites may cover
+  several types. Follow the specification's type/file rule for new classes and fixtures.
 - Scenario tests follow the established naming conventions
   (`BLIND-*`, `PREMIUM-*`, `PHASE-*`, `JOKER-*`) when they encode a bot-AI
   scenario from `docs/BOT_AI_TEST_SCENARIOS.md`.
@@ -72,7 +72,7 @@ a full run is explicitly needed outside the harness. Do not repeat a covered run
 
 ## Review checklist
 
-- placement mirrors app structure; one type per test file;
+- placement and type/file naming follow the structural specification;
 - setup is explicit and local; no hidden ordering between tests;
 - assertions check player/game-observable outcomes;
 - the test fails for the broken behavior (demonstrated) and passes after;
